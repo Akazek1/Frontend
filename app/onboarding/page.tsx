@@ -1,8 +1,8 @@
 "use client";
 
-import type React from "react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import AppIcon from "@/public/svg/app-icon.svg";
 import GreenAppIcon from "@/public/svg/green-app-icon.svg";
 import RightFlowerIcon from "@/public/svg/flower.svg";
@@ -113,7 +113,7 @@ const Step: React.FC<{
   }
 };
 
-const OnboardingPage: React.FC = () => {
+const OnboardingPage = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [currentStep, setCurrentStep] = useState(-1);
 
@@ -121,7 +121,7 @@ const OnboardingPage: React.FC = () => {
     const timer = setTimeout(() => {
       setShowSplash(false);
       setCurrentStep(0);
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -134,44 +134,65 @@ const OnboardingPage: React.FC = () => {
 
   if (showSplash) {
     return (
-      <div className="relative h-full bg-gradient-to-l from-[#145B10] to-[#729D70]">
-        <div className="h-full flex items-center justify-center">
+      <div className="relative h-screen bg-gradient-to-l from-[#145B10] to-[#729D70] flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1 }}
+        >
           <AppIcon />
-        </div>
-        <div className="absolute bottom-[160px] left-[50%]">
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-[160px] left-[50%]"
+        >
           <BubbleLoader />
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  const currentStepData = ONBOARDING_STEPS[currentStep];
-
   return (
-    <div className="relative min-h-screen">
-      <div className="flex flex-col absolute bottom-0 space-y-[60px] w-full px-6">
-        <Step currentStepData={currentStepData} stepNumber={currentStep} />
-
-        <div className="mt-auto">
-          <button
-            onClick={handleNext}
-            className="w-full bg-[#1B5E20] text-[#ffffff] py-[20px] rounded-[100px] font-bold"
-          >
-            {currentStepData.buttonText}
-          </button>
-        </div>
-        <div className="flex justify-center space-x-2 pb-12">
-          {ONBOARDING_STEPS.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full ${
-                index === currentStep
-                  ? "bg-[#1B5E20] w-8 transition transform 1s"
-                  : "bg-[#E0E0E0] w-2"
-              }`}
+    <div className="relative min-h-screen overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ x: "100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "-100%", opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="absolute bottom-32 w-full h-full px-6 flex flex-col justify-center items-center"
+        >
+          <div className="flex flex-col absolute bottom-0 space-y-[60px] w-full px-6">
+            <Step
+              currentStepData={ONBOARDING_STEPS[currentStep]}
+              stepNumber={currentStep}
             />
-          ))}
-        </div>
+
+            <div className="mt-auto">
+              <button
+                onClick={handleNext}
+                className="w-full bg-[#1B5E20] text-[#ffffff] py-[20px] rounded-[100px] font-bold"
+              >
+                {ONBOARDING_STEPS[currentStep].buttonText}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+      <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-12">
+        {ONBOARDING_STEPS.map((_, index) => (
+          <div
+            key={index}
+            className={`h-2 rounded-full ${
+              index === currentStep
+                ? "bg-[#1B5E20] w-8 transition transform 1s"
+                : "bg-[#E0E0E0] w-2"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
