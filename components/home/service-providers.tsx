@@ -1,9 +1,13 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import SectionHeader from "../section-header";
 import ServiceCard from "../service-card";
+import Scroller from "../scroller";
+import { motion, AnimatePresence } from "framer-motion";
 
 const providers = [
   {
+    id: 1,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Akaliza",
@@ -19,6 +23,7 @@ const providers = [
     verified: true,
   },
   {
+    id: 2,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
@@ -34,6 +39,7 @@ const providers = [
     verified: false,
   },
   {
+    id: 3,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
@@ -49,10 +55,11 @@ const providers = [
     verified: true,
   },
   {
+    id: 4,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
-    title: "HouseHelp",
+    title: "Repairing",
     experience: "5 Years of Experience",
     languages: "English, Kinyarwanda, Swahili, French",
     location: "Nyamirambo, Kigali",
@@ -64,10 +71,11 @@ const providers = [
     verified: false,
   },
   {
+    id: 5,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
-    title: "HouseHelp",
+    title: "Painting",
     experience: "5 Years of Experience",
     languages: "English, Kinyarwanda, Swahili, French",
     location: "Nyamirambo, Kigali",
@@ -79,10 +87,11 @@ const providers = [
     verified: true,
   },
   {
+    id: 6,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
-    title: "HouseHelp",
+    title: "Repairing",
     experience: "5 Years of Experience",
     languages: "English, Kinyarwanda, Swahili, French",
     location: "Nyamirambo, Kigali",
@@ -94,10 +103,11 @@ const providers = [
     verified: false,
   },
   {
+    id: 7,
     image:
       "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     name: "Agency",
-    title: "HouseHelp",
+    title: "Cleaning",
     experience: "5 Years of Experience",
     languages: "English, Kinyarwanda, Swahili, French",
     location: "Nyamirambo, Kigali",
@@ -110,22 +120,72 @@ const providers = [
   },
 ];
 
+const filters = ["All", "Cleaning", "Repairing", "Painting"];
+
 const ServiceProvider = () => {
+  const [selectedFilter, setSelectedFilter] = useState("All");
+
+  const filteredProviders = providers.filter((provider) => {
+    if (selectedFilter === "All") return true;
+    return provider.title === selectedFilter;
+  });
+
   return (
-    <div className="space-y-4">
-      {/* Section Header */}
+    <div className="space-y-6">
       <SectionHeader
         title="Browse by Service Provider"
         linkText="See All"
         linkHref="/"
-        className="text-[#1B2431] font-medium text-lg "
+        className="text-[#1B2431] font-medium text-lg"
       />
+
+      {/* Sticky Filter Bar */}
+      <div className="sticky top-0 z-10 bg-[#F1FCEF] py-2">
+        <div className="flex rounded-lg">
+          <Scroller
+            visibleItems={3.5}
+            gap={12}
+            items={filters}
+            renderItem={(filter) => (
+              <button
+                key={filter}
+                className={`px-5 py-2 rounded-full border-2 border-[#145B10] text-[#145B10] font-semibold
+                  transition-all duration-300 ease-in-out
+                  ${
+                    selectedFilter === filter
+                      ? "bg-[#145B10] text-white scale-105"
+                      : "bg-transparent hover:bg-[#145B10]/10"
+                  }`}
+                onClick={() => setSelectedFilter(filter)}
+              >
+                {filter}
+              </button>
+            )}
+          />
+        </div>
+      </div>
 
       {/* Service Provider Cards */}
       <div className="space-y-4">
-        {providers.map((provider, index) => (
-          <ServiceCard key={index} {...provider} />
-        ))}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedFilter}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {filteredProviders.length > 0 ? (
+              filteredProviders.map((provider) => (
+                <ServiceCard key={provider.id} {...provider} />
+              ))
+            ) : (
+              <p className="text-center text-gray-500">
+                No providers found for this filter
+              </p>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

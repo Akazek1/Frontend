@@ -133,7 +133,7 @@ const OnboardingPage = () => {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      router.push("/overview");
+      router.push("/");
     }
   };
 
