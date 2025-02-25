@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import Header from "@/components/header";
+import Header from "@/components/header/header";
 import Categories from "@/components/home/category-scroller";
 import PromoBanner from "@/components/home/promo-banner";
 import ServiceProvider from "@/components/home/service-providers";
 import PopulerService from "@/components/home/service-scroller";
-import SearchBar from "@/components/search";
+import SearchBar from "@/components/search/search";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchResults from "@/components/search/search-result";
 

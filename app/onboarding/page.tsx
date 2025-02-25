@@ -160,7 +160,7 @@ const OnboardingPage = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-white">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
