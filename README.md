@@ -1,37 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Commands to Run the Application
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Install Dependencies
+```sh
+npm install
 ```
+Installs all required dependencies from `package.json`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Run the Development Server
+```sh
+npm run dev
+```
+Starts the app in development mode with hot reloading.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build the Application
+```sh
+npm run build
+```
+Compiles the project for production use.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Start the Production Server
+```sh
+npm run start
+```
+Runs the compiled project in production mode.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+# Changelog - HWA[FA]
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## [1.0.0] - 2025-04-02
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Onboarding Pages
+- Implemented a smooth onboarding flow to guide new users through the platform setup.
+- Includes user profile setup and initial preferences selection.
 
-## Deploy on Vercel
+### Home Page
+- Designed and developed the main landing page with an intuitive UI/UX.
+- Highlights featured services and promotions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Get Hired Page
+- A dedicated page for job seekers to explore opportunities.
+- Includes job listings and profile-building features.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# HWA_Frontend" 
+### All Messages Page
+- Integrated a messaging system where users can send and receive messages.
+- Implemented read/unread indicators for better communication tracking.
+
+### More Section (User Account & Settings)
+- **Edit Profile:** Users can update their personal details, including name, contact information, and profile picture.
+- **Transactions:** View transaction history with filters for payments, refunds, and purchases.
+- **Order History:** Track past orders with detailed summaries and status updates.
+- **Address Book:** Add, edit, and delete saved addresses for quick access during orders.
+- **Privacy Policy:** Dedicated page outlining data protection policies and user rights.
+- **Share Feedback:** Allows users to submit feedback on services and platform experience.
+
+### Individual Service Page
+- Provides in-depth details of specific services offered on the platform.
+- Includes service descriptions, pricing, user reviews, and booking options.
+
+### Search Page
+- Implemented a dynamic search functionality to help users find relevant content, services, or job listings quickly.
+- Supports filters and sorting options for improved results.
+
