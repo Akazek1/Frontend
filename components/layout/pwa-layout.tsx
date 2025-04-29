@@ -6,7 +6,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register"];
-  const shouldShowNavigation = !hideNavigationPaths.includes(pathname);
+  const shouldHideNavigation =
+    hideNavigationPaths.includes(pathname) || pathname.startsWith("/conversations/inbox");
 
   return (
     <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col min-h-screen">
@@ -14,7 +15,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <main className="flex-1">{children}</main>
 
       {/* Fixed Navigation */}
-      {shouldShowNavigation && (
+      {!shouldHideNavigation && (
         <div className="max-w-[428px] fixed bottom-0 left-0 right-0 mx-auto w-full bg-white shadow-md">
           <Navigation />
         </div>
