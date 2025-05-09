@@ -53,7 +53,7 @@ export const verifyOtp = createAsyncThunk(
   async (data: VerifyOtpRequest, { rejectWithValue }) => {
     try {
       const response = await authService.verifyOtp(data);
-      return response.data; // Return the data property which contains token and user
+      return response;
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
       const message = err.response?.data?.message || "OTP verification failed";

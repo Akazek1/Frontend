@@ -48,24 +48,21 @@ const authService = {
   },
 
   // Verify OTP
-  verifyOtp: async (data: VerifyOtpRequest): Promise<AuthResponse> => {
+  verifyOtp: async (data: VerifyOtpRequest): Promise<AuthResponse["data"]> => {
     try {
       const response = await api.post<AuthResponse>("/auth/verify-otp", data);
-      console.log("Response from verifyOtp:", response.data);
 
       // Store token in localStorage and cookie
-      if (response.data.data && response.data.data.token) {
+      if (response.data.data?.token) {
         const token = response.data.data.token;
         localStorage.setItem("token", token);
-
-        // Set the cookie with proper attributes for Next.js middleware to read it
         document.cookie = `token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-
       } else {
         console.warn("Token not found in response:", response.data);
       }
 
-      return response.data;
+      // ✅ Return only the relevant data: { token, user }
+      return response.data.data;
     } catch (error) {
       console.error("Error in verifyOtp service:", error);
       throw error;

@@ -15,10 +15,14 @@ import { logout } from "@/store/slices/auth-slice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 const ProfileScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter()
+  const actualUser = useSelector((state: RootState) => state.auth.user);
+
   const user = {
     name: "Gatete",
     email: "gatete@gmail.com",
