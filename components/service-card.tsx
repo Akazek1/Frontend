@@ -54,7 +54,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="bg-white shadow-[#04060F0D] rounded-2xl p-5 flex items-center gap-4 hover:scale-105 transition transform 2s ease-in cursor-pointer"
+      className="bg-white shadow-[#04060F0D] rounded-2xl p-5 flex items-center gap-4 cursor-pointer"
     >
       {/* Image */}
       <div className="relative">

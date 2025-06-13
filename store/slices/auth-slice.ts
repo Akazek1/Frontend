@@ -24,7 +24,10 @@ interface AuthState {
 
 // Initial state
 const initialState: AuthState = {
-  user: null,
+  user:
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "null")
+      : null,
   token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   isAuthenticated:
     typeof window !== "undefined" ? !!localStorage.getItem("token") : false,
@@ -53,7 +56,7 @@ export const verifyOtp = createAsyncThunk(
   async (data: VerifyOtpRequest, { rejectWithValue }) => {
     try {
       const response = await authService.verifyOtp(data);
-      return response.data; // Return the data property which contains token and user
+      return response;
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
       const message = err.response?.data?.message || "OTP verification failed";
@@ -63,6 +66,7 @@ export const verifyOtp = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
+  localStorage.removeItem("token");
   authService.logout();
 });
 
@@ -90,6 +94,19 @@ const authSlice = createSlice({
     },
     setPhoneNumber: (state, action: PayloadAction<string>) => {
       state.phoneNumber = action.payload;
+    },
+    updateUser(state, action: PayloadAction<Partial<AuthState["user"]>>) {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+
+        // Update localStorage too
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(state.user));
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -122,6 +139,13 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.otpSent = false;
         state.phoneNumber = null;
+
+        // Save user and token to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(action.payload.user));
+          localStorage.setItem("token", action.payload.token);
+        }
+
         toast.success("OTP verified successfully");
       })
       .addCase(verifyOtp.rejected, (state, action) => {
@@ -158,5 +182,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, setPhoneNumber } = authSlice.actions;
+export const { resetAuthState, setPhoneNumber, updateUser } = authSlice.actions;
 export default authSlice.reducer;

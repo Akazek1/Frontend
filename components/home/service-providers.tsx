@@ -40,7 +40,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: true,
     verified: true,
-    type:"Professional"
+    type: "Professional"
   },
   {
     id: 2,
@@ -57,7 +57,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: false,
     verified: false,
-    type:"Agency"
+    type: "Agency"
   },
   {
     id: 3,
@@ -74,7 +74,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: true,
     verified: true,
-    type:"Agency"
+    type: "Agency"
   },
   {
     id: 4,
@@ -91,7 +91,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: false,
     verified: false,
-    type:"Professional"
+    type: "Professional"
   },
   {
     id: 5,
@@ -108,7 +108,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: true,
     verified: true,
-    type:"Agency"
+    type: "Agency"
   },
   {
     id: 6,
@@ -125,7 +125,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: false,
     verified: false,
-    type:"Professional"
+    type: "Professional"
   },
   {
     id: 7,
@@ -142,7 +142,7 @@ const providers: Provider[] = [
     distance: "2 miles",
     available: true,
     verified: true,
-    type:"Agency"
+    type: "Agency"
   },
 ];
 
@@ -164,49 +164,46 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
   });
 
   return (
-    <div className="space-y-6">
+    <div >
       {showHeader && (
-        <div>
-          <SectionHeader
-            title="Browse by Service Provider"
-            linkText="See All"
-            linkHref="/"
-            className="text-[#1B2431] font-medium text-lg"
-          />
-          <div className="sticky top-0 z-10 bg-[#F1FCEF] py-2">
-            <div className="flex rounded-lg">
-              <Scroller
-                visibleItems={3.5}
-                gap={12}
-                items={filters}
-                renderItem={(filter) => (
-                  <button
-                    key={filter}
-                    className={`px-5 py-2 rounded-full border-2 border-[#145B10] text-[#145B10] font-semibold
-                    transition-all duration-300 ease-in-out
-                    ${
-                      selectedFilter === filter
-                        ? "bg-[#145B10] text-white scale-105"
-                        : "bg-transparent hover:bg-[#145B10]/10"
-                    }`}
-                    onClick={() => setSelectedFilter(filter)}
-                  >
-                    {filter}
-                  </button>
-                )}
-              />
-            </div>
-          </div>
-        </div>
+        <SectionHeader
+          title="Browse by Service Provider"
+          linkText="See All"
+          linkHref="/"
+          className="text-[#1B2431] font-medium text-lg"
+        />
       )}
-
-      {/* Service Provider Cards with Exit Animation */}
+      <div className="sticky top-0 z-10 bg-[#F1FCEF] py-4">
+        <div className="flex rounded-lg">
+          <Scroller
+            visibleItems={3.5}
+            gap={12}
+            items={filters}
+            renderItem={(filter) => (
+              <button
+                key={filter}
+                className={`px-5 py-2 rounded-full border-2 border-[#145B10] text-[#145B10] font-semibold
+                  transition-all duration-300 ease-in-out
+                  ${selectedFilter === filter
+                    ? "bg-[#145B10] text-white scale-105"
+                    : "bg-transparent hover:bg-[#145B10]/10"
+                  }`}
+                onClick={() => setSelectedFilter(filter)}
+              >
+                {filter}
+              </button>
+            )}
+          />
+        </div>
+      </div>
+      {/* Service Provider Cards */}
       <AnimatePresence mode="wait">
         <motion.div
           key={selectedFilter || "default"}
-          initial={{ opacity: 1 }} // No initial animation for entry
+          initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.3 } }} // Fade out on exit
+          exit={{ opacity: 0, transition: { duration: 0.3 } }}
+          className="flex flex-col gap-4 pb-8"
         >
           {filteredProviders.length > 0 ? (
             filteredProviders.map((provider) => (

@@ -11,6 +11,7 @@ import {
   getCurrentUser,
   resetAuthState,
   setPhoneNumber,
+  updateUser,
 } from "@/store/slices/auth-slice";
 import type { SendOtpRequest, VerifyOtpRequest } from "@/services/auth-service";
 import { toast } from "react-hot-toast";
@@ -44,7 +45,6 @@ export const useAuth = () => {
         return false;
       }
 
-      console.log("Sending OTP to:", data.phoneNumber);
       await dispatch(sendOtp(data)).unwrap();
       return true;
     } catch (error) {
@@ -73,20 +73,13 @@ export const useAuth = () => {
         otp,
       };
 
-      console.log("Verifying OTP:", otp, "for phone:", phoneNumber);
       const result = await dispatch(verifyOtp(data)).unwrap();
 
-      // Log successful verification
-      console.log("OTP verification successful:", result);
-
-      // Force a page reload to ensure cookies are properly recognized
-      if (result && result.token) {
-        setTimeout(() => {
-          router.push("/");
-        }, 500);
+      if (result.token) {
+        return true;
+      } else {
+        toast.error("Invalid OTP please try again.");
       }
-
-      return true;
     } catch (error) {
       console.error("OTP verification failed:", error);
       return false;
@@ -97,6 +90,74 @@ export const useAuth = () => {
   const handleLogout = async () => {
     await dispatch(logout());
     router.push("/onboarding"); // Redirect to onboarding page after logout
+  };
+
+  // Update user profile with userType locally
+  const updateUserProfile = async (data: { userType: string }) => {
+    try {
+      if (!data.userType) {
+        toast.error("User type is required");
+        return false;
+      }
+
+      // Normalize userType input (capitalize each word)
+      const toTitleCase = (str: string) =>
+        str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+      const normalizedUserType = toTitleCase(data.userType.trim());
+
+      const validUserTypes = [
+        "Individual",
+        "Agency",
+      ] as const;
+
+      if (
+        !validUserTypes.includes(
+          normalizedUserType as (typeof validUserTypes)[number]
+        )
+      ) {
+        toast.error("Invalid user type");
+        return false;
+      }
+
+      if (isLoading) {
+        toast.error("Please wait, another request is in progress");
+        return false;
+      }
+
+      dispatch(
+        updateUser({
+          userType: normalizedUserType as (typeof validUserTypes)[number],
+          isProfileComplete: true,
+        })
+      );
+
+      // Update localStorage
+      if (typeof window !== "undefined" && user) {
+        const updatedUser = {
+          ...user,
+          userType: normalizedUserType,
+          isProfileComplete: true,
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } else {
+        toast.error("User data not found");
+        return false;
+      }
+
+      toast.success("User profile updated successfully");
+      return true;
+    } catch (error) {
+      const err = error as Error;
+      const message = err.message || "Failed to update user profile";
+      console.error("Error updating user profile:", error);
+      toast.error(message);
+      return false;
+    }
   };
 
   // Reset auth state (clear errors)
@@ -114,6 +175,7 @@ export const useAuth = () => {
     sendOtp: handleSendOtp,
     verifyOtp: handleVerifyOtp,
     logout: handleLogout,
+    updateUserProfile,
     resetAuth,
     setPhoneNumber: (phone: string) => dispatch(setPhoneNumber(phone)),
   };
