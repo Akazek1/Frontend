@@ -60,10 +60,10 @@ interface ServiceFormProps {
 }
 
 const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submitting, setData, onCancel }) => {
-  
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      
+
       {/* Category Select */}
       <div className="space-y-2">
         <Select
@@ -107,7 +107,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
       {/* Price Select */}
       <div className="space-y-2">
         <Select
-          value={initialData?.price?.toString()}
+          value={
+            initialData?.price &&
+              ["1500", "4500", "8000"].includes(initialData.price.toString())
+              ? initialData.price.toString()
+              : ""
+          }
           onValueChange={(value) => setData((prev) => ({ ...prev, price: parseInt(value) }))}
         >
           <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
@@ -134,7 +139,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           value={initialData.timing}
           onValueChange={(value) => setData((prev) => ({ ...prev, timing: value }))}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-4 py-[18px] border-none focus:ring-[#145B10] w-full">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10] w-full">
             <SelectValue placeholder="Select Work Time" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
           </SelectTrigger>
@@ -148,7 +153,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
               <SelectItem
                 key={idx}
                 value={text}
-                className="whitespace-normal font-semibold break-words text-sm px-4 py-2"
+                className="whitespace-normal font-semibold break-words text-sm px-5 py-2"
               >
                 {text}
               </SelectItem>
@@ -300,9 +305,9 @@ const IndividualForm = () => {
       try {
         const response = await api.get(`/services?providerId=${user.id}`);
         console.log(response.data);
-        
+
         setServices(response.data.data || []);
-      } catch  {
+      } catch {
         toast.error('Failed to fetch services');
       } finally {
         setLoadingServices(false);
@@ -314,7 +319,7 @@ const IndividualForm = () => {
   // Initialize update form data for a service
   const initializeUpdateData = (service: Service) => {
     // console.log(service);
-    
+
     setUpdateData((prev) => ({
       ...prev,
       [service.id]: {
@@ -396,7 +401,7 @@ const IndividualForm = () => {
       );
       setEditModalOpen(false);
       setEditingServiceId(null);
-    } catch  {
+    } catch {
       toast.error('Failed to update service');
     } finally {
       setSubmitting(false);
@@ -412,7 +417,7 @@ const IndividualForm = () => {
       setServices(services.filter((service) => service.id !== serviceToDelete));
       setDeleteModalOpen(false);
       setServiceToDelete(null);
-    } catch  {
+    } catch {
       toast.error('Failed to delete service');
     }
   };
@@ -450,7 +455,7 @@ const IndividualForm = () => {
                 className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4"
               >
                 <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 capitalize">{service.title}</h3>
                   <div className="flex space-x-2">
                     <Button
                       variant="ghost"

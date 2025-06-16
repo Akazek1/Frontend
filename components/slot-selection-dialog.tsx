@@ -55,7 +55,7 @@ const SlotSelectionDialog: React.FC<SlotSelectionDialogProps> = ({
             setIsOpen(false); // Close the dialog
             // Navigate to the booking summary page with serviceId and slot details
             router.push(
-                `/book/${provider.id}/booking-summary?serviceId=${encodeURIComponent(
+                `/book/${provider.type}/${provider.id}/booking-summary?serviceId=${encodeURIComponent(
                     provider.id
                 )}&date=${encodeURIComponent(selectedDate)}&time=${encodeURIComponent(selectedTime)}`
             );

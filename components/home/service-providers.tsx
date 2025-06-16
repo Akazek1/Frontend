@@ -47,8 +47,6 @@ interface Service {
   };
 }
 
-const filters = ["All", "Cleaning", "Repairing", "Painting"];
-
 interface ServiceProviderProps {
   showHeader: boolean;
 }
@@ -59,6 +57,9 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Derive unique filters from service titles
+  const filters = ["All", ...new Set(services.map((service) => service.title))];
 
   // Fetch services
   useEffect(() => {
@@ -90,7 +91,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
   const filteredProviders: Provider[] = services
     .filter((service) => {
       if (selectedFilter === "All") return true;
-      return service.title.toLowerCase().includes(selectedFilter.toLowerCase());
+      return service.title === selectedFilter;
     })
     .map((service) => ({
       id: service.id,
@@ -129,7 +130,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
               <button
                 key={filter}
                 className={`px-5 py-2 rounded-full border-2 border-[#145B10] text-[#145B10] font-semibold
-                  transition-all duration-200 ease-in-out
+                  transition-all duration-200 ease-in-out capitalize
                   ${selectedFilter === filter
                     ? "bg-[#145B10] text-white"
                     : "bg-transparent hover:bg-[#145B10]/10"

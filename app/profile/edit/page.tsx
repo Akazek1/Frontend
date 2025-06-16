@@ -388,7 +388,7 @@ const EditProfile = () => {
         </div>
 
         {/* Address Fields */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Input
             id="street"
             name="street"
@@ -397,7 +397,7 @@ const EditProfile = () => {
             className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
             placeholder="Enter street address"
           />
-        </div>
+        </div> */}
 
         {/* Update Button */}
         <Button

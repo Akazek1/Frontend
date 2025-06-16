@@ -6,7 +6,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Calendar, Languages, MapPin, Star } from "lucide-react";
+import { ArrowDown, ArrowUp, Calendar, Languages, MapPin, Star } from "lucide-react";
 import { Icons } from "@/components/icons";
 import {
     Select,
@@ -22,7 +22,7 @@ import { Loader2 } from "lucide-react";
 
 // Define the provider interface
 interface Provider {
-    id: number;
+    id: string;
     image: string;
     name: string;
     title: string;
@@ -49,30 +49,6 @@ interface Address {
     isDefault: boolean;
 }
 
-// Define the booking response interface
-interface Booking {
-    id: string;
-    serviceId: string;
-    userId: string;
-    addressId: string;
-    workerId: string;
-    status: string;
-    scheduledFor: string;
-    price: number;
-    service: {
-        id: string;
-        title: string;
-    };
-    address: {
-        street: string;
-        city: string;
-    };
-    worker: {
-        id: string;
-        firstName: string;
-        lastName: string;
-    };
-}
 
 // Define the service response interface
 interface Service {
@@ -134,23 +110,23 @@ const BookingSummary = () => {
             try {
                 setIsLoadingService(true);
                 const response = await api.get(`/services/${serviceId}`);
-                const service: Service = response.data;
+                const service: Service = response.data.data;
 
                 // Map service to provider
                 const mappedProvider: Provider = {
-                    id: parseInt(service.id, 10),
+                    id: service.id,
                     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
                     name: `${service.provider.firstName} ${service.provider.lastName}`,
                     title: service.title,
                     experience: service.description || "No experience provided",
-                    languages: "English, Kinyarwanda, Swahili, French", // Hardcoded
-                    location: "Nyamirambo, Kigali", // Hardcoded
+                    languages: "English, Kinyarwanda, Swahili, French",
+                    location: "Nyamirambo, Kigali",
                     price: `${service.price} RWF/day`,
-                    rating: 4.8, // Hardcoded
-                    reviews: 8289, // Hardcoded
-                    distance: "2 miles", // Hardcoded
-                    available: true, // Hardcoded
-                    verified: true, // Hardcoded
+                    rating: 4.8,
+                    reviews: 8289,
+                    distance: "2 miles",
+                    available: true,
+                    verified: true,
                     type: service.provider.userType === "AGENCY" ? "Agency" : "Professional",
                 };
 
@@ -227,13 +203,14 @@ const BookingSummary = () => {
                 addressId: selectedAddressId,
                 scheduledFor,
             };
+            console.log(payload);
+
 
             const response = await api.post("/bookings", payload);
-            const booking: Booking = response.data;
-
-            toast.success("Booking created successfully");
-            // Navigate to checkout with booking ID
-            router.push(`/checkout?bookingId=${encodeURIComponent(booking.id)}`);
+            if (response.status === 201) {
+                toast.success("Booking created successfully");
+                router.push(`/`);
+            }
         } catch (err) {
             console.error("Error creating booking:", err);
             const errorMessage =
@@ -246,8 +223,8 @@ const BookingSummary = () => {
 
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (
-            <div className="flex items-center justify-center h-screen bg-[#F1FCEF]">
-                <p className="text-[#616161] font-medium">Loading...</p>
+            <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
             </div>
         );
     }
@@ -298,16 +275,16 @@ const BookingSummary = () => {
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 rounded-full border-[#145B10] text-[#145B10]"
+                                className="w-[22px] h-[28px]  border-[1.5px] border-[#145B10] text-[#145B10] rounded-none"
                             >
-                                -
+                                <ArrowDown />
                             </Button>
                             <span className="text-[#145B10] font-bold">1</span>
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 rounded-full border-[#145B10] text-[#145B10]"
+                                className="w-[22px] h-[28px] border-[1.5px] border-[#145B10] text-[#145B10] rounded-none"
                             >
-                                +
+                                <ArrowUp />
                             </Button>
                         </div>
                     </div>
@@ -356,7 +333,9 @@ const BookingSummary = () => {
                             <span className="text-[#145B10] font-medium">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
-                            <p className="text-[#616161] text-sm font-medium">Loading...</p>
+                            <div className="bg-[#F1FCEF] flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+                            </div>
                         ) : addresses.length === 0 ? (
                             <p className="text-[#616161] text-sm font-medium">
                                 No addresses found.{" "}

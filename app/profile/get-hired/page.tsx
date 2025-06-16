@@ -1,8 +1,7 @@
 "use client";
 
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import ServiceProvider from "@/components/home/service-providers";
 import { ChevronDown, SquarePlus } from "lucide-react";
 import BackButtonHeader from "@/components/header/back-button-header";
@@ -44,13 +43,13 @@ interface Professional {
     services: string;
     location: string;
     rating: string;
-    profileImage?: string; // Optional, as it’s a placeholder
+    profileImage?: string;
 }
 
 interface AgencyProfile extends CommonProfile {
-    certificate: File | string | null; // Updated to handle File or string (URL/path) or null
+    certificate: File | string | null;
     professionals: Professional[];
-    logoImage?: string; // Optional, as it’s a placeholder
+    logoImage?: string;
 }
 
 const GetHired: React.FC = () => {
@@ -266,7 +265,7 @@ const GetHired: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex items-center border border-black rounded-xl overflow-hidden w-full">
-                                <div className="flex items-center gap-2 pl-3 pr-5 py-4 border-r border-black">
+                                <div className="flex items-center gap-2 pl-3 pr-5 py-4 border-r border-black bg-white">
                                     <Image
                                         height={40}
                                         width={40}
@@ -327,16 +326,28 @@ const GetHired: React.FC = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div>
-                                <Input
-                                    id="languages"
-                                    defaultValue={individualData.languages || ""}
-                                    onChange={(e) => handleIndividualChange("languages", e.target.value)}
-                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                />
+                            <div className="space-y-2">
+                                <Select
+                                    value={user?.gender}
+                                >
+                                    <SelectTrigger
+                                        id="gender"
+                                        className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-[#145B10]`}
+                                    >
+                                        <SelectValue placeholder="Select Language" />
+                                        <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-200" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Kinyarwanda">Kinyarwanda</SelectItem>
+                                        <SelectItem value="English">English</SelectItem>
+                                        <SelectItem value="French">French</SelectItem>
+                                        <SelectItem value="Swahili">
+                                            Swahili
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div>
-
                                 <Input
                                     id="address"
                                     defaultValue={individualData.yearsExperience || ""}
@@ -345,10 +356,8 @@ const GetHired: React.FC = () => {
                                     placeholder="Enter street address"
                                 />
                             </div>
-                            <div>
-                                <Label>
-                                    Services Offered
-                                </Label>
+                            <div className="text-[#1B2431] text-lg font-medium">
+                                Services Offered
                             </div>
                             <IndividualForm />
                         </div>
