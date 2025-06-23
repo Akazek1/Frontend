@@ -5,7 +5,9 @@ import {
   Briefcase,
   ChevronRight,
   CircleEllipsis,
+  HelpingHand,
   MessageSquare,
+  ShieldX,
 } from "lucide-react";
 import { Icons } from "../icons";
 import { Separator } from "../ui/separator";
@@ -34,6 +36,8 @@ const ProfileScreen = () => {
     { name: "Order History", Icon: Icons.OrderHistoryIcon, href: "/profile/orders" },
     { name: "Address Book", Icon: Icons.BookIcon, href: "/profile/address-book" },
     { name: "Privacy Policy", Icon: Icons.LockIcon, href: "/profile/privacy-policy" },
+    { name: "Terms & Conditions", Icon: ShieldX, href: "/profile/terms-&-conditions" },
+    { name: "Help & Support", Icon: HelpingHand, href: "/profile/help-&-support" },
     { name: "Share Feedback", Icon: MessageSquare, href: "/profile/feedback" },
   ];
 

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Image from "next/image";
 
 interface Service {
   id: string;
@@ -380,7 +381,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
   );
 };
 
-const IndividualForm = () => {
+const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -575,14 +576,14 @@ const IndividualForm = () => {
         services.map((service) =>
           service.id === serviceId
             ? {
-                ...service,
-                category: payload.category,
-                price: payload.price,
-                serviceType: payload.serviceType,
-                scopeOfService: payload.scopeOfService,
-                areaServed: payload.areaServed,
-                title: payload.title,
-              }
+              ...service,
+              category: payload.category,
+              price: payload.price,
+              serviceType: payload.serviceType,
+              scopeOfService: payload.scopeOfService,
+              areaServed: payload.areaServed,
+              title: payload.title,
+            }
             : service
         )
       );
@@ -637,6 +638,18 @@ const IndividualForm = () => {
 
   return (
     <div className="space-y-8">
+      {
+        isWorker &&
+        <div className="flex items-center justify-center">
+          <Image
+            src={"/images/user.png"}
+            width={120}
+            height={120}
+            alt="Worker Image"
+            className="rounded-full"
+          />
+        </div>
+      }
       {/* Service Creation Form */}
       <ServiceForm
         initialData={individualData}
@@ -647,7 +660,11 @@ const IndividualForm = () => {
 
       {/* Display User's Services */}
       <div>
-        <h1 className="text-lg font-bold">Your Services</h1>
+        <h1 className="text-lg font-bold">
+          {
+            isWorker ? "Worker's Service" : "Your Services"
+          }
+        </h1>
         {loadingServices ? (
           <div className="flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin" />

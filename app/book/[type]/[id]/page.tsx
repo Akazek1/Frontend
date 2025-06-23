@@ -87,7 +87,6 @@ const Page = () => {
       try {
         const response = await api.get(`/services/${id}`);
         const service: Service = response.data.data;
-        
 
         // Map service to provider
         const mappedProvider: Provider = {
