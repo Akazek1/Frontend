@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { FormEvent, useState, useEffect } from "react";
@@ -19,7 +20,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import ImagePicker from "../image-picker";
 
+// Service interface for services fetched from or sent to the backend
 interface Service {
   id: string;
   title: string;
@@ -60,6 +63,7 @@ interface Service {
   }[];
 }
 
+// Availability interface for service availability
 interface Availability {
   dayOfWeek: number;
   startTime: string;
@@ -67,6 +71,7 @@ interface Availability {
   enabled: boolean;
 }
 
+// IndividualData interface for form data
 interface IndividualData {
   category: string;
   price: number;
@@ -75,8 +80,10 @@ interface IndividualData {
   areaServed?: string;
   title: string;
   availability: Availability[];
+  serviceImage: File | null;
 }
 
+// ServiceFormProps interface for the ServiceForm component
 interface ServiceFormProps {
   initialData: IndividualData;
   onSubmit: (e: FormEvent) => Promise<void>;
@@ -85,9 +92,12 @@ interface ServiceFormProps {
   onCancel?: () => void;
 }
 
+
+// ServiceForm component
 const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submitting, setData, onCancel }) => {
   const [selectedDayGroup, setSelectedDayGroup] = useState<string>("Weekdays");
   const [availabilityStatus, setAvailabilityStatus] = useState<string>("unavailable");
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData.serviceImage ? null : null);
 
   const dayGroups = [
     { value: "Weekdays", label: "Weekdays (Mon-Fri)", days: [1, 2, 3, 4, 5] },
@@ -100,6 +110,20 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
     { value: "Saturday", label: "Saturday", days: [6] },
     { value: "Sunday", label: "Sunday", days: [7] },
   ];
+
+  useEffect(() => {
+    if (initialData.serviceImage instanceof File) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setImagePreview(reader.result);
+        }
+      };
+      reader.readAsDataURL(initialData.serviceImage);
+    } else {
+      setImagePreview(initialData.serviceImage);
+    }
+  }, [initialData.serviceImage]);
 
   const handleAvailabilityChange = (
     days: number[],
@@ -127,9 +151,21 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
     enabled: false,
   };
 
+  const handleImageSelect = (file: File) => {
+    setData((prev) => ({ ...prev, serviceImage: file }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setImagePreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {/* Category Select */}
+      <ImagePicker onImageSelect={handleImageSelect} initialPreview={imagePreview} />
       <div className="space-y-2">
         <Select
           value={initialData.category}
@@ -168,8 +204,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           </SelectContent>
         </Select>
       </div>
-
-      {/* Price Select */}
       <div className="space-y-2">
         <Select
           value={
@@ -197,8 +231,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           </SelectContent>
         </Select>
       </div>
-
-      {/* Availability Inputs */}
       <div className="space-y-4">
         <Label className="text-sm font-semibold">Availability</Label>
         <div className="space-y-2">
@@ -223,7 +255,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
               ))}
             </SelectContent>
           </Select>
-
           <Select
             value={availabilityStatus}
             onValueChange={(value) => {
@@ -240,7 +271,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
               <SelectItem value="unavailable">Unavailable</SelectItem>
             </SelectContent>
           </Select>
-
           {availabilityStatus === "available" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -267,8 +297,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           )}
         </div>
       </div>
-
-      {/* Area of Service */}
       <div className="space-y-2">
         <Select
           value={initialData.areaServed}
@@ -297,8 +325,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           </SelectContent>
         </Select>
       </div>
-
-      {/* Service Type Select */}
       <div className="space-y-2">
         <Select
           value={initialData.serviceType}
@@ -315,14 +341,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
             <SelectItem className="text-sm font-semibold" value="COMMERCIAL">
               Commercial
             </SelectItem>
-            <SelectItem className="text-sm font-semibold" value="RESIDENTIAL,COMMERCIAL">
+            <SelectItem className="text-sm font-semibold" value="BOTH">
               Residential & Commercial
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
-
-      {/* Scope of Service Select */}
       <div className="space-y-2">
         <Select
           value={initialData.scopeOfService}
@@ -354,7 +378,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
           </SelectContent>
         </Select>
       </div>
-
       <div className="flex space-x-2">
         <Button
           size="lg"
@@ -381,6 +404,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, onSubmit, submit
   );
 };
 
+// IndividualForm component
 const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
@@ -390,6 +414,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
   const { user } = useSelector((state: RootState) => state.auth);
+  const [imagePreviews, setImagePreviews] = useState<Record<string, string | null>>({});
 
   const defaultAvailability: Availability[] = [
     { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", enabled: false },
@@ -409,6 +434,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     areaServed: "",
     title: "",
     availability: defaultAvailability,
+    serviceImage: null,
   });
 
   const [updateData, setUpdateData] = useState<Record<string, IndividualData>>({});
@@ -438,7 +464,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       }
     }
     throw lastError || new Error("Retry failed");
-  };
+  }
 
   // Fetch services for the logged-in user
   useEffect(() => {
@@ -449,7 +475,13 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         const response = await retryWithBackoff(() =>
           api.get(`/services?providerId=${user.id}`)
         );
-        setServices(response.data.data || []);
+        const fetchedServices = response.data.data || [];
+        setServices(fetchedServices);
+        const previews: Record<string, string | null> = {};
+        fetchedServices.forEach((service: Service) => {
+          previews[service.id] = service.serviceImage;
+        });
+        setImagePreviews(previews);
       } catch {
         toast.error("Failed to fetch services");
       } finally {
@@ -468,18 +500,19 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       return serviceAvail
         ? {
           dayOfWeek: serviceAvail.dayOfWeek,
-          startTime: new Date(serviceAvail.startTime).toISOString().slice(11, 16),
-          endTime: new Date(serviceAvail.endTime).toISOString().slice(11, 16),
+          startTime: serviceAvail.startTime.slice(11, 16),
+          endTime: serviceAvail.endTime.slice(11, 16),
           enabled: true,
         }
         : defaultAvail;
     });
 
-    setUpdateData((prev) => ({
+    // Set form state (no image File initially)
+    setUpdateData((prev: any) => ({
       ...prev,
       [service.id]: {
         category: service.category || "",
-        price: service.price || 0,
+        price: Number(service.price) || 0,
         serviceType: service.serviceType || "",
         scopeOfService: service.description || "",
         areaServed: Array.isArray(service.serviceAreas)
@@ -487,8 +520,16 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
           : service.areaServed || "",
         title: service.title || "",
         availability,
+        serviceImage: service.serviceImage,
       },
     }));
+
+    // Set preview image (string URL from server)
+    setImagePreviews((prev) => ({
+      ...prev,
+      [service.id]: service.serviceImage ?? "",
+    }));
+
   };
 
   // Handle edit button click
@@ -498,30 +539,44 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     setEditModalOpen(true);
   };
 
-  // Handle form submission for creating a new service
+  // Handle service creation
   const handleServiceSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const payload = {
-      category: individualData.category.toLowerCase(),
-      price: individualData.price,
-      serviceType: individualData.serviceType,
-      scopeOfService: individualData.scopeOfService,
-      areaServed: individualData.areaServed,
-      // title: individualData.category,
-      availability: individualData.availability
-        .filter((avail) => avail.enabled)
-        .map((avail) => ({
-          // dayOfWeek: avail.dayOfWeek,
-          startTime: avail.startTime,
-          endTime: avail.endTime,
-        })),
-    };
+
+    const formData = new FormData();
+    formData.append("category", individualData.category.toLowerCase());
+    formData.append("price", individualData.price.toString());
+    formData.append("serviceType", individualData.serviceType);
+    formData.append("scopeOfService", individualData.scopeOfService);
+    formData.append("areaServed", individualData.areaServed || "");
+    formData.append("title", individualData.category);
+
+    if (individualData.serviceImage instanceof File) {
+      formData.append("serviceImage", individualData.serviceImage);
+    }
+
+    formData.append(
+      "availability",
+      JSON.stringify(
+        individualData.availability
+          .filter((avail) => avail.enabled)
+          .map((avail) => ({
+            startTime: avail.startTime,
+            endTime: avail.endTime,
+          }))
+      )
+    );
 
     try {
-      const response = await retryWithBackoff(() => api.post("/services", payload));
+      const response = await retryWithBackoff(() =>
+        api.post("/services", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+      );
       toast.success("Service submitted successfully");
-      setServices([...services, response.data]);
+      const newService = response.data;
+      setServices([...services, newService]);
       setIndividualData({
         category: "",
         price: 0,
@@ -530,7 +585,12 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         areaServed: "",
         title: "",
         availability: defaultAvailability,
+        serviceImage: null,
       });
+      setImagePreviews((prev) => ({
+        ...prev,
+        [newService.id]: newService.serviceImage,
+      }));
     } catch (error: unknown) {
       const message =
         typeof error === "object" &&
@@ -545,7 +605,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     }
   };
 
-  // Handle update service
+  // Handle service update
   const handleUpdateService = async (e: FormEvent, serviceId: string) => {
     e.preventDefault();
     setSubmitting(true);
@@ -553,40 +613,78 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     const data = updateData[serviceId];
     if (!data) return;
 
-    const payload = {
+    const price = Number(data.price);
+    if (isNaN(price) || price < 0) {
+      toast.error("Price must be a valid non-negative number.");
+      setSubmitting(false);
+      return;
+    }
+
+    const servicePayload = {
       category: data.category.toLowerCase(),
-      price: data.price,
+      price: price,
       serviceType: data.serviceType,
       scopeOfService: data.scopeOfService,
-      areaServed: data.areaServed,
+      areaServed: data.areaServed ?? "",
       title: data.category,
       availability: data.availability
         .filter((avail) => avail.enabled)
         .map((avail) => ({
-          // dayOfWeek: avail.dayOfWeek,
           startTime: avail.startTime,
           endTime: avail.endTime,
         })),
     };
 
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(servicePayload)); // backend parses `data` as JSON
+
+    if (data.serviceImage instanceof File) {
+      formData.append("serviceImage", data.serviceImage);
+    }
+
     try {
-      await retryWithBackoff(() => api.patch(`/services/${serviceId}`, payload));
+      const response = await retryWithBackoff(() =>
+        api.patch(`/services/${serviceId}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+      );
       toast.success("Service updated successfully");
+
+      const updatedService = response.data;
+
       setServices(
         services.map((service) =>
           service.id === serviceId
             ? {
               ...service,
-              category: payload.category,
-              price: payload.price,
-              serviceType: payload.serviceType,
-              scopeOfService: payload.scopeOfService,
-              areaServed: payload.areaServed,
-              title: payload.title,
+              category: data.category,
+              price: price,
+              serviceType: data.serviceType,
+              scopeOfService: data.scopeOfService,
+              areaServed: data.areaServed,
+              title: data.title,
+              serviceImage: updatedService.serviceImage || service.serviceImage,
+              availability: data.availability
+                .filter((avail) => avail.enabled)
+                .map((avail) => ({
+                  id: "",
+                  serviceId,
+                  dayOfWeek: avail.dayOfWeek,
+                  startTime: `1970-01-01T${avail.startTime}:00Z`,
+                  endTime: `1970-01-01T${avail.endTime}:00Z`,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                })),
             }
             : service
         )
       );
+
+      setImagePreviews((prev) => ({
+        ...prev,
+        [serviceId]: updatedService.serviceImage || prev[serviceId],
+      }));
+
       setEditModalOpen(false);
       setEditingServiceId(null);
     } catch (error: unknown) {
@@ -603,13 +701,19 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     }
   };
 
-  // Handle delete service
+
+  // Handle service deletion
   const handleDeleteService = async () => {
     if (!serviceToDelete) return;
     try {
       await retryWithBackoff(() => api.delete(`/services/${serviceToDelete}`));
       toast.success("Service deleted successfully");
       setServices(services.filter((service) => service.id !== serviceToDelete));
+      setImagePreviews((prev) => {
+        const newPreviews = { ...prev };
+        delete newPreviews[serviceToDelete];
+        return newPreviews;
+      });
       setDeleteModalOpen(false);
       setServiceToDelete(null);
     } catch {
@@ -629,8 +733,8 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     return availability
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
       .map((avail) => {
-        const start = new Date(avail.startTime).toISOString().slice(11, 16);
-        const end = new Date(avail.endTime).toISOString().slice(11, 16);
+        const start = avail.startTime.slice(11, 16);
+        const end = avail.endTime.slice(11, 16);
         return `${daysOfWeek[avail.dayOfWeek - 1]}: ${start} - ${end}`;
       })
       .join(", ");
@@ -638,32 +742,15 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
 
   return (
     <div className="space-y-8">
-      {
-        isWorker &&
-        <div className="flex items-center justify-center">
-          <Image
-            src={"/images/user.png"}
-            width={120}
-            height={120}
-            alt="Worker Image"
-            className="rounded-full"
-          />
-        </div>
-      }
-      {/* Service Creation Form */}
       <ServiceForm
         initialData={individualData}
         onSubmit={handleServiceSubmit}
         submitting={submitting}
         setData={setIndividualData}
       />
-
-      {/* Display User's Services */}
       <div>
         <h1 className="text-lg font-bold">
-          {
-            isWorker ? "Worker's Service" : "Your Services"
-          }
+          {isWorker ? "Worker's Service" : "Your Services"}
         </h1>
         {loadingServices ? (
           <div className="flex justify-center">
@@ -676,7 +763,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
             {services.map((service) => (
               <div
                 key={service.id}
-                className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4"
+                className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 space-y-4"
               >
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-semibold text-gray-900 capitalize">{service.title}</h3>
@@ -699,6 +786,15 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                     </Button>
                   </div>
                 </div>
+                {imagePreviews[service.id] && (
+                  <Image
+                    width={400}
+                    height={400}
+                    src={imagePreviews[service.id]!}
+                    alt={service.title}
+                    className="w-full h-32 object-cover rounded"
+                  />
+                )}
                 <div className="space-y-2 text-sm text-gray-600">
                   <p className="flex items-center justify-between">
                     <span className="font-medium text-gray-900">Category</span>
@@ -718,7 +814,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                     <span className="font-medium text-gray-900">Availability</span>
                     <span className="flex items-center text-xs">
                       <Clock className="w-4 h-4 mr-1" />
-                      {service.availability.length ? formatAvailability(service.availability) : "N/A"}
+                      {service?.availability?.length ? formatAvailability(service?.availability) : "N/A"}
                     </span>
                   </p>
                   <p className="flex items-center justify-between">
@@ -736,8 +832,6 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
           </div>
         )}
       </div>
-
-      {/* Delete Confirmation Modal */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
         <DialogContent className="sm:max-w-[425px] top-1/3 translate-y-1/3">
           <DialogHeader>
@@ -766,8 +860,6 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Edit Service Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="w-[400px] max-h-[90vh] overflow-y-auto top-16">
           <DialogHeader>

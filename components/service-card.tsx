@@ -2,7 +2,6 @@
 import { Star, MapPin, Languages, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { Icons } from "./icons";
-import { getUnsplashImageUrl } from "@/lib/unsplash";
 import { useBookmark } from "@/context/bookmark-context";
 
 interface ServiceCardProps {
@@ -40,10 +39,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const { isBookmarked, toggleBookmark, isLoading } = useBookmark("services");
 
-  // Fallback image URL in case image or getUnsplashImageUrl fails
-  const idNumber = Number.isNaN(Number(id)) ? id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : Number(id);
-  const imageUrl = image && getUnsplashImageUrl(idNumber) ? getUnsplashImageUrl(idNumber) : "/placeholder-image.jpg";
-
   return (
     <div
       onClick={onClick}
@@ -52,7 +47,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       {/* Image */}
       <div className="relative">
         <Image
-          src={imageUrl}
+          src={image}
           alt={title || "Service Provider"}
           width={200}
           height={200}
@@ -68,7 +63,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       {/* Details */}
-      <div className="flex flex-col gap-3 w-full">
+      <div className="flex flex-col gap-3 w-full overflow-hidden">
         {/* Profile Section */}
         <div className="flex justify-between items-start w-full">
           <div className="flex flex-col items-start gap-1">
@@ -91,16 +86,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           >
             <Icons.BookMarkIcon
               className={`w-6 h-6 ${isBookmarked(id)
-                  ? "fill-[#145B10] stroke-white"
-                  : "stroke-[#145B10] hover:stroke-green-600"
+                ? "fill-[#145B10] stroke-white"
+                : "stroke-[#145B10] hover:stroke-green-600"
                 }`}
             />
           </span>
         </div>
 
-        <p className="text-sm text-[#616161] font-medium flex items-center gap-2">
+        <p className="text-sm text-[#616161] font-medium flex  items-center gap-2 line-clamp-1">
           <Icons.BagIcon className="w-4 h-4 stroke-[#212121]" />
-          {experience || "No experience provided"}
+          {experience.length > 25 ? experience.slice(0, 22) + "..." : experience || "No experience provided"}
         </p>
         <p className="text-sm text-[#616161] font-medium flex items-center gap-2">
           <Languages className="w-5 h-5 text-[#212121]" />

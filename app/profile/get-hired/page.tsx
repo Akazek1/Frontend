@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { updateUser } from "@/store/slices/auth-slice";
 import { toast } from "react-hot-toast";
 import IndividualForm from "@/components/get-hired/individual-form";
+import { Label } from "@/components/ui/label";
+import AgencyWorkerForm from "@/components/get-hired/agency-worker-form";
 
 interface CommonProfile {
     name: string;
@@ -177,7 +179,6 @@ const GetHired: React.FC = () => {
         setShowWorkerForm((p) => !p)
     }
 
-
     return (
         <div className="">
             <div className="p-6 flex items-center justify-between">
@@ -189,7 +190,9 @@ const GetHired: React.FC = () => {
                 }
             </div>
             {
-                showWorkerForm ? <div className="p-6">
+                showWorkerForm ? <div className="px-6 pb-6">
+                    <AgencyWorkerForm />
+                    <Label className="text-sm font-semibold">Service</Label>
                     <IndividualForm isWorker={true} />
                 </div> : <div className="pb-10">
                     <ProfileImageUploader />
@@ -371,7 +374,6 @@ const GetHired: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-
                                     <Input
                                         id="lastName"
                                         defaultValue={user?.lastName || ""}
@@ -399,7 +401,6 @@ const GetHired: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-
                                     <Input
                                         id="phone"
                                         defaultValue={user?.phoneNumber || ""}

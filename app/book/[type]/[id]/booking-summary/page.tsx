@@ -19,24 +19,9 @@ import Link from "next/link";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { Provider, Service } from "@/types";
 
-// Define the provider interface
-interface Provider {
-    id: string;
-    image: string;
-    name: string;
-    title: string;
-    experience: string;
-    languages: string;
-    location: string;
-    price: string;
-    rating: number;
-    reviews: number;
-    distance: string;
-    available: boolean;
-    verified: boolean;
-    type: string;
-}
+
 
 // Define the address interface
 interface Address {
@@ -50,27 +35,6 @@ interface Address {
 }
 
 
-// Define the service response interface
-interface Service {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    category: string;
-    provider: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-        userType: "AGENCY" | "INDIVIDUAL";
-    };
-    worker?: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        email: string;
-    };
-}
 
 const BookingSummary = () => {
     const router = useRouter();
@@ -115,7 +79,7 @@ const BookingSummary = () => {
                 // Map service to provider
                 const mappedProvider: Provider = {
                     id: service.id,
-                    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
+                    image: service.serviceImage,
                     name: `${service.provider.firstName} ${service.provider.lastName}`,
                     title: service.title,
                     experience: service.description || "No experience provided",
@@ -256,7 +220,7 @@ const BookingSummary = () => {
                 <div className="bg-white rounded-[32px] p-5 space-y-3">
                     <div className="flex items-center gap-3">
                         <Avatar className="w-[60px] h-[60px]">
-                            <AvatarImage src={provider.image} />
+                            <AvatarImage src={provider.image} className="object-cover" />
                             <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">

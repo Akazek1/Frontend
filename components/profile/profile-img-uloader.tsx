@@ -19,6 +19,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { user } = useSelector((state: RootState) => state.auth);
+    
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -41,8 +42,8 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                 },
             });
 
-            if (response.data.data?.imageUrl) {
-                dispatch(updateUser({ profileURL: response.data.data.imageUrl }));
+            if (response.data.data?.profilePicture) {
+                dispatch(updateUser({ profilePicture: response.data.data.profilePicture }));
                 toast.success("Profile image updated successfully");
             } else {
                 throw new Error("No image URL returned from server");
@@ -63,7 +64,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
         <div className="flex flex-col items-center gap-2">
             <label htmlFor="profile-image" className={`relative cursor-pointer group ${className}`}>
                 <Avatar className={`w-[120px] h-[120px] ${isUploading ? "animate-pulse" : ""}`}>
-                    <AvatarImage src={user?.profileURL || "/images/user.png"} className="object-cover" />
+                    <AvatarImage src={user?.profilePicture || "/images/user.png"} className="object-cover" />
                 </Avatar>
                 <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-8 h-8 text-white" />

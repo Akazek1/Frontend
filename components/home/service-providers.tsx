@@ -8,44 +8,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-
-interface Provider {
-  id: string;
-  image: string;
-  name: string;
-  title: string;
-  experience: string;
-  languages: string;
-  location: string;
-  price: string;
-  rating: number;
-  reviews: number;
-  distance: string;
-  available: boolean;
-  verified: boolean;
-  type: string;
-}
-
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  provider: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    userType: "AGENCY" | "INDIVIDUAL";
-  };
-  worker?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}
+import { Provider, Service } from "@/types";
 
 interface ServiceProviderProps {
   showHeader: boolean;
@@ -95,7 +58,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
     })
     .map((service) => ({
       id: service.id,
-      image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
+      image: service.serviceImage,
       name: `${service.provider.firstName} ${service.provider.lastName}`,
       title: service.title,
       experience: service.description || "No description provided",

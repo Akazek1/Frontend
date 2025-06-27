@@ -23,7 +23,7 @@ export interface AuthResponse {
       isProfileComplete: boolean;
       isMobileVerified: boolean;
       isEmailVerified: boolean;
-      profileURL?: string;
+      profilePicture?: string;
       dateOfBirth?: string;
       gender?: string;
       languages?: string[];
