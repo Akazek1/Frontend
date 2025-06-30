@@ -15,46 +15,9 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import ReviewSection from "@/components/review-section";
 import { useBookmark } from "@/context/bookmark-context";
+import { Provider, Service } from "@/types";
+import Link from "next/link";
 
-// Define the provider interface (aligned with ServiceProvider)
-interface Provider {
-  id: string;
-  image: string;
-  name: string;
-  title: string;
-  experience: string;
-  languages: string;
-  location: string;
-  price: string;
-  rating: number;
-  reviews: number;
-  distance: string;
-  available: boolean;
-  verified: boolean;
-  type: string;
-}
-
-// Define the service interface (aligned with ServiceProvider)
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  provider: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    userType: "AGENCY" | "INDIVIDUAL";
-  };
-  worker?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}
 
 // Sample date and time data
 const availableDates = [
@@ -87,17 +50,16 @@ const Page = () => {
       try {
         const response = await api.get(`/services/${id}`);
         const service: Service = response.data.data;
-        
 
         // Map service to provider
         const mappedProvider: Provider = {
           id: service.id,
-          image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
+          image: service.serviceImage,
           name: `${service.provider.firstName} ${service.provider.lastName}`,
           title: service.title,
           experience: service.description || "No experience provided",
-          languages: "English, Kinyarwanda, Swahili, French",
-          location: "Nyamirambo, Kigali",
+          languages: Array.isArray(service?.worker?.languages) && service.worker.languages.join(", ") || "No Languages Specified",
+          location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "No Location Specified",
           price: `${service.price} RWF/day`,
           rating: 4.8,
           reviews: 8289,
@@ -176,7 +138,7 @@ const Page = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Avatar className="w-[78px] h-[78px]">
-                  <AvatarImage src={provider.image} />
+                  <AvatarImage src={provider.image} className="object-cover" />
                   <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
@@ -197,8 +159,8 @@ const Page = () => {
               >
                 <Icons.BookMarkIcon
                   className={`w-6 h-6 ${isBookmarked(provider.id)
-                      ? "fill-[#145B10] stroke-white"
-                      : "stroke-[#145B10] hover:stroke-green-600"
+                    ? "fill-[#145B10] stroke-white"
+                    : "stroke-[#145B10] hover:stroke-green-600"
                     }`}
                 />
               </span>
@@ -223,18 +185,22 @@ const Page = () => {
             </div>
 
             <div className="flex gap-5 py-4 justify-center">
-              <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
-                <span className="px-6 pt-4">
-                  <Phone className="w-5 h-5" />
-                </span>
-                Call
-              </div>
-              <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
-                <span className="px-6 pt-4">
-                  <MessageCircleMore className="w-5 h-5" />
-                </span>
-                Message
-              </div>
+              <a href={`tel:${provider.phoneNumber}`}>
+                <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
+                  <span className="px-6 pt-4">
+                    <Phone className="w-5 h-5" />
+                  </span>
+                  Call
+                </div>
+              </a>
+              <Link href="/conversations">
+                <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
+                  <span className="px-6 pt-4">
+                    <MessageCircleMore className="w-5 h-5" />
+                  </span>
+                  Message
+                </div>
+              </Link>
               <div
                 className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white cursor-pointer"
                 onClick={handleShare}

@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         hostname: "flagcdn.com",
         pathname: "/**", // Allow all paths
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
   },
 };

@@ -145,6 +145,8 @@ const OrderHistory: React.FC = () => {
       try {
         const response = await retryWithBackoff(() => api.get<{ data: Booking[] }>("/bookings"));
         const bookings: Booking[] = Array.isArray(response.data.data) ? response.data.data : [];
+        console.log(bookings);
+        
 
         // Group bookings by service title
         const groupedByCategory: Category[] = bookings.reduce((acc: Category[], booking: Booking) => {
@@ -159,11 +161,11 @@ const OrderHistory: React.FC = () => {
                   : booking.status,
             provider: booking.worker
               ? `${booking.worker.firstName} ${booking.worker.lastName}`
-              : "Unknown Worker",
+              : "Agency Worker",
             profession: booking.service.title,
             date: formatDate(booking.scheduledFor),
             amount: booking.price ? `${booking.price} RWF` : undefined,
-            reviewSubmitted: !!booking.review, // True if review exists
+            reviewSubmitted: !!booking.review, 
           };
 
           const existingCategory = acc.find((cat) => cat.category === category);
