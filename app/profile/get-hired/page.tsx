@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import ServiceProvider from "@/components/home/service-providers";
 import { ChevronDown, SquarePlus } from "lucide-react";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -192,8 +191,6 @@ const GetHired: React.FC = () => {
             {
                 showWorkerForm ? <div className="px-6 pb-6">
                     <AgencyWorkerForm />
-                    <Label className="text-sm font-semibold">Service</Label>
-                    <IndividualForm isWorker={true} />
                 </div> : <div className="pb-10">
                     <ProfileImageUploader />
                     <div className="px-6 pt-6">
@@ -257,46 +254,40 @@ const GetHired: React.FC = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Select
-                                        value={individualData.country}
-                                    >
-                                        <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none  border-none focus:ring-[#145B10] ">
-                                            <SelectValue placeholder="Select country" className="text-sm font-semibold" />
-                                            <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 focus-within:rotate-90 transition ease-in 2s" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Rwanda">Rwanda</SelectItem>
-                                            <SelectItem value="USA">USA</SelectItem>
-                                            <SelectItem value="UK">UK</SelectItem>
-                                            {/* Add more countries as needed */}
-                                        </SelectContent>
-                                    </Select>
+                                    <Input
+                                        id="country"
+                                        name="country"
+                                        value={individualData.country || "Rwanda"}
+                                        disabled
+                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10] text-gray-500"
+                                    />
                                 </div>
-                                <div className="flex items-center border border-black rounded-xl overflow-hidden w-full">
-                                    <div className="flex items-center gap-2 pl-3 pr-5 py-4 border-r border-black bg-white">
+                                <div className="flex items-center border border-black rounded-xl overflow-hidden w-full h-14">
+                                    <div className="flex items-center gap-2 px-4 h-full border-r border-black bg-white">
                                         <Image
-                                            height={40}
-                                            width={40}
+                                            height={16}
+                                            width={24}
                                             src="https://flagcdn.com/w40/rw.png"
                                             alt="Rwanda Flag"
                                             className="w-6 h-4 object-cover rounded-sm"
                                         />
                                         <span className="text-[#212121] font-semibold text-sm">+256</span>
                                     </div>
-                                    <Input
+                                    <input
                                         id="phone"
                                         type="tel"
                                         inputMode="numeric"
                                         value={user?.phoneNumber || ""}
                                         placeholder="Phone Number"
                                         onChange={(e) => handleIndividualChange("phone", e.target.value)}
-                                        className="px-4 py-4 w-full text-[#212121] font-semibold placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm 
-                                                border-none focus:outline-none focus:ring-0 focus:border-transparent 
-                                                active:outline-none active:ring-0 active:border-transparent shadow-none"
-                                        autoFocus
+                                        className="h-full w-full px-4 text-[#212121] font-semibold text-sm
+                                                    placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm
+                                                    border-none outline-none focus:outline-none focus:ring-0 focus:border-none
+                                                    active:outline-none active:ring-0 active:border-none shadow-none"
                                         maxLength={10}
                                     />
                                 </div>
+
                                 <div>
                                     <Input
                                         id="certificate"
@@ -365,88 +356,66 @@ const GetHired: React.FC = () => {
                         // Agency Profile Form
                         <div className="p-6">
                             <div className="space-y-6">
-                                <div>
-                                    <Input
-                                        id="agencyName"
-                                        defaultValue={user?.firstName || ""}
-                                        onChange={(e) => handleAgencyChange("name", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="lastName"
-                                        defaultValue={user?.lastName || ""}
-                                        onChange={(e) => handleAgencyChange("lastName", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-
-                                    <Input
-                                        id="email"
-                                        defaultValue={user?.email || ""}
-                                        onChange={(e) => handleAgencyChange("email", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-
-                                    <Input
-                                        id="dob"
-                                        type="date"
-                                        defaultValue={user?.dateOfBirth || ""}
-                                        onChange={(e) => handleAgencyChange("dob", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="phone"
-                                        defaultValue={user?.phoneNumber || ""}
-                                        onChange={(e) => handleAgencyChange("phone", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="country"
-                                        defaultValue={agencyData.country || ""}
-                                        disabled
-                                        onChange={(e) => handleAgencyChange("country", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="certificate"
-                                        type="file"
-                                        onChange={handleCertificateChange}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                        accept="application/pdf"
-                                    />
-                                    {agencyData.certificate instanceof File && (
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Selected file: {agencyData.certificate.name}
-                                        </p>
-                                    )}
-                                    {typeof agencyData.certificate === "string" && agencyData.certificate && (
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Current file: {agencyData.certificate}
-                                        </p>
-                                    )}
-                                </div>
+                                <Input
+                                    id="agencyName"
+                                    defaultValue={user?.firstName || ""}
+                                    onChange={(e) => handleAgencyChange("name", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="lastName"
+                                    defaultValue={user?.lastName || ""}
+                                    onChange={(e) => handleAgencyChange("lastName", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="email"
+                                    defaultValue={user?.email || ""}
+                                    onChange={(e) => handleAgencyChange("email", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="dob"
+                                    type="date"
+                                    defaultValue={user?.dateOfBirth || ""}
+                                    onChange={(e) => handleAgencyChange("dob", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="phone"
+                                    defaultValue={user?.phoneNumber || ""}
+                                    onChange={(e) => handleAgencyChange("phone", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="country"
+                                    defaultValue={agencyData.country || ""}
+                                    disabled
+                                    onChange={(e) => handleAgencyChange("country", e.target.value)}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                />
+                                <Input
+                                    id="certificate"
+                                    type="file"
+                                    onChange={handleCertificateChange}
+                                    className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                                    accept="application/pdf"
+                                />
+                                {agencyData.certificate instanceof File && (
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Selected file: {agencyData.certificate.name}
+                                    </p>
+                                )}
+                                {typeof agencyData.certificate === "string" && agencyData.certificate && (
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Current file: {agencyData.certificate}
+                                    </p>
+                                )}
                             </div>
-
-                            {/* Service Professionals for Agency */}
-                            {
-                                user && user.userType === "Agency" && (
-                                    <div className="mt-6">
-                                        <h3 className="text-lg font-semibold mb-4">Service Professionals</h3>
-                                        <ServiceProvider showHeader={false} />
-                                    </div>
-                                )
-                            }
+                            <div className="py-5">
+                                <Label className="text-base pb-5 font-semibold">Add Service</Label>
+                                <IndividualForm isWorker={true} />
+                            </div>
                         </div>
                     )}
                 </div>
