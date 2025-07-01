@@ -218,11 +218,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             <div className="text-sm text-gray-500">No workers available</div>
           )}
           {!isLoading && !error && workerList.length > 0 && (
-            <Select
-              value={selectedWorkerId}
-              onValueChange={(value) => {
-                setSelectedWorkerId(value)
-                setData((prev) => ({ ...prev, workerId: value }))
+            <div className="space-y-0.5">
+              <Label className="font-semibold text-secondary-foreground/50 text-sm">Select Worker</Label>
+              <Select
+                value={selectedWorkerId}
+                onValueChange={(value) => {
+                  setSelectedWorkerId(value)
+                  setData((prev) => ({ ...prev, workerId: value }))
               }}
             >
               <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
@@ -241,13 +243,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                 ))}
               </SelectContent>
             </Select>
+            </div>
           )}
         </>
       )}
 
       <ImagePicker onImageSelect={handleImageSelect} initialPreview={imagePreview} />
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-sm">Service Category</Label>
         <Select
           value={initialData.category}
           onValueChange={(value) => setData((prev) => ({ ...prev, category: value }))}
@@ -286,7 +290,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-sm">Service Price</Label>
         <Select
           value={
             initialData?.price && ["1500", "4500", "8000"].includes(initialData.price.toString())
@@ -313,8 +318,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-4">
-        <Label className="text-sm font-semibold">Availability</Label>
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50">Availability</Label>
         <div className="space-y-2">
           <Select
             value={selectedDayGroup}
@@ -378,7 +383,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-sm">Area of Service</Label>
         <Select
           value={initialData.areaServed}
           onValueChange={(value) => setData((prev) => ({ ...prev, areaServed: value }))}
@@ -407,7 +413,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-sm">Service Type</Label>
         <Select
           value={initialData.serviceType}
           onValueChange={(value) => setData((prev) => ({ ...prev, serviceType: value }))}
@@ -430,7 +437,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-sm">Service Scope</Label>
         <Select
           value={initialData.scopeOfService}
           onValueChange={(value) => setData((prev) => ({ ...prev, scopeOfService: value }))}
@@ -466,7 +474,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         <Button
           size="lg"
           type="submit"
-          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-14 hover:bg-[#0F4D0C] transition-colors"
+          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-[#0F4D0C] transition-colors"
           disabled={submitting}
         >
           {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save"}
@@ -476,7 +484,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             size="lg"
             type="button"
             variant="outline"
-            className="w-full rounded-full bg-transparent"
+            className="w-full rounded-full h-13 bg-transparent"
             onClick={onCancel}
             disabled={submitting}
           >

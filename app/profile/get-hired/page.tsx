@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ProfileImageUploader from "@/components/profile/profile-img-uloader";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { updateUser } from "@/store/slices/auth-slice";
 import { toast } from "react-hot-toast";
@@ -16,6 +15,7 @@ import IndividualForm from "@/components/get-hired/individual-form";
 import { Label } from "@/components/ui/label";
 import AgencyWorkerForm from "@/components/get-hired/agency-worker-form";
 import Link from "next/link";
+import EditProfile from "../edit/page";
 
 interface CommonProfile {
     name: string;
@@ -30,13 +30,6 @@ interface CommonProfile {
     areasServiced: string[];
 }
 
-// Define interfaces for specific profiles
-interface IndividualProfile extends CommonProfile {
-    languages: string;
-    yearsExperience: string;
-    image: string
-    price: string;
-}
 
 interface Professional {
     name: string;
@@ -62,23 +55,7 @@ const GetHired: React.FC = () => {
 
     // Determine if user is coming for the first time
     const [selectedUserType, setSelectedUserType] = useState<"Individual" | "Agency">(user?.userType as "Individual" | "Agency" || "Individual");
-    // State for individual and agency profile data (editable)
-    const [individualData, setIndividualData] = useState<IndividualProfile>({
-        name: "",
-        email: "",
-        lastName: "",
-        dob: "",
-        phone: "",
-        country: "",
-        servicesOffered: [],
-        weekdaysHours: "",
-        weekendsHours: "",
-        areasServiced: [],
-        languages: "",
-        yearsExperience: "",
-        image: "",
-        price: "",
-    });
+
 
     const [agencyData, setAgencyData] = useState<AgencyProfile>({
         name: "HouseHelp",
@@ -133,20 +110,6 @@ const GetHired: React.FC = () => {
         }
     };
 
-    // Handle input changes for individual profile
-    const handleIndividualChange = (field: keyof IndividualProfile, value: string) => {
-        if (field === "servicesOffered" || field === "areasServiced") {
-            setIndividualData((prev) => ({
-                ...prev,
-                [field]: value ? value.split(",").map((item) => item.trim()) : [],
-            }));
-        } else {
-            setIndividualData((prev) => ({
-                ...prev,
-                [field]: value || "", // Ensure value is never undefined
-            }));
-        }
-    };
 
     // Handle input changes for agency profile
     const handleAgencyChange = (field: keyof AgencyProfile, value: string | File | null) => {
@@ -199,7 +162,8 @@ const GetHired: React.FC = () => {
                 </div> : <div className="pb-10">
                     <ProfileImageUploader />
                     <div className="px-6 pt-6">
-                        <div className="space-y-2">
+                        <div className="space-y-0.5">
+                            <Label className="font-semibold text-secondary-foreground/50 text-sm">User Type</Label>
                             <Select
                                 value={user?.userType || selectedUserType}
                                 disabled
@@ -218,146 +182,11 @@ const GetHired: React.FC = () => {
                     </div>
                     {user?.userType === "Individual" ? (
                         // Individual Profile Form
-                        <div className="p-6">
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Input
-                                        id="firstName"
-                                        name="firstName"
-                                        defaultValue={user?.firstName}
-                                        disabled
-                                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]`}
-                                        placeholder="Enter first name"
-                                    />
-                                </div>
-
-                                {/* Last Name */}
-                                <div className="space-y-2">
-                                    <Input
-                                        id="lastName"
-                                        name="lastName"
-                                        defaultValue={user?.lastName}
-                                        disabled
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                        placeholder="Enter last name(Optional)"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="#0F4D0C"
-                                        type="date"
-                                        placeholder="Date of Birth"
-                                        value={user?.dateOfBirth || ""}
-                                        disabled
-                                        onChange={(e) => handleIndividualChange("email", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        id="email"
-                                        defaultValue={user?.email || ""}
-                                        disabled
-                                        onChange={(e) => handleIndividualChange("email", e.target.value)}
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Input
-                                        id="country"
-                                        name="country"
-                                        value={individualData.country || "Rwanda"}
-                                        disabled
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10] "
-                                    />
-                                </div>
-                                <div className="flex items-center border border-black rounded-xl overflow-hidden w-full h-14">
-                                    <div className="flex items-center gap-2 pl-2 pr-4 h-full border-r border-black bg-white">
-                                        <Image
-                                            height={16}
-                                            width={24}
-                                            src="https://flagcdn.com/w40/rw.png"
-                                            alt="Rwanda Flag"
-                                            className="w-6 h-4 object-cover rounded-sm"
-                                        />
-                                        <span className="text-[#212121] font-semibold text-sm">+256</span>
-                                    </div>
-                                    <input
-                                        id="phone"
-                                        type="tel"
-                                        inputMode="numeric"
-                                        value={user?.phoneNumber || ""}
-                                        disabled
-                                        placeholder="Phone Number"
-                                        onChange={(e) => handleIndividualChange("phone", e.target.value)}
-                                        className="h-full w-full px-4 text-[#212121] font-semibold text-sm
-                                                    placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm
-                                                    border-none outline-none focus:outline-none focus:ring-0 focus:border-none
-                                                    active:outline-none active:ring-0 active:border-none shadow-none"
-                                        maxLength={10}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Select
-                                        value={"MALE"}
-                                        disabled
-                                    >
-                                        <SelectTrigger
-                                            id="gender"
-                                            className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-[#145B10]`}
-                                        >
-                                            <SelectValue placeholder="Select gender" />
-                                            <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-200" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="MALE">Male</SelectItem>
-                                            <SelectItem value="FEMALE">Female</SelectItem>
-                                            <SelectItem value="OTHER">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Select
-                                        value={"English"}
-                                        disabled
-                                    >
-                                        <SelectTrigger
-                                            id="gender"
-                                            className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-[#145B10]`}
-                                        >
-                                            <SelectValue placeholder="Select Language" />
-                                            <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-200" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Kinyarwanda">Kinyarwanda</SelectItem>
-                                            <SelectItem value="English">English</SelectItem>
-                                            <SelectItem value="French">French</SelectItem>
-                                            <SelectItem value="Swahili">
-                                                Swahili
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Input
-                                        id="certificate"
-                                        type="file"
-                                        onChange={handleCertificateChange}
-                                        disabled
-                                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
-                                        accept="application/pdf"
-                                    />
-                                    {agencyData.certificate instanceof File && (
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Selected file: {agencyData.certificate.name}
-                                        </p>
-                                    )}
-                                    {typeof agencyData.certificate === "string" && agencyData.certificate && (
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Current file: {agencyData.certificate}
-                                        </p>
-                                    )}
-                                </div>
+                        <div className="">
+                            <EditProfile idEditable={false} />
+                            <div className="px-6 space-y-6">
+                           
+                                
                                 <div className="text-[#1B2431] text-lg font-medium">
                                     Services Offered
                                 </div>
