@@ -37,13 +37,13 @@ const BookingSummary = () => {
     const searchParams = useSearchParams();
     const params = useParams();
     const [provider, setProvider] = useState<Provider | null>(null);
-    const [quantity, setQuantity] = useState(1); // New state for service quantity
+    const [quantity, setQuantity] = useState(1);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-    const [additionalServices, setAdditionalServices] = useState<Service[]>([]); // New state for additional services
-    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]); // Track selected additional services
+    const [additionalServices, setAdditionalServices] = useState<Service[]>([]); 
+    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]); 
     const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
     const [isLoadingService, setIsLoadingService] = useState(true);
     const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
@@ -84,7 +84,7 @@ const BookingSummary = () => {
                     experience: service.description || "No experience provided",
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
                     location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
-                    price: service.price.toString(), 
+                    price: service.price.toString(),
                     rating: 4.8,
                     reviews: 8289,
                     distance: "2 miles",
@@ -191,10 +191,11 @@ const BookingSummary = () => {
         try {
             const scheduledFor = getScheduledFor(selectedDate, selectedTime);
             const payload = {
-                serviceIds: [provider.id.toString(), ...selectedAdditionalServiceIds], // Include main and additional services
+                // serviceIds: [provider.id.toString(), ...selectedAdditionalServiceIds],
+                serviceId: provider.id.toString(),
                 addressId: selectedAddressId,
                 scheduledFor,
-                quantity, // Include quantity
+                // quantity,
             };
 
             const response = await api.post("/bookings", payload);
@@ -382,22 +383,24 @@ const BookingSummary = () => {
                         <span>{grandTotal} RWF</span>
                     </div>
                 </div>
+                <div className="w-full flex items-center justify-center">
+                    <Button
+                        className="w-[90%] sm:w-[50%] mx-auto rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2.5 touch-manipulation"
+                        onClick={handleProceedToCheckout}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            "Proceed To Checkout"
+                        )}
+                    </Button>
+                </div>
             </main>
 
-            <Button
-                className="w-[90%] sm:w-[50%] mx-auto rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2.5 mb-4 touch-manipulation"
-                onClick={handleProceedToCheckout}
-                disabled={isSubmitting}
-            >
-                {isSubmitting ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                    </>
-                ) : (
-                    "Proceed To Checkout"
-                )}
-            </Button>
         </div>
     );
 };

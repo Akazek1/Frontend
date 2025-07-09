@@ -14,6 +14,7 @@ export interface NavItem {
 }
 
 export interface Service {
+  service: any;
   id: string;
   title: string;
   description: string;

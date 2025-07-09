@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { CircleCheck, Loader2, Star } from "lucide-react";
-import { Icons } from "@/components/icons";
+import { CircleCheck, Loader2, MessageCircleMore, Star } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
 
 // Define interfaces based on API response
 interface Address {
@@ -30,6 +30,7 @@ interface Worker {
 interface Service {
   id: string;
   title: string;
+  providerId: string;
 }
 
 interface Booking {
@@ -52,7 +53,8 @@ interface Category {
     profession: string;
     date: string;
     amount?: string;
-    reviewSubmitted: boolean; // Tracks if review exists
+    reviewSubmitted: boolean;
+    service: Service
   }[];
 }
 
@@ -145,8 +147,6 @@ const OrderHistory: React.FC = () => {
       try {
         const response = await retryWithBackoff(() => api.get<{ data: Booking[] }>("/bookings"));
         const bookings: Booking[] = Array.isArray(response.data.data) ? response.data.data : [];
-        console.log(bookings);
-        
 
         // Group bookings by service title
         const groupedByCategory: Category[] = bookings.reduce((acc: Category[], booking: Booking) => {
@@ -165,7 +165,8 @@ const OrderHistory: React.FC = () => {
             profession: booking.service.title,
             date: formatDate(booking.scheduledFor),
             amount: booking.price ? `${booking.price} RWF` : undefined,
-            reviewSubmitted: !!booking.review, 
+            reviewSubmitted: !!booking.review,
+            service: booking.service,
           };
 
           const existingCategory = acc.find((cat) => cat.category === category);
@@ -361,7 +362,9 @@ const OrderHistory: React.FC = () => {
                         <p className="text-sm font-medium text-[#616161]">{order.provider}</p>
                         <p className="text-[#212121] text-lg font-bold capitalize">{order.profession}</p>
                       </div>
-                      <Icons.BookMarkIcon className="stroke-[#145B10]" />
+                      <Link href={`/conversations/inbox/${order.id}`} className="flex items-center">
+                        <MessageCircleMore className="stroke-[#145B10]" />
+                      </Link>
                     </div>
 
                     {/* Date */}

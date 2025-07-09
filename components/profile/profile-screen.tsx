@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Briefcase,
   ChevronRight,
-  CircleEllipsis,
   HelpingHand,
   MessageSquare,
   ShieldX,
@@ -32,6 +31,7 @@ const ProfileScreen = () => {
       Icon: Briefcase,
       href: "/profile/get-hired"
     },
+    { name: "Bookmarks", Icon: Icons.BookMarkIcon, href: "/profile/bookmark" },
     { name: "Transactions", Icon: Icons.WalletIcon, href: "/profile/transactions" },
     { name: "Order History", Icon: Icons.OrderHistoryIcon, href: "/profile/orders" },
     { name: "Address Book", Icon: Icons.BookIcon, href: "/profile/address-book" },
@@ -60,9 +60,6 @@ const ProfileScreen = () => {
           <Image src={"/images/hwa-green-icon.png"} width={20} height={20} alt="icon" />
           More
         </h1>
-        <Link href="/settings" className="p-1 rounded-full">
-          <CircleEllipsis className="w-[21px] h-[21px] text-black" />
-        </Link>
       </div>
 
       <ProfileImageUploader />
