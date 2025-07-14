@@ -7,7 +7,6 @@ let socket: Socket | null = null;
 
 export const initializeSocket = (token: string, userId: string) => {
   if (socket && socket.connected) {
-    console.log("Socket already connected, reusing existing connection");
     return socket;
   }
 
@@ -35,22 +34,19 @@ export const initializeSocket = (token: string, userId: string) => {
   });
 
   socket.on("connect", () => {
-    console.log("Socket connected to:", SOCKET_URL);
-    console.log("Socket ID:", socket?.id);
-    console.log("Transport:", socket?.io.engine.transport.name);
+    
   });
 
-  socket.on("disconnect", (reason) => {
-    console.log("Socket disconnected due to:", reason);
+  socket.on("disconnect", () => {
+   
   });
 
-  socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error.message);
-    // If it's an auth error, we'll handle it in the component
+  socket.on("connect_error", () => {
+   
   });
 
-  socket.on("reconnect", (attempt) => {
-    console.log(`Socket reconnected after attempt ${attempt}`);
+  socket.on("reconnect", () => {
+    
   });
 
   socket.on("reconnect_error", (error) => {
@@ -70,7 +66,6 @@ export const getSocket = () => {
 
 export const disconnectSocket = () => {
   if (socket) {
-    console.log("Disconnecting socket");
     socket.off();
     socket.disconnect();
     socket = null;

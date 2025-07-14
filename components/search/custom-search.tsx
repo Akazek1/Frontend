@@ -25,19 +25,16 @@ const CustomSearch = ({
 
     const handleFocus = () => {
         setIsActive(true);
-        console.log("CustomSearch focused");
     };
 
     const handleBlur = () => {
         setIsActive(false);
-        console.log("CustomSearch blurred"); 
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newQuery = e.target.value;
         setQuery(newQuery);
-        onSearch(newQuery); // Trigger search on every change
-        console.log("CustomSearch input changed, value:", newQuery); 
+        onSearch(newQuery); 
     };
 
     return (
@@ -54,13 +51,13 @@ const CustomSearch = ({
                     <Input
                         type="text"
                         placeholder={placeholder}
-                        className="pl-10 pr-12 border-[#D6D6D6] rounded-[40px] placeholder:text-xs placeholder:text-[#878787]"
+                        className="pl-10 pr-12 border-[#D6D6D6] rounded-[40px] placeholder:text-xs placeholder:text-[#878787] placeholder:font-semibold"
                         value={query}
                         onChange={handleChange}
                         onFocus={handleFocus}
                         onBlur={handleBlur}
                     />
-                    <Icons.FilerIcon className="absolute right-4 top-3 w-[18px] h-[18px] fill-[#145B10]" />
+                    {/* <Icons.FilerIcon className="absolute right-4 top-3 w-[18px] h-[18px] fill-[#145B10]" /> */}
                 </motion.div>
             </AnimatePresence>
         </div>

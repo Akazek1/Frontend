@@ -78,7 +78,6 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
       {showHeader && (
         <SectionHeader
           title="Browse by Service Provider"
-          linkText="See All"
           linkHref="/services"
           className="text-[#1B2431] font-medium text-lg"
         />

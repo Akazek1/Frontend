@@ -47,16 +47,16 @@ const Conversation: React.FC = () => {
     const [newMessage, setNewMessage] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(true)
     const [sending, setSending] = useState<boolean>(false)
-    // const [socketConnected, setSocketConnected] = useState<boolean>(false)
-    const [useSocketForMessages, setUseSocketForMessages] = useState<boolean>(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const { token, user } = useSelector((state: RootState) => state.auth)
     const currentUserId = user?.id || ""
 
+    // Scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
 
+    // Initialize socket and fetch booking data
     useEffect(() => {
         if (!token || !id || !currentUserId) {
             toast.error("Authentication required")
@@ -64,63 +64,53 @@ const Conversation: React.FC = () => {
             return
         }
 
+        const fetchBooking = async () => {
+            setLoading(true)
+            try {
+                const { data } = await api.get<{ data: Booking }>(`/bookings/${id}`)
+                setBooking(data.data)
+                const sortedMessages = data.data.messages.sort(
+                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                )
+                setMessages(sortedMessages)
+            } catch {
+                toast.error("Failed to fetch booking")
+            } finally {
+                setLoading(false)
+            }
+        }
+
         const socket = initializeSocket(token, currentUserId)
 
-        let connectionTimeout: NodeJS.Timeout
-
-        socket.on("connect", () => {
-            // setSocketConnected(true)
-
-            // Try to join the booking room
+        // Join booking room and handle connection events
+        const joinBooking = () => {
             socket.emit("joinBooking", id as string)
+        }
 
-            // Set a timeout to fall back to REST API if no response
-            connectionTimeout = setTimeout(() => {
-                setUseSocketForMessages(false)
-            }, 5000)
-        })
+        socket.on("connect", joinBooking)
+        socket.on("reconnect", joinBooking)
 
-        socket.on("disconnect", () => {
-            // setSocketConnected(false)
-            setUseSocketForMessages(false)
-            if (connectionTimeout) clearTimeout(connectionTimeout)
-        })
-
-        socket.on("connect_error", (error) => {
-            console.error("Socket connection error:", error)
-            // setSocketConnected(false)
-            setUseSocketForMessages(false)
-        })
-
-        socket.on("reconnect", () => {
-            // setSocketConnected(true)
-            socket.emit("joinBooking", id as string)
-        })
-
-        // Handle successful room join (if backend supports it)
+        // Handle successful room join
         socket.on("joinBookingSuccess", () => {
-            setUseSocketForMessages(true)
-            if (connectionTimeout) clearTimeout(connectionTimeout)
+            // Mark messages as read when joining
+            socket.emit("markMessagesAsRead", { bookingId: id })
         })
 
         socket.on("joinBookingError", (error) => {
             console.error("Failed to join booking room:", error)
-            setUseSocketForMessages(false)
-            if (connectionTimeout) clearTimeout(connectionTimeout)
-            // Don't show error toast, just use REST API
+            toast.error("Realtime connection failed - using fallback")
         })
 
         // Handle new messages
         socket.on("newMessage", (message: Message) => {
-            setMessages((prev) => {
-                if (prev.some((m) => m.id === message.id)) {
-                    return prev
-                }
+            setMessages(prev => {
+                // Avoid duplicates
+                if (prev.some(m => m.id === message.id)) return prev
 
-                const updated = [...prev, message].sort(
-                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+                // Add new message and sort by timestamp
+                return [...prev, message].sort(
+                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
                 )
-                return updated
             })
         })
 
@@ -132,73 +122,38 @@ const Conversation: React.FC = () => {
         socket.on("messageError", (error) => {
             console.error("Message error:", error)
             setSending(false)
-            // Don't show error toast, the fallback will handle it
+            toast.error("Failed to send message")
         })
 
-        // Handle messages read
+        // Handle messages read updates
         socket.on("messagesRead", ({ bookingId, userId }) => {
             if (bookingId === id && userId !== currentUserId) {
-                // When the other user reads messages, mark YOUR messages as read
-                setMessages((prev) =>
-                    prev.map((msg) => {
+                setMessages(prev =>
+                    prev.map(msg => {
                         if (msg.senderId === currentUserId) {
                             return { ...msg, isRead: true }
                         }
                         return msg
-                    }),
+                    })
                 )
             }
         })
 
+        // Initial data fetch
+        fetchBooking()
+
         return () => {
-            if (connectionTimeout) clearTimeout(connectionTimeout)
-            socket.off("connect")
-            socket.off("disconnect")
-            socket.off("connect_error")
-            socket.off("reconnect")
+            socket.off("connect", joinBooking)
+            socket.off("reconnect", joinBooking)
             socket.off("joinBookingSuccess")
             socket.off("joinBookingError")
             socket.off("newMessage")
             socket.off("messageSent")
             socket.off("messageError")
             socket.off("messagesRead")
+            socket.disconnect()
         }
     }, [id, token, router, currentUserId])
-
-    // Polling for new messages when socket is not working
-    useEffect(() => {
-        if (!useSocketForMessages && !loading && booking) {
-            const pollMessages = async () => {
-                try {
-                    const { data } = await api.get<{ data: Booking }>(`/bookings/${id}`)
-                    const sortedMessages = data.data.messages.sort(
-                        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-                    )
-
-                    // Only update if there are actual changes in messages
-                    const hasChanges =
-                        sortedMessages.some((newMsg, index) => {
-                            const existingMsg = messages[index]
-                            return (
-                                !existingMsg ||
-                                existingMsg.id !== newMsg.id ||
-                                existingMsg.isRead !== newMsg.isRead ||
-                                existingMsg.content !== newMsg.content
-                            )
-                        }) || sortedMessages.length !== messages.length
-
-                    if (hasChanges) {
-                        setMessages(sortedMessages)
-                    }
-                } catch (error) {
-                    console.error("Error polling messages:", error)
-                }
-            }
-
-            const interval = setInterval(pollMessages, 3000) // Poll every 3 seconds
-            return () => clearInterval(interval)
-        }
-    }, [useSocketForMessages, loading, booking, id])
 
     // Mark messages as read when messages change
     useEffect(() => {
@@ -206,98 +161,62 @@ const Conversation: React.FC = () => {
             const unreadMessages = messages.filter((msg) => msg.senderId !== currentUserId && !msg.isRead)
 
             if (unreadMessages.length > 0) {
-                // Add a small delay to avoid marking messages as read immediately
                 const timeoutId = setTimeout(() => {
-                    if (useSocketForMessages) {
-                        const socket = getSocket()
-                        if (socket?.connected) {
-                            socket.emit("markMessagesAsRead", { bookingId: id })
-                        }
+                    const socket = getSocket()
+                    if (socket?.connected) {
+                        socket.emit("markMessagesAsRead", { bookingId: id })
                     } else {
-                        // Use REST API to mark as read
-                        api.patch(`/bookings/messages/${id}/read`).catch((error) => {
-                            console.error("Error marking messages as read:", error)
-                        })
+                        api.patch(`/bookings/messages/${id}/read`).catch(console.error)
                     }
-                }, 1000) // 1 second delay
+                }, 1000)
 
                 return () => clearTimeout(timeoutId)
             }
         }
-    }, [messages, currentUserId, id, useSocketForMessages])
-
-    useEffect(() => {
-        const fetchBooking = async () => {
-            if (!id || !token) return
-
-            setLoading(true)
-            try {
-                const { data } = await api.get<{ data: Booking }>(`/bookings/${id}`)
-                setBooking(data.data)
-                const sortedMessages = data.data.messages.sort(
-                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-                )
-                setMessages(sortedMessages)
-            } catch (error: unknown) {
-                const message =
-                    typeof error === "object" &&
-                        error !== null &&
-                        "response" in error &&
-                        (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                        ? (error as { response: { data: { message: string } } }).response.data.message
-                        : "Failed to fetch booking."
-                toast.error(message)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchBooking()
-    }, [id, token, router])
+    }, [messages, currentUserId, id])
 
     const sendViaRestAPI = async (messageContent: string) => {
         try {
-            console.log("Sending message via REST API:", messageContent)
-            const res = await api.post(`/bookings/${id}/messages`, { content: messageContent }, { withCredentials: true })
+            const res = await api.post(`/bookings/${id}/messages`,
+                { content: messageContent },
+                { withCredentials: true }
+            )
             if (res.data?.data) {
-                setMessages((prev) => {
-                    if (prev.some((m) => m.id === res.data.data.id)) {
-                        return prev
-                    }
-                    const updated = [...prev, res.data.data].sort(
-                        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+                setMessages(prev => {
+                    if (prev.some(m => m.id === res.data.data.id)) return prev
+                    return [...prev, res.data.data].sort(
+                        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
                     )
-                    return updated
                 })
-                toast.success("Message sent")
             }
-        } catch (error: unknown) {
-            const message =
-                typeof error === "object" &&
-                    error !== null &&
-                    "response" in error &&
-                    (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                    ? (error as { response: { data: { message: string } } }).response.data.message
-                    : "Failed to send message."
-            toast.error(message)
+        } catch {
+            toast.error("Failed to send message")
         } finally {
             setSending(false)
         }
     }
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim()) {
-            toast.error("Message cannot be empty")
-            return
-        }
-        if (sending) return
+        if (!newMessage.trim() || sending) return
 
         const messageContent = newMessage.trim()
-        setNewMessage("") // Clear input immediately
+        setNewMessage("")
         setSending(true)
 
-        // Always use REST API since socket auth might not work
-        await sendViaRestAPI(messageContent)
+        try {
+            const socket = getSocket()
+            if (socket?.connected) {
+                socket.emit("sendMessage", {
+                    bookingId: id,
+                    message: { content: messageContent }
+                })
+            } else {
+                await sendViaRestAPI(messageContent)
+            }
+        } catch {
+            setSending(false)
+            toast.error("Failed to send message")
+        }
     }
 
     const formatTimestamp = (iso: string) => {
@@ -315,7 +234,7 @@ const Conversation: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex justify-center items-center bg-gray-50">
-                <Loader2 className="w-6 h-6 animate-spin text-[#7210FF]" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
             </div>
         )
     }
@@ -359,18 +278,6 @@ const Conversation: React.FC = () => {
                 </div>
             </div>
 
-            {/* Connection status indicator */}
-            {/* <div className="flex items-center justify-center mb-2 space-x-4">
-                <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full ${socketConnected ? "bg-green-500" : "bg-red-500"}`} />
-                    <span className="ml-2 text-xs text-gray-500">{socketConnected ? "Connected" : "Offline Mode"}</span>
-                </div>
-                <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full ${useSocketForMessages ? "bg-blue-500" : "bg-orange-500"}`} />
-                    <span className="ml-2 text-xs text-gray-500">{useSocketForMessages ? "Real-time" : "Polling"}</span>
-                </div>
-            </div> */}
-
             <div className="flex flex-col space-y-[10px] mt-4 flex-1 overflow-y-auto scrollbar-hide pb-10">
                 {messages.length === 0 ? (
                     <p className="text-center text-gray-500">No messages yet.</p>
@@ -391,10 +298,8 @@ const Conversation: React.FC = () => {
                                     {msg.senderId === currentUserId && (
                                         <span className={`text-xs ml-2 ${msg.isRead ? "text-blue-200" : "text-gray-300"}`}>
                                             {msg.isRead
-                                                ?
-                                                <CheckCheck className="w-5 h-5" />
-                                                :
-                                                <Check className="w-5 h-5" />
+                                                ? <CheckCheck className="w-5 h-5" />
+                                                : <Check className="w-5 h-5" />
                                             }
                                         </span>
                                     )}

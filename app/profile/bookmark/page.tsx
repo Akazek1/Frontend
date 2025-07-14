@@ -28,7 +28,6 @@ const BookmarksPage = () => {
                     : [];
                 // Extract the `service` property from each BookmarksResponse
                 const services: Service[] = bookmarks.map((bookmark) => bookmark.service);
-                console.log(services);
                 
                 setBookmarkedServices(services);
             } catch (error) {

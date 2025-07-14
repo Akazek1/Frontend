@@ -52,7 +52,6 @@ const AgencyWorkerManagement: React.FC = () => {
                 setIsLoading(true)
                 setError(null)
                 const response = await api.get<WorkerResponse>("/agency/workers")
-                console.log(response.data.data);
 
                 if (response.data && response.data.data) {
                     setWorkerList(response.data.data)
@@ -132,11 +131,6 @@ const AgencyWorkerManagement: React.FC = () => {
             }
             if (file) {
                 formData.append("file", file)
-            }
-
-            // Debug FormData contents
-            for (const [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
             }
 
             const token = localStorage.getItem("token");

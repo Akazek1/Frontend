@@ -32,7 +32,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   price,
   rating,
   reviews,
-  distance,
+  // distance,
   available,
   verified,
   onClick,
@@ -110,9 +110,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <div className="flex items-center gap-1 text-sm leading-[14px] text-[#616161] font-medium">
             <Star className="w-4 h-4 text-yellow-500" />
             {rating || "N/A"} |<span>{reviews || 0} reviews</span>
-            <span className="flex items-center gap-1">
+            {/* <span className="flex items-center gap-1">
               <Icons.ClockIcon className="w-3 h-3 stroke-[#212121]" /> {distance || "N/A"}
-            </span>
+            </span> */}
           </div>
         </div>
       </div>

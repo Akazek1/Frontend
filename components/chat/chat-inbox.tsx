@@ -68,7 +68,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
   const fetchMissingBooking = useCallback(
     async (bookingId: string, message: Message) => {
       try {
-        console.log("Fetching missing booking:", bookingId)
         const { data } = await api.get<{ data: Booking }>(`/bookings/${bookingId}`, {
           withCredentials: true,
         })
@@ -111,30 +110,25 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
   const initializeSocketConnection = useCallback(
     (bookingsData: Booking[]) => {
       if (isInitialized.current) {
-        console.log("Socket already initialized, skipping...")
         return
       }
 
-      console.log("Initializing socket connection...")
       const socket = initializeSocket(token ?? "", userId ?? "")
       socketRef.current = socket
       isInitialized.current = true
 
       socket.on("connect", () => {
-        console.log("Socket connected successfully")
         setSocketConnected(true)
 
         // Join all booking rooms
         bookingsData.forEach((booking) => {
           if (booking.bookingId) {
-            console.log("Joining booking room:", booking.bookingId)
             socket.emit("joinBooking", booking.bookingId)
           }
         })
       })
 
-      socket.on("disconnect", (reason) => {
-        console.log("Socket disconnected:", reason)
+      socket.on("disconnect", () => {
         setSocketConnected(false)
       })
 
@@ -143,9 +137,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
         setSocketConnected(false)
       })
 
-      socket.on("joinBookingSuccess", (data) => {
-        console.log("Successfully joined booking room:", data)
-      })
 
       socket.on("joinBookingError", (error) => {
         console.error("Failed to join booking room:", error)
@@ -153,7 +144,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
 
       // Handle new messages
       socket.on("newMessage", (message: Message) => {
-        console.log("New message received in ChatInbox:", message)
 
         setBookings((prevBookings) => {
           const existingBookingIndex = prevBookings.findIndex((b) => b.bookingId === message.bookingId)
@@ -180,7 +170,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
 
       // Handle messages read
       socket.on("messagesRead", ({ bookingId, userId: readByUserId }: { bookingId: string; userId: string }) => {
-        console.log("Messages read event:", { bookingId, readByUserId })
 
         setBookings((prevBookings) =>
           prevBookings.map((booking) => {
@@ -205,10 +194,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
         console.error("Socket error:", error)
       })
 
-      // Debug: Log all socket events
-      socket.onAny((eventName, ...args) => {
-        console.log("Socket event received:", eventName, args)
-      })
     },
     [token, userId, fetchMissingBooking],
   )
@@ -237,7 +222,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
           }))
           : []
 
-        console.log("Fetched bookings:", bookingsData)
         setBookings(bookingsData)
 
         // Initialize socket after data is loaded
@@ -255,7 +239,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
     // Cleanup function
     return () => {
       if (socketRef.current) {
-        console.log("Cleaning up socket listeners")
         socketRef.current.off("connect")
         socketRef.current.off("disconnect")
         socketRef.current.off("connect_error")
@@ -273,7 +256,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
   // Polling fallback when socket is not connected
   useEffect(() => {
     if (!socketConnected && !loading && bookings.length > 0) {
-      console.log("Socket not connected, setting up polling...")
 
       const pollForUpdates = async () => {
         try {
@@ -301,7 +283,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
           })
 
           if (hasChanges || updatedBookings.length !== bookings.length) {
-            console.log("Found changes via polling, updating bookings")
             setBookings(updatedBookings)
           }
         } catch (error) {
@@ -332,10 +313,8 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
       )
 
       if (socketConnected && socketRef.current?.connected) {
-        console.log("Marking messages as read via socket for booking:", bookingId)
         socketRef.current.emit("markMessagesAsRead", { bookingId })
       } else {
-        console.log("Socket not connected, marking messages as read via REST for booking:", bookingId)
         await api.patch(`/bookings/messages/${bookingId}/read`, {}, { withCredentials: true })
       }
     } catch (error) {

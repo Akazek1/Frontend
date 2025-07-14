@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -155,11 +156,11 @@ const BookingSummary = () => {
     };
 
     // Handle adding additional service
-    const handleAddService = (serviceId: string) => {
-        setSelectedAdditionalServiceIds((prev) =>
-            prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId]
-        );
-    };
+    // const handleAddService = (serviceId: string) => {
+    //     setSelectedAdditionalServiceIds((prev) =>
+    //         prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId]
+    //     );
+    // };
 
     // Convert selectedDate and selectedTime to ISO datetime
     const getScheduledFor = (date: string, time: string): string => {
@@ -234,7 +235,7 @@ const BookingSummary = () => {
     return (
         <div className="flex flex-col bg-[#F1FCEF] min-h-screen overflow-y-auto touch-pan-y">
             <main className="flex-1 p-3 sm:p-4 md:p-6 space-y-4 max-w-lg mx-auto">
-                <BackButtonHeader text="Booking Summary" />
+                <BackButtonHeader text="Booking Summary" backHref={`/book/${provider.type}/${provider.id}`} />
 
                 {/* Main Provider */}
                 <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm">
@@ -277,7 +278,7 @@ const BookingSummary = () => {
                 </div>
 
                 {/* Frequently Added Together */}
-                <h3 className="font-medium text-[#212121] text-base">Frequently Added Together</h3>
+                {/* <h3 className="font-medium text-[#212121] text-base">Frequently Added Together</h3>
                 <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm">
                     {isLoadingAdditionalServices ? (
                         <div className="flex items-center justify-center">
@@ -311,7 +312,7 @@ const BookingSummary = () => {
                             </div>
                         ))
                     )}
-                </div>
+                </div> */}
 
                 {/* Booking Details */}
                 <h3 className="text-[#212121] font-medium text-base">Booking Details</h3>

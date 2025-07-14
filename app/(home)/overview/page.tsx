@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+
 import React, { useState } from "react";
 import Header from "@/components/header/header";
 import Categories from "@/components/home/category-scroller";
@@ -9,10 +9,10 @@ import SearchResults from "@/components/search/search-result";
 import SearchBar from "@/components/search/search";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import RecievedBookings from "@/components/recieved-booking/recieved-booking";
 
-const ServiceProvider = dynamic(() => import("@/components/home/service-providers"), {
-  ssr: false,
-});
+import ServiceProvider from "@/components/home/service-providers";
+
 
 const HomeContent = () => {
   const [isSearching, setIsSearching] = useState(false);
@@ -36,21 +36,23 @@ const HomeContent = () => {
       ) : (
 
         <div className="space-y-6">
+          <Header />
           {
             user?.userType === "Individual"
-            &&
-            <>
-              <Header />
-              <SearchBar
-                onSearch={handleSearch}
-                placeholder="Search baby sitter, carpenter etc"
-              />
-              <PromoBanner />
-              <Categories />
-              <PopulerService />
-            </>
+              ?
+              <>
+                <SearchBar
+                  onSearch={handleSearch}
+                  placeholder="Search baby sitter, carpenter etc"
+                />
+                <PromoBanner />
+                <Categories />
+                <PopulerService />
+                <ServiceProvider showHeader={true} />
+              </>
+              :
+              <RecievedBookings />
           }
-          <ServiceProvider showHeader={true} />
         </div>
       )}
     </div>
