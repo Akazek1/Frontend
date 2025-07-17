@@ -92,7 +92,7 @@ const RecievedBookings: React.FC = () => {
                 });
                 setBookings(response.data.data);
                 setError(null);
-            } catch  {
+            } catch {
                 setError('Failed to fetch bookings');
             } finally {
                 setLoading(false);
@@ -128,7 +128,7 @@ const RecievedBookings: React.FC = () => {
                     {bookings.map((booking) => (
                         <div
                             key={booking.id}
-                            className="border rounded-lg p-2 shadow-sm bg-white cursor-pointer hover:shadow-md transition"
+                            className="border rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition"
                             onClick={() => router.push(`/recieved-bookings/${booking.id}`)}
                         >
                             <Image
@@ -136,13 +136,15 @@ const RecievedBookings: React.FC = () => {
                                 height={300}
                                 src={booking.service.serviceImage}
                                 alt={booking.service.title}
-                                className="w-full h-32 object-cover rounded-md mb-2"
+                                className="w-full h-32 object-cover rounded-md"
                             />
-                            <h2 className="font-semibold capitalize">{booking.service.title}</h2>
-                            <p className="text-gray-600 text-xs">Receiver: {booking.receiver.firstName} {booking.receiver.lastName}</p>
-                            <p className="text-gray-600 text-xs line-clamp-1">Scheduled: {new Date(booking.scheduledFor).toLocaleString()}</p>
-                            <p className="text-[#145B10] font-medium text-xs">Status: {booking.status}</p>
-                            <p className="text-gray-600 text-xs">Price: ${booking.price}</p>
+                            <div className='p-2'>
+                                <p className="font-semibold capitalize text-xs">Receiver: {booking.receiver.firstName} {booking.receiver.lastName}</p>
+                                <h2 className="text-gray-600 text-xs capitalize">{booking.service.title}</h2>
+                                <p className="text-gray-600 text-xs line-clamp-1">Scheduled: {new Date(booking.scheduledFor).toLocaleString()}</p>
+                                <p className="text-[#145B10] font-medium text-xs">Status: {booking.status}</p>
+                                <p className="text-gray-600 text-xs">Price: ${booking.price}</p>
+                            </div>
                         </div>
                     ))}
                 </div>

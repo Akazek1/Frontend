@@ -162,7 +162,7 @@ const Page = () => {
                 <Languages className="w-3 h-3 sm:w-4 sm:h-4 text-[#212121]" />
                 <span className="line-clamp-1">{provider.languages}</span>
               </p>
-              <p className="flex items-center gap-2 text-[#616161] text-xs sm:text-sm font-medium">
+              <p className="flex items-center gap-2 text-[#616161] text-xs sm:text-sm font-medium capitalize">
                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-[#212121]" />
                 <span className="line-clamp-1">{provider.location}</span>
               </p>

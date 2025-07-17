@@ -43,8 +43,8 @@ const BookingSummary = () => {
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-    const [additionalServices, setAdditionalServices] = useState<Service[]>([]); 
-    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]); 
+    const [additionalServices, setAdditionalServices] = useState<Service[]>([]);
+    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]);
     const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
     const [isLoadingService, setIsLoadingService] = useState(true);
     const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
@@ -163,56 +163,69 @@ const BookingSummary = () => {
     // };
 
     // Convert selectedDate and selectedTime to ISO datetime
-    const getScheduledFor = (date: string, time: string): string => {
-        const timeMatch = time.match(/(\d{1,2}):(\d{2})(am|pm)/i);
-        if (!timeMatch) throw new Error("Invalid time format");
-
-        let hours = parseInt(timeMatch[1], 10);
-        const minutes = timeMatch[2];
-        const period = timeMatch[3].toLowerCase();
-
-        if (period === "pm" && hours !== 12) hours += 12;
-        if (period === "am" && hours === 12) hours = 0;
-
-        return `${date}T${hours.toString().padStart(2, "0")}:${minutes}:00.000Z`;
-    };
 
     // Handle proceed to checkout
-    const handleProceedToCheckout = async () => {
-        if (!selectedAddressId) {
-            toast.error("Please select a service address");
-            return;
-        }
-        if (!provider || !selectedDate || !selectedTime) {
-            toast.error("Booking details are incomplete");
-            return;
+   const handleProceedToCheckout = async () => {
+    if (!selectedAddressId) {
+        toast.error("Please select a service address");
+        return;
+    }
+    if (!provider || !selectedDate || !selectedTime) {
+        toast.error("Booking details are incomplete");
+        return;
+    }
+
+    setIsSubmitting(true);
+    try {
+        // Parse the selected date and time
+        const [year, month, day] = selectedDate.split('-');
+        let [hours, minutes] = selectedTime.includes(':') 
+            ? selectedTime.split(':') 
+            : ['00', '00'];
+
+        // Handle AM/PM if present
+        if (selectedTime.toLowerCase().includes('am') || selectedTime.toLowerCase().includes('pm')) {
+            const period = selectedTime.toLowerCase().includes('pm') ? 'pm' : 'am';
+            [hours, minutes] = selectedTime.replace(/[^0-9:]/g, '').split(':');
+            
+            let hourNum = parseInt(hours, 10);
+            if (period === 'pm' && hourNum < 12) hourNum += 12;
+            if (period === 'am' && hourNum === 12) hourNum = 0;
+            
+            hours = hourNum.toString().padStart(2, '0');
         }
 
-        setIsSubmitting(true);
-        try {
-            const scheduledFor = getScheduledFor(selectedDate, selectedTime);
-            const payload = {
-                // serviceIds: [provider.id.toString(), ...selectedAdditionalServiceIds],
-                serviceId: provider.id.toString(),
-                addressId: selectedAddressId,
-                scheduledFor,
-                // quantity,
-            };
+        // Create ISO string
+        const isoString = `${year}-${month}-${day}T${hours}:${minutes}:00.000Z`;
+        const dateObj = new Date(isoString);
 
-            const response = await api.post("/bookings", payload);
-            if (response.status === 201) {
-                toast.success("Booking created successfully");
-                router.push(`/`);
-            }
-        } catch (err) {
-            console.error("Error creating booking:", err);
-            const errorMessage =
-                (err as any).response?.data?.message || "Failed to create booking";
-            toast.error(errorMessage);
-        } finally {
-            setIsSubmitting(false);
+        if (isNaN(dateObj.getTime())) {
+            throw new Error('Invalid date/time combination');
         }
-    };
+
+        const scheduledFor = dateObj.toISOString();
+
+        const payload = {
+            serviceId: provider.id.toString(),
+            addressId: selectedAddressId,
+            scheduledFor,
+        };
+
+        const response = await api.post("/bookings", payload);
+        if (response.status === 201) {
+            toast.success("Booking created successfully");
+            router.push(`/`);
+        }
+    } catch (err) {
+        console.error("Error creating booking:", err);
+        const errorMessage = err instanceof Error 
+            ? err.message 
+            : "Failed to create booking";
+        toast.error(errorMessage);
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (

@@ -68,6 +68,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex justify-between items-start w-full">
           <div className="flex flex-col items-start gap-1">
             <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
+              <span></span>
               {name || "Unknown Provider"}
               {verified && (
                 <BadgeCheck className="fill-blue-500 stroke-white w-5 h-5" />
@@ -97,11 +98,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <Icons.BagIcon className="w-4 h-4 stroke-[#212121]" />
           {experience.length > 25 ? experience.slice(0, 22) + "..." : experience || "No experience provided"}
         </p> */}
-        <p className="text-sm text-[#616161] font-medium flex items-center gap-2">
+        <p className="text-sm text-[#616161] font-medium flex items-center gap-2 capitalize">
           <Languages className="w-5 h-5 text-[#212121]" />
           {languages || "No languages specified"}
         </p>
-        <p className="text-sm text-[#616161] font-medium flex items-center gap-2">
+        <p className="text-sm text-[#616161] font-medium flex items-center gap-2 capitalize">
           <MapPin className="w-4 h-4 text-[#212121]" />
           {location || "No location provided"}
         </p>

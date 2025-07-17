@@ -225,24 +225,24 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                 onValueChange={(value) => {
                   setSelectedWorkerId(value)
                   setData((prev) => ({ ...prev, workerId: value }))
-              }}
-            >
-              <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
-                <SelectValue placeholder="Select Worker" />
-                <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
-              </SelectTrigger>
-              <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
-                {workerList.map((worker) => (
-                  <SelectItem
-                    key={worker.id}
-                    value={worker.id}
-                    className="text-sm font-semibold whitespace-normal break-words px-4 py-2"
-                  >
-                    {worker.firstName} {worker.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                }}
+              >
+                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+                  <SelectValue placeholder="Select Worker" />
+                  <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
+                </SelectTrigger>
+                <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
+                  {workerList.map((worker) => (
+                    <SelectItem
+                      key={worker.id}
+                      value={worker.id}
+                      className="text-sm font-semibold whitespace-normal break-words px-4 py-2"
+                    >
+                      {worker.firstName} {worker.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </>
@@ -564,6 +564,8 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       try {
         const response = await retryWithBackoff(() => api.get(`/services?providerId=${user.id}`))
         const fetchedServices = response.data.data || []
+        console.log(fetchedServices);
+        
         setServices(fetchedServices)
         const previews: Record<string, string | null> = {}
         fetchedServices.forEach((service: Service) => {
@@ -627,8 +629,13 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   // Handle service creation
   const handleServiceSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
 
+    // if (user?.isProfileComplete) {
+    //   toast.error("Please complete your profile first.")
+    //   return
+    // }
+
+    setSubmitting(true)
     const formData = new FormData()
     formData.append("category", individualData.category.toLowerCase())
     formData.append("price", individualData.price.toString())

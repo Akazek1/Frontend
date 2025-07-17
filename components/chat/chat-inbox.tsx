@@ -27,6 +27,7 @@ interface Message {
 }
 
 interface Booking {
+  userId: string
   bookingId: string
   service: {
     id: string
@@ -46,6 +47,11 @@ interface Booking {
   } | null
   latestMessage?: Message
   unreadCount?: number
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+  }
 }
 
 interface ChatInboxProps {
@@ -446,7 +452,7 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
                         <p
                           className={`text-xl font-bold leading-5 ${!msg.isRead ? "text-[#212121]" : "text-gray-700"}`}
                         >
-                          {`${msg.sender.firstName} ${msg.sender.lastName}`}
+                          {booking?.user?.id === userId ? `${booking.service.provider.firstName} ${booking.service.provider.lastName}` : `${booking.user.firstName} ${booking.user.lastName}`}
                         </p>
                         <p
                           className={`text-sm font-medium leading-5 line-clamp-1 ${!msg.isRead ? "text-[#616161]" : "text-gray-500"

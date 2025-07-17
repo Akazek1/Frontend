@@ -25,12 +25,21 @@ interface Message {
 }
 
 interface Booking {
+    userId: string;
+    user: {
+        firstName: string
+        lastName: string
+    },
     messages: Message[]
     id: string
     service: {
         id: string
         title: string
         providerId: string
+        provider: {
+            firstName: string;
+            lastName: string
+        }
     }
     worker: {
         id: string
@@ -252,7 +261,7 @@ const Conversation: React.FC = () => {
         <div className="relative flex flex-col h-screen p-6 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
                 <BackButtonHeader
-                    text={booking.worker ? `${booking.worker.firstName} ${booking.worker.lastName}` : "Agency Worker"}
+                    text={booking.userId === user?.id ? `${booking.service.provider.firstName} ${booking.service.provider.lastName}` : `${booking.user.firstName} ${booking.user.lastName}`}
                     backHref="/conversations"
                 />
                 <div className="flex items-center space-x-3">
