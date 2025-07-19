@@ -33,7 +33,7 @@ const Scroller = <T,>({
     containerRef.current?.getBoundingClientRect().width || 400;
 
   return (
-    <div className={`overflow-hidden ${className}`}>
+    <div className={`overflow-hidden w-full ${className}`}>
       <motion.div
         ref={containerRef}
         className="flex cursor-grab active:cursor-grabbing"

@@ -218,36 +218,40 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             <div className="text-sm text-gray-500">No workers available</div>
           )}
           {!isLoading && !error && workerList.length > 0 && (
-            <Select
-              value={selectedWorkerId}
-              onValueChange={(value) => {
-                setSelectedWorkerId(value)
-                setData((prev) => ({ ...prev, workerId: value }))
-              }}
-            >
-              <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
-                <SelectValue placeholder="Select Worker" />
-                <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
-              </SelectTrigger>
-              <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
-                {workerList.map((worker) => (
-                  <SelectItem
-                    key={worker.id}
-                    value={worker.id}
-                    className="text-sm font-semibold whitespace-normal break-words px-4 py-2"
-                  >
-                    {worker.firstName} {worker.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-0.5">
+              <Label className="font-semibold text-secondary-foreground/50 text-xs">Select Worker</Label>
+              <Select
+                value={selectedWorkerId}
+                onValueChange={(value) => {
+                  setSelectedWorkerId(value)
+                  setData((prev) => ({ ...prev, workerId: value }))
+                }}
+              >
+                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+                  <SelectValue placeholder="Select Worker" />
+                  <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
+                </SelectTrigger>
+                <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
+                  {workerList.map((worker) => (
+                    <SelectItem
+                      key={worker.id}
+                      value={worker.id}
+                      className="text-sm font-semibold whitespace-normal break-words px-4 py-2"
+                    >
+                      {worker.firstName} {worker.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </>
       )}
 
       <ImagePicker onImageSelect={handleImageSelect} initialPreview={imagePreview} />
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Category</Label>
         <Select
           value={initialData.category}
           onValueChange={(value) => setData((prev) => ({ ...prev, category: value }))}
@@ -286,7 +290,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Price</Label>
         <Select
           value={
             initialData?.price && ["1500", "4500", "8000"].includes(initialData.price.toString())
@@ -313,8 +318,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-4">
-        <Label className="text-sm font-semibold">Availability</Label>
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Availability</Label>
         <div className="space-y-2">
           <Select
             value={selectedDayGroup}
@@ -378,7 +383,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Area of Service</Label>
         <Select
           value={initialData.areaServed}
           onValueChange={(value) => setData((prev) => ({ ...prev, areaServed: value }))}
@@ -407,7 +413,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Type</Label>
         <Select
           value={initialData.serviceType}
           onValueChange={(value) => setData((prev) => ({ ...prev, serviceType: value }))}
@@ -430,7 +437,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Scope</Label>
         <Select
           value={initialData.scopeOfService}
           onValueChange={(value) => setData((prev) => ({ ...prev, scopeOfService: value }))}
@@ -466,7 +474,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         <Button
           size="lg"
           type="submit"
-          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-14 hover:bg-[#0F4D0C] transition-colors"
+          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-[#0F4D0C] transition-colors"
           disabled={submitting}
         >
           {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save"}
@@ -476,7 +484,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             size="lg"
             type="button"
             variant="outline"
-            className="w-full rounded-full bg-transparent"
+            className="w-full rounded-full h-13 bg-transparent"
             onClick={onCancel}
             disabled={submitting}
           >
@@ -556,6 +564,8 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       try {
         const response = await retryWithBackoff(() => api.get(`/services?providerId=${user.id}`))
         const fetchedServices = response.data.data || []
+        console.log(fetchedServices);
+        
         setServices(fetchedServices)
         const previews: Record<string, string | null> = {}
         fetchedServices.forEach((service: Service) => {
@@ -619,8 +629,13 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   // Handle service creation
   const handleServiceSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setSubmitting(true)
 
+    // if (user?.isProfileComplete) {
+    //   toast.error("Please complete your profile first.")
+    //   return
+    // }
+
+    setSubmitting(true)
     const formData = new FormData()
     formData.append("category", individualData.category.toLowerCase())
     formData.append("price", individualData.price.toString())

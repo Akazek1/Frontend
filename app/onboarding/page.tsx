@@ -68,6 +68,7 @@ const OnboardingPage = () => {
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
   const inputsRef = useRef<Array<HTMLInputElement | null>>(Array(CODE_LENGTH).fill(null))
+  const [activeInputIndex, setActiveInputIndex] = useState(0)
 
   const router = useRouter()
   const { sendOtp, verifyOtp, updateUserProfile, isLoading } = useAuth()
@@ -88,6 +89,7 @@ const OnboardingPage = () => {
     setCode(newCode)
 
     if (numericValue && index < CODE_LENGTH - 1) {
+      setActiveInputIndex(index + 1)
       setTimeout(() => {
         inputsRef.current[index + 1]?.focus()
       }, 10)
@@ -101,6 +103,7 @@ const OnboardingPage = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
+      setActiveInputIndex(index - 1)
       inputsRef.current[index - 1]?.focus()
     }
   }
@@ -115,6 +118,7 @@ const OnboardingPage = () => {
     setCode(newCode)
 
     const nextIndex = Math.min(pasteData.length - 1, CODE_LENGTH - 1)
+    setActiveInputIndex(nextIndex)
     inputsRef.current[nextIndex]?.focus()
 
     if (pasteData.length === CODE_LENGTH) {
@@ -123,6 +127,15 @@ const OnboardingPage = () => {
     }
 
     e.preventDefault()
+  }
+
+  const handleInputFocus = (index: number) => {
+    setActiveInputIndex(index)
+    // Focus the first empty input if current one is already filled
+    if (code[index] && index < CODE_LENGTH - 1 && !code[index + 1]) {
+      setActiveInputIndex(index + 1)
+      inputsRef.current[index + 1]?.focus()
+    }
   }
 
   const handleSendOtp = async () => {
@@ -142,6 +155,10 @@ const OnboardingPage = () => {
 
     if (success) {
       setCurrentStep(4)
+      // Focus first OTP input after transition
+      setTimeout(() => {
+        inputsRef.current[0]?.focus()
+      }, 500)
     }
   }
 
@@ -161,7 +178,6 @@ const OnboardingPage = () => {
       }
     }
   };
-
 
   const handleNext = async () => {
     if (currentStep === 3) {
@@ -194,23 +210,23 @@ const OnboardingPage = () => {
     currentStepData: OnboardingStep
     stepNumber: number
     code: string[]
-    setCode: React.Dispatch<React.SetStateAction<string[]>>
     inputsRef: React.MutableRefObject<Array<HTMLInputElement | null>>
     handleChange: (value: string, index: number) => void
     handleKeyDown: (e: React.KeyboardEvent, index: number) => void
     handlePaste: (e: React.ClipboardEvent) => void
-  }> = ({ currentStepData, stepNumber, code, inputsRef, handleChange, handleKeyDown, handlePaste }) => {
-    const imageWrapper = "p-6 bg-[#F1FCEF] rounded-full"
-    const imageStyle = "w-[287px] h-[287px] object-cover rounded-full"
+    handleInputFocus: (index: number) => void
+  }> = ({ currentStepData, stepNumber, code, inputsRef, handleChange, handleKeyDown, handlePaste, handleInputFocus }) => {
+    const imageWrapper = "p-5 bg-[#F1FCEF] rounded-full"
+    const imageStyle = "w-[160px] h-[160px] sm:w-[250px] sm:h-[250px] object-cover rounded-full"
 
-    const renderImage = (height = 287, width = 287) => (
+    const renderImage = () => (
       <div className={imageWrapper}>
         <Image
           height={400}
           width={400}
           src={currentStepData.image || "/placeholder.svg"}
           alt={`Onboarding step ${stepNumber + 1}`}
-          className={`${imageStyle} w-[${width}px] h-[${height}px]`}
+          className={imageStyle}
         />
       </div>
     )
@@ -219,16 +235,16 @@ const OnboardingPage = () => {
       case 0:
         return (
           <div>
-            <div className="absolute -right-[130px] -top-56 flex">
-              <LeftFlowerIcon />
-              {renderImage(287, 287)}
+            <div className="absolute -right-20 -top-52 sm:-right-[130px] sm:-top-56 flex">
+              <LeftFlowerIcon className="w-16 h-auto sm:w-auto sm:h-auto" />
+              {renderImage()}
             </div>
-            <div className="mb-8">
-              <div className={`${currentStepData.textColor} text-4xl font-serif`}>
+            <div className="mb-4 sm:mb-8">
+              <div className={`${currentStepData.textColor} text-3xl font-serif`}>
                 <GreenAppIcon />
               </div>
             </div>
-            <h1 className="text-[40px] font-bold leading-[48px] text-gray-900 mb-8 max-w-[280px]">
+            <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8 max-w-[280px]">
               {currentStepData.title}
             </h1>
           </div>
@@ -236,23 +252,27 @@ const OnboardingPage = () => {
       case 1:
         return (
           <div>
-            <div className="absolute -left-[130px] -top-[350px] flex items-center">
-              {renderImage(287, 287)}
-              <RightFlowerIcon />
+            <div className="absolute -left-20 -top-80 sm:-left-[130px] sm:-top-[350px] flex items-center">
+              {renderImage()}
+              <RightFlowerIcon className="w-40 h-auto sm:w-auto sm:h-auto" />
             </div>
             <div className="text-right flex items-center justify-end w-full">
-              <h1 className="text-[40px] font-bold leading-[48px] text-gray-900 mb-8">{currentStepData.title}</h1>
+              <h1 className="text-3xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8">
+                {currentStepData.title}
+              </h1>
             </div>
           </div>
         )
       case 2:
         return (
           <div className="h-full">
-            <div className="flex flex-col items-center gap-[60px]">
+            <div className="flex flex-col items-center gap-8 sm:gap-[60px]">
               <div className="text-center flex items-center justify-center w-full">
-                <h1 className="text-[40px] font-bold leading-[48px] text-gray-900 mb-8">{currentStepData.title}</h1>
+                <h1 className="text-3xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8">
+                  {currentStepData.title}
+                </h1>
               </div>
-              {renderImage(287, 287)}
+              {renderImage()}
             </div>
           </div>
         )
@@ -264,17 +284,17 @@ const OnboardingPage = () => {
                 <GreenAppIcon />
               </div>
             </div>
-            <div className={`${imageWrapper} flex items-center justify-between w-max mx-auto mb-10`}>
+            <div className={`${imageWrapper} flex items-center justify-between w-max mx-auto mb-6 sm:mb-10`}>
               <Image
                 height={400}
                 width={400}
                 src={currentStepData.image || "/placeholder.svg"}
                 alt={`Onboarding step ${stepNumber + 1}`}
-                className={`${imageStyle} w-[260px] h-[260px]`}
+                className="w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] object-cover rounded-full"
               />
             </div>
             <div className="flex items-center border border-black rounded-xl overflow-hidden w-full">
-              <div className="flex items-center gap-2 pl-3 pr-5 py-4 border-r border-black">
+              <div className="flex items-center gap-2 pl-3 pr-5 py-3 sm:py-4 border-r border-black">
                 <Image
                   height={40}
                   width={40}
@@ -301,7 +321,7 @@ const OnboardingPage = () => {
                     handleSendOtp()
                   }
                 }}
-                className="px-4 py-4 w-full text-[#212121] font-semibold placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm 
+                className="px-4 py-3 sm:py-4 w-full text-[#212121] font-semibold placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm 
                     border-none focus:outline-none focus:ring-0 focus:border-transparent 
                     active:outline-none active:ring-0 active:border-transparent shadow-none"
                 autoFocus
@@ -312,14 +332,14 @@ const OnboardingPage = () => {
         )
       case 4:
         return (
-          <div className="flex flex-col items-center gap-20">
-            <span className="flex flex-col items-center gap-2 mb-8">
-              <h2 className="font-bold text-3xl text-[#212121]">Enter Verification Code</h2>
-              <p className="text-sm font-bold text-center text-[#212121]">
+          <div className="flex flex-col items-center gap-10 sm:gap-20">
+            <span className="flex flex-col items-center gap-2 mb-6 sm:mb-8">
+              <h2 className="font-bold text-2xl sm:text-3xl text-[#212121]">Enter Verification Code</h2>
+              <p className="text-sm font-bold text-center text-[#212121] max-w-[300px]">
                 We have sent a {CODE_LENGTH} digit verification code to your registered mobile
               </p>
             </span>
-            <div onPaste={handlePaste} className="flex gap-1">
+            <div onPaste={handlePaste} className="flex gap-1 sm:gap-2">
               {code.map((digit, index) => (
                 <Input
                   key={index}
@@ -332,7 +352,16 @@ const OnboardingPage = () => {
                   value={digit}
                   onChange={(e) => handleChange(e.target.value, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="w-12 h-12 text-center text-lg font-medium border border-black rounded-md focus:ring-2 focus:ring-none focus:outline-none outline-none"
+                  onFocus={() => {
+                    const firstEmptyIndex = code.findIndex(d => !d);
+                    if (index === firstEmptyIndex || index === activeInputIndex) {
+                      handleInputFocus(index);
+                    } else {
+                      inputsRef.current[index]?.blur();
+                    }
+                  }}
+                  readOnly={index !== activeInputIndex}
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg font-medium border border-black rounded-md focus:ring-2 focus:ring-none focus:outline-none outline-none"
                 />
               ))}
             </div>
@@ -370,23 +399,23 @@ const OnboardingPage = () => {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: "-100%", opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="absolute bottom-32 w-full h-full px-6 flex flex-col justify-center items-center"
+          className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
         >
-          <div className="flex flex-col absolute bottom-0 space-y-[56px] w-full px-6">
+          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
             <Step
               currentStepData={ONBOARDING_STEPS[currentStep]}
               stepNumber={currentStep}
               code={code}
-              setCode={setCode}
               inputsRef={inputsRef}
               handleChange={handleChange}
               handleKeyDown={handleKeyDown}
               handlePaste={handlePaste}
+              handleInputFocus={handleInputFocus}
             />
             <div className="mt-auto">
               <button
                 onClick={handleNext}
-                className="w-full bg-[#1B5E20] text-[#ffffff] py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || (currentStep === 4 && !code.every((digit) => digit))}
               >
                 {isLoading ? "Please wait..." : getButtonText()}
@@ -395,11 +424,11 @@ const OnboardingPage = () => {
           </div>
         </motion.div>
       </AnimatePresence>
-      <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-12">
+      <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
         {ONBOARDING_STEPS.map((_, index) => (
           <div
             key={index}
-            className={`h-2 rounded-full ${index === currentStep ? "bg-[#1B5E20] w-8 transition transform 1s" : "bg-[#E0E0E0] w-2"}`}
+            className={`h-2 rounded-full ${index === currentStep ? "bg-[#1B5E20] w-6 sm:w-8 transition-all duration-300" : "bg-[#E0E0E0] w-2"}`}
           />
         ))}
       </div>

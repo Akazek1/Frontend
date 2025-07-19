@@ -12,7 +12,7 @@ interface SectionHeaderProps {
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
-  linkText = "See All",
+  linkText,
   linkHref = "#",
   linkClassName = "text-green-600 font-semibold flex items-center gap-1", // Default styles
   className = "",

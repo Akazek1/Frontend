@@ -51,15 +51,29 @@ const Header = () => {
         </Link>
       ) : (
         <>
-          <div className="flex items-center gap-2">
-            <span className="bg-[#D0DECF] p-2">
-              <Icons.Location className="w-5 h-5 text-green-600" />
-            </span>
-            <div>
-              <p className="text-sm text-gray-500">Home</p>
-              <p className="text-sm font-semibold">Jl. Soekarno Hatta 15A Malang</p>
+          <Link href={"/profile"} className="flex items-center gap-2">
+            {user?.profilePicture ? (
+              <div>
+                <Image
+                  src={user?.profilePicture || "/default-profile.png"}
+                  alt="Profile Picture"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover mr-2"
+                />
+              </div>
+            ) : (
+              <div className="p-2 cursor-pointer rounded-full bg-[#167021] text-white">
+                <User className="w-5 h-5" />
+              </div>
+            )}
+            <div className="flex flex-col leading-3">
+              <span className="text-[#757575] font-normal text-sm">{getGreeting()}</span>
+              <span className="font-bold text-lg">
+                {user?.firstName || user?.phoneNumber} {user?.lastName}
+              </span>
             </div>
-          </div>
+          </Link>
         </>
       )}
       <div className="flex items-center gap-6">

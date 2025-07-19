@@ -131,7 +131,6 @@ const SearchResults = ({ query: initialQuery, onBack }: SearchResultsProps) => {
         throw new Error("Failed to fetch services");
       }
       const data: Service[] = await response.data.data;
-      console.log(data);
 
       setServices(data);
     } catch {

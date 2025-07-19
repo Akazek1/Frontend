@@ -19,25 +19,16 @@ import { Provider, Service } from "@/types";
 import Link from "next/link";
 
 
-// Sample date and time data
-const availableDates = [
-  { day: "Tue", date: 18 },
-  { day: "Wed", date: 19 },
-  { day: "Thu", date: 20 },
-  { day: "Fri", date: 21 },
-];
-
-const availableTimes = ["10:00am", "10:59am", "12:00pm", "1:00pm", "2:00pm", "3:00pm", "4:00pm"];
 
 const Page = () => {
   const router = useParams();
-  const id = router.id as string; // Get the service ID from the URL
+  const id = router.id as string;
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [availability, setAvailabity] = useState([])
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isBookmarked, toggleBookmark, isLoading } = useBookmark("services");
 
-  // Fetch service details from API
   useEffect(() => {
     const fetchService = async () => {
       if (!id || typeof id !== "string") {
@@ -50,8 +41,8 @@ const Page = () => {
       try {
         const response = await api.get(`/services/${id}`);
         const service: Service = response.data.data;
+        setAvailabity(service?.availability || [])
 
-        // Map service to provider
         const mappedProvider: Provider = {
           id: service.id,
           image: service.serviceImage,
@@ -85,10 +76,8 @@ const Page = () => {
 
   const handleSlotConfirm = (selectedDate: string, selectedTime: string) => {
     console.log("Selected Slot:", { date: selectedDate, time: selectedTime });
-    // Additional logic can be handled in SlotSelectionDialog
   };
 
-  // Handle copy link for Share button
   const handleShare = () => {
     const shareLink = window.location.href;
     navigator.clipboard
@@ -101,7 +90,6 @@ const Page = () => {
       });
   };
 
-  // Render loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -110,10 +98,9 @@ const Page = () => {
     );
   }
 
-  // Render error state
   if (error || !provider) {
     return (
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <BackButtonHeader text="Service Details" backHref="/" />
         <div className="text-center text-red-500 py-4">
           {error || "Service not found"}
@@ -123,7 +110,7 @@ const Page = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <BackButtonHeader text="Service Details" backHref="/" />
 
       <main className="flex-1 overflow-y-auto">
@@ -132,20 +119,20 @@ const Page = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: "100vh" }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-[#FFFFFF80]/50 rounded-[32px] p-5"
+          className="bg-[#FFFFFF80]/50 rounded-2xl md:rounded-[32px] p-4 md:p-5"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Avatar className="w-[78px] h-[78px]">
+                <Avatar className="w-12 h-12 sm:w-16 sm:h-16 md:w-[78px] md:h-[78px]">
                   <AvatarImage src={provider.image} className="object-cover" />
                   <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
-                  <h2 className="text-lg font-semibold text-[#1B2431]">
+                  <h2 className="text-sm sm:text-base md:text-lg font-semibold text-[#1B2431] line-clamp-1">
                     {provider.name}
                   </h2>
-                  <p className="text-sm text-[#212121] font-bold">
+                  <p className="text-xs sm:text-sm text-[#212121] font-bold line-clamp-1">
                     {provider.title}
                   </p>
                 </div>
@@ -158,7 +145,7 @@ const Page = () => {
                 className={`cursor-pointer ${isLoading ? "opacity-50" : ""}`}
               >
                 <Icons.BookMarkIcon
-                  className={`w-6 h-6 ${isBookmarked(provider.id)
+                  className={`w-5 h-5 sm:w-6 sm:h-6 ${isBookmarked(provider.id)
                     ? "fill-[#145B10] stroke-white"
                     : "stroke-[#145B10] hover:stroke-green-600"
                     }`}
@@ -166,53 +153,56 @@ const Page = () => {
               </span>
             </div>
 
-            <div className="space-y-3">
-              <p className="flex items-center gap-2 text-[#616161] text-sm font-medium">
-                <Icons.BagIcon className="w-4 h-4 stroke-[#212121]" /> {provider.experience}
+            <div className="space-y-2 md:space-y-3">
+              <p className="flex items-center gap-2 text-[#616161] text-xs sm:text-sm font-medium">
+                <Icons.BagIcon className="w-3 h-3 sm:w-4 sm:h-4 stroke-[#212121]" />
+                <span className="line-clamp-1">{provider.experience}</span>
               </p>
-              <p className="flex items-center gap-2 text-[#616161] text-sm font-medium">
-                <Languages className="w-4 h-4 text-[#212121]" /> {provider.languages}
+              <p className="flex items-center gap-2 text-[#616161] text-xs sm:text-sm font-medium">
+                <Languages className="w-3 h-3 sm:w-4 sm:h-4 text-[#212121]" />
+                <span className="line-clamp-1">{provider.languages}</span>
               </p>
-              <p className="flex items-center gap-2 text-[#616161] text-sm font-medium">
-                <MapPin className="w-4 h-4 text-[#212121]" /> {provider.location}
+              <p className="flex items-center gap-2 text-[#616161] text-xs sm:text-sm font-medium capitalize">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-[#212121]" />
+                <span className="line-clamp-1">{provider.location}</span>
               </p>
-              <p className="flex flex-col gap-3 text-[#616161] font-semibold leading-[120%] text-sm">
-                <strong className="font-bold text-[#212121] text-lg leading-[100%]">
+              <p className="flex flex-col gap-2 md:gap-3 text-[#616161] font-semibold leading-[120%] text-xs sm:text-sm">
+                <strong className="font-bold text-[#212121] text-base md:text-lg leading-[100%]">
                   Description
                 </strong>
                 {provider.experience || "No description available."}
               </p>
             </div>
 
-            <div className="flex gap-5 py-4 justify-center">
-              <a href={`tel:${provider.phoneNumber}`}>
-                <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
-                  <span className="px-6 pt-4">
-                    <Phone className="w-5 h-5" />
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-5 py-3 md:py-4">
+              <a href={`tel:${provider.phoneNumber}`} className="w-full">
+                <div className="flex flex-col items-center gap-1 pb-1 md:pb-2 text-[11px] sm:text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-lg md:rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
+                  <span className="px-2 sm:px-4 pt-2 sm:pt-3 md:pt-4">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                   </span>
                   Call
                 </div>
               </a>
-              <Link href="/conversations">
-                <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
-                  <span className="px-6 pt-4">
-                    <MessageCircleMore className="w-5 h-5" />
+              <Link href="/conversations" className="w-full">
+                <div className="flex flex-col items-center gap-1 pb-1 md:pb-2 text-[11px] sm:text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-lg md:rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
+                  <span className="px-2 sm:px-4 pt-2 sm:pt-3 md:pt-4">
+                    <MessageCircleMore className="w-4 h-4 sm:w-5 sm:h-5" />
                   </span>
                   Message
                 </div>
               </Link>
               <div
-                className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white cursor-pointer"
+                className="flex flex-col items-center gap-1 pb-1 md:pb-2 text-[11px] sm:text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-lg md:rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white cursor-pointer"
                 onClick={handleShare}
               >
-                <span className="px-6 pt-4">
-                  <Share className="w-5 h-5" />
+                <span className="px-2 sm:px-4 pt-2 sm:pt-3 md:pt-4">
+                  <Share className="w-4 h-4 sm:w-5 sm:h-5" />
                 </span>
                 Share
               </div>
-              <div className="flex flex-col items-center gap-1 pb-2 text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
-                <span className="px-6 pt-4">
-                  <MapPin className="w-5 h-5" />
+              <div className="flex flex-col items-center gap-1 pb-1 md:pb-2 text-[11px] sm:text-xs font-medium bg-white text-[#145B10] border-[#145B10] rounded-lg md:rounded-[10px] border-2 hover:bg-[#145B10] hover:text-white">
+                <span className="px-2 sm:px-4 pt-2 sm:pt-3 md:pt-4">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                 </span>
                 Map
               </div>
@@ -221,25 +211,26 @@ const Page = () => {
             <ReviewSection serviceId={id} />
 
             <div className="py-2 flex items-center justify-between">
-              <h1 className="text-[#145B10] font-bold text-lg leading-[120%]">{provider.price}</h1>
+              <h1 className="text-[#145B10] font-bold text-base md:text-lg leading-[120%]">
+                {provider.price}
+              </h1>
               <SlotSelectionDialog
                 trigger={
-                  <Button className="rounded-[100px] font-bold mr-3 bg-[#145B10] text-white hover:bg-[#145B10]/90">
+                  <Button className="rounded-[100px] font-bold text-xs sm:text-sm bg-[#145B10] text-white hover:bg-[#145B10]/90 py-2 px-4 sm:py-2 sm:px-6">
                     Select Slot
                   </Button>
                 }
                 providerName={provider.name}
                 price={provider.price}
                 onConfirm={handleSlotConfirm}
-                availableDates={availableDates}
-                availableTimes={availableTimes}
                 provider={provider}
+                availability={availability} 
               />
             </div>
           </div>
         </motion.div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           <ServiceProvider showHeader={true} />
         </div>
       </main>

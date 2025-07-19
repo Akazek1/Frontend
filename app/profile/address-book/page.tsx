@@ -142,14 +142,14 @@ const AddressBook = () => {
         const response = await api.patch(`/users/addresses/${editingAddressId}`, payload);
         setAddresses((prev) =>
           prev.map((addr) =>
-            addr.id === editingAddressId ? { ...addr, ...response.data } : addr
+            addr.id === editingAddressId ? { ...addr, ...response.data.data } : addr
           )
         );
         toast.success("Address updated successfully");
       } else {
         // Create new address
         const response = await api.post("/users/addresses", payload);
-        setAddresses((prev) => [...prev, response.data]);
+        setAddresses((prev) => [...prev, response.data.data]);
         toast.success("Address added successfully");
       }
 

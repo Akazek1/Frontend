@@ -5,55 +5,121 @@ import CustomDialog from "./custom-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-// Define the interface for available dates
-interface AvailableDate {
-    day: string;
-    date: number;
+interface Availability {
+    dayOfWeek: number; // 0-6 (Sunday-Saturday)
+    startTime: string;
+    endTime: string;
 }
 
-// Props interface for the dialog
 interface SlotSelectionDialogProps {
     trigger: React.ReactNode;
     providerName: string;
     price: string;
     onConfirm: (selectedDate: string, selectedTime: string) => void;
-    availableDates: AvailableDate[];
-    availableTimes: string[];
-    provider: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    provider: { id: string; type: string };
+    availability: Availability[];
 }
 
 const SlotSelectionDialog: React.FC<SlotSelectionDialogProps> = ({
     trigger,
     onConfirm,
-    availableDates,
-    availableTimes,
     provider,
+    availability,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [availableDates, setAvailableDates] = useState<{ day: string, date: number, dateString: string }[]>([]);
+    const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const router = useRouter();
 
-    const handleDateSelect = (day: string, date: number) => {
-        // Construct ISO date (assuming current year for simplicity; adjust if needed)
-        const currentYear = new Date().getFullYear();
-        const month = new Date().getMonth() + 1; // Adjust month for current date
-        const formattedDate = `${currentYear}-${month.toString().padStart(2, "0")}-${date
-            .toString()
-            .padStart(2, "0")}`;
-        setSelectedDate(formattedDate);
+    // Convert dayOfWeek number to day name
+    const getDayName = (dayOfWeek: number) => {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[dayOfWeek];
+    };
+
+    // Convert time string to readable format
+    const formatTime = (timeString: string) => {
+        const time = new Date(timeString);
+        const hours = time.getHours();
+        const minutes = time.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    };
+
+    // Generate available dates for the next 2 weeks based on availability
+    useEffect(() => {
+        if (!availability || availability.length === 0) {
+            return;
+        }
+
+        const today = new Date();
+        const dates = [];
+
+        // Get all available days of week
+        const availableDays = [...new Set(availability.map(a => a.dayOfWeek))];
+
+        // Generate dates for the next 14 days (2 weeks)
+        for (let i = 0; i < 14; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+
+            if (availableDays.includes(date.getDay())) {
+                dates.push({
+                    day: getDayName(date.getDay()).substring(0, 3), // Short day name (e.g., "Mon")
+                    date: date.getDate(),
+                    dateString: date.toISOString().split('T')[0] // YYYY-MM-DD format
+                });
+            }
+        }
+
+        setAvailableDates(dates);
+    }, [availability]);
+
+    // Generate time slots when a date is selected
+    useEffect(() => {
+        if (!selectedDate || !availability || availability.length === 0) return;
+
+        const date = new Date(selectedDate);
+        const dayOfWeek = date.getDay();
+
+        // Find availability for this day of week
+        const dayAvailability = availability.find(a => a.dayOfWeek === dayOfWeek);
+
+        if (!dayAvailability) {
+            return;
+        }
+
+        // Generate time slots (every 30 minutes between start and end)
+        const slots = [];
+        const start = new Date(dayAvailability.startTime);
+        const end = new Date(dayAvailability.endTime);
+
+        const current = new Date(start);
+
+        while (current <= end) {
+            slots.push(formatTime(current.toISOString()));
+            current.setMinutes(current.getMinutes() + 30); // 30-minute intervals
+        }
+
+        setAvailableTimes(slots);
+    }, [selectedDate, availability]);
+
+    const handleDateSelect = (dateString: string) => {
+        setSelectedDate(dateString);
+        setSelectedTime(null); // Reset time when date changes
     };
 
     const handleTimeSelect = (time: string) => {
         setSelectedTime(time);
     };
 
-    // Auto-navigate when both date and time are selected
     useEffect(() => {
         if (selectedDate && selectedTime) {
-            onConfirm(selectedDate, selectedTime); // Call the onConfirm callback
-            setIsOpen(false); // Close the dialog
-            // Navigate to the booking summary page with serviceId and slot details
+            onConfirm(selectedDate, selectedTime);
+            setIsOpen(false);
             router.push(
                 `/book/${provider.type}/${provider.id}/booking-summary?serviceId=${encodeURIComponent(
                     provider.id
@@ -65,42 +131,57 @@ const SlotSelectionDialog: React.FC<SlotSelectionDialogProps> = ({
     return (
         <div>
             <div onClick={() => setIsOpen(true)}>{trigger}</div>
-            <CustomDialog isOpen={isOpen} onClose={() => setIsOpen(false)} className="p-3">
+            <CustomDialog isOpen={isOpen} onClose={() => setIsOpen(false)} className="p-2">
                 <div className="space-y-6">
                     {/* Date Selection */}
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Select Date</h3>
-                        <div className="grid grid-cols-4 gap-4">
-                            {availableDates.map((date) => (
-                                <div
-                                    key={`${date.day}-${date.date}`}
-                                    className={`flex flex-col items-center cursor-pointer bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-lg py-3 ${selectedDate?.includes(date.date.toString()) ? "bg-white/20" : ""
-                                        }`}
-                                    onClick={() => handleDateSelect(date.day, date.date)}
-                                >
-                                    <span>{date.day}</span> {date.date}
-                                </div>
-                            ))}
-                        </div>
+                        {availableDates.length > 0 ? (
+                            <div className="grid grid-cols-4 gap-2">
+                                {availableDates.map((date) => (
+                                    <div
+                                        key={date.dateString}
+                                        className={`flex flex-col items-center cursor-pointer p-3 rounded-lg border ${selectedDate === date.dateString
+                                                ? "bg-[#145B10] text-white border-[#145B10]"
+                                                : "bg-[#437C40] text-white border-[#145B10] hover:bg-[#618f5e]"
+                                            }`}
+                                        onClick={() => handleDateSelect(date.dateString)}
+                                    >
+                                        <span className="font-medium">{date.day}</span>
+                                        <span className="font-bold">{date.date}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center text-gray-500">No available dates found for this service</p>
+                        )}
                     </div>
 
-                    {/* Time Selection */}
-                    <div>
-                        <h3 className="text-lg font-semibold mb-4">Select Time</h3>
-                        <div className="grid grid-cols-4 gap-4">
-                            {availableTimes.map((time, index) => (
-                                <Button
-                                    key={index}
-                                    variant="outline"
-                                    className={`bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-lg py-3 ${selectedTime === time ? "bg-white/20" : ""
-                                        }`}
-                                    onClick={() => handleTimeSelect(time)}
-                                >
-                                    {time}
-                                </Button>
-                            ))}
+                    {/* Time Selection - Only show if a date is selected */}
+                    {selectedDate && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-4">Select Time</h3>
+                            {availableTimes.length > 0 ? (
+                                <div className="grid grid-cols-4 gap-2">
+                                    {availableTimes.map((time, index) => (
+                                        <Button
+                                            key={index}
+                                            variant="outline"
+                                            className={`px-3  ${selectedTime === time
+                                                    ? "bg-[#145B10] text-white border-[#145B10]"
+                                                    : "bg-[#437C40] text-white border-[#145B10] hover:bg-[#618f5e]"
+                                                }`}
+                                            onClick={() => handleTimeSelect(time)}
+                                        >
+                                            {time}
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-500">No available times for selected date</p>
+                            )}
                         </div>
-                    </div>
+                    )}
                 </div>
             </CustomDialog>
         </div>

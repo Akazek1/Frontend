@@ -11,7 +11,8 @@ interface ChatTabsProps {
 const ChatTabs = ({ onTabChange }: ChatTabsProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab") || "All"; // Default to "All"
+  const validTabs = ["All", "Read", "Unread"];
+  const currentTab = validTabs.includes(searchParams.get("tab") ?? "") ? searchParams.get("tab")! : "All";
 
   // Function to update the URL with the selected tab
   const setTab = (tab: string) => {

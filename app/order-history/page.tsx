@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import BackButtonHeader from "@/components/header/back-button-header";
-import { CircleCheck, Loader2, Star } from "lucide-react";
-import { Icons } from "@/components/icons";
-import api from "@/lib/axios";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import BackButtonHeader from '@/components/header/back-button-header';
+import { CircleCheck, Loader2, MessageCircleMore, Star } from 'lucide-react';
+import api from '@/lib/axios';
+import toast from 'react-hot-toast';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
 
 // Define interfaces based on API response
 interface Address {
@@ -30,11 +30,12 @@ interface Worker {
 interface Service {
   id: string;
   title: string;
+  providerId: string;
 }
 
 interface Booking {
   id: string;
-  status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   scheduledFor: string;
   service: Service;
   address: Address;
@@ -52,7 +53,8 @@ interface Category {
     profession: string;
     date: string;
     amount?: string;
-    reviewSubmitted: boolean; // Tracks if review exists
+    reviewSubmitted: boolean;
+    service: Service;
   }[];
 }
 
@@ -63,27 +65,28 @@ const OrderHistory: React.FC = () => {
   const [reviewModalOpen, setReviewModalOpen] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(0);
-  const [comment, setComment] = useState<string>("");
+  const [comment, setComment] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'All' | 'Pending' | 'Completed'>('All');
 
   // Format ISO date to "Monday, 26th January 2024"
   const formatDate = (isoDate: string): string => {
     try {
       const date = new Date(isoDate);
-      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
       ];
       const dayName = days[date.getDay()];
       const day = date.getDate();
@@ -92,22 +95,22 @@ const OrderHistory: React.FC = () => {
       const suffix = getDaySuffix(day);
       return `${dayName}, ${day}${suffix} ${month} ${year}`;
     } catch {
-      return "Invalid Date";
+      return 'Invalid Date';
     }
   };
 
   // Get day suffix (1st, 2nd, 3rd, etc.)
   const getDaySuffix = (day: number): string => {
-    if (day >= 11 && day <= 13) return "th";
+    if (day >= 11 && day <= 13) return 'th';
     switch (day % 10) {
       case 1:
-        return "st";
+        return 'st';
       case 2:
-        return "nd";
+        return 'nd';
       case 3:
-        return "rd";
+        return 'rd';
       default:
-        return "th";
+        return 'th';
     }
   };
 
@@ -124,10 +127,10 @@ const OrderHistory: React.FC = () => {
       } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
         const status =
-          typeof error === "object" && error !== null && "response" in error
+          typeof error === 'object' && error !== null && 'response' in error
             ? (error as { response?: { status?: number } }).response?.status
             : undefined;
-        if (status === 429 || (typeof status === "number" && status >= 500)) {
+        if (status === 429 || (typeof status === 'number' && status >= 500)) {
           const delay = baseDelay * Math.pow(2, i);
           await new Promise((resolve) => setTimeout(resolve, delay));
         } else {
@@ -135,18 +138,16 @@ const OrderHistory: React.FC = () => {
         }
       }
     }
-    throw lastError || new Error("Retry failed");
-  };
+    throw lastError || new Error('Retry failed');
+  }
 
   // Fetch bookings
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
       try {
-        const response = await retryWithBackoff(() => api.get<{ data: Booking[] }>("/bookings"));
+        const response = await retryWithBackoff(() => api.get<{ data: Booking[] }>('/bookings'));
         const bookings: Booking[] = Array.isArray(response.data.data) ? response.data.data : [];
-        console.log(bookings);
-        
 
         // Group bookings by service title
         const groupedByCategory: Category[] = bookings.reduce((acc: Category[], booking: Booking) => {
@@ -154,18 +155,19 @@ const OrderHistory: React.FC = () => {
           const order = {
             id: booking.id,
             status:
-              booking.status === "COMPLETED"
-                ? "Job Completed"
-                : booking.status === "CANCELLED"
-                  ? "Job Cancelled"
+              booking.status === 'COMPLETED'
+                ? 'Job Completed'
+                : booking.status === 'CANCELLED'
+                  ? 'Job Cancelled'
                   : booking.status,
             provider: booking.worker
               ? `${booking.worker.firstName} ${booking.worker.lastName}`
-              : "Agency Worker",
+              : 'Agency Worker',
             profession: booking.service.title,
             date: formatDate(booking.scheduledFor),
             amount: booking.price ? `${booking.price} RWF` : undefined,
-            reviewSubmitted: !!booking.review, 
+            reviewSubmitted: !!booking.review,
+            service: booking.service,
           };
 
           const existingCategory = acc.find((cat) => cat.category === category);
@@ -186,9 +188,9 @@ const OrderHistory: React.FC = () => {
         setCategories(sortedCategories);
         setError(null);
       } catch (err: unknown) {
-        console.error("Error fetching bookings:", err);
-        let message = "Failed to fetch order history";
-        if (typeof err === "object" && err !== null && "response" in err) {
+        console.error('Error fetching bookings:', err);
+        let message = 'Failed to fetch order history';
+        if (typeof err === 'object' && err !== null && 'response' in err) {
           const response = (err as { response?: { data?: { message?: string } } }).response;
           if (response?.data?.message) {
             message = response.data.message;
@@ -209,7 +211,7 @@ const OrderHistory: React.FC = () => {
   const openReviewModal = (bookingId: string) => {
     setSelectedBookingId(bookingId);
     setRating(0);
-    setComment("");
+    setComment('');
     setReviewModalOpen(true);
   };
 
@@ -217,11 +219,11 @@ const OrderHistory: React.FC = () => {
   const handleSubmitReview = async () => {
     if (!selectedBookingId) return;
     if (rating < 1 || rating > 5) {
-      toast.error("Please select a rating between 1 and 5.");
+      toast.error('Please select a rating between 1 and 5.');
       return;
     }
     if (!comment.trim()) {
-      toast.error("Please provide a comment.");
+      toast.error('Please provide a comment.');
       return;
     }
 
@@ -230,7 +232,7 @@ const OrderHistory: React.FC = () => {
       await retryWithBackoff(() =>
         api.post(`/bookings/${selectedBookingId}/reviews`, { rating, comment })
       );
-      toast.success("Review submitted successfully!");
+      toast.success('Review submitted successfully!');
       // Update categories to reflect review submission
       setCategories((prev) =>
         prev.map((cat) => ({
@@ -242,9 +244,9 @@ const OrderHistory: React.FC = () => {
       );
       setReviewModalOpen(false);
     } catch (err: unknown) {
-      console.error("Error submitting review:", err);
-      let message = "Failed to submit review";
-      if (typeof err === "object" && err !== null && "response" in err) {
+      console.error('Error submitting review:', err);
+      let message = 'Failed to submit review';
+      if (typeof err === 'object' && err !== null && 'response' in err) {
         const response = (err as { response?: { data?: { message?: string } } }).response;
         if (response?.data?.message) {
           message = response.data.message;
@@ -255,6 +257,19 @@ const OrderHistory: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  // Filter categories based on active tab
+  const filteredCategories = categories
+    .map((category) => ({
+      ...category,
+      orders: category.orders.filter((order) => {
+        if (activeTab === 'All') return true;
+        if (activeTab === 'Pending') return order.status === 'PENDING';
+        if (activeTab === 'Completed') return order.status === 'Job Completed';
+        return false;
+      }),
+    }))
+    .filter((category) => category.orders.length > 0);
 
   // Render loading state
   if (loading) {
@@ -277,11 +292,29 @@ const OrderHistory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F1FCEF]">
-      <BackButtonHeader text="Order History" className="p-6" backHref="/" />
+      <BackButtonHeader text="Order History" className="p-4 sm:p-6" backHref="/" />
+
+      {/* Tabs Navigation */}
+      <div className="px-4 sm:px-6 pb-4">
+        <div className="flex sm:space-x-2 bg-white/50 rounded-md p-1 border border-gray-100">
+          {['All', 'Pending', 'Completed'].map((tab) => (
+            <button
+              key={tab}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${activeTab === tab
+                  ? 'bg-[#145B10] text-white'
+                  : 'text-[#616161] hover:bg-gray-100'
+                }`}
+              onClick={() => setActiveTab(tab as 'All' | 'Pending' | 'Completed')}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Review Modal */}
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
-        <DialogContent className="sm:w-[425px] bg-white rounded-[32px] p-6">
+        <DialogContent className="w-[90vw] max-w-[360px] sm:max-w-lg bg-white rounded-[32px] p-4">
           <DialogHeader>
             <DialogTitle className="text-[#1B2431] text-lg font-semibold">
               Submit Review
@@ -289,7 +322,7 @@ const OrderHistory: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4">
             {/* Rating Stars */}
-            <div className="flex justify-center gap-1">
+            <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
@@ -298,7 +331,7 @@ const OrderHistory: React.FC = () => {
                   className="focus:outline-none"
                 >
                   <Star
-                    className={`w-8 h-8 ${star <= rating ? "fill-[#145B10] stroke-[#145B10]" : "stroke-[#145B10]"
+                    className={`w-6 h-6 sm:w-8 sm:h-8 ${star <= rating ? 'fill-[#145B10] stroke-[#145B10]' : 'stroke-[#145B10]'
                       }`}
                   />
                 </button>
@@ -309,19 +342,22 @@ const OrderHistory: React.FC = () => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Write your feedback..."
-              className="border-[#145B10] focus:ring-[#145B10] rounded-lg"
+              className="border-[#145B10] focus:ring-[#145B10] rounded-lg text-sm"
               rows={4}
             />
             {/* Submit Button */}
             <Button
-              className="w-full rounded-[100px] font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90"
+              className="w-full rounded-[100px] font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm"
               onClick={handleSubmitReview}
               disabled={submitting}
             >
               {submitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Submitting...
+                </>
               ) : (
-                "Submit Review"
+                'Submit Review'
               )}
             </Button>
           </div>
@@ -329,26 +365,34 @@ const OrderHistory: React.FC = () => {
       </Dialog>
 
       {/* Order History List */}
-      <div className="px-6 pb-10">
-        {categories.length === 0 ? (
-          <p className="text-center text-[#616161] font-medium">No orders found.</p>
+      <div className="px-4 sm:px-6 pb-10 max-w-2xl mx-auto">
+        {filteredCategories.length === 0 ? (
+          <p className="text-center text-[#616161] font-medium text-sm sm:text-base">
+            No orders found for this status.
+          </p>
         ) : (
-          categories.map((category, index) => (
+          filteredCategories.map((category, index) => (
             <div key={index} className="">
               {/* Category Header */}
-              <h2 className="py-6 text-xl font-bold text-[#212121] capitalize">{category.category}</h2>
+              <h2 className="py-4 sm:py-6 text-lg sm:text-xl font-bold text-[#212121] capitalize">
+                {category.category}
+              </h2>
 
               {/* Orders under this category */}
               <div className="space-y-4">
                 {category.orders.map((order, orderIndex) => (
                   <div
                     key={orderIndex}
-                    className="bg-white/50 shadow-sm p-5 space-y-3 rounded-[32px] border border-gray-100"
+                    className="bg-white/50 shadow-sm p-4 sm:p-5 space-y-3 rounded-[24px] sm:rounded-[32px] border border-gray-100"
                   >
                     {/* Status and Expand Icon */}
                     <div className="flex justify-between items-center">
                       <span
-                        className={`text-xs text-white font-bold text-[10px] py-1 px-2.5 rounded-full ${order.status === "Job Completed" ? "bg-[#145B10]" : "bg-[#C01212]"
+                        className={`text-[10px] sm:text-xs text-white font-bold py-1 px-2.5 rounded-full ${order.status === 'PENDING'
+                            ? 'bg-[#C01212]'
+                            : order.status === 'Job Completed'
+                              ? 'bg-[#145B10]'
+                              : 'bg-[#C01212]'
                           }`}
                       >
                         {order.status}
@@ -358,16 +402,22 @@ const OrderHistory: React.FC = () => {
                     {/* Provider and Profession */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-[#616161]">{order.provider}</p>
-                        <p className="text-[#212121] text-lg font-bold capitalize">{order.profession}</p>
+                        <p className="text-xs sm:text-sm font-medium text-[#616161]">
+                          {order.provider}
+                        </p>
+                        <p className="text-base sm:text-lg font-bold text-[#212121] capitalize">
+                          {order.profession}
+                        </p>
                       </div>
-                      <Icons.BookMarkIcon className="stroke-[#145B10]" />
+                      <Link href={`/conversations/inbox/${order.id}`} className="flex items-center">
+                        <MessageCircleMore className="w-5 h-5 sm:w-6 sm:h-6 stroke-[#145B10]" />
+                      </Link>
                     </div>
 
                     {/* Date */}
                     <div className="flex items-center">
                       <svg
-                        className="w-4 h-4 text-gray-400 mr-1"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-1 sm:mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -380,25 +430,25 @@ const OrderHistory: React.FC = () => {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      <p className="text-sm text-[#616161] font-medium">{order.date}</p>
+                      <p className="text-xs sm:text-sm text-[#616161] font-medium">{order.date}</p>
                     </div>
 
                     <div className="flex items-center justify-between w-full">
                       {/* Amount Paid (if applicable) */}
-                      {order.status === "Job Completed" && order.amount && (
-                        <div className="flex items-center mt-1">
-                          <CircleCheck className="w-4 h-4 mr-1" />
-                          <p className="text-xs text-[#145B10] w-max font-bold">
+                      {order.status === 'Job Completed' && order.amount && (
+                        <div className="flex w-full items-center">
+                          <CircleCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-1 text-[#145B10]" />
+                          <p className="text-xs sm:text-sm text-[#145B10] font-bold">
                             Amount Paid {order.amount}
                           </p>
                         </div>
                       )}
 
                       {/* Give Feedback Button */}
-                      <div className="flex items-center justify-end w-full">
-                        {order.status === "Job Completed" && !order.reviewSubmitted && (
+                      <div className="flex items-center justify-end">
+                        {order.status === 'Job Completed' && !order.reviewSubmitted && (
                           <Button
-                            className="w-max rounded-full border border-[#145B10] text-[#145B10] font-bold bg-transparent hover:bg-[#145B10] hover:text-white py-2"
+                            className="w-max rounded-full border border-[#145B10] text-[#145B10] font-bold bg-transparent hover:bg-[#145B10] hover:text-white py-1 sm:py-1.5 text-xs sm:text-sm"
                             onClick={() => openReviewModal(order.id)}
                           >
                             Give Feedback
