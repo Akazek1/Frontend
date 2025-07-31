@@ -83,23 +83,26 @@ const OnboardingPage = () => {
   }, [])
 
   const handleChange = (value: string, index: number) => {
-    const numericValue = value.replace(/[^0-9]/g, "")
-    const newCode = [...code]
-    newCode[index] = numericValue.slice(-1)
-    setCode(newCode)
+    const numericValue = value.replace(/[^0-9]/g, "");
+    const newCode = [...code];
+    newCode[index] = numericValue.slice(-1);
+    setCode(newCode);
 
-    if (numericValue && index < CODE_LENGTH - 1) {
-      setActiveInputIndex(index + 1)
+    const nextIndex = index + 1;
+
+    if (numericValue && nextIndex < CODE_LENGTH) {
+      // Delay to prevent flicker but still auto-focus next input
       setTimeout(() => {
-        inputsRef.current[index + 1]?.focus()
-      }, 10)
+        setActiveInputIndex(nextIndex);
+        inputsRef.current[nextIndex]?.focus();
+      }, 50);
     }
 
-    if (newCode.every((val) => val) && newCode.join("").length === CODE_LENGTH) {
-      const finalCode = newCode.join("")
-      handleVerifyOtp(finalCode)
+    if (newCode.every((val) => val.length > 0)) {
+      handleVerifyOtp(newCode.join(""));
     }
-  }
+  };
+
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
@@ -130,13 +133,10 @@ const OnboardingPage = () => {
   }
 
   const handleInputFocus = (index: number) => {
-    setActiveInputIndex(index)
-    // Focus the first empty input if current one is already filled
-    if (code[index] && index < CODE_LENGTH - 1 && !code[index + 1]) {
-      setActiveInputIndex(index + 1)
-      inputsRef.current[index + 1]?.focus()
-    }
-  }
+    if (activeInputIndex === index) return;
+    setActiveInputIndex(index);
+  };
+
 
   const handleSendOtp = async () => {
     if (!phoneNumber || phoneNumber.length < 9) {
@@ -360,7 +360,7 @@ const OnboardingPage = () => {
                       inputsRef.current[index]?.blur();
                     }
                   }}
-                  readOnly={index !== activeInputIndex}
+                  autoFocus={activeInputIndex === index}
                   className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg font-medium border border-black rounded-md focus:ring-2 focus:ring-none focus:outline-none outline-none"
                 />
               ))}
