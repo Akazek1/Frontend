@@ -22,12 +22,27 @@ interface AuthState {
   phoneNumber: string | null;
 }
 
+// Helper function to safely parse localStorage
+const getStoredUser = () => {
+  if (typeof window === "undefined") return null;
+  
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser || storedUser === "undefined" || storedUser === "null") {
+      return null;
+    }
+    return JSON.parse(storedUser);
+  } catch (error) {
+    console.error("Error parsing stored user:", error);
+    // Clear invalid data
+    localStorage.removeItem("user");
+    return null;
+  }
+};
+
 // Initial state
 const initialState: AuthState = {
-  user:
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null,
+  user: getStoredUser(),
   token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   isAuthenticated:
     typeof window !== "undefined" ? !!localStorage.getItem("token") : false,

@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import AppIcon from "@/public/svg/app-icon.svg"
@@ -29,7 +28,7 @@ interface OnboardingStep {
   bgColor: string
   textColor: string
   buttonText: string
-  type?: "info" | "dual-mode" | "phone" | "otp" | "user-type"
+  type?: "info" | "dual-mode" | "phone" | "otp" | "user-type" | "basic-info"
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
@@ -138,16 +137,37 @@ const OnboardingPage = () => {
     return () => clearTimeout(timer)
   }, [])
 
-  // Auto-focus firstName field when step 7 is shown
+  // Track if inputs should maintain focus
+  const shouldMaintainFirstNameFocus = useRef(false)
+  const shouldMaintainLastNameFocus = useRef(false)
+  const shouldMaintainEmailFocus = useRef(false)
+  
+  // Maintain focus on firstName input when typing
   useEffect(() => {
-    if (currentStep === 7 && !hasFocusedFirstName && firstNameInputRef.current) {
-      const timer = setTimeout(() => {
-        firstNameInputRef.current?.focus()
-        setHasFocusedFirstName(true)
-      }, 100)
-      return () => clearTimeout(timer)
+    if (currentStep === 7 && firstNameInputRef.current) {
+      if (shouldMaintainFirstNameFocus.current && document.activeElement !== firstNameInputRef.current) {
+        firstNameInputRef.current.focus()
+      }
     }
-  }, [currentStep, hasFocusedFirstName])
+  }, [currentStep, firstName])
+
+  // Maintain focus on lastName input when typing
+  useEffect(() => {
+    if (currentStep === 7 && lastNameInputRef.current) {
+      if (shouldMaintainLastNameFocus.current && document.activeElement !== lastNameInputRef.current) {
+        lastNameInputRef.current.focus()
+      }
+    }
+  }, [currentStep, lastName])
+
+  // Maintain focus on email input when typing
+  useEffect(() => {
+    if (currentStep === 7 && emailInputRef.current) {
+      if (shouldMaintainEmailFocus.current && document.activeElement !== emailInputRef.current) {
+        emailInputRef.current.focus()
+      }
+    }
+  }, [currentStep, email])
 
   // Check if user exists when phone number is entered
   const checkUserExists = async (phone: string) => {
@@ -186,6 +206,19 @@ const OnboardingPage = () => {
     // Skip to phone number entry (step 5)
     setCurrentStep(5)
   }
+
+  // Stable onChange handlers to prevent re-renders that cause focus loss
+  const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFirstName(e.target.value)
+  }, [])
+
+  const handleLastNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLastName(e.target.value)
+  }, [])
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+  }, [])
 
   const handleChange = (value: string, index: number) => {
     const numericValue = value.replace(/[^0-9]/g, "");
@@ -497,7 +530,36 @@ const OnboardingPage = () => {
     handleKeyDown: (e: React.KeyboardEvent, index: number) => void
     handlePaste: (e: React.ClipboardEvent) => void
     handleInputFocus: (index: number) => void
-  }> = ({ currentStepData, stepNumber, code, inputsRef, handleChange, handleKeyDown, handlePaste, handleInputFocus }) => {
+    firstName: string
+    lastName: string
+    email: string
+    firstNameInputRef: React.RefObject<HTMLInputElement | null>
+    lastNameInputRef: React.RefObject<HTMLInputElement | null>
+    emailInputRef: React.RefObject<HTMLInputElement | null>
+    handleFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleSaveBasicInfo: () => void
+  }> = React.memo(({ 
+    currentStepData, 
+    stepNumber, 
+    code, 
+    inputsRef, 
+    handleChange, 
+    handleKeyDown, 
+    handlePaste, 
+    handleInputFocus,
+    firstName,
+    lastName,
+    email,
+    firstNameInputRef,
+    lastNameInputRef,
+    emailInputRef,
+    handleFirstNameChange,
+    handleLastNameChange,
+    handleEmailChange,
+    handleSaveBasicInfo
+  }) => {
     const imageWrapper = "p-5 bg-[#F1FCEF] rounded-full"
     const imageStyle = "w-[160px] h-[160px] sm:w-[250px] sm:h-[250px] object-cover rounded-full"
 
@@ -834,16 +896,28 @@ const OnboardingPage = () => {
                     type="text"
                     placeholder="Enter your first name"
                     value={firstName}
-                    onChange={(e) => {
-                      setFirstName(e.target.value)
+                    onChange={handleFirstNameChange}
+                    onFocus={() => {
+                      shouldMaintainFirstNameFocus.current = true
+                    }}
+                    onBlur={() => {
+                      // Don't clear the flag immediately - allow for re-focus
+                      setTimeout(() => {
+                        if (document.activeElement !== firstNameInputRef.current) {
+                          shouldMaintainFirstNameFocus.current = false
+                        }
+                      }, 100)
                     }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && firstName.trim()) {
                         e.preventDefault()
+                        shouldMaintainFirstNameFocus.current = false
+                        shouldMaintainLastNameFocus.current = true
                         lastNameInputRef.current?.focus()
                       }
                     }}
+                    autoFocus={currentStep === 7 && !firstName}
                   />
                 </div>
                 
@@ -857,13 +931,24 @@ const OnboardingPage = () => {
                     type="text"
                     placeholder="Enter your last name"
                     value={lastName}
-                    onChange={(e) => {
-                      setLastName(e.target.value)
+                    onChange={handleLastNameChange}
+                    onFocus={() => {
+                      shouldMaintainLastNameFocus.current = true
+                    }}
+                    onBlur={() => {
+                      // Don't clear the flag immediately - allow for re-focus
+                      setTimeout(() => {
+                        if (document.activeElement !== lastNameInputRef.current) {
+                          shouldMaintainLastNameFocus.current = false
+                        }
+                      }, 100)
                     }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault()
+                        shouldMaintainLastNameFocus.current = false
+                        shouldMaintainEmailFocus.current = true
                         emailInputRef.current?.focus()
                       }
                     }}
@@ -880,13 +965,23 @@ const OnboardingPage = () => {
                     type="email"
                     placeholder="your.email@example.com"
                     value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
+                    onChange={handleEmailChange}
+                    onFocus={() => {
+                      shouldMaintainEmailFocus.current = true
+                    }}
+                    onBlur={() => {
+                      // Don't clear the flag immediately - allow for re-focus
+                      setTimeout(() => {
+                        if (document.activeElement !== emailInputRef.current) {
+                          shouldMaintainEmailFocus.current = false
+                        }
+                      }, 100)
                     }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && firstName.trim()) {
                         e.preventDefault()
+                        shouldMaintainEmailFocus.current = false
                         handleSaveBasicInfo()
                       }
                     }}
@@ -902,7 +997,7 @@ const OnboardingPage = () => {
       default:
         return null
     }
-  }
+  })
 
   if (showSplash) {
     return (
@@ -938,15 +1033,9 @@ const OnboardingPage = () => {
         </button>
       )}
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ x: "100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "-100%", opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
-        >
+      {currentStep === 7 ? (
+        // For step 7, render without animation to prevent remounting
+        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
           <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
             <Step
               currentStepData={ONBOARDING_STEPS[currentStep]}
@@ -957,6 +1046,61 @@ const OnboardingPage = () => {
               handleKeyDown={handleKeyDown}
               handlePaste={handlePaste}
               handleInputFocus={handleInputFocus}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              firstNameInputRef={firstNameInputRef}
+              lastNameInputRef={lastNameInputRef}
+              emailInputRef={emailInputRef}
+              handleFirstNameChange={handleFirstNameChange}
+              handleLastNameChange={handleLastNameChange}
+              handleEmailChange={handleEmailChange}
+              handleSaveBasicInfo={handleSaveBasicInfo}
+            />
+            <div className="mt-auto">
+              <button
+                onClick={handleNext}
+                className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  isLoading || 
+                  !firstName.trim()
+                }
+              >
+                {isLoading ? "Please wait..." : getButtonText()}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "-100%", opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
+          >
+          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
+            <Step
+              currentStepData={ONBOARDING_STEPS[currentStep]}
+              stepNumber={currentStep}
+              code={code}
+              inputsRef={inputsRef}
+              handleChange={handleChange}
+              handleKeyDown={handleKeyDown}
+              handlePaste={handlePaste}
+              handleInputFocus={handleInputFocus}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
+              firstNameInputRef={firstNameInputRef}
+              lastNameInputRef={lastNameInputRef}
+              emailInputRef={emailInputRef}
+              handleFirstNameChange={handleFirstNameChange}
+              handleLastNameChange={handleLastNameChange}
+              handleEmailChange={handleEmailChange}
+              handleSaveBasicInfo={handleSaveBasicInfo}
             />
             <div className="mt-auto">
               <button
@@ -975,6 +1119,7 @@ const OnboardingPage = () => {
           </div>
         </motion.div>
       </AnimatePresence>
+      )}
       <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
         {ONBOARDING_STEPS.map((_, index) => (
           <div

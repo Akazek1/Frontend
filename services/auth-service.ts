@@ -39,11 +39,12 @@ const authService = {
     data: SendOtpRequest
   ): Promise<{ message: string; phoneNumber: string }> => {
     try {
-      const response = await api.post<{ message: string; phoneNumber: string }>(
+      const response = await api.post<{ data: { message: string; phoneNumber: string } }>(
         "/auth/request-otp",
         data
       );
-      return response.data;
+      // Backend wraps response in { data, statusCode, message, timestamp }
+      return response.data.data || response.data;
     } catch (error) {
       console.error("Error in sendOtp service:", error);
       throw error;
