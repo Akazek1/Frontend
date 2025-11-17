@@ -1,7 +1,20 @@
 import axios from "axios";
 
+// Get API URL - use environment variable or detect from window location
+const getApiUrl = () => {
+  if (typeof window !== "undefined") {
+    // If running on mobile/network, use the host's IP
+    const hostname = window.location.hostname;
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      // Replace port 3000 with 3001 for backend
+      return `http://${hostname}:3001`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  baseURL: getApiUrl(),
   headers: {
     "Content-Type": "application/json",
   },
@@ -16,6 +29,11 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // If the data is FormData, remove Content-Type header to let axios set it automatically with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
     }
 
     return config;

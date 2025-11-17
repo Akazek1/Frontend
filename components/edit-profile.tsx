@@ -65,6 +65,73 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const usernameCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Check username availability and get suggestions
+    const checkUsername = useCallback(async (username: string) => {
+        if (!username || username.trim().length < 3) {
+            setUsernameSuggestions([]);
+            return;
+        }
+
+        const usernameRegex = /^[a-z0-9_-]{3,30}$/;
+        if (!usernameRegex.test(username.toLowerCase())) {
+            setUsernameSuggestions([]);
+            return;
+        }
+
+        setIsCheckingUsername(true);
+        try {
+            const excludeUserId = user?.id ? `?excludeUserId=${user.id}` : "";
+            const checkResponse = await api.get(`/users/username/${encodeURIComponent(username.toLowerCase())}/check${excludeUserId}`);
+            
+            if (!checkResponse.data.data?.available && user?.username !== username.toLowerCase()) {
+                // Username is taken, show suggestions
+                const suggestions = checkResponse.data.data?.suggestions || [];
+                setUsernameSuggestions(suggestions);
+                setErrors((prev) => ({ 
+                    ...prev, 
+                    username: "Username is already taken. Try one of the suggestions below." 
+                }));
+            } else {
+                setUsernameSuggestions([]);
+                setErrors((prev) => ({ ...prev, username: "" }));
+            }
+        } catch (err: any) {
+            if (err.response?.status === 400) {
+                setErrors((prev) => ({ 
+                    ...prev, 
+                    username: err.response?.data?.message || "Invalid username format" 
+                }));
+            }
+            setUsernameSuggestions([]);
+        } finally {
+            setIsCheckingUsername(false);
+        }
+    }, [user?.id, user?.username]);
+
+    // Debounce username checking
+    useEffect(() => {
+        if (usernameCheckTimeoutRef.current) {
+            clearTimeout(usernameCheckTimeoutRef.current);
+        }
+
+        if (formData.username && formData.username.length >= 3) {
+            usernameCheckTimeoutRef.current = setTimeout(() => {
+                checkUsername(formData.username);
+            }, 500);
+        } else {
+            setUsernameSuggestions([]);
+        }
+
+        return () => {
+            if (usernameCheckTimeoutRef.current) {
+                clearTimeout(usernameCheckTimeoutRef.current);
+            }
+        };
+    }, [formData.username, checkUsername]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -108,6 +175,11 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({ ...prev, [name]: "" }));
+        
+        // Clear suggestions when username changes
+        if (name === "username") {
+            setUsernameSuggestions([]);
+        }
     }, []);
 
     const handleSelectChange = useCallback((name: string, value: string) => {
@@ -165,9 +237,8 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
         } else if (isNaN(new Date(formData.dateOfBirth).getTime())) {
             newErrors.dateOfBirth = "Invalid date of birth";
         }
-        if (!formData.email.trim()) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        // Email is optional, but if provided, it must be valid format
+        if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "Invalid email format";
         }
         if (!formData.phone.trim()) {
@@ -232,18 +303,23 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 }
             }
 
-            const payload = {
-                phoneNumber: String(formData.phone),
+            const payload: any = {
                 firstName: String(formData.firstName),
                 lastName: String(formData.lastName),
                 username: formData.username ? String(formData.username) : undefined,
-                email: String(formData.email),
                 gender,
-                dateOfBirth: dateOfBirth.toISOString(),
+                dateOfBirth: dateOfBirth.toISOString(), // Backend will transform this to Date
                 languages: formData.languages.map(String),
                 userType: user?.userType === "Agency" ? "AGENCY" : "INDIVIDUAL",
                 // certificate: formData.certificate ?? null,
+                // Note: phoneNumber is not included as it's not part of UpdateUserDto
+                // Phone number should be updated through a separate endpoint if needed
             };
+
+            // Only include email if provided and valid
+            if (formData.email.trim() && /\S+@\S+\.\S+/.test(formData.email.trim())) {
+                payload.email = String(formData.email.trim());
+            }
 
             // Use PATCH for profile updates (username can be updated via PATCH)
             const profileResponse = await api.patch("/users/profile", payload);
@@ -323,23 +399,53 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">
                         Username <span className="text-gray-400 text-xs">(for sharing your profile)</span>
                     </Label>
-                    <Input
-                        id="username"
-                        name="username"
-                        value={formData.username}
-                        disabled={!idEditable}
-                        onChange={(e) => {
-                            // Convert to lowercase and remove invalid characters
-                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-                            setFormData((prev) => ({ ...prev, username: value }));
-                            setErrors((prev) => ({ ...prev, username: "" }));
-                        }}
-                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.username ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
-                        placeholder="your-username"
-                        maxLength={30}
-                    />
+                    <div className="relative">
+                        <Input
+                            id="username"
+                            name="username"
+                            value={formData.username}
+                            disabled={!idEditable}
+                            onChange={(e) => {
+                                // Convert to lowercase and remove invalid characters
+                                const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                                setFormData((prev) => ({ ...prev, username: value }));
+                                setErrors((prev) => ({ ...prev, username: "" }));
+                                setUsernameSuggestions([]);
+                            }}
+                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.username ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                            placeholder="your-username"
+                            maxLength={30}
+                        />
+                        {isCheckingUsername && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            </div>
+                        )}
+                    </div>
                     {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
-                    {formData.username && (
+                    {usernameSuggestions.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                            <p className="text-xs text-gray-600 font-medium">Available suggestions:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {usernameSuggestions.map((suggestion) => (
+                                    <button
+                                        key={suggestion}
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData((prev) => ({ ...prev, username: suggestion }));
+                                            setUsernameSuggestions([]);
+                                            setErrors((prev) => ({ ...prev, username: "" }));
+                                            checkUsername(suggestion);
+                                        }}
+                                        className="text-xs px-3 py-1 bg-[#145B10] text-white rounded-full hover:bg-[#1B5E20] transition-colors"
+                                    >
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {formData.username && !errors.username && (
                         <p className="text-xs text-gray-500">
                             Your profile link: {typeof window !== "undefined" ? window.location.origin : ""}/provider/{formData.username}
                         </p>

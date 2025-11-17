@@ -39,10 +39,15 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             // Don't set Content-Type header - let axios set it automatically with boundary
             const response = await api.patch("/users/profile/image", formData);
 
-            if (response.data.data?.profilePicture) {
-                dispatch(updateUser({ profilePicture: response.data.data.profilePicture }));
+            // TransformInterceptor wraps response in { data: ..., statusCode: ..., message: ..., timestamp: ... }
+            // Backend returns { profilePicture: "url" }, so after TransformInterceptor it's response.data.data.profilePicture
+            const profilePicture = response.data?.data?.profilePicture || response.data?.profilePicture;
+            
+            if (profilePicture) {
+                dispatch(updateUser({ profilePicture }));
                 toast.success("Profile image updated successfully");
             } else {
+                console.error("Unexpected response structure:", JSON.stringify(response.data, null, 2));
                 throw new Error("No image URL returned from server");
             }
         } catch (err: unknown) {

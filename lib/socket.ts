@@ -1,7 +1,19 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+// Get Socket URL - use environment variable or detect from window location
+const getSocketUrl = () => {
+  if (typeof window !== "undefined") {
+    // If running on mobile/network, use the host's IP
+    const hostname = window.location.hostname;
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      // Replace port 3000 with 3001 for backend
+      return `http://${hostname}:3001`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+};
+
+const SOCKET_URL = getSocketUrl();
 
 let socket: Socket | null = null;
 

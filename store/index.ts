@@ -1,7 +1,27 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/auth-slice";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
+
+// Create a noop storage for SSR (server-side rendering)
+const createNoopStorage = () => {
+  return {
+    getItem(_key: string) {
+      return Promise.resolve(null);
+    },
+    setItem(_key: string, value: any) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key: string) {
+      return Promise.resolve();
+    },
+  };
+};
+
+// Use localStorage on client, noop storage on server
+const storage = typeof window !== "undefined" 
+  ? createWebStorage("local")
+  : createNoopStorage();
 
 // Redux Persist Configuration
 const persistConfig = {
