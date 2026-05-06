@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import AppIcon from "@/public/svg/app-icon.svg"
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
 import { toast } from "react-hot-toast"
 import BubbleLoader from "@/components/loader/Bubble-Loader.tsx"
-import { Briefcase, User, ArrowRight, X } from "lucide-react"
+import { Briefcase, User, X } from "lucide-react"
 import api from "@/lib/axios"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
@@ -108,7 +108,6 @@ const OnboardingPage = () => {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedUserType, setSelectedUserType] = useState<"INDIVIDUAL" | "AGENCY" | null>(null)
   const [isReturningUser, setIsReturningUser] = useState(false)
-  const [userExists, setUserExists] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -118,7 +117,6 @@ const OnboardingPage = () => {
   const firstNameInputRef = useRef<HTMLInputElement | null>(null)
   const lastNameInputRef = useRef<HTMLInputElement | null>(null)
   const emailInputRef = useRef<HTMLInputElement | null>(null)
-  const [hasFocusedFirstName, setHasFocusedFirstName] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -183,21 +181,18 @@ const OnboardingPage = () => {
         })
         
         if (response?.data?.exists) {
-          setUserExists(true)
           setIsReturningUser(true)
           return true
         }
-      } catch (apiError) {
+      } catch {
         // Endpoint doesn't exist or user doesn't exist - both are fine
         // We'll just proceed with normal flow
       }
-      
-      setUserExists(false)
+
       setIsReturningUser(false)
       return false
-    } catch (error) {
+    } catch {
       // User doesn't exist, which is fine for new signups
-      setUserExists(false)
       setIsReturningUser(false)
       return false
     }

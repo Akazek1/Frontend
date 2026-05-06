@@ -7,7 +7,7 @@ import EmployerBookings from "@/components/bookings/employer-bookings";
 
 const BookingsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const isProvider = user?.userType === "INDIVIDUAL" || user?.userType === "AGENCY";
+  const isProvider = user?.userType === "Individual" || user?.userType === "Agency";
 
   // Providers see their received jobs + stats
   // Employers see their booking history

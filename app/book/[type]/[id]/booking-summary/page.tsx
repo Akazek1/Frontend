@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -82,6 +81,7 @@ const BookingSummary = () => {
                     id: service.id,
                     image: service.serviceImage || "/default-service.svg",
                     name: `${service.provider.firstName} ${service.provider.lastName}`,
+                    handle: `${service.provider.firstName.toLowerCase()}${service.provider.lastName.toLowerCase()}`,
                     title: service.title,
                     experience: service.description || "No experience provided",
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
