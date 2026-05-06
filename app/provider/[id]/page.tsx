@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { Languages, MapPin, Phone, Share, BadgeCheck, MessageCircleMore } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import ServiceCard from "@/components/service-card";
@@ -143,7 +144,7 @@ const ProviderProfilePage = () => {
               <div className="flex items-center gap-3">
                 <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24">
                   <AvatarImage 
-                    src={provider.profilePicture || "/default-profile.png"} 
+                    src={provider.profilePicture || "/default-profile.svg"}
                     className="object-cover" 
                   />
                   <AvatarFallback className="bg-[#145B10] text-white text-xl font-bold">
@@ -214,17 +215,17 @@ const ProviderProfilePage = () => {
               {services.map((service) => {
                 const mappedProvider = {
                   id: service.id,
-                  image: service.serviceImage || "/default-service.png",
+                  image: service.serviceImage || "/default-service.svg",
                   name: providerName,
                   title: service.title,
                   experience: service.description || "No description provided",
-                  languages: Array.isArray(service?.worker?.languages) 
-                    ? service.worker.languages.join(", ") 
+                  languages: Array.isArray(service?.worker?.languages)
+                    ? service.worker.languages.join(", ")
                     : provider.languages?.join(", ") || "No Languages Specified",
-                  location: Array.isArray(service.serviceAreas) 
-                    ? service.serviceAreas.join(", ") 
+                  location: Array.isArray(service.serviceAreas)
+                    ? service.serviceAreas.join(", ")
                     : service.serviceAreas || "No Location Specified",
-                  price: `${service.price} RWF/day`,
+                  price: formatPrice(service.priceMin, service.priceMax, service.priceType),
                   rating: service?.reviews?.averageRating || 0,
                   reviews: service?.reviews?.totalReviews || 0,
                   distance: "N/A",

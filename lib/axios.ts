@@ -6,6 +6,7 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  timeout: 30000,
 });
 
 // Request interceptor for adding auth token
@@ -16,6 +17,12 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // If the request has FormData, remove Content-Type header
+    // to let the browser set it automatically with the boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
     }
 
     return config;

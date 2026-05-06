@@ -33,7 +33,7 @@ interface Service {
   title: string
   description: string
   price: number
-  category: string
+  category: { id: string; name: string } | string
   serviceType: string
   scopeOfService: string
   areaServed?: string
@@ -601,7 +601,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     setUpdateData((prev: any) => ({
       ...prev,
       [service.id]: {
-        category: service.category || "",
+        category: (typeof service.category === "object" ? service.category?.name : service.category) || "",
         price: Number(service.price) || 0,
         serviceType: service.serviceType || "",
         scopeOfService: service.description || "",

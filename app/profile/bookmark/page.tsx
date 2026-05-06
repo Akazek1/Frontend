@@ -8,6 +8,7 @@ import api from "@/lib/axios";
 import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
 import { useBookmark } from "@/context/bookmark-context";
+import { formatPrice } from "@/lib/utils";
 
 interface BookmarksResponse {
     service: Service;
@@ -70,7 +71,7 @@ const BookmarksPage = () => {
                             experience="5+ years"
                             languages={Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "N/A"}
                             location={Array.isArray(service?.serviceAreas) ? service.serviceAreas.join(", ") : service?.serviceAreas || "N/A"}
-                            price={`${service?.price || 0} RWF/day`}
+                            price={formatPrice(service?.priceMin, service?.priceMax, service?.priceType)}
                             rating={service?.reviews?.averageRating || 0}
                             reviews={service?.reviews?.totalReviews || 0}
                             distance="2.5 miles"

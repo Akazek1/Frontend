@@ -28,6 +28,7 @@ export interface AuthResponse {
       gender?: string;
       languages?: string[];
       country?: string;
+      username?: string;
     };
   };
 }
@@ -81,10 +82,11 @@ const authService = {
 
   // Get current user
   getCurrentUser: async (): Promise<AuthResponse["data"]["user"]> => {
-    const response = await api.get<{ user: AuthResponse["data"]["user"] }>(
+    const response = await api.get<{ data: { user: AuthResponse["data"]["user"] } }>(
       "/auth/me"
     );
-    return response.data.user;
+    // Backend wraps response in { data, statusCode, message, timestamp }
+    return response.data.data?.user || (response.data as any).user;
   },
 
   // Check if user is authenticated

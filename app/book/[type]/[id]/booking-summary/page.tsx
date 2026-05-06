@@ -21,6 +21,7 @@ import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
+import { formatPrice } from "@/lib/utils";
 
 // Define the address interface
 interface Address {
@@ -79,13 +80,13 @@ const BookingSummary = () => {
 
                 const mappedProvider: Provider = {
                     id: service.id,
-                    image: service.serviceImage,
+                    image: service.serviceImage || "/default-service.svg",
                     name: `${service.provider.firstName} ${service.provider.lastName}`,
                     title: service.title,
                     experience: service.description || "No experience provided",
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
                     location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
-                    price: service.price.toString(),
+                    price: formatPrice(service.priceMin, service.priceMax, service.priceType),
                     rating: 4.8,
                     reviews: 8289,
                     distance: "2 miles",
@@ -239,7 +240,7 @@ const BookingSummary = () => {
     const itemTotal = Number(provider.price) * quantity +
         selectedAdditionalServiceIds.reduce((total, id) => {
             const service = additionalServices.find((s) => s.id === id);
-            return total + (service ? Number(service.price) : 0);
+            return total + (service ? Number(service.priceMin) : 0);
         }, 0);
     const discount = 0;
     const deliveryFee = 0;

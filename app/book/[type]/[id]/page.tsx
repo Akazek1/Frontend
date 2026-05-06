@@ -17,6 +17,7 @@ import ReviewSection from "@/components/review-section";
 import { useBookmark } from "@/context/bookmark-context";
 import { Provider, Service } from "@/types";
 import Link from "next/link";
+import { formatPrice } from "@/lib/utils";
 
 
 
@@ -47,17 +48,17 @@ const Page = () => {
         
         // Store provider ID and username for sharing
         setProviderId(service.provider.id);
-        setProviderUsername(service.provider.username || null);
+        setProviderUsername((service.provider as any).username || null);
 
         const mappedProvider: Provider = {
           id: service.id,
-          image: service.serviceImage,
+          image: service.serviceImage || "/default-service.svg",
           name: `${service.provider.firstName} ${service.provider.lastName}`,
           title: service.title,
           experience: service.description || "No experience provided",
           languages: Array.isArray(service?.worker?.languages) && service.worker.languages.join(", ") || "No Languages Specified",
           location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "No Location Specified",
-          price: `${service.price} RWF/day`,
+          price: formatPrice(service.priceMin, service.priceMax, service.priceType),
           rating: 4.8,
           reviews: 8289,
           distance: "2 miles",

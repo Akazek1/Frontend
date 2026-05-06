@@ -125,8 +125,9 @@ const OnboardingPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { sendOtp, verifyOtp, updateUserProfile, isLoading } = useAuth()
   
-  // Get redirect URL from query params
-  const redirectUrl = searchParams.get("redirect") || null
+  // Get redirect URL from query params — only allow internal paths
+  const rawRedirect = searchParams.get("redirect")
+  const redirectUrl = rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : null
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -377,7 +378,7 @@ const OnboardingPage = () => {
       }
     } catch (error: any) {
       console.error("OTP verification error:", error);
-      toast.error(error.response?.data?.message || "Invalid OTP. Use 11111 for development.");
+      toast.error(error.response?.data?.message || "Invalid OTP. Please try again.");
     }
   };
 
@@ -521,45 +522,9 @@ const OnboardingPage = () => {
     return ONBOARDING_STEPS[currentStep]?.buttonText || "Next"
   }
 
-  const Step: React.FC<{
-    currentStepData: OnboardingStep
-    stepNumber: number
-    code: string[]
-    inputsRef: React.MutableRefObject<Array<HTMLInputElement | null>>
-    handleChange: (value: string, index: number) => void
-    handleKeyDown: (e: React.KeyboardEvent, index: number) => void
-    handlePaste: (e: React.ClipboardEvent) => void
-    handleInputFocus: (index: number) => void
-    firstName: string
-    lastName: string
-    email: string
-    firstNameInputRef: React.RefObject<HTMLInputElement | null>
-    lastNameInputRef: React.RefObject<HTMLInputElement | null>
-    emailInputRef: React.RefObject<HTMLInputElement | null>
-    handleFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-    handleLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-    handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-    handleSaveBasicInfo: () => void
-  }> = React.memo(({ 
-    currentStepData, 
-    stepNumber, 
-    code, 
-    inputsRef, 
-    handleChange, 
-    handleKeyDown, 
-    handlePaste, 
-    handleInputFocus,
-    firstName,
-    lastName,
-    email,
-    firstNameInputRef,
-    lastNameInputRef,
-    emailInputRef,
-    handleFirstNameChange,
-    handleLastNameChange,
-    handleEmailChange,
-    handleSaveBasicInfo
-  }) => {
+  const renderStep = () => {
+    const currentStepData = ONBOARDING_STEPS[currentStep]
+    const stepNumber = currentStep
     const imageWrapper = "p-5 bg-[#F1FCEF] rounded-full"
     const imageStyle = "w-[160px] h-[160px] sm:w-[250px] sm:h-[250px] object-cover rounded-full"
 
@@ -585,7 +550,7 @@ const OnboardingPage = () => {
             </div>
             <div className="mb-4 sm:mb-8">
               <div className={`${currentStepData.textColor} text-3xl font-serif`}>
-                <GreenAppIcon />
+                <GreenAppIcon className="w-12 h-14 sm:w-16 sm:h-20" />
               </div>
             </div>
             <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8 max-w-[280px]">
@@ -731,7 +696,7 @@ const OnboardingPage = () => {
           <div>
             <div className="mb-2">
               <div className={`${currentStepData.textColor} flex items-center justify-center text-4xl font-serif`}>
-                <GreenAppIcon />
+                <GreenAppIcon className="w-12 h-14 sm:w-16 sm:h-20" />
               </div>
             </div>
             <div className={`${imageWrapper} flex items-center justify-between w-max mx-auto mb-6 sm:mb-10`}>
@@ -997,7 +962,7 @@ const OnboardingPage = () => {
       default:
         return null
     }
-  })
+  }
 
   if (showSplash) {
     return (
@@ -1021,7 +986,7 @@ const OnboardingPage = () => {
   const canSkip = introSteps.includes(currentStep)
 
   return (
-    <div className="relative h-screen overflow-hidden bg-white">
+    <div className="relative h-screen overflow-hidden bg-white max-w-md mx-auto">
       {/* Skip button for intro steps */}
       {canSkip && (
         <button
@@ -1037,32 +1002,13 @@ const OnboardingPage = () => {
         // For step 7, render without animation to prevent remounting
         <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
           <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            <Step
-              currentStepData={ONBOARDING_STEPS[currentStep]}
-              stepNumber={currentStep}
-              code={code}
-              inputsRef={inputsRef}
-              handleChange={handleChange}
-              handleKeyDown={handleKeyDown}
-              handlePaste={handlePaste}
-              handleInputFocus={handleInputFocus}
-              firstName={firstName}
-              lastName={lastName}
-              email={email}
-              firstNameInputRef={firstNameInputRef}
-              lastNameInputRef={lastNameInputRef}
-              emailInputRef={emailInputRef}
-              handleFirstNameChange={handleFirstNameChange}
-              handleLastNameChange={handleLastNameChange}
-              handleEmailChange={handleEmailChange}
-              handleSaveBasicInfo={handleSaveBasicInfo}
-            />
+            {renderStep()}
             <div className="mt-auto">
               <button
                 onClick={handleNext}
                 className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
-                  isLoading || 
+                  isLoading ||
                   !firstName.trim()
                 }
               >
@@ -1082,32 +1028,13 @@ const OnboardingPage = () => {
             className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
           >
           <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            <Step
-              currentStepData={ONBOARDING_STEPS[currentStep]}
-              stepNumber={currentStep}
-              code={code}
-              inputsRef={inputsRef}
-              handleChange={handleChange}
-              handleKeyDown={handleKeyDown}
-              handlePaste={handlePaste}
-              handleInputFocus={handleInputFocus}
-              firstName={firstName}
-              lastName={lastName}
-              email={email}
-              firstNameInputRef={firstNameInputRef}
-              lastNameInputRef={lastNameInputRef}
-              emailInputRef={emailInputRef}
-              handleFirstNameChange={handleFirstNameChange}
-              handleLastNameChange={handleLastNameChange}
-              handleEmailChange={handleEmailChange}
-              handleSaveBasicInfo={handleSaveBasicInfo}
-            />
+            {renderStep()}
             <div className="mt-auto">
               <button
                 onClick={handleNext}
                 className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
-                  isLoading || 
+                  isLoading ||
                   (currentStep === 6 && code.join("").length < OTP_LENGTH) ||
                   (currentStep === 4 && !selectedUserType) ||
                   (currentStep === 7 && !firstName.trim())
