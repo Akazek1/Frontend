@@ -1,11 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import SectionHeader from "../section-header";
+import React, { useEffect, useState } from "react";
 import ServiceCard from "../service-card";
-import Scroller from "../scroller";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
@@ -14,24 +13,17 @@ interface ServiceProviderProps {
   showHeader: boolean;
 }
 
-const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
+const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState("All");
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Derive unique filters from service titles
-  const filters = ["All", ...new Set(services.map((service) => service.title))];
-
-  // Fetch services
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const response = await api.get("/services");
         const data = Array.isArray(response.data.data) ? response.data.data : [];
-
-        // Validate services have valid id
         const validatedServices = data.filter(
           (service: Service) =>
             service.id && typeof service.id === "string" && service.id.trim() !== ""
@@ -50,62 +42,50 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
     fetchServices();
   }, []);
 
-  // Map services to Provider interface
   const filteredProviders: Provider[] = services
-    .filter((service) => {
-      if (selectedFilter === "All") return true;
-      return service.title === selectedFilter;
-    })
-    .map((service) => ({
-      id: service.id,
-      image: service.serviceImage,
-      name: `${service.provider.firstName} ${service.provider.lastName}`,
-      title: service.title,
-      experience: service.description || "No description provided",
-      languages: Array.isArray(service?.provider?.languages) ? service.provider.languages.join(", ") : "No Languages Specified",
-      location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
-      price: `${service.price} RWF/day`,
-      rating: service?.reviews?.averageRating || 0,
-      reviews: service?.reviews?.totalReviews || 0,
-      distance: "2 miles",
-      available: service.isActive,
-      verified: true,
-      type: service.provider.userType === "AGENCY" ? "AGENCY" : "INDIVIDUAL",
-    }));
+    .map((service) => {
+      const areas = Array.isArray(service.serviceAreas)
+        ? service.serviceAreas
+        : service.serviceAreas
+        ? [service.serviceAreas as string]
+        : [];
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const providerPic = (service.provider as any).profilePicture;
+      const titleKey = service.title.toLowerCase();
+      const fallbackImage =
+        titleKey.includes("clean") ? "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("cook") ? "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("nanny") || titleKey.includes("babysit") || titleKey.includes("child") ? "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("repair") || titleKey.includes("electric") || titleKey.includes("plumb") ? "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("paint") ? "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("garden") ? "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400"
+        : titleKey.includes("laundry") ? "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&q=80&w=400"
+        : "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400";
+      const image = service.serviceImage || providerPic || fallbackImage;
+
+      return {
+        id: service.id,
+        image,
+        name: `${service.provider.firstName} ${service.provider.lastName}`,
+        title: service.title,
+        experience: service.description || "",
+        languages: Array.isArray(service?.provider?.languages)
+          ? service.provider.languages.join(", ")
+          : "",
+        location: areas.join(", "),
+        price: formatPrice(service.priceMin, service.priceMax, service.priceType),
+        rating: service?.reviews?.averageRating || 0,
+        reviews: service?.reviews?.totalReviews || 0,
+        distance: "",
+        available: service.isActive,
+        verified: true,
+        type: service.provider.userType === "AGENCY" ? "AGENCY" : "INDIVIDUAL",
+      };
+    });
 
   return (
     <div>
-      {showHeader && (
-        <SectionHeader
-          title="Browse by Service Provider"
-          linkHref="/services"
-          className="text-[#1B2431] font-medium text-lg"
-        />
-      )}
-      <div className="sticky top-0 z-10 bg-[#F1FCEF] py-4">
-        <div className="flex rounded-lg">
-          <Scroller
-            visibleItems={3.5}
-            gap={12}
-            items={filters}
-            renderItem={(filter) => (
-              <button
-                key={filter}
-                className={`px-5 py-2 rounded-full border-2 border-[#145B10] text-[#145B10] font-semibold
-                  transition-all duration-200 ease-in-out capitalize
-                  ${selectedFilter === filter
-                    ? "bg-[#145B10] text-white"
-                    : "bg-transparent hover:bg-[#145B10]/10"
-                  }`}
-                onClick={() => setSelectedFilter(filter)}
-              >
-                {filter}
-              </button>
-            )}
-          />
-        </div>
-      </div>
-      {/* Service Provider Cards */}
       <AnimatePresence mode="wait">
         {loading ? (
           <motion.div
@@ -125,11 +105,11 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
           </motion.div>
         ) : (
           <motion.div
-            key={selectedFilter || "default"}
+            key="services"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
-            className="flex flex-col gap-4 pb-8"
+            className="flex flex-col gap-3 pb-8 mt-2"
           >
             {filteredProviders.length > 0 ? (
               filteredProviders.map((provider) => (
@@ -146,8 +126,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = ({ showHeader }) => {
                 />
               ))
             ) : (
-              <p className="text-center text-gray-500">
-                No providers found for this filter
+              <p className="text-center text-gray-500 py-4">
+                No providers found.
               </p>
             )}
           </motion.div>

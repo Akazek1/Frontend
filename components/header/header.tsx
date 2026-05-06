@@ -1,7 +1,7 @@
 "use client";
 import { Icons } from "@/components/icons";
 import { RootState } from "@/store";
-import { User } from "lucide-react";
+import { Bell, Globe, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSelector } from "react-redux";
@@ -9,79 +9,65 @@ import { useSelector } from "react-redux";
 const Header = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // Function to determine greeting based on current time
   const getGreeting = () => {
-    const currentHour = new Date().getHours();
-    if (currentHour >= 0 && currentHour < 12) {
-      return "Good Morning 👋";
-    } else if (currentHour >= 12 && currentHour < 17) {
-      return "Good Afternoon 👋";
-    } else if (currentHour >= 17 && currentHour < 21) {
-      return "Good Evening 👋";
-    } else {
-      return "Good Night 👋";
-    }
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    if (hour < 21) return "Good Evening";
+    return "Good Night";
   };
 
   return (
-    <div className="flex justify-between items-center rounded">
-      {user?.userType === "Individual" ? (
-        <Link href={"/profile"} className="flex items-center gap-2">
-          {user?.profilePicture ? (
-            <div>
-              <Image
-                src={user?.profilePicture || "/default-profile.png"}
-                alt="Profile Picture"
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full object-cover mr-2"
-              />
-            </div>
-          ) : (
-            <div className="p-2 cursor-pointer rounded-full bg-[#167021] text-white">
-              <User className="w-5 h-5" />
-            </div>
-          )}
-          <div className="flex flex-col leading-3">
-            <span className="text-[#757575] font-normal text-sm">{getGreeting()}</span>
-            <span className="font-bold text-lg">
-              {user?.firstName || user?.phoneNumber} {user?.lastName}
-            </span>
-          </div>
-        </Link>
-      ) : (
-        <>
-          <Link href={"/profile"} className="flex items-center gap-2">
+    <div className="flex flex-col gap-2.5">
+      {/* Top row */}
+      <div className="flex items-center justify-between">
+
+        {/* Location label — static display only */}
+        <div className="flex items-center gap-1.5 bg-white/70 border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
+          <MapPin className="w-3.5 h-3.5 text-[#145B10] flex-shrink-0" />
+          <span className="text-[13px] font-semibold text-[#1B2431]">Kigali, Rwanda</span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+
+          {/* Language chip */}
+          <button className="flex items-center gap-1 bg-white/70 border border-gray-200 rounded-full px-2.5 py-1.5 shadow-sm">
+            <Globe className="w-3.5 h-3.5 text-[#145B10]" />
+            <span className="text-[12px] font-semibold text-[#1B2431]">EN</span>
+          </button>
+
+          {/* Bell */}
+          <button className="relative bg-white/70 border border-gray-200 rounded-full p-2 shadow-sm">
+            <Bell className="w-4 h-4 text-[#1B2431]" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+          </button>
+
+          {/* Avatar */}
+          <Link href="/profile">
             {user?.profilePicture ? (
-              <div>
-                <Image
-                  src={user?.profilePicture || "/default-profile.png"}
-                  alt="Profile Picture"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-full object-cover mr-2"
-                />
-              </div>
+              <Image
+                src={user.profilePicture}
+                alt="Profile"
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#145B10]/30"
+              />
             ) : (
-              <div className="p-2 cursor-pointer rounded-full bg-[#167021] text-white">
-                <User className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-full bg-[#145B10] text-white flex items-center justify-center ring-2 ring-[#145B10]/30">
+                <User className="w-4 h-4" />
               </div>
             )}
-            <div className="flex flex-col leading-3">
-              <span className="text-[#757575] font-normal text-sm">{getGreeting()}</span>
-              <span className="font-bold text-lg">
-                {user?.firstName || user?.phoneNumber} {user?.lastName}
-              </span>
-            </div>
           </Link>
-        </>
-      )}
-      <div className="flex items-center gap-6">
-        <Icons.Language className="w-6 h-6 text-gray-500" />
-        <span className="relative">
-          <Icons.BellIcon className="w-5 h-5 text-green-600 z-0" />
-          <span className="bg-red-700 rounded-full w-1.5 h-1.5 absolute -top-0.5 right-1 z-10" />
-        </span>
+        </div>
+      </div>
+
+      {/* Greeting */}
+      <div>
+        <h1 className="text-[20px] font-bold text-[#1B2431] leading-tight">
+          {getGreeting()}, {user?.firstName || user?.phoneNumber} 👋
+        </h1>
+        <p className="text-[13px] text-[#757575] mt-0.5">How can we help you today?</p>
       </div>
     </div>
   );

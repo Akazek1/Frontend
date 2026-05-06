@@ -5,11 +5,10 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/header/header";
 import Categories from "@/components/home/category-scroller";
 import PromoBanner from "@/components/home/promo-banner";
-import PopulerService from "@/components/home/service-scroller";
 import SearchResults from "@/components/search/search-result";
 import SearchBar from "@/components/search/search";
 import ServiceProvider from "@/components/home/service-providers";
-import RecievedBookings from "@/components/recieved-booking/recieved-booking";
+import ReceivedBookings from "@/components/recieved-booking/received-booking";
 import ViewModeToggle from "@/components/view-mode-toggle";
 import TutorialModal from "@/components/tutorial-modal";
 import { useViewMode } from "@/context/view-mode-context";
@@ -23,10 +22,8 @@ const HomeContent = () => {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check if tutorial query parameter is present
     if (searchParams.get("tutorial") === "true") {
       setShowTutorial(true);
-      // Remove the query parameter from URL
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [searchParams]);
@@ -44,36 +41,34 @@ const HomeContent = () => {
   return (
     <>
       <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
-      <div className="space-y-6 p-3 sm:p-6 relative">
+
+      {/* Sticky top bar — header, role toggle, search always visible */}
+      <div className="sticky top-0 z-20 bg-[#F1FCEF] px-3 sm:px-6 pt-3 pb-3 space-y-3 shadow-sm">
+        <Header />
+        <ViewModeToggle />
+        {!isSearching && viewMode === "employer" && (
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search baby sitter, carpenter etc"
+          />
+        )}
+      </div>
+
+      {/* Scrollable content — banner, categories and cards scroll away and back */}
+      <div className="px-3 sm:px-6 pb-24 space-y-5 mt-2">
         {isSearching ? (
           <SearchResults query={searchQuery} onBack={handleBack} />
+        ) : viewMode === "employer" ? (
+          <>
+            <PromoBanner />
+            <Categories />
+            <ServiceProvider showHeader={true} />
+          </>
         ) : (
-          <div className="space-y-6">
-            <Header />
-            <div className="flex justify-center">
-              <ViewModeToggle />
-            </div>
-            
-            {viewMode === "employer" ? (
-              // Employer view: Show service providers (who they can hire)
-              <>
-                <SearchBar
-                  onSearch={handleSearch}
-                  placeholder="Search baby sitter, carpenter etc"
-                />
-                <PromoBanner />
-                <Categories />
-                <PopulerService />
-                <ServiceProvider showHeader={true} />
-              </>
-            ) : (
-              // Provider view: Show received bookings/job postings (what they can work on)
-              <RecievedBookings 
-                title="Job Postings" 
-                emptyMessage="No job postings available at the moment."
-              />
-            )}
-          </div>
+          <ReceivedBookings
+            title="Job Postings"
+            emptyMessage="No job postings available at the moment."
+          />
         )}
       </div>
     </>
