@@ -1,40 +1,55 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import Image from 'next/image';
 import BackButtonHeader from '@/components/header/back-button-header';
 import {
-  Briefcase, Star, CheckCircle2, Clock, XCircle, Loader2,
+  Loader2, CalendarDays, Banknote, Briefcase,
+  CheckCircle2, Clock, XCircle, TrendingUp, MessageCircleMore,
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import toast from 'react-hot-toast';
 
 interface Booking {
   id: string;
-  service: { title: string; serviceImage: string };
-  receiver: { firstName: string; lastName: string; profilePicture: string };
   status: string;
   scheduledFor: string;
   price: number;
+  service: { title: string; serviceImage: string };
+  receiver: { firstName: string; lastName: string; profilePicture: string };
 }
 
-const STATUS_STYLE: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
-  PENDING:   { icon: <Clock className="w-3 h-3" />,        color: 'text-amber-600',  bg: 'bg-amber-50',  label: 'Pending'   },
-  ACCEPTED:  { icon: <CheckCircle2 className="w-3 h-3" />, color: 'text-[#145B10]',  bg: 'bg-green-50',  label: 'Accepted'  },
-  CONFIRMED: { icon: <CheckCircle2 className="w-3 h-3" />, color: 'text-[#145B10]',  bg: 'bg-green-50',  label: 'Confirmed' },
-  COMPLETED: { icon: <CheckCircle2 className="w-3 h-3" />, color: 'text-blue-600',   bg: 'bg-blue-50',   label: 'Completed' },
-  CANCELLED: { icon: <XCircle className="w-3 h-3" />,      color: 'text-red-500',    bg: 'bg-red-50',    label: 'Cancelled' },
+type Tab = 'All' | 'Requests' | 'Active' | 'Completed' | 'Cancelled';
+
+const TABS: Tab[] = ['All', 'Requests', 'Active', 'Completed', 'Cancelled'];
+
+const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
+  PENDING:     { label: 'Request',     icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700'  },
+  CONFIRMED:   { label: 'Confirmed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]'  },
+  IN_PROGRESS: { label: 'In Progress', icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-blue-50 text-blue-700'    },
+  COMPLETED:   { label: 'Done',        icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]'  },
+  CANCELLED:   { label: 'Cancelled',   icon: <XCircle className="w-3 h-3" />,      chip: 'bg-red-50 text-red-600'      },
+  ACCEPTED:    { label: 'Accepted',    icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]'  },
+};
+
+const formatDate = (iso: string) => {
+  try {
+    return new Date(iso).toLocaleDateString('en-RW', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    });
+  } catch { return '—'; }
 };
 
 const ProviderBookings: React.FC = () => {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
+  const [loading, setLoading]   = useState(true);
+  const [acting, setActing]     = useState<string | null>(null); // booking id being accepted/declined
+  const [tab, setTab]           = useState<Tab>('All');
 
   useEffect(() => {
     api.get('/bookings/received', { withCredentials: true })
@@ -43,135 +58,217 @@ const ProviderBookings: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const total     = bookings.length;
-  const pending   = bookings.filter((b) => b.status === 'PENDING').length;
-  const completed = bookings.filter((b) => b.status === 'COMPLETED').length;
-  const earnings  = bookings.filter((b) => b.status === 'COMPLETED').reduce((s, b) => s + (b.price || 0), 0);
+  const total    = bookings.length;
+  const active   = bookings.filter((b) => ['CONFIRMED','IN_PROGRESS','ACCEPTED'].includes(b.status)).length;
+  const earnings = bookings.filter((b) => b.status === 'COMPLETED').reduce((s, b) => s + (b.price || 0), 0);
 
-  const filtered = bookings.filter((b) => activeTab === 'All' || b.status === activeTab.toUpperCase());
+  const filtered = bookings.filter((b) => {
+    if (tab === 'All')       return true;
+    if (tab === 'Requests')  return b.status === 'PENDING';
+    if (tab === 'Active')    return ['CONFIRMED','IN_PROGRESS','ACCEPTED'].includes(b.status);
+    if (tab === 'Completed') return b.status === 'COMPLETED';
+    if (tab === 'Cancelled') return b.status === 'CANCELLED';
+    return true;
+  });
+
+  const counts: Record<Tab, number> = {
+    All:       bookings.length,
+    Requests:  bookings.filter((b) => b.status === 'PENDING').length,
+    Active:    bookings.filter((b) => ['CONFIRMED','IN_PROGRESS','ACCEPTED'].includes(b.status)).length,
+    Completed: bookings.filter((b) => b.status === 'COMPLETED').length,
+    Cancelled: bookings.filter((b) => b.status === 'CANCELLED').length,
+  };
+
+  const handleAccept = async (id: string) => {
+    setActing(id);
+    try {
+      await api.patch(`/bookings/${id}/accept`);
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'CONFIRMED' } : b));
+      toast.success('Booking accepted!');
+    } catch { toast.error('Could not accept booking.'); }
+    finally { setActing(null); }
+  };
+
+  const handleDecline = async (id: string) => {
+    setActing(id);
+    try {
+      await api.patch(`/bookings/${id}/cancel`);
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'CANCELLED' } : b));
+      toast.success('Booking declined.');
+    } catch { toast.error('Could not decline booking.'); }
+    finally { setActing(null); }
+  };
+
+  // ── render ──────────────────────────────────────────────────────────────────
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F1FCEF] pb-24">
-      <BackButtonHeader text="My Jobs" className="p-3 sm:p-6" backHref="/" />
 
-      <div className="px-4 space-y-4">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-[#F1FCEF] px-4 pt-4 pb-3 shadow-sm space-y-3">
+        <BackButtonHeader text="My Jobs" backHref="/" />
 
-        {/* Welcome strip */}
-        <div className="flex items-center gap-3 bg-[#145B10] rounded-2xl px-4 py-4 text-white">
-          <div className="flex-1">
-            <p className="text-[11px] opacity-75">Provider Overview</p>
-            <h2 className="text-[16px] font-bold leading-snug mt-0.5">
-              Hi, <span className="capitalize">{user?.firstName || 'Provider'}</span> 👋
-            </h2>
-          </div>
-          {user?.profilePicture ? (
-            <Image src={user.profilePicture} alt="profile" width={44} height={44}
-              className="w-11 h-11 rounded-full object-cover ring-2 ring-white/40 flex-shrink-0" />
-          ) : (
-            <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg flex-shrink-0">
-              {(user?.firstName?.[0] || 'P').toUpperCase()}
-            </div>
-          )}
+        {/* Tab chips */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
+                tab === t
+                  ? 'bg-[#145B10] text-white'
+                  : 'bg-white text-[#616161] border border-gray-200'
+              }`}
+            >
+              {t}
+              {counts[t] > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  tab === t ? 'bg-white/20' : 'bg-gray-100'
+                }`}>
+                  {counts[t]}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Stats */}
+      <div className="px-4 pt-3 space-y-4">
+
+        {/* Stats strip */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Total',     value: total,     icon: <Briefcase className="w-4 h-4 text-[#145B10]" /> },
-            { label: 'Pending',   value: pending,   icon: <Clock className="w-4 h-4 text-amber-500" /> },
-            { label: 'Completed', value: completed, icon: <CheckCircle2 className="w-4 h-4 text-blue-500" /> },
+            { label: 'Total Jobs',   value: total,                          icon: <Briefcase className="w-4 h-4 text-[#145B10]" /> },
+            { label: 'Active',       value: active,                         icon: <Clock className="w-4 h-4 text-amber-500" />     },
+            { label: 'Earned (RWF)', value: earnings.toLocaleString(),      icon: <TrendingUp className="w-4 h-4 text-blue-500" /> },
           ].map(({ label, value, icon }) => (
-            <div key={label} className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex flex-col gap-1">
-              <div className="flex items-center gap-1.5">{icon}<span className="text-[10px] text-[#616161]">{label}</span></div>
-              <span className="text-[20px] font-bold text-[#1B2431]">{loading ? '—' : value}</span>
+            <div key={label} className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-1.5 mb-1">{icon}<span className="text-[10px] text-[#616161]">{label}</span></div>
+              <p className="text-[16px] font-bold text-[#1B2431] leading-tight truncate">{value}</p>
             </div>
           ))}
         </div>
 
-        {/* Earnings */}
-        <div className="bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-gray-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-            <Star className="w-5 h-5 text-[#145B10]" />
-          </div>
-          <div>
-            <p className="text-[11px] text-[#616161]">Total earnings (completed)</p>
-            <p className="text-[17px] font-bold text-[#145B10]">
-              {loading ? '—' : `RWF ${earnings.toLocaleString()}`}
-            </p>
-          </div>
-        </div>
+        {/* Booking list */}
+        {filtered.length === 0 ? (
+          <EmptyState tab={tab} />
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((b) => {
+              const meta     = STATUS_META[b.status] ?? STATUS_META.PENDING;
+              const isPending = b.status === 'PENDING';
+              const canMessage = ['CONFIRMED','IN_PROGRESS','ACCEPTED'].includes(b.status);
+              const isActing   = acting === b.id;
 
-        {/* Filter + list */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[13px] font-bold text-[#1B2431]">Received Bookings</p>
-            <div className="w-36">
-              <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger className="h-8 text-[11px] font-semibold text-[#616161] border-gray-200 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['All','Pending','Accepted','Confirmed','Completed','Cancelled'].map((t) => (
-                    <SelectItem key={t} value={t} className="text-[12px]">{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              return (
+                <div
+                  key={b.id}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                >
+                  <div className="flex gap-3 p-3">
+                    {/* Service image */}
+                    <div className="relative w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                      <Image
+                        src={b.service?.serviceImage || '/default-service.svg'}
+                        alt={b.service?.title}
+                        fill
+                        className="object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/default-service.svg'; }}
+                      />
+                    </div>
 
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-[#145B10]" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
-              <Briefcase className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-[13px] font-semibold text-[#1B2431]">No bookings yet</p>
-              <p className="text-[11px] text-[#616161] mt-1">
-                Complete your profile so employers can find and book you.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {filtered.map((b) => {
-                const s = STATUS_STYLE[b.status] ?? STATUS_STYLE.PENDING;
-                return (
-                  <div
-                    key={b.id}
-                    onClick={() => router.push(`/received-bookings/${b.id}`)}
-                    className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex gap-3 items-center cursor-pointer hover:shadow-md transition-shadow"
-                  >
-                    <Image
-                      src={b.service?.serviceImage || '/default-service.svg'}
-                      alt={b.service?.title}
-                      width={52} height={52}
-                      className="w-13 h-13 rounded-xl object-cover flex-shrink-0"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/default-service.svg'; }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-bold text-[#1B2431] truncate capitalize">{b.service?.title}</p>
-                      <p className="text-[11px] text-[#616161] truncate">
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="text-[13px] font-bold text-[#1B2431] capitalize leading-snug truncate">
+                          {b.service?.title}
+                        </p>
+                        <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${meta.chip}`}>
+                          {meta.icon}{meta.label}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-[#616161]">
                         From: {b.receiver?.firstName} {b.receiver?.lastName}
                       </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        {new Date(b.scheduledFor).toLocaleDateString('en-RW', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.bg} ${s.color}`}>
-                        {s.icon}{s.label}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#145B10]">
-                        RWF {(b.price || 0).toLocaleString()}
-                      </span>
+
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <CalendarDays className="w-3 h-3 flex-shrink-0" />
+                          {formatDate(b.scheduledFor)}
+                        </span>
+                        {b.price ? (
+                          <span className="flex items-center gap-1 text-[#145B10] font-semibold">
+                            <Banknote className="w-3 h-3 flex-shrink-0" />
+                            RWF {b.price.toLocaleString()}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+
+                  {/* Action bar */}
+                  {(isPending || canMessage) && (
+                    <div className="border-t border-gray-100 flex">
+                      {isPending && (
+                        <>
+                          <button
+                            onClick={() => handleDecline(b.id)}
+                            disabled={isActing}
+                            className="flex-1 py-2.5 text-[12px] font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          >
+                            {isActing ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Decline'}
+                          </button>
+                          <div className="w-px bg-gray-100" />
+                          <button
+                            onClick={() => handleAccept(b.id)}
+                            disabled={isActing}
+                            className="flex-1 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors disabled:opacity-50"
+                          >
+                            {isActing ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'Accept'}
+                          </button>
+                        </>
+                      )}
+                      {canMessage && (
+                        <button
+                          onClick={() => router.push(`/conversations/inbox/${b.id}`)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
+                        >
+                          <MessageCircleMore className="w-4 h-4" /> Message Client
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+    </div>
+  );
+};
+
+const EmptyState = ({ tab }: { tab: Tab }) => {
+  const messages: Record<Tab, { icon: React.ReactNode; title: string; sub: string }> = {
+    All:       { icon: <Briefcase className="w-8 h-8 text-gray-300" />,      title: 'No jobs yet',          sub: 'Complete your profile so employers can find and book you.'  },
+    Requests:  { icon: <Clock className="w-8 h-8 text-gray-300" />,          title: 'No pending requests',  sub: 'New booking requests from employers will appear here.'       },
+    Active:    { icon: <CheckCircle2 className="w-8 h-8 text-gray-300" />,   title: 'No active jobs',       sub: 'Jobs you accept will show here while they\'re in progress.' },
+    Completed: { icon: <CheckCircle2 className="w-8 h-8 text-gray-300" />,   title: 'No completed jobs',    sub: 'Your finished jobs and earnings will appear here.'           },
+    Cancelled: { icon: <XCircle className="w-8 h-8 text-gray-300" />,        title: 'No cancellations',     sub: "You haven't declined or cancelled any bookings."            },
+  };
+  const { icon, title, sub } = messages[tab];
+  return (
+    <div className="flex flex-col items-center justify-center py-14 gap-2 text-center">
+      {icon}
+      <p className="text-[14px] font-bold text-[#1B2431] mt-1">{title}</p>
+      <p className="text-[12px] text-[#616161] px-8 leading-relaxed">{sub}</p>
     </div>
   );
 };

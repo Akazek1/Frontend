@@ -1,153 +1,119 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import BackButtonHeader from '@/components/header/back-button-header';
-import { CircleCheck, Loader2, MessageCircleMore, Star } from 'lucide-react';
+import {
+  Loader2, MessageCircleMore, Star, MapPin, CalendarDays,
+  Banknote, ClipboardList, CheckCircle2, Clock, XCircle,
+} from 'lucide-react';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Address { street: string; city: string; }
-interface Worker { id: string; firstName: string; lastName: string; }
-interface Service { id: string; title: string; providerId: string; }
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 interface Booking {
   id: string;
   status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   scheduledFor: string;
-  service: Service;
-  address: Address;
-  worker: Worker | null;
-  review: null | { rating: number; comment: string };
   price?: number;
-}
-
-interface Category {
-  category: string;
-  orders: {
+  service: {
     id: string;
-    status: string;
-    provider: string;
-    profession: string;
-    date: string;
-    amount?: string;
-    reviewSubmitted: boolean;
-    service: Service;
-  }[];
+    title: string;
+    serviceImage?: string;
+  };
+  worker: { id: string; firstName: string; lastName: string } | null;
+  address?: { city?: string; street?: string };
+  review: null | { rating: number; comment: string };
 }
 
-const getDaySuffix = (day: number) => {
-  if (day >= 11 && day <= 13) return 'th';
-  switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
-  }
+type Tab = 'All' | 'Upcoming' | 'Completed' | 'Cancelled';
+
+const TABS: Tab[] = ['All', 'Upcoming', 'Completed', 'Cancelled'];
+
+const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
+  PENDING:     { label: 'Pending',     icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
+  CONFIRMED:   { label: 'Confirmed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
+  IN_PROGRESS: { label: 'In Progress', icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-blue-50 text-blue-700'   },
+  COMPLETED:   { label: 'Completed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
+  CANCELLED:   { label: 'Cancelled',   icon: <XCircle className="w-3 h-3" />,      chip: 'bg-red-50 text-red-600'     },
 };
 
 const formatDate = (iso: string) => {
   try {
-    const d = new Date(iso);
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return `${days[d.getDay()]}, ${d.getDate()}${getDaySuffix(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  } catch { return 'Invalid Date'; }
-};
-
-const getStatusDisplay = (status: string) => {
-  switch (status) {
-    case 'PENDING':    return { text: 'Pending',       color: 'bg-amber-500' };
-    case 'CONFIRMED':  return { text: 'Confirmed',     color: 'bg-[#145B10]' };
-    case 'COMPLETED':  return { text: 'Completed',     color: 'bg-[#145B10]' };
-    case 'CANCELLED':  return { text: 'Cancelled',     color: 'bg-red-500' };
-    default:           return { text: status,           color: 'bg-gray-500' };
-  }
+    return new Date(iso).toLocaleDateString('en-RW', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    });
+  } catch { return '—'; }
 };
 
 const EmployerBookings: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'All'|'Pending'|'Confirmed'|'Completed'|'Cancelled'>('All');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+  const [tab, setTab]           = useState<Tab>('All');
+
+  // Review modal state
+  const [reviewOpen, setReviewOpen]         = useState(false);
+  const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
+  const [rating, setRating]                 = useState(0);
+  const [comment, setComment]               = useState('');
+  const [submitting, setSubmitting]         = useState(false);
 
   useEffect(() => {
     api.get<{ data: Booking[] }>('/bookings')
       .then((r) => {
-        const bookings = Array.isArray(r.data.data) ? r.data.data : [];
-        const grouped = bookings.reduce((acc: Category[], b) => {
-          const cat = b.service.title.toUpperCase();
-          const order = {
-            id: b.id,
-            status: b.status,
-            provider: b.worker ? `${b.worker.firstName} ${b.worker.lastName}` : 'Agency Worker',
-            profession: b.service.title,
-            date: formatDate(b.scheduledFor),
-            amount: b.price ? `${b.price} RWF` : undefined,
-            reviewSubmitted: !!b.review,
-            service: b.service,
-          };
-          const existing = acc.find((c) => c.category === cat);
-          if (existing) existing.orders.push(order);
-          else acc.push({ category: cat, orders: [order] });
-          return acc;
-        }, []);
-        setCategories(grouped.sort((a, b) => a.category.localeCompare(b.category)));
+        setBookings(Array.isArray(r.data.data) ? r.data.data : []);
         setError(null);
       })
       .catch((err) => {
-        const msg = err?.response?.data?.message || 'Failed to fetch bookings';
+        const msg = err?.response?.data?.message || 'Failed to load bookings';
         setError(msg);
         toast.error(msg);
-        setCategories([]);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const openReviewModal = (id: string) => {
-    setSelectedBookingId(id); setRating(0); setComment(''); setReviewModalOpen(true);
+  const filtered = bookings.filter((b) => {
+    if (tab === 'All')       return true;
+    if (tab === 'Upcoming')  return ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status);
+    if (tab === 'Completed') return b.status === 'COMPLETED';
+    if (tab === 'Cancelled') return b.status === 'CANCELLED';
+    return true;
+  });
+
+  const counts: Record<Tab, number> = {
+    All:       bookings.length,
+    Upcoming:  bookings.filter((b) => ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status)).length,
+    Completed: bookings.filter((b) => b.status === 'COMPLETED').length,
+    Cancelled: bookings.filter((b) => b.status === 'CANCELLED').length,
   };
 
-  const handleSubmitReview = async () => {
-    if (!selectedBookingId || rating < 1 || !comment.trim()) {
-      toast.error('Please select a rating and write a comment.'); return;
+  const openReview = (id: string) => {
+    setReviewBookingId(id); setRating(0); setComment(''); setReviewOpen(true);
+  };
+
+  const submitReview = async () => {
+    if (!reviewBookingId || rating < 1 || !comment.trim()) {
+      toast.error('Choose a star rating and write a comment.'); return;
     }
     setSubmitting(true);
     try {
-      await api.post(`/bookings/${selectedBookingId}/reviews`, { rating, comment });
+      await api.post(`/bookings/${reviewBookingId}/reviews`, { rating, comment });
       toast.success('Review submitted!');
-      setCategories((prev) => prev.map((c) => ({
-        ...c,
-        orders: c.orders.map((o) => o.id === selectedBookingId ? { ...o, reviewSubmitted: true } : o),
-      })));
-      setReviewModalOpen(false);
+      setBookings((prev) =>
+        prev.map((b) => b.id === reviewBookingId ? { ...b, review: { rating, comment } } : b)
+      );
+      setReviewOpen(false);
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit review');
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Could not submit review');
     } finally { setSubmitting(false); }
   };
 
-  const filtered = categories
-    .map((c) => ({
-      ...c,
-      orders: c.orders.filter((o) => {
-        if (activeTab === 'All') return true;
-        return o.status.toLowerCase() === activeTab.toLowerCase();
-      }),
-    }))
-    .filter((c) => c.orders.length > 0);
+  // ── render ──────────────────────────────────────────────────────────────────
 
   if (loading) return (
     <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
@@ -155,109 +121,193 @@ const EmployerBookings: React.FC = () => {
     </div>
   );
 
-  if (error) return (
-    <div className="min-h-screen bg-[#F1FCEF] p-4">
-      <BackButtonHeader text="Bookings" backHref="/" />
-      <p className="text-center text-red-500 py-4">{error}</p>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-[#F1FCEF] pb-24">
-      <BackButtonHeader text="My Bookings" className="p-3 sm:p-6" backHref="/" />
 
-      {/* Status filter */}
-      <div className="px-4 pb-4">
-        <div className="bg-white/50 rounded-xl border border-gray-100">
-          <Select value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-            <SelectTrigger className="w-full py-3 text-sm font-semibold text-[#616161] bg-transparent border-none focus:ring-2 focus:ring-[#145B10]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="bg-white text-[#616161]">
-              {['All','Pending','Confirmed','Completed','Cancelled'].map((t) => (
-                <SelectItem key={t} value={t} className="font-semibold">{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-[#F1FCEF] px-4 pt-4 pb-3 shadow-sm space-y-3">
+        <BackButtonHeader text="My Bookings" backHref="/" />
+
+        {/* Tab chips */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
+                tab === t
+                  ? 'bg-[#145B10] text-white'
+                  : 'bg-white text-[#616161] border border-gray-200'
+              }`}
+            >
+              {t}
+              {counts[t] > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  tab === t ? 'bg-white/20' : 'bg-gray-100'
+                }`}>
+                  {counts[t]}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Review modal */}
-      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
-        <DialogContent className="w-[90vw] max-w-[360px] bg-white rounded-3xl p-4">
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+        <DialogContent className="w-[90vw] max-w-[360px] bg-white rounded-3xl p-5">
           <DialogHeader>
-            <DialogTitle className="text-[#1B2431] text-lg font-semibold">Submit Review</DialogTitle>
+            <DialogTitle className="text-[15px] font-bold text-[#1B2431]">Leave a Review</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex gap-1">
-              {[1,2,3,4,5].map((s) => (
-                <button key={s} onClick={() => setRating(s)}>
-                  <Star className={`w-7 h-7 ${s <= rating ? 'fill-[#145B10] stroke-[#145B10]' : 'stroke-[#145B10]'}`} />
-                </button>
-              ))}
-            </div>
-            <Textarea value={comment} onChange={(e) => setComment(e.target.value)}
-              placeholder="Write your feedback…" className="border-[#145B10] rounded-xl text-sm" rows={4} />
-            <Button className="w-full rounded-full font-bold bg-[#145B10] text-white hover:bg-[#0f4a0c]"
-              onClick={handleSubmitReview} disabled={submitting}>
-              {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Submitting…</> : 'Submit Review'}
-            </Button>
+          <p className="text-[12px] text-[#616161] -mt-2">How was the service?</p>
+          <div className="flex gap-1.5 my-1">
+            {[1,2,3,4,5].map((s) => (
+              <button key={s} onClick={() => setRating(s)} className="focus:outline-none">
+                <Star className={`w-8 h-8 transition-colors ${
+                  s <= rating ? 'fill-yellow-400 stroke-yellow-400' : 'stroke-gray-300'
+                }`} />
+              </button>
+            ))}
           </div>
+          <Textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Tell us what you liked or what could be better…"
+            className="border-gray-200 rounded-xl text-[13px] resize-none focus:ring-[#145B10]"
+            rows={4}
+          />
+          <Button
+            onClick={submitReview}
+            disabled={submitting}
+            className="w-full rounded-full bg-[#145B10] hover:bg-[#0f4a0c] text-white font-bold"
+          >
+            {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Submitting…</> : 'Submit Review'}
+          </Button>
         </DialogContent>
       </Dialog>
 
-      {/* Booking cards */}
-      <div className="px-4 pb-10 max-w-2xl mx-auto">
-        {filtered.length === 0 ? (
-          <p className="text-center text-[#616161] font-medium text-sm py-8">No bookings found.</p>
+      {/* Booking list */}
+      <div className="px-4 pt-3 space-y-3">
+        {error ? (
+          <p className="text-center text-red-500 py-8 text-[13px]">{error}</p>
+        ) : filtered.length === 0 ? (
+          <EmptyState tab={tab} />
         ) : (
-          filtered.map((cat, i) => (
-            <div key={i}>
-              <h2 className="py-4 text-lg font-bold text-[#212121] capitalize">{cat.category}</h2>
-              <div className="space-y-3">
-                {cat.orders.map((order, j) => (
-                  <div key={j} className="bg-white shadow-sm p-4 space-y-3 rounded-3xl border border-gray-100">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-[10px] text-white font-bold py-1 px-2.5 rounded-full ${getStatusDisplay(order.status).color}`}>
-                        {getStatusDisplay(order.status).text}
+          filtered.map((b) => {
+            const meta   = STATUS_META[b.status] ?? STATUS_META.PENDING;
+            const worker = b.worker ? `${b.worker.firstName} ${b.worker.lastName}` : 'Agency Worker';
+            const location = b.address?.city || b.address?.street || null;
+            const isUpcoming   = ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status);
+            const isCompleted  = b.status === 'COMPLETED';
+            const canMessage   = ['CONFIRMED','IN_PROGRESS'].includes(b.status);
+            const hasReview    = !!b.review;
+
+            return (
+              <div key={b.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="flex gap-3 p-3">
+                  {/* Service image */}
+                  <div className="relative w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                    <Image
+                      src={b.service?.serviceImage || '/default-service.svg'}
+                      alt={b.service?.title}
+                      fill
+                      className="object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/default-service.svg'; }}
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-[13px] font-bold text-[#1B2431] capitalize leading-snug truncate">
+                        {b.service?.title}
+                      </p>
+                      <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${meta.chip}`}>
+                        {meta.icon}{meta.label}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-[#616161]">{order.provider}</p>
-                        <p className="text-base font-bold text-[#212121] capitalize">{order.profession}</p>
-                      </div>
-                      <button
-                        onClick={() => order.status === 'CONFIRMED' && (window.location.href = `/conversations/inbox/${order.id}`)}
-                        disabled={order.status !== 'CONFIRMED' && order.status !== 'IN_PROGRESS'}
-                      >
-                        <MessageCircleMore className={`w-5 h-5 ${order.status === 'CONFIRMED' ? 'stroke-[#145B10]' : 'stroke-gray-300'}`} />
-                      </button>
-                    </div>
-                    <p className="text-xs text-[#616161]">📅 {order.date}</p>
-                    <div className="flex items-center justify-between">
-                      {order.status === 'COMPLETED' && order.amount && (
-                        <div className="flex items-center gap-1">
-                          <CircleCheck className="w-4 h-4 text-[#145B10]" />
-                          <p className="text-xs text-[#145B10] font-bold">Paid {order.amount}</p>
-                        </div>
+
+                    <p className="text-[11px] text-[#616161]">
+                      {isUpcoming ? `Provider: ${worker}` : `Served by: ${worker}`}
+                    </p>
+
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">
+                      <span className="flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3 flex-shrink-0" />
+                        {formatDate(b.scheduledFor)}
+                      </span>
+                      {location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          {location}
+                        </span>
                       )}
-                      {order.status === 'COMPLETED' && !order.reviewSubmitted && (
-                        <Button
-                          className="ml-auto rounded-full border border-[#145B10] text-[#145B10] font-bold bg-transparent hover:bg-[#145B10] hover:text-white text-xs py-1"
-                          onClick={() => openReviewModal(order.id)}
-                        >
-                          Give Feedback
-                        </Button>
-                      )}
+                      {b.price ? (
+                        <span className="flex items-center gap-1 text-[#145B10] font-semibold">
+                          <Banknote className="w-3 h-3 flex-shrink-0" />
+                          RWF {b.price.toLocaleString()}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Action bar */}
+                {(canMessage || isCompleted) && (
+                  <div className="border-t border-gray-100 flex">
+                    {canMessage && (
+                      <button
+                        onClick={() => window.location.href = `/conversations/inbox/${b.id}`}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
+                      >
+                        <MessageCircleMore className="w-4 h-4" /> Message Provider
+                      </button>
+                    )}
+                    {isCompleted && !hasReview && (
+                      <>
+                        {canMessage && <div className="w-px bg-gray-100" />}
+                        <button
+                          onClick={() => openReview(b.id)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
+                        >
+                          <Star className="w-4 h-4" /> Leave Review
+                        </button>
+                      </>
+                    )}
+                    {isCompleted && hasReview && (
+                      <div className="flex-1 flex items-center justify-center gap-1 py-2.5">
+                        {[1,2,3,4,5].map((s) => (
+                          <Star key={s} className={`w-4 h-4 ${
+                            s <= (b.review?.rating ?? 0) ? 'fill-yellow-400 stroke-yellow-400' : 'stroke-gray-200'
+                          }`} />
+                        ))}
+                        <span className="text-[11px] text-[#616161] ml-1">Your review</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
+    </div>
+  );
+};
+
+const EmptyState = ({ tab }: { tab: Tab }) => {
+  const messages: Record<Tab, { icon: React.ReactNode; title: string; sub: string }> = {
+    All:       { icon: <ClipboardList className="w-8 h-8 text-gray-300" />, title: 'No bookings yet',     sub: "Once you book a service, it'll appear here."           },
+    Upcoming:  { icon: <Clock className="w-8 h-8 text-gray-300" />,        title: 'No upcoming bookings', sub: 'Browse services and book one to get started.'          },
+    Completed: { icon: <CheckCircle2 className="w-8 h-8 text-gray-300" />, title: 'No completed jobs',    sub: 'Completed bookings and your reviews will show here.'   },
+    Cancelled: { icon: <XCircle className="w-8 h-8 text-gray-300" />,      title: 'No cancellations',    sub: "You haven't cancelled any bookings — great!"           },
+  };
+  const { icon, title, sub } = messages[tab];
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
+      {icon}
+      <p className="text-[14px] font-bold text-[#1B2431] mt-1">{title}</p>
+      <p className="text-[12px] text-[#616161] px-8 leading-relaxed">{sub}</p>
     </div>
   );
 };
