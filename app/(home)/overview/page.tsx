@@ -9,7 +9,7 @@ import SearchResults from "@/components/search/search-result";
 import SearchBar from "@/components/search/search";
 import ServiceProvider from "@/components/home/service-providers";
 import PostJobBanner from "@/components/home/post-job-banner";
-import ProviderDashboard from "@/components/home/provider-dashboard";
+import JobPostingsFeed from "@/components/home/job-postings-feed";
 import ViewModeToggle from "@/components/view-mode-toggle";
 import TutorialModal from "@/components/tutorial-modal";
 import { useViewMode } from "@/context/view-mode-context";
@@ -47,10 +47,14 @@ const HomeContent = () => {
       <div className="sticky top-0 z-20 bg-[#F1FCEF] px-3 sm:px-6 pt-3 pb-3 space-y-3 shadow-sm">
         <Header />
         <ViewModeToggle />
-        {!isSearching && viewMode === "employer" && (
+        {!isSearching && (
           <SearchBar
             onSearch={handleSearch}
-            placeholder="Search baby sitter, carpenter etc"
+            placeholder={
+              viewMode === "employer"
+                ? "Search baby sitter, carpenter etc"
+                : "Search job postings…"
+            }
           />
         )}
       </div>
@@ -67,7 +71,7 @@ const HomeContent = () => {
             <ServiceProvider showHeader={true} />
           </>
         ) : (
-          <ProviderDashboard />
+          <JobPostingsFeed />
         )}
       </div>
     </>
