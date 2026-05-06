@@ -8,7 +8,8 @@ import PromoBanner from "@/components/home/promo-banner";
 import SearchResults from "@/components/search/search-result";
 import SearchBar from "@/components/search/search";
 import ServiceProvider from "@/components/home/service-providers";
-import ReceivedBookings from "@/components/recieved-booking/received-booking";
+import PostJobBanner from "@/components/home/post-job-banner";
+import ProviderDashboard from "@/components/home/provider-dashboard";
 import ViewModeToggle from "@/components/view-mode-toggle";
 import TutorialModal from "@/components/tutorial-modal";
 import { useViewMode } from "@/context/view-mode-context";
@@ -61,14 +62,12 @@ const HomeContent = () => {
         ) : viewMode === "employer" ? (
           <>
             <PromoBanner />
+            <PostJobBanner />
             <Categories />
             <ServiceProvider showHeader={true} />
           </>
         ) : (
-          <ReceivedBookings
-            title="Job Postings"
-            emptyMessage="No job postings available at the moment."
-          />
+          <ProviderDashboard />
         )}
       </div>
     </>

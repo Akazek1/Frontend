@@ -19,15 +19,19 @@ export interface Service {
   id: string;
   title: string;
   description: string;
-  price: number;
-  category: string;
-  serviceImage: string;
+  priceMin: number;
+  priceMax: number;
+  priceType: string;
+  category: { id: string; name: string; nameKn?: string; nameFr?: string; icon?: string } | string;
+  serviceImage: string | null;
+  isActive: boolean;
   provider: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
     userType: "AGENCY" | "INDIVIDUAL";
+    languages?: string[];
   };
   worker?: {
     id: string;
@@ -47,6 +51,7 @@ export interface Provider {
   id: string;
   image: string;
   name: string;
+  handle: string;
   title: string;
   experience: string;
   languages: string;

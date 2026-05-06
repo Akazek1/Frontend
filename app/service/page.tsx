@@ -5,6 +5,7 @@ import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Service } from "@/types";
 import BackButtonHeader from "@/components/header/back-button-header";
+import { formatPrice } from "@/lib/utils";
 
 
 const ServicePage = () => {
@@ -74,8 +75,8 @@ const ServicePage = () => {
                                 title={service.title}
                                 experience="5+ years"
                                 languages={Array.isArray(service.worker?.languages) ? service.worker.languages.join(", ") : ""}
-                                location={Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || ""}
-                                price={`$${service.price}`}
+                                location={Array.isArray(service.serviceAreas) ? (service.serviceAreas[0] || "") : service.serviceAreas || ""}
+                                price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
                                 rating={service.reviews.averageRating || 0}
                                 reviews={service.reviews.totalReviews || 0}
                                 distance="2.5 miles"

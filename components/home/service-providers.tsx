@@ -64,16 +64,21 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         : "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400";
       const image = service.serviceImage || providerPic || fallbackImage;
 
+      const firstName = service.provider.firstName.toLowerCase().replace(/\s+/g, "");
+      const lastName = service.provider.lastName.toLowerCase().replace(/\s+/g, "");
+      const handle = `@${firstName}_${lastName}${service.id.slice(0, 4)}`;
+
       return {
         id: service.id,
         image,
         name: `${service.provider.firstName} ${service.provider.lastName}`,
+        handle,
         title: service.title,
         experience: service.description || "",
         languages: Array.isArray(service?.provider?.languages)
           ? service.provider.languages.join(", ")
           : "",
-        location: areas.join(", "),
+        location: areas[0] || "",
         price: formatPrice(service.priceMin, service.priceMax, service.priceType),
         rating: service?.reviews?.averageRating || 0,
         reviews: service?.reviews?.totalReviews || 0,
