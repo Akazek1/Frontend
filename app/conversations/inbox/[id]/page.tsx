@@ -1,348 +1,354 @@
-"use client"
-import type React from "react"
-import { useState, useEffect, useRef } from "react"
-import { useParams, useRouter } from "next/navigation"
-import api from "@/lib/axios"
-import toast from "react-hot-toast"
-import { initializeSocket, getSocket } from "@/lib/socket"
-import BackButtonHeader from "@/components/header/back-button-header"
-import { Check, CheckCheck, Loader2, Phone, Send } from "lucide-react"
-import { useSelector } from "react-redux"
-import type { RootState } from "@/store"
+"use client";
+
+import type React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import BackButtonHeader from "@/components/header/back-button-header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import api from "@/lib/axios";
+import { Check, CheckCheck, Info, Loader2, Phone, Send } from "lucide-react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 interface Message {
-    id: string
-    bookingId: string
-    senderId: string
-    content: string
-    createdAt: string
-    isRead: boolean
-    sender: {
-        id: string
-        firstName: string
-        lastName: string
-    }
+  id: string;
+  bookingId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  sender: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 interface Booking {
-    userId: string;
-    user: {
-        firstName: string
-        lastName: string
-    },
-    messages: Message[]
-    id: string
-    service: {
-        id: string
-        title: string
-        providerId: string
-        provider: {
-            firstName: string;
-            lastName: string
-        }
-    }
-    worker: {
-        id: string
-        firstName: string
-        lastName: string
-    } | null
+  userId?: string;
+  user?: {
+    id?: string;
+    firstName: string;
+    lastName: string;
+  };
+  messages: Message[];
+  id: string;
+  service: {
+    id: string;
+    title: string;
+    providerId?: string;
+    provider: {
+      firstName: string;
+      lastName: string;
+      profilePicture?: string;
+    };
+  };
 }
+
+const now = new Date();
+const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60 * 1000).toISOString();
+
+const demoConversations: Record<string, Booking> = {
+  "demo-cleaning": {
+    id: "demo-cleaning",
+    userId: "demo-user",
+    user: { id: "demo-user", firstName: "You", lastName: "" },
+    service: {
+      id: "service-cleaning",
+      title: "Home cleaning",
+      provider: { firstName: "Aline", lastName: "Uwase", profilePicture: "" },
+    },
+    messages: [
+      {
+        id: "demo-cleaning-1",
+        bookingId: "demo-cleaning",
+        senderId: "demo-provider",
+        content: "Hello, I received your cleaning request.",
+        createdAt: minutesAgo(32),
+        isRead: true,
+        sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+      },
+      {
+        id: "demo-cleaning-2",
+        bookingId: "demo-cleaning",
+        senderId: "demo-user",
+        content: "Thank you. The house is in Kacyiru. Morning works best.",
+        createdAt: minutesAgo(18),
+        isRead: true,
+        sender: { id: "demo-user", firstName: "You", lastName: "" },
+      },
+      {
+        id: "demo-cleaning-3",
+        bookingId: "demo-cleaning",
+        senderId: "demo-provider",
+        content: "I can come tomorrow morning at 9:00. Please confirm the address.",
+        createdAt: minutesAgo(8),
+        isRead: false,
+        sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+      },
+    ],
+  },
+  "demo-nanny": {
+    id: "demo-nanny",
+    userId: "demo-user",
+    user: { id: "demo-user", firstName: "You", lastName: "" },
+    service: {
+      id: "service-nanny",
+      title: "Child care",
+      provider: { firstName: "Vestine", lastName: "Mukamana", profilePicture: "" },
+    },
+    messages: [
+      {
+        id: "demo-nanny-1",
+        bookingId: "demo-nanny",
+        senderId: "demo-provider",
+        content: "I have experience with toddlers and can help after school.",
+        createdAt: minutesAgo(130),
+        isRead: true,
+        sender: { id: "demo-provider", firstName: "Vestine", lastName: "Mukamana" },
+      },
+      {
+        id: "demo-nanny-2",
+        bookingId: "demo-nanny",
+        senderId: "demo-user",
+        content: "Thank you. I will prepare the task list before you arrive.",
+        createdAt: minutesAgo(95),
+        isRead: true,
+        sender: { id: "demo-user", firstName: "You", lastName: "" },
+      },
+    ],
+  },
+  "demo-electrician": {
+    id: "demo-electrician",
+    userId: "demo-user",
+    user: { id: "demo-user", firstName: "You", lastName: "" },
+    service: {
+      id: "service-electrician",
+      title: "Electrical repair",
+      provider: { firstName: "Jean", lastName: "Hirwa", profilePicture: "" },
+    },
+    messages: [
+      {
+        id: "demo-electrician-1",
+        bookingId: "demo-electrician",
+        senderId: "demo-provider",
+        content: "Please send a photo of the switch before I come.",
+        createdAt: minutesAgo(1440),
+        isRead: false,
+        sender: { id: "demo-provider", firstName: "Jean", lastName: "Hirwa" },
+      },
+    ],
+  },
+};
 
 const Conversation: React.FC = () => {
-    const { id } = useParams()
-    const router = useRouter()
-    const [booking, setBooking] = useState<Booking | null>(null)
-    const [messages, setMessages] = useState<Message[]>([])
-    const [newMessage, setNewMessage] = useState<string>("")
-    const [loading, setLoading] = useState<boolean>(true)
-    const [sending, setSending] = useState<boolean>(false)
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const { token, user } = useSelector((state: RootState) => state.auth)
-    const currentUserId = user?.id || ""
+  const { id } = useParams<{ id: string }>();
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [usingDemoContent, setUsingDemoContent] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { token, user } = useSelector((state: RootState) => state.auth);
+  const currentUserId = user?.id || "demo-user";
 
-    // Scroll to bottom when messages change
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }, [messages])
+  const participant = useMemo(() => {
+    if (!booking) return { name: "Conversation", initials: "AK", service: "" };
+    const provider = booking.service.provider;
+    const name = `${provider.firstName} ${provider.lastName}`.trim();
+    return {
+      name,
+      initials: `${provider.firstName?.[0] || ""}${provider.lastName?.[0] || ""}` || "AK",
+      service: booking.service.title,
+      image: provider.profilePicture || "",
+    };
+  }, [booking]);
 
-    // Initialize socket and fetch booking data
-    useEffect(() => {
-        if (!token || !id || !currentUserId) {
-            toast.error("Authentication required")
-            router.push("/login")
-            return
-        }
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-        const fetchBooking = async () => {
-            setLoading(true)
-            try {
-                const { data } = await api.get<{ data: Booking }>(`/bookings/${id}`)
-                setBooking(data.data)
-                const sortedMessages = data.data.messages.sort(
-                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                )
-                setMessages(sortedMessages)
-            } catch {
-                toast.error("Failed to fetch booking")
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        const socket = initializeSocket(token, currentUserId)
-
-        // Join booking room and handle connection events
-        const joinBooking = () => {
-            socket.emit("joinBooking", id as string)
-        }
-
-        socket.on("connect", joinBooking)
-        socket.on("reconnect", joinBooking)
-
-        // Handle successful room join
-        socket.on("joinBookingSuccess", () => {
-            // Mark messages as read when joining
-            socket.emit("markMessagesAsRead", { bookingId: id })
-        })
-
-        socket.on("joinBookingError", (error) => {
-            console.error("Failed to join booking room:", error)
-            toast.error("Realtime connection failed - using fallback")
-        })
-
-        // Handle new messages
-        socket.on("newMessage", (message: Message) => {
-            setMessages(prev => {
-                // Avoid duplicates
-                if (prev.some(m => m.id === message.id)) return prev
-
-                // Add new message and sort by timestamp
-                return [...prev, message].sort(
-                    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                )
-            })
-        })
-
-        // Handle message sent confirmation
-        socket.on("messageSent", () => {
-            setSending(false)
-        })
-
-        socket.on("messageError", (error) => {
-            console.error("Message error:", error)
-            setSending(false)
-            toast.error("Failed to send message")
-        })
-
-        // Handle messages read updates
-        socket.on("messagesRead", ({ bookingId, userId }) => {
-            if (bookingId === id && userId !== currentUserId) {
-                setMessages(prev =>
-                    prev.map(msg => {
-                        if (msg.senderId === currentUserId) {
-                            return { ...msg, isRead: true }
-                        }
-                        return msg
-                    })
-                )
-            }
-        })
-
-        // Initial data fetch
-        fetchBooking()
-
-        return () => {
-            socket.off("connect", joinBooking)
-            socket.off("reconnect", joinBooking)
-            socket.off("joinBookingSuccess")
-            socket.off("joinBookingError")
-            socket.off("newMessage")
-            socket.off("messageSent")
-            socket.off("messageError")
-            socket.off("messagesRead")
-            socket.disconnect()
-        }
-    }, [id, token, router, currentUserId])
-
-    // Mark messages as read when messages change
-    useEffect(() => {
-        if (messages.length > 0 && currentUserId && id) {
-            const unreadMessages = messages.filter((msg) => msg.senderId !== currentUserId && !msg.isRead)
-
-            if (unreadMessages.length > 0) {
-                const timeoutId = setTimeout(() => {
-                    const socket = getSocket()
-                    if (socket?.connected) {
-                        socket.emit("markMessagesAsRead", { bookingId: id })
-                    } else {
-                        api.patch(`/bookings/messages/${id}/read`).catch(console.error)
-                    }
-                }, 1000)
-
-                return () => clearTimeout(timeoutId)
-            }
-        }
-    }, [messages, currentUserId, id])
-
-    const sendViaRestAPI = async (messageContent: string) => {
-        try {
-            const res = await api.post(`/bookings/${id}/messages`,
-                { content: messageContent },
-                { withCredentials: true }
-            )
-            if (res.data?.data) {
-                setMessages(prev => {
-                    if (prev.some(m => m.id === res.data.data.id)) return prev
-                    return [...prev, res.data.data].sort(
-                        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                    )
-                })
-            }
-        } catch {
-            toast.error("Failed to send message")
-        } finally {
-            setSending(false)
-        }
+  useEffect(() => {
+    const demo = demoConversations[id];
+    if (!token || demo) {
+      const fallback = demo || demoConversations["demo-cleaning"];
+      setBooking(fallback);
+      setMessages(fallback.messages);
+      setUsingDemoContent(true);
+      setLoading(false);
+      return;
     }
 
-    const handleSendMessage = async () => {
-        if (!newMessage.trim() || sending) return
+    const fetchBooking = async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get<{ data: Booking }>(`/bookings/${id}`);
+        const nextBooking = data.data;
+        setBooking(nextBooking);
+        setMessages(
+          [...(nextBooking.messages || [])].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          ),
+        );
+        setUsingDemoContent(false);
+      } catch {
+        const fallback = demoConversations["demo-cleaning"];
+        setBooking(fallback);
+        setMessages(fallback.messages);
+        setUsingDemoContent(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        const messageContent = newMessage.trim()
-        setNewMessage("")
-        setSending(true)
+    fetchBooking();
+  }, [id, token]);
 
-        try {
-            const socket = getSocket()
-            if (socket?.connected) {
-                socket.emit("sendMessage", {
-                    bookingId: id,
-                    message: { content: messageContent }
-                })
-            } else {
-                await sendViaRestAPI(messageContent)
-            }
-        } catch {
-            setSending(false)
-            toast.error("Failed to send message")
-        }
+  const handleSendMessage = async () => {
+    const content = newMessage.trim();
+    if (!content || sending) return;
+
+    setNewMessage("");
+    setSending(true);
+
+    if (usingDemoContent || !token) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `local-${Date.now()}`,
+          bookingId: id,
+          senderId: currentUserId,
+          content,
+          createdAt: new Date().toISOString(),
+          isRead: false,
+          sender: { id: currentUserId, firstName: "You", lastName: "" },
+        },
+      ]);
+      setSending(false);
+      return;
     }
 
-    const formatTimestamp = (iso: string) => {
-        const date = new Date(iso)
-        const now = new Date()
-        const diff = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
-        if (diff === 0) {
-            return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-        }
-        if (diff === 1) return "Yesterday"
-        return date.toLocaleDateString([], { month: "short", day: "numeric" })
+    try {
+      const res = await api.post(`/bookings/${id}/messages`, { content }, { withCredentials: true });
+      if (res.data?.data) {
+        setMessages((prev) => [...prev, res.data.data]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `local-${Date.now()}`,
+          bookingId: id,
+          senderId: currentUserId,
+          content,
+          createdAt: new Date().toISOString(),
+          isRead: false,
+          sender: { id: currentUserId, firstName: "You", lastName: "" },
+        },
+      ]);
+    } finally {
+      setSending(false);
     }
+  };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex justify-center items-center bg-gray-50">
-                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
-            </div>
-        )
-    }
+  const formatTimestamp = (iso: string) => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
-    if (!booking) {
-        return (
-            <div className="min-h-screen p-4 bg-gray-50">
-                <BackButtonHeader text="Conversation" backHref="/conversations" />
-                <p className="text-center text-red-500">Conversation not found</p>
-            </div>
-        )
-    }
-
+  if (loading) {
     return (
-        <div className="relative flex flex-col h-screen p-4 sm:p-6 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-                <BackButtonHeader
-                    text={booking.userId === user?.id ? `${booking.service.provider.firstName} ${booking.service.provider.lastName}` : `${booking.user.firstName} ${booking.user.lastName}`}
-                    backHref="/conversations"
-                    
-                />
-                <div className="flex items-center space-x-3">
-                    <Phone className="text-[#222222] w-6 h-6" />
-                    {/* <span className="cursor-pointer">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-message-circle-more-icon lucide lucide-circle-more"
-                        >
-                            <path d="M12.0002 1.2085C17.9595 1.2085 22.7918 6.03966 22.7918 12.0002C22.7918 17.9595 17.9595 22.7918 12.0002 22.7918C6.03966 22.7918 1.2085 17.9595 1.2085 12.0002C1.2085 6.04083 6.04083 1.2085 12.0002 1.2085Z" />
-                            <path d="M8 12h.01" />
-                            <path d="M12 12h.01" />
-                            <path d="M16 12h.01" />
-                        </svg>
-                    </span> */}
-                </div>
-            </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#F1FCEF]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+      </div>
+    );
+  }
 
-            <div className="flex flex-col space-y-[10px] mt-4 flex-1 overflow-y-auto scrollbar-hide pb-10">
-                {messages.length === 0 ? (
-                    <p className="text-center text-gray-500">No messages yet.</p>
-                ) : (
-                    messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.senderId === currentUserId ? "justify-end" : "justify-start"}`}>
-                            <div
-                                className={`max-w-[70%] p-3 tracking-[0.2px] rounded-b-[12px] ${msg.senderId === currentUserId
-                                    ? "bg-gradient-to-tl from-[#145B10] to-[#289723] text-white rounded-tl-[12px]"
-                                    : "bg-[#F5F5F5] text-black rounded-tr-lg"
-                                    }`}
-                            >
-                                <p>{msg.content}</p>
-                                <div className="flex items-center justify-between mt-1">
-                                    <p className={`text-sm ${msg.senderId === currentUserId ? "text-white" : "text-[#757575]"}`}>
-                                        {formatTimestamp(msg.createdAt)}
-                                    </p>
-                                    {msg.senderId === currentUserId && (
-                                        <span className={`text-xs ml-2 ${msg.isRead ? "text-blue-200" : "text-gray-300"}`}>
-                                            {msg.isRead
-                                                ? <CheckCheck className="w-5 h-5" />
-                                                : <Check className="w-5 h-5" />
-                                            }
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                )}
-                <div ref={messagesEndRef} />
+  return (
+    <div className="flex h-screen flex-col bg-[#F1FCEF]">
+      <div className="sticky top-0 z-10 bg-[#F1FCEF] px-4 pb-3 pt-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <BackButtonHeader text="" backHref="/conversations" />
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarImage src={participant.image} className="object-cover" />
+              <AvatarFallback className="bg-[#145B10] text-[12px] font-bold text-white">
+                {participant.initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-bold text-[#1B2431]">{participant.name}</p>
+              <p className="truncate text-[11px] text-[#757575]">{participant.service}</p>
             </div>
-
-            <div className="absolute z-50 w-[95%] bottom-5 left-1/2 -translate-x-1/2 flex items-center space-x-2 p-1 rounded-lg">
-                <input
-                    type="text"
-                    placeholder="Message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !sending) handleSendMessage()
-                    }}
-                    className="flex-1 p-2 border-none focus:outline-none bg-[#FAFAFA] w-[90%] rounded-lg"
-                    disabled={sending}
-                />
-                <button
-                    className="p-2.5 bg-gradient-to-tl from-[#145B10] to-[#289723] rounded-full text-white disabled:opacity-50"
-                    onClick={handleSendMessage}
-                    disabled={sending}
-                >
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                </button>
-            </div>
+          </div>
+          <button
+            type="button"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#145B10] shadow-sm"
+            aria-label="Call contact"
+          >
+            <Phone className="h-4 w-4" />
+          </button>
         </div>
-    )
-}
+        {usingDemoContent && (
+          <div className="mt-3 flex gap-2 rounded-2xl bg-white px-3 py-2 text-[11px] leading-4 text-[#616161]">
+            <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#145B10]" />
+            This is a local preview conversation. Messages you send here are only shown on this screen.
+          </div>
+        )}
+      </div>
 
-export default Conversation
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 pb-24">
+        {messages.map((msg) => {
+          const mine = msg.senderId === currentUserId;
+          return (
+            <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[78%] rounded-2xl px-3 py-2 shadow-sm ${
+                  mine
+                    ? "rounded-br-md bg-[#145B10] text-white"
+                    : "rounded-bl-md bg-white text-[#1B2431]"
+                }`}
+              >
+                <p className="text-[13px] leading-5">{msg.content}</p>
+                <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-white/75" : "text-[#9E9E9E]"}`}>
+                  <span>{formatTimestamp(msg.createdAt)}</span>
+                  {mine ? msg.isRead ? <CheckCheck className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" /> : null}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[428px] -translate-x-1/2 border-t border-gray-100 bg-white p-3">
+        <div className="flex items-center gap-2 rounded-full bg-[#F7F7F7] p-1">
+          <input
+            type="text"
+            placeholder="Write a message"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSendMessage();
+            }}
+            className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[13px] outline-none placeholder:text-[#9E9E9E]"
+            disabled={sending}
+          />
+          <button
+            type="button"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#145B10] text-white disabled:opacity-50"
+            onClick={handleSendMessage}
+            disabled={sending || !newMessage.trim()}
+            aria-label="Send message"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Conversation;

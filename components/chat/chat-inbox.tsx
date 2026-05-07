@@ -1,519 +1,315 @@
-"use client"
-import { motion } from "framer-motion"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { cn } from "@/lib/utils"
-import api from "@/lib/axios"
-import toast from "react-hot-toast"
-import { initializeSocket } from "@/lib/socket"
-import type { RootState } from "@/store"
-import { useSelector } from "react-redux"
-import type { Socket } from "socket.io-client"
+"use client";
 
-// Define interfaces
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import api from "@/lib/axios";
+import type { RootState } from "@/store";
+import { useSelector } from "react-redux";
+import { CalendarDays, CheckCheck, MessageCircle, ShieldCheck } from "lucide-react";
+
 interface Message {
-  id: string
-  bookingId: string
-  senderId: string
-  content: string
-  createdAt: string
-  isRead: boolean
+  id: string;
+  bookingId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
   sender: {
-    id: string
-    firstName: string
-    lastName: string
-  }
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 interface Booking {
-  userId: string
-  bookingId: string
+  userId?: string;
+  bookingId: string;
   service: {
-    id: string
-    title: string
-    providerId: string
+    id: string;
+    title: string;
+    providerId?: string;
     provider: {
-      id: string
-      firstName: string
-      lastName: string
-      profilePicture?: string
-    }
-  }
-  worker: {
-    id: string
-    firstName: string
-    lastName: string
-  } | null
-  latestMessage?: Message
-  unreadCount?: number
-  user: {
-    id: string
-    firstName: string
-    lastName: string
-  }
+      id?: string;
+      firstName: string;
+      lastName: string;
+      profilePicture?: string;
+    };
+  };
+  latestMessage?: Message;
+  unreadCount?: number;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 interface ChatInboxProps {
-  searchQuery: string
+  searchQuery: string;
 }
 
+const now = new Date();
+const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60 * 1000).toISOString();
+
+const demoBookings: Booking[] = [
+  {
+    userId: "demo-user",
+    bookingId: "demo-cleaning",
+    service: {
+      id: "service-cleaning",
+      title: "Home cleaning",
+      provider: {
+        firstName: "Aline",
+        lastName: "Uwase",
+        profilePicture: "",
+      },
+    },
+    user: { id: "demo-employer", firstName: "Grace", lastName: "Mutesi" },
+    unreadCount: 2,
+    latestMessage: {
+      id: "msg-1",
+      bookingId: "demo-cleaning",
+      senderId: "demo-provider",
+      content: "I can come tomorrow morning at 9:00. Please confirm the address.",
+      createdAt: minutesAgo(8),
+      isRead: false,
+      sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+    },
+  },
+  {
+    userId: "demo-user",
+    bookingId: "demo-nanny",
+    service: {
+      id: "service-nanny",
+      title: "Child care",
+      provider: {
+        firstName: "Vestine",
+        lastName: "Mukamana",
+        profilePicture: "",
+      },
+    },
+    user: { id: "demo-employer", firstName: "Eric", lastName: "Ndayisaba" },
+    unreadCount: 0,
+    latestMessage: {
+      id: "msg-2",
+      bookingId: "demo-nanny",
+      senderId: "demo-user",
+      content: "Thank you. I will prepare the task list before you arrive.",
+      createdAt: minutesAgo(95),
+      isRead: true,
+      sender: { id: "demo-user", firstName: "You", lastName: "" },
+    },
+  },
+  {
+    userId: "demo-user",
+    bookingId: "demo-electrician",
+    service: {
+      id: "service-electrician",
+      title: "Electrical repair",
+      provider: {
+        firstName: "Jean",
+        lastName: "Hirwa",
+        profilePicture: "",
+      },
+    },
+    user: { id: "demo-employer", firstName: "Patrick", lastName: "Karekezi" },
+    unreadCount: 1,
+    latestMessage: {
+      id: "msg-3",
+      bookingId: "demo-electrician",
+      senderId: "demo-provider",
+      content: "Please send a photo of the switch before I come.",
+      createdAt: minutesAgo(1440),
+      isRead: false,
+      sender: { id: "demo-provider", firstName: "Jean", lastName: "Hirwa" },
+    },
+  },
+];
+
 export default function ChatInbox({ searchQuery }: ChatInboxProps) {
-  const searchParams = useSearchParams()
-  const currentTab = searchParams.get("tab") || "All"
-  const router = useRouter()
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [socketConnected, setSocketConnected] = useState<boolean>(false)
-  const { token } = useSelector((state: RootState) => state.auth)
-  const userId = useSelector((state: RootState) => state.auth.user?.id ?? "")
-  const socketRef = useRef<Socket | null>(null)
-  const isInitialized = useRef(false)
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab") || "All";
+  const router = useRouter();
+  const [bookings, setBookings] = useState<Booking[]>(demoBookings);
+  const [loading, setLoading] = useState(false);
+  const [usingDemoContent, setUsingDemoContent] = useState(true);
+  const { token } = useSelector((state: RootState) => state.auth);
+  const userId = useSelector((state: RootState) => state.auth.user?.id ?? "demo-user");
 
-  // Fetch missing booking function
-  const fetchMissingBooking = useCallback(
-    async (bookingId: string, message: Message) => {
-      try {
-        const { data } = await api.get<{ data: Booking }>(`/bookings/${bookingId}`, {
-          withCredentials: true,
-        })
-
-        const newBooking = {
-          ...data.data,
-          latestMessage: message,
-          unreadCount: message.senderId !== userId ? 1 : 0,
-        }
-
-        setBookings((prev) => {
-          // Check if booking already exists
-          const exists = prev.find((b) => b.bookingId === bookingId)
-          if (exists) {
-            return prev.map((b) =>
-              b.bookingId === bookingId
-                ? {
-                  ...b,
-                  latestMessage: message,
-                  unreadCount: message.senderId !== userId ? (b.unreadCount || 0) + 1 : b.unreadCount || 0,
-                }
-                : b,
-            )
-          }
-          return [...prev, newBooking]
-        })
-
-        // Join the new booking room
-        if (socketRef.current?.connected) {
-          socketRef.current.emit("joinBooking", bookingId)
-        }
-      } catch (error) {
-        console.error("Failed to fetch missing booking:", error)
-      }
-    },
-    [userId],
-  )
-
-  // Initialize socket connection
-  const initializeSocketConnection = useCallback(
-    (bookingsData: Booking[]) => {
-      if (isInitialized.current) {
-        return
-      }
-
-      const socket = initializeSocket(token ?? "", userId ?? "")
-      socketRef.current = socket
-      isInitialized.current = true
-
-      socket.on("connect", () => {
-        setSocketConnected(true)
-
-        // Join all booking rooms
-        bookingsData.forEach((booking) => {
-          if (booking.bookingId) {
-            socket.emit("joinBooking", booking.bookingId)
-          }
-        })
-      })
-
-      socket.on("disconnect", () => {
-        setSocketConnected(false)
-      })
-
-      socket.on("connect_error", (error) => {
-        console.error("Socket connection error:", error)
-        setSocketConnected(false)
-      })
-
-
-      socket.on("joinBookingError", (error) => {
-        console.error("Failed to join booking room:", error)
-      })
-
-      // Handle new messages
-      socket.on("newMessage", (message: Message) => {
-
-        setBookings((prevBookings) => {
-          const existingBookingIndex = prevBookings.findIndex((b) => b.bookingId === message.bookingId)
-
-          if (existingBookingIndex !== -1) {
-            // Update existing booking
-            const updatedBookings = [...prevBookings]
-            updatedBookings[existingBookingIndex] = {
-              ...updatedBookings[existingBookingIndex],
-              latestMessage: message,
-              unreadCount:
-                message.senderId !== userId
-                  ? (updatedBookings[existingBookingIndex].unreadCount || 0) + 1
-                  : updatedBookings[existingBookingIndex].unreadCount || 0,
-            }
-            return updatedBookings
-          } else {
-            // Fetch missing booking
-            fetchMissingBooking(message.bookingId, message)
-            return prevBookings
-          }
-        })
-      })
-
-      // Handle messages read
-      socket.on("messagesRead", ({ bookingId, userId: readByUserId }: { bookingId: string; userId: string }) => {
-
-        setBookings((prevBookings) =>
-          prevBookings.map((booking) => {
-            if (booking.bookingId === bookingId) {
-              return {
-                ...booking,
-                unreadCount: readByUserId !== userId ? 0 : booking.unreadCount,
-                latestMessage: booking.latestMessage
-                  ? {
-                    ...booking.latestMessage,
-                    isRead: readByUserId !== userId ? true : booking.latestMessage.isRead,
-                  }
-                  : booking.latestMessage,
-              }
-            }
-            return booking
-          }),
-        )
-      })
-
-      socket.on("messageError", (error) => {
-        console.error("Socket error:", error)
-      })
-
-    },
-    [token, userId, fetchMissingBooking],
-  )
-
-  // Fetch initial data
   useEffect(() => {
-    if (!token || !userId) {
-      console.warn("No JWT token or userId found for socket authentication")
-      toast.error("Authentication required")
-      router.push("/login")
-      return
+    if (!token) {
+      setBookings(demoBookings);
+      setUsingDemoContent(true);
+      return;
     }
 
     const fetchData = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
         const response = await api.get<{ data: Booking[] }>("/bookings/chats", {
           withCredentials: true,
-        })
+        });
 
-        const bookingsData = Array.isArray(response.data.data)
-          ? response.data.data.map((booking) => ({
-            ...booking,
-            unreadCount: booking.unreadCount || 0,
-            latestMessage: booking.latestMessage || undefined,
-          }))
-          : []
+        const nextBookings = Array.isArray(response.data.data)
+          ? response.data.data.filter((booking) => booking.latestMessage)
+          : [];
 
-        setBookings(bookingsData)
-
-        // Initialize socket after data is loaded
-        initializeSocketConnection(bookingsData)
-      } catch (error: any) {
-        // Silently handle 404 - endpoint not implemented yet
-        if (error?.response?.status === 404) {
-          setBookings([])
+        if (nextBookings.length > 0) {
+          setBookings(nextBookings);
+          setUsingDemoContent(false);
         } else {
-          console.error("Error fetching data:", error)
-          toast.error("Failed to load messages")
+          setBookings(demoBookings);
+          setUsingDemoContent(true);
         }
+      } catch {
+        setBookings(demoBookings);
+        setUsingDemoContent(true);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-
-    // Cleanup function
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("connect")
-        socketRef.current.off("disconnect")
-        socketRef.current.off("connect_error")
-        socketRef.current.off("newMessage")
-        socketRef.current.off("messagesRead")
-        socketRef.current.off("joinBookingSuccess")
-        socketRef.current.off("joinBookingError")
-        socketRef.current.off("messageError")
-        socketRef.current.offAny()
-        isInitialized.current = false
-      }
-    }
-  }, [token, userId, router, initializeSocketConnection])
-
-  // Polling fallback when socket is not connected
-  useEffect(() => {
-    if (!socketConnected && !loading && bookings.length > 0) {
-
-      const pollForUpdates = async () => {
-        try {
-          const response = await api.get<{ data: Booking[] }>("/bookings/chats", {
-            withCredentials: true,
-          })
-
-          const updatedBookings = Array.isArray(response.data.data)
-            ? response.data.data.map((booking) => ({
-              ...booking,
-              unreadCount: booking.unreadCount || 0,
-              latestMessage: booking.latestMessage || undefined,
-            }))
-            : []
-
-          // Check for actual changes
-          const hasChanges = updatedBookings.some((updatedBooking) => {
-            const currentBooking = bookings.find((b) => b.bookingId === updatedBooking.bookingId)
-            return (
-              !currentBooking ||
-              currentBooking.latestMessage?.id !== updatedBooking.latestMessage?.id ||
-              currentBooking.unreadCount !== updatedBooking.unreadCount ||
-              currentBooking.latestMessage?.isRead !== updatedBooking.latestMessage?.isRead
-            )
-          })
-
-          if (hasChanges || updatedBookings.length !== bookings.length) {
-            setBookings(updatedBookings)
-          }
-        } catch (error: any) {
-          // Silently handle 404 during polling
-          if (error?.response?.status !== 404) {
-            console.error("Error polling for updates:", error)
-          }
-        }
-      }
-
-      const interval = setInterval(pollForUpdates, 3000) // Poll every 3 seconds
-      return () => clearInterval(interval)
-    }
-  }, [socketConnected, loading, bookings])
-
-  const markAsRead = async (bookingId: string) => {
-    try {
-      // Optimistically update UI
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.bookingId === bookingId
-            ? {
-              ...booking,
-              unreadCount: 0,
-              latestMessage: booking.latestMessage
-                ? { ...booking.latestMessage, isRead: true }
-                : booking.latestMessage,
-            }
-            : booking,
-        ),
-      )
-
-      if (socketConnected && socketRef.current?.connected) {
-        socketRef.current.emit("markMessagesAsRead", { bookingId })
-      } else {
-        await api.patch(`/bookings/messages/${bookingId}/read`, {}, { withCredentials: true })
-      }
-    } catch (error) {
-      console.error(`Error marking messages as read for booking ${bookingId}:`, error)
-      // Revert optimistic update on error
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.bookingId === bookingId
-            ? {
-              ...booking,
-              unreadCount: booking.unreadCount || 1,
-              latestMessage: booking.latestMessage
-                ? { ...booking.latestMessage, isRead: false }
-                : booking.latestMessage,
-            }
-            : booking,
-        ),
-      )
-    }
-  }
+    fetchData();
+  }, [token]);
 
   const filteredBookings = useMemo(() => {
-    let filtered = bookings
+    const tabFiltered = bookings.filter((booking) => {
+      if (currentTab.toLowerCase() === "read") return booking.latestMessage?.isRead === true;
+      if (currentTab.toLowerCase() === "unread") return booking.latestMessage?.isRead === false;
+      return true;
+    });
 
-    // Filter by tab
-    switch (currentTab.toLowerCase()) {
-      case "read":
-        filtered = bookings.filter((booking) => booking.latestMessage?.isRead === true)
-        break
-      case "unread":
-        filtered = bookings.filter((booking) => booking.latestMessage?.isRead === false)
-        break
-      default:
-        break
-    }
+    const query = searchQuery.trim().toLowerCase();
+    const searchFiltered = query
+      ? tabFiltered.filter((booking) => {
+          const provider = booking.service.provider;
+          const name = `${provider.firstName} ${provider.lastName}`.toLowerCase();
+          return (
+            name.includes(query) ||
+            booking.service.title.toLowerCase().includes(query) ||
+            booking.latestMessage?.content.toLowerCase().includes(query)
+          );
+        })
+      : tabFiltered;
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim()
-      filtered = filtered.filter((booking) => {
-        const message = booking.latestMessage
-        return (
-          message &&
-          (`${message.sender.firstName} ${message.sender.lastName}`.toLowerCase().includes(query) ||
-            message.content.toLowerCase().includes(query) ||
-            booking.service.title.toLowerCase().includes(query))
-        )
-      })
-    }
-
-    // Sort by latest message timestamp
-    return filtered.sort((a, b) => {
-      const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0
-      const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0
-      return bTime - aTime
-    })
-  }, [bookings, currentTab, searchQuery])
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  }
+    return [...searchFiltered].sort((a, b) => {
+      const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0;
+      const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [bookings, currentTab, searchQuery]);
 
   const formatTimestamp = (isoDate: string): string => {
-    const date = new Date(isoDate)
-    if (isNaN(date.getTime())) return "Invalid date"
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) return "";
 
-    const now = new Date()
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })
-    } else if (diffDays === 1) {
-      return "Yesterday"
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric", timeZone: "Asia/Kolkata" })
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
-  }
+    if (diffDays === 1) return "Yesterday";
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full overflow-hidden">
+    <div className="w-full space-y-4">
+      {usingDemoContent && (
+        <div className="rounded-2xl border border-[#145B10]/10 bg-white p-3 shadow-sm">
+          <div className="flex gap-3">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
+              <ShieldCheck className="h-4 w-4 text-[#145B10]" />
+            </span>
+            <div>
+              <p className="text-[13px] font-bold text-[#1B2431]">Message preview</p>
+              <p className="mt-0.5 text-[11px] leading-4 text-[#616161]">
+                These sample conversations show how booking chat will feel before the backend chat list is connected.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {loading ? (
-          <p className="text-center text-gray-500">Loading messages...</p>
-        ) : (
-          <motion.div
-            className="overflow-y-auto space-y-6"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {filteredBookings.length > 0 ? (
-              filteredBookings.map((booking) => {
-                const msg = booking.latestMessage
-                if (!msg) return null
-
-                return (
-                  <motion.div
-                    key={booking.bookingId}
-                    className={`flex justify-between cursor-pointer  hover:bg-gray-50`}
-                    variants={itemVariants}
-                    onClick={() => {
-                      router.push(`/conversations/inbox/${booking.bookingId}`)
-                      markAsRead(booking.bookingId)
-                    }}
-                  >
-                    <div className="flex items-center gap-5">
-                      <Avatar className={cn("h-16 w-16")}>
-                        <AvatarImage src={booking.service.provider.profilePicture || ""} className="object-cover" />
-                        <AvatarFallback>
-                          <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-medium">
-                            {msg.sender.firstName[0]}
-                          </div>
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="ml-3 flex flex-col gap-1">
-                        <p
-                          className={`text-lg sm:text-xl font-bold leading-5 ${!msg.isRead ? "text-[#212121]" : "text-gray-700"}`}
-                        >
-                          {booking?.user?.id === userId ? `${booking.service.provider.firstName} ${booking.service.provider.lastName}` : `${booking.user.firstName} ${booking.user.lastName}`}
-                        </p>
-                        <p
-                          className={`text-sm font-medium leading-5 line-clamp-1 ${!msg.isRead ? "text-[#616161]" : "text-gray-500"
-                            }`}
-                          title={msg.content}
-                        >
-                          {msg.content}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="relative flex flex-col items-end gap-2 w-20">
-                      {booking.unreadCount && booking.unreadCount > 0 ? (
-                        <span className="bg-[#145B10] text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {booking.unreadCount > 99 ? "99+" : booking.unreadCount}
-                        </span>
-                      ) : null}
-                      <p className="absolute bottom-0 right-0 text-xs text-[#616161] leading-4 text-right">{formatTimestamp(msg.createdAt)}</p>
-                    </div>
-                  </motion.div>
-                )
-              })
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <svg
-                    className="w-10 h-10 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {bookings.length === 0 ? "No messages yet" : "No messages found"}
-                </h3>
-                <p className="text-sm text-gray-500 text-center max-w-sm">
-                  {bookings.length === 0
-                    ? "When you book a service, you'll be able to chat with providers here."
-                    : searchQuery
-                    ? "Try adjusting your search or filters"
-                    : "No messages match the selected filter"}
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-bold text-[#1B2431]">
+          {currentTab === "All" ? "Recent conversations" : `${currentTab} conversations`}
+        </p>
+        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#616161]">
+          {filteredBookings.length} chat{filteredBookings.length === 1 ? "" : "s"}
+        </span>
       </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="h-[86px] animate-pulse rounded-2xl bg-white" />
+          ))}
+        </div>
+      ) : filteredBookings.length > 0 ? (
+        <div className="space-y-3">
+          {filteredBookings.map((booking) => {
+            const msg = booking.latestMessage;
+            if (!msg) return null;
+
+            const provider = booking.service.provider;
+            const displayName = `${provider.firstName} ${provider.lastName}`.trim();
+            const initials = `${provider.firstName?.[0] || ""}${provider.lastName?.[0] || ""}` || "AK";
+            const unread = (booking.unreadCount || 0) > 0 || !msg.isRead;
+
+            return (
+              <button
+                key={booking.bookingId}
+                type="button"
+                className="flex w-full gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition-colors hover:bg-gray-50"
+                onClick={() => router.push(`/conversations/inbox/${booking.bookingId}`)}
+              >
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarImage src={provider.profilePicture || ""} className="object-cover" />
+                  <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-bold text-[#1B2431]">{displayName}</span>
+                      <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-[#757575]">
+                        <CalendarDays className="h-3 w-3" />
+                        {booking.service.title}
+                      </span>
+                    </span>
+                    <span className="flex flex-shrink-0 flex-col items-end gap-1">
+                      <span className="text-[10px] font-semibold text-[#9E9E9E]">{formatTimestamp(msg.createdAt)}</span>
+                      {booking.unreadCount && booking.unreadCount > 0 ? (
+                        <span className="min-w-5 rounded-full bg-[#145B10] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                          {booking.unreadCount}
+                        </span>
+                      ) : (
+                        <CheckCheck className="h-3.5 w-3.5 text-[#9E9E9E]" />
+                      )}
+                    </span>
+                  </span>
+
+                  <span className={`mt-1 block truncate text-[12px] leading-5 ${unread ? "font-semibold text-[#1B2431]" : "text-[#616161]"}`}>
+                    {msg.content}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-12 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1FCEF]">
+            <MessageCircle className="h-7 w-7 text-[#145B10]" />
+          </span>
+          <h3 className="mt-4 text-[15px] font-bold text-[#1B2431]">No messages found</h3>
+          <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-[#616161]">
+            Try a different search term or switch to another message filter.
+          </p>
+        </div>
+      )}
     </div>
-  )
+  );
 }

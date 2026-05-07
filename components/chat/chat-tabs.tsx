@@ -23,31 +23,28 @@ const ChatTabs = ({ onTabChange }: ChatTabsProps) => {
   };
 
   return (
-    <div className="">
-      {/* Tabs using shadcn/ui */}
+    <div>
       <Tabs value={currentTab} onValueChange={setTab} className="w-full">
-        <TabsList className="flex justify-between bg-transparent p-0">
+        <TabsList className="grid h-auto w-full grid-cols-3 rounded-full bg-white p-1 shadow-sm">
           <TabsTrigger
             value="All"
-            className="py-2 px-4 text-lg font-bold leading-6 w-full rounded-none data-[state=active]:text-green-800 data-[state=active]:border-b-4 data-[state=active]:border-green-800 data-[state=inactive]:text-gray-500"
+            className="rounded-full px-3 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-[#145B10] data-[state=active]:text-white data-[state=inactive]:text-gray-500"
           >
             All
           </TabsTrigger>
           <TabsTrigger
             value="Read"
-            className="py-2 px-4 text-lg font-bold leading-6 w-full rounded-none data-[state=active]:text-green-800 data-[state=active]:border-b-4 data-[state=active]:border-green-800 data-[state=inactive]:text-gray-500"
+            className="rounded-full px-3 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-[#145B10] data-[state=active]:text-white data-[state=inactive]:text-gray-500"
           >
             Read
           </TabsTrigger>
           <TabsTrigger
             value="Unread"
-            className="py-2 px-4 text-lg font-bold leading-6 w-full rounded-none data-[state=active]:text-green-800 data-[state=active]:border-b-4 data-[state=active]:border-green-800 data-[state=inactive]:text-gray-500"
+            className="rounded-full px-3 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-[#145B10] data-[state=active]:text-white data-[state=inactive]:text-gray-500"
           >
             Unread
           </TabsTrigger>
         </TabsList>
-
-        {/* Tab Content will be handled by ChatInbox */}
       </Tabs>
     </div>
   );
