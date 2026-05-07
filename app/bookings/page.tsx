@@ -1,17 +1,13 @@
 "use client";
 import React from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
 import ProviderBookings from "@/components/bookings/provider-bookings";
 import EmployerBookings from "@/components/bookings/employer-bookings";
+import { useViewMode } from "@/context/view-mode-context";
 
 const BookingsPage: React.FC = () => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  const isProvider = user?.userType === "Individual" || user?.userType === "Agency";
+  const { viewMode } = useViewMode();
 
-  // Providers see their received jobs + stats
-  // Employers see their booking history
-  return isProvider ? <ProviderBookings /> : <EmployerBookings />;
+  return viewMode === "provider" ? <ProviderBookings /> : <EmployerBookings />;
 };
 
 export default BookingsPage;

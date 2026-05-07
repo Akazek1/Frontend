@@ -7,13 +7,22 @@ import Link from "next/link";
 import { NavItem } from "@/types";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
+import { useViewMode } from "@/context/view-mode-context";
 
 const Navigation = () => {
   const pathname = usePathname();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { viewMode } = useViewMode();
 
   // Dynamically adjust nav items based on user type
   const navItems: NavItem[] = defaultNavItems.map((item) => {
+    if (item.title === "Bookings") {
+      return {
+        ...item,
+        title: viewMode === "provider" ? "Jobs" : "Bookings",
+      };
+    }
+
     if (item.title === "Get Hired" && user?.userType?.toLowerCase() === "individual") {
       return {
         ...item,
