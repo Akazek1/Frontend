@@ -181,7 +181,7 @@ const Header = () => {
       {/* Greeting */}
       <div>
         <h1 className="text-[20px] font-bold text-[#1B2431] leading-tight">
-          {getGreeting()}, {user?.firstName || user?.phoneNumber} 👋
+          {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
         </h1>
         <p className="text-[13px] text-[#757575] mt-0.5">How can we help you today?</p>
       </div>

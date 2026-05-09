@@ -8,6 +8,7 @@ export function middleware(request: NextRequest) {
     request.headers.get("Authorization")?.replace("Bearer ", "");
 
   const isAuthenticated = !!token;
+  const isProfileComplete = request.cookies.get("profileComplete")?.value === "true";
 
   // Protected routes that require authentication
   const protectedRoutes = ["/profile", "/get-hired", "/book", "/checkout"];
@@ -33,8 +34,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(onboardingUrl);
   }
 
-  // If trying to access onboarding while logged in, redirect to home
-  if (request.nextUrl.pathname === "/onboarding" && isAuthenticated) {
+  // If authenticated but profile incomplete, redirect to onboarding to finish signup
+  if (isProtectedRoute && isAuthenticated && !isProfileComplete) {
+    const onboardingUrl = new URL("/onboarding", request.url);
+    onboardingUrl.searchParams.set("step", "complete-profile");
+    return NextResponse.redirect(onboardingUrl);
+  }
+
+  // If trying to access onboarding while logged in with complete profile, redirect to home
+  if (request.nextUrl.pathname === "/onboarding" && isAuthenticated && isProfileComplete) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

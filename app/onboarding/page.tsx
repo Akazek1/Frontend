@@ -125,14 +125,19 @@ const OnboardingPage = () => {
   const stepParam = searchParams.get("step")
 
   useEffect(() => {
-    // If redirected back to complete profile, skip splash and go to basic info
-    if (stepParam === "complete-profile") {
-      const storedUser = localStorage.getItem("user")
-      if (storedUser) {
-        try {
-          setVerifiedUser(JSON.parse(storedUser))
-        } catch { /* ignore */ }
-      }
+    // If the user already has a verification token but no firstName,
+    // they refreshed mid-signup. Resume at the basic-info step instead of
+    // restarting from the intro slides.
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    const storedUserRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null
+    let storedUser: any = null
+    if (storedUserRaw && storedUserRaw !== "undefined" && storedUserRaw !== "null") {
+      try { storedUser = JSON.parse(storedUserRaw) } catch { /* ignore */ }
+    }
+    const profileIncomplete = !!token && (!storedUser?.firstName || !storedUser.firstName.trim())
+
+    if (stepParam === "complete-profile" || profileIncomplete) {
+      if (storedUser) setVerifiedUser(storedUser)
       setShowSplash(false)
       setCurrentStep(4)
       return

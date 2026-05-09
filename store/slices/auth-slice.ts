@@ -40,9 +40,20 @@ const getStoredUser = () => {
   }
 };
 
+const storedUser = getStoredUser();
+
+// Sync profileComplete cookie with stored user state on load
+if (typeof document !== "undefined" && storedUser) {
+  if (storedUser.firstName) {
+    document.cookie = "profileComplete=true; path=/; max-age=31536000";
+  } else {
+    document.cookie = "profileComplete=; path=/; max-age=0";
+  }
+}
+
 // Initial state
 const initialState: AuthState = {
-  user: getStoredUser(),
+  user: storedUser,
   token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   isAuthenticated:
     typeof window !== "undefined" ? !!localStorage.getItem("token") : false,
@@ -82,6 +93,9 @@ export const verifyOtp = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  document.cookie = "token=; path=/; max-age=0";
+  document.cookie = "profileComplete=; path=/; max-age=0";
   authService.logout();
 });
 
@@ -155,10 +169,17 @@ const authSlice = createSlice({
         state.otpSent = false;
         state.phoneNumber = null;
 
-        // Save user and token to localStorage
+        // Save user and token to localStorage and mirror token into a cookie
+        // so the Next.js middleware can gate protected routes.
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(action.payload.user));
           localStorage.setItem("token", action.payload.token);
+          document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`;
+          if (action.payload.user?.firstName) {
+            document.cookie = "profileComplete=true; path=/; max-age=31536000";
+          } else {
+            document.cookie = "profileComplete=; path=/; max-age=0";
+          }
         }
 
         toast.success("OTP verified successfully");
@@ -187,6 +208,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        if (typeof document !== "undefined" && action.payload?.firstName) {
+          document.cookie = "profileComplete=true; path=/; max-age=31536000";
+        }
       })
       .addCase(getCurrentUser.rejected, (state) => {
         state.isLoading = false;
