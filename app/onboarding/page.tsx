@@ -17,9 +17,11 @@ import api from "@/lib/axios"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
 import { updateUser } from "@/store/slices/auth-slice"
+import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
+import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 
-const HARDCODED_OTP = "111111" // 6 digits to match backend
-const OTP_LENGTH = 6 // 6-digit OTPs
+const HARDCODED_OTP = "111111"
+const OTP_LENGTH = 6
 
 interface OnboardingStep {
   title: string
@@ -28,46 +30,22 @@ interface OnboardingStep {
   bgColor: string
   textColor: string
   buttonText: string
-  type?: "info" | "dual-mode" | "phone" | "otp" | "user-type" | "basic-info"
+  type?: "info" | "dual-mode" | "phone" | "otp" | "user-type" | "basic-info" | "document-upload" | "service-category"
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Quality, Affordable, Best Services.",
+    subtitle: "Welcome to HWA",
     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     bgColor: "bg-[#145B10]",
     textColor: "text-[#1B5E20]",
-    buttonText: "Next",
+    buttonText: "Get Started",
     type: "info",
   },
   {
-    title: "Quick & Professional Solutions to your Problems.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800",
-    bgColor: "bg-[#729D70]",
-    textColor: "text-[#145B10]",
-    buttonText: "Next",
-    type: "info",
-  },
-  {
-    title: "Get services by HWA's verified professionals.",
-    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=800",
-    bgColor: "bg-[#1B5E20]",
-    textColor: "text-white",
-    buttonText: "Next",
-    type: "info",
-  },
-  {
-    title: "Switch Between Two Views Anytime",
-    subtitle: "You can be both an Employer and a Provider",
-    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800",
-    bgColor: "bg-[#1B5E20]",
-    textColor: "text-white",
-    buttonText: "Next",
-    type: "dual-mode",
-  },
-  {
-    title: "Choose Your Account Type",
-    subtitle: "You can change this later in your profile",
+    title: "Choose Your Role",
+    subtitle: "What brings you here today?",
     image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800",
     bgColor: "bg-[#1B5E20]",
     textColor: "text-white",
@@ -99,19 +77,37 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     buttonText: "Continue",
     type: "basic-info",
   },
+  {
+    title: "Upload Your ID",
+    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800",
+    bgColor: "bg-[#1B5E20]",
+    textColor: "text-white",
+    buttonText: "Upload",
+    type: "document-upload",
+  },
+  {
+    title: "What services do you offer?",
+    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800",
+    bgColor: "bg-[#1B5E20]",
+    textColor: "text-white",
+    buttonText: "Finish",
+    type: "service-category",
+  },
 ]
 
 const OnboardingPage = () => {
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(-1)
-  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill("")) // Support 6-digit OTPs
+  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [selectedUserType, setSelectedUserType] = useState<"INDIVIDUAL" | "AGENCY" | null>(null)
+  const [selectedRole, setSelectedRole] = useState<"EMPLOYER" | "WORKER" | null>(null)
   const [isReturningUser, setIsReturningUser] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
-  const [verifiedUser, setVerifiedUser] = useState<any>(null) // Store verified user data
+  const [verifiedUser, setVerifiedUser] = useState<any>(null)
+  const [uploadedDocument, setUploadedDocument] = useState<any>(null)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const inputsRef = useRef<Array<HTMLInputElement | null>>(Array(OTP_LENGTH).fill(null))
   const [activeInputIndex, setActiveInputIndex] = useState(0)
   const firstNameInputRef = useRef<HTMLInputElement | null>(null)
@@ -126,15 +122,29 @@ const OnboardingPage = () => {
   // Get redirect URL from query params — only allow internal paths
   const rawRedirect = searchParams.get("redirect")
   const redirectUrl = rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : null
+  const stepParam = searchParams.get("step")
 
   useEffect(() => {
+    // If redirected back to complete profile, skip splash and go to basic info
+    if (stepParam === "complete-profile") {
+      const storedUser = localStorage.getItem("user")
+      if (storedUser) {
+        try {
+          setVerifiedUser(JSON.parse(storedUser))
+        } catch { /* ignore */ }
+      }
+      setShowSplash(false)
+      setCurrentStep(4)
+      return
+    }
+
     const timer = setTimeout(() => {
       setShowSplash(false)
       setCurrentStep(0)
-    }, 3500)
+    }, 500)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [stepParam])
 
   // Track if inputs should maintain focus
   const shouldMaintainFirstNameFocus = useRef(false)
@@ -143,7 +153,7 @@ const OnboardingPage = () => {
   
   // Maintain focus on firstName input when typing
   useEffect(() => {
-    if (currentStep === 7 && firstNameInputRef.current) {
+    if (currentStep === 4 && firstNameInputRef.current) {
       if (shouldMaintainFirstNameFocus.current && document.activeElement !== firstNameInputRef.current) {
         firstNameInputRef.current.focus()
       }
@@ -152,7 +162,7 @@ const OnboardingPage = () => {
 
   // Maintain focus on lastName input when typing
   useEffect(() => {
-    if (currentStep === 7 && lastNameInputRef.current) {
+    if (currentStep === 4 && lastNameInputRef.current) {
       if (shouldMaintainLastNameFocus.current && document.activeElement !== lastNameInputRef.current) {
         lastNameInputRef.current.focus()
       }
@@ -161,12 +171,49 @@ const OnboardingPage = () => {
 
   // Maintain focus on email input when typing
   useEffect(() => {
-    if (currentStep === 7 && emailInputRef.current) {
+    if (currentStep === 4 && emailInputRef.current) {
       if (shouldMaintainEmailFocus.current && document.activeElement !== emailInputRef.current) {
         emailInputRef.current.focus()
       }
     }
   }, [currentStep, email])
+
+  // Arrow key navigation between onboarding steps (only on screens without text inputs)
+  useEffect(() => {
+    const handleArrowNavigation = (e: KeyboardEvent) => {
+      // Don't navigate if user is typing in an input/textarea
+      const activeEl = document.activeElement
+      const isTyping =
+        activeEl?.tagName === "INPUT" ||
+        activeEl?.tagName === "TEXTAREA" ||
+        (activeEl as HTMLElement)?.isContentEditable
+
+      if (isTyping) return
+
+      // Only enable on intro slide (0) and role selection (1) - other steps use arrows for cursor/inputs
+      if (currentStep < 0 || currentStep > 1) return
+
+      if (e.key === "ArrowRight") {
+        e.preventDefault()
+        if (currentStep === 1) {
+          // Role selection - require a role to be picked before advancing
+          if (selectedRole) {
+            setCurrentStep(2)
+          }
+        } else if (currentStep < ONBOARDING_STEPS.length - 1) {
+          setCurrentStep((prev) => prev + 1)
+        }
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        if (currentStep > 0) {
+          setCurrentStep((prev) => prev - 1)
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleArrowNavigation)
+    return () => window.removeEventListener("keydown", handleArrowNavigation)
+  }, [currentStep, selectedRole])
 
   // Check if user exists when phone number is entered
   const checkUserExists = async (phone: string) => {
@@ -199,8 +246,8 @@ const OnboardingPage = () => {
   }
 
   const handleSkipIntro = () => {
-    // Skip to phone number entry (step 5)
-    setCurrentStep(5)
+    // Skip intro and go to role selection (step 1)
+    setCurrentStep(1)
   }
 
   // Stable onChange handlers to prevent re-renders that cause focus loss
@@ -222,19 +269,18 @@ const OnboardingPage = () => {
     newCode[index] = numericValue.slice(-1);
     setCode(newCode);
 
-    const nextIndex = index + 1;
-
-    if (numericValue && nextIndex < OTP_LENGTH) {
+    // Only move to next field if current field just got filled AND next field is empty
+    if (numericValue && index < OTP_LENGTH - 1 && !newCode[index + 1]) {
       setTimeout(() => {
-        setActiveInputIndex(nextIndex);
-        inputsRef.current[nextIndex]?.focus();
+        setActiveInputIndex(index + 1);
+        inputsRef.current[index + 1]?.focus();
       }, 50);
     }
 
     // Auto-verify if all 6 digits are filled
     const fullCode = newCode.join("")
     const filledDigits = newCode.filter((val) => val.length > 0).length
-    
+
     // Auto-verify when all 6 digits are entered
     if (fullCode.length === OTP_LENGTH && filledDigits === OTP_LENGTH) {
       handleVerifyOtp(fullCode);
@@ -242,9 +288,38 @@ const OnboardingPage = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
+    if (e.key === "Backspace") {
+      e.preventDefault()
+
+      const newCode = [...code]
+
+      if (code[index]) {
+        // If current field has a value, delete it and move focus to previous field
+        newCode[index] = ""
+        setCode(newCode)
+        if (index > 0) {
+          setActiveInputIndex(index - 1)
+          setTimeout(() => {
+            inputsRef.current[index - 1]?.focus()
+          }, 0)
+        }
+      } else if (index > 0) {
+        // If current field is empty, delete from previous field and move there
+        newCode[index - 1] = ""
+        setCode(newCode)
+        setActiveInputIndex(index - 1)
+        inputsRef.current[index - 1]?.focus()
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      // Move to previous field with arrow left
+      e.preventDefault()
       setActiveInputIndex(index - 1)
       inputsRef.current[index - 1]?.focus()
+    } else if (e.key === "ArrowRight" && index < OTP_LENGTH - 1) {
+      // Move to next field with arrow right
+      e.preventDefault()
+      setActiveInputIndex(index + 1)
+      inputsRef.current[index + 1]?.focus()
     }
   }
 
@@ -276,7 +351,9 @@ const OnboardingPage = () => {
   };
 
   const handleSendOtp = async () => {
+    console.log("handleSendOtp called, phoneNumber:", phoneNumber)
     if (!phoneNumber || phoneNumber.length < 9) {
+      console.log("Phone validation failed: length", phoneNumber?.length)
       toast.error("Please enter a valid phone number (at least 9 digits)")
       return
     }
@@ -298,8 +375,8 @@ const OnboardingPage = () => {
     // Format phone number with country code for backend (250 + 9 digits = 12 digits)
     const formattedPhoneNumber = `250${cleanedPhoneNumber}`
 
-    // Check if user exists (using cleaned number without country code for lookup)
-    await checkUserExists(cleanedPhoneNumber)
+    // Skip user check during development (endpoint not ready)
+    // await checkUserExists(cleanedPhoneNumber)
 
     try {
       console.log("Sending OTP request for:", formattedPhoneNumber)
@@ -308,10 +385,10 @@ const OnboardingPage = () => {
       if (success) {
         // Show toast with hardcoded OTP for all users (development mode)
         toast.success(`OTP sent! Use ${HARDCODED_OTP} for verification`, { duration: 5000 })
-        
+
         // Store cleaned phone number (without country code) for OTP verification
         setPhoneNumber(cleanedPhoneNumber)
-        setCurrentStep(6) // Move to OTP step
+        setCurrentStep(3) // Move to OTP step
         setTimeout(() => {
           inputsRef.current[0]?.focus()
         }, 500)
@@ -330,29 +407,34 @@ const OnboardingPage = () => {
     try {
       // Clean phone number and ensure it has country code for backend
       let cleanedPhone = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
-      
+
       // Remove leading 250 if present
       if (cleanedPhone.startsWith("250")) {
         cleanedPhone = cleanedPhone.substring(3)
       }
-      
+
       // Format with country code for backend (250 + 9 digits)
       const formattedPhone = cleanedPhone.length === 9 ? `250${cleanedPhone}` : cleanedPhone
-      
-      // Use the updated verifyOtp that accepts object format
+
+      // Verify OTP
       const user = await verifyOtp({ phoneNumber: formattedPhone, otp: otpCode });
 
+      if (!user) {
+        // Hook already showed a toast — just clear the OTP inputs for retry
+        setCode(Array(OTP_LENGTH).fill(""));
+        setActiveInputIndex(0);
+        setTimeout(() => inputsRef.current[0]?.focus(), 50);
+        return;
+      }
+
       if (user) {
+        console.log("OTP verification successful, user:", user)
         // Store verified user data
         setVerifiedUser(user);
-        
-        // Update user type if selected
-        if (selectedUserType) {
-          await updateUserProfile({ userType: selectedUserType }, user);
-        }
 
         // If user has firstName, go to home or redirect URL. Otherwise, collect basic info
         if (user.firstName && user.firstName.trim() !== "") {
+          document.cookie = "profileComplete=true; path=/; max-age=31536000";
           // Redirect to intended URL if available, otherwise check for tutorial
           if (redirectUrl) {
             router.push(redirectUrl);
@@ -368,12 +450,18 @@ const OnboardingPage = () => {
           }
         } else {
           // Move to basic info step
-          setCurrentStep(7);
+          setCurrentStep(4);
         }
       }
     } catch (error: any) {
       console.error("OTP verification error:", error);
-      toast.error(error.response?.data?.message || "Invalid OTP. Please try again.");
+      const raw = error?.response?.data?.message;
+      const msg = Array.isArray(raw) ? raw[0] : raw;
+      toast.error(msg || "Invalid OTP. Please try again.");
+      // Clear the OTP inputs so the user can retry without manually deleting
+      setCode(Array(OTP_LENGTH).fill(""));
+      setActiveInputIndex(0);
+      setTimeout(() => inputsRef.current[0]?.focus(), 50);
     }
   };
 
@@ -383,13 +471,18 @@ const OnboardingPage = () => {
       return
     }
 
+    if (!selectedRole) {
+      toast.error("Role not selected. Please go back and select a role.")
+      return
+    }
+
     if (!verifiedUser) {
       toast.error("User verification required. Please go back and verify OTP.")
       return
     }
 
     try {
-      // Prepare minimal update payload
+      // Prepare profile update payload
       const updatePayload: any = {
         firstName: firstName.trim(),
       }
@@ -403,26 +496,31 @@ const OnboardingPage = () => {
       if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) {
         updatePayload.email = email.trim()
       }
-      
-      // Username will be auto-generated on backend from firstName
 
-      // Update user via API
-      const response = await api.patch("/users/profile", updatePayload, {
+      // Update user profile
+      const profileResponse = await api.patch("/users/profile", updatePayload, {
         withCredentials: true,
       })
 
-      if (response.data) {
-        // Get updated user data from response or construct it
-        const updatedUserData = response.data.data || response.data
-        
-        // Update local user state - preserve phone number and other fields
+      if (profileResponse.data) {
+        const updatedUserData = profileResponse.data.data || profileResponse.data
+
+        // Select the role (add to user's roles array)
+        await api.post(
+          "/users/role-selection",
+          { role: selectedRole },
+          { withCredentials: true }
+        )
+
+        // Update local user state
         const updatedUser = {
           ...verifiedUser,
           firstName: firstName.trim(),
           lastName: lastName.trim() || updatedUserData.lastName || verifiedUser.lastName,
           username: updatedUserData.username || verifiedUser.username,
           email: email.trim() || verifiedUser.email || updatedUserData.email,
-          phoneNumber: verifiedUser.phoneNumber, // Preserve phone number
+          phoneNumber: verifiedUser.phoneNumber,
+          roles: [selectedRole],
         }
 
         // Update Redux store
@@ -433,21 +531,33 @@ const OnboardingPage = () => {
           localStorage.setItem("user", JSON.stringify(updatedUser))
         }
 
-            toast.success("Welcome! Let's get started.")
+        // Branch based on role
+        if (selectedRole === "EMPLOYER") {
+          // Employers: Complete onboarding and redirect to home
+          await api.patch(
+            "/users/complete-onboarding",
+            { role: "EMPLOYER" },
+            { withCredentials: true }
+          )
 
-            // Redirect to intended URL if available, otherwise check for tutorial
-            if (redirectUrl) {
-              router.push(redirectUrl)
+          document.cookie = "profileComplete=true; path=/; max-age=31536000"
+          toast.success("Welcome! Let's get started.")
+
+          if (redirectUrl) {
+            router.push(redirectUrl)
+          } else {
+            const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
+            if (isFirstLogin) {
+              localStorage.setItem("hasSeenTutorial", "true")
+              router.push("/?tutorial=true")
             } else {
-              // Check if this is first login to show tutorial
-              const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
-              if (isFirstLogin) {
-                localStorage.setItem("hasSeenTutorial", "true")
-                router.push("/?tutorial=true")
-              } else {
-                router.push("/")
-              }
+              router.push("/")
             }
+          }
+        } else {
+          // Workers: Continue to document upload step (step 5)
+          setCurrentStep(5)
+        }
       }
     } catch (error: any) {
       console.error("Error saving basic info:", error)
@@ -455,25 +565,59 @@ const OnboardingPage = () => {
     }
   }
 
+  const handleDocumentUpload = (document: any) => {
+    setUploadedDocument(document)
+    // Move to next step (service categories for workers - step 6)
+    setCurrentStep(6)
+  }
+
+  const handleCategoriesSelected = async (categories: string[]) => {
+    setSelectedCategories(categories)
+    try {
+      // Call complete-onboarding endpoint
+      await api.patch(
+        "/users/complete-onboarding",
+        { role: "WORKER" },
+        { withCredentials: true }
+      )
+
+      toast.success("Welcome! You're all set.")
+
+      // Set profile complete and redirect
+      document.cookie = "profileComplete=true; path=/; max-age=31536000"
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hasSeenTutorial", "true")
+      }
+
+      router.push("/?tutorial=true")
+    } catch (error: any) {
+      console.error("Error completing onboarding:", error)
+      toast.error("Failed to complete setup. Please try again.")
+    }
+  }
+
   const handleNext = async () => {
-    // User type selection step
-    if (currentStep === 4) {
-      if (!selectedUserType) {
-        toast.error("Please select an account type")
+    console.log("handleNext called, currentStep:", currentStep, "selectedRole:", selectedRole)
+    // User role selection step (step 1)
+    if (currentStep === 1) {
+      if (!selectedRole) {
+        console.log("Role not selected")
+        toast.error("Please select a role")
         return
       }
-      setCurrentStep(5) // Move to phone number entry
+      console.log("Setting currentStep to 2")
+      setCurrentStep(2) // Move to phone number entry
       return
     }
 
-    // Phone number entry step
-    if (currentStep === 5) {
+    // Phone number entry step (step 2)
+    if (currentStep === 2) {
       await handleSendOtp()
       return
     }
 
-    // OTP verification step
-    if (currentStep === 6) {
+    // OTP verification step (step 3)
+    if (currentStep === 3) {
       const otpCode = code.join("")
       if (otpCode.length === OTP_LENGTH) {
         await handleVerifyOtp(otpCode)
@@ -483,11 +627,13 @@ const OnboardingPage = () => {
       return
     }
 
-    // Basic info step
-    if (currentStep === 7) {
+    // Basic info step (step 4)
+    if (currentStep === 4) {
       await handleSaveBasicInfo()
       return
     }
+
+    // Document upload (step 5) and categories (step 6) are handled by their own components
 
     // Regular next step
     if (currentStep < ONBOARDING_STEPS.length - 1) {
@@ -496,24 +642,33 @@ const OnboardingPage = () => {
   }
 
   const handleBack = () => {
-    if (currentStep === 6) {
+    if (currentStep === 3) {
+      // Going back from OTP step
+      setCurrentStep(2)
+      setCode(Array(OTP_LENGTH).fill(""))
+      setActiveInputIndex(0)
+    } else if (currentStep === 4) {
+      // Going back from basic info step to OTP
+      setCurrentStep(3)
+      setCode(Array(OTP_LENGTH).fill(""))
+      setActiveInputIndex(0)
+    } else if (currentStep === 5) {
+      // Going back from document step
+      setCurrentStep(4)
+    } else if (currentStep === 6) {
+      // Going back from categories step
       setCurrentStep(5)
-      setCode(Array(OTP_LENGTH).fill(""))
-      setActiveInputIndex(0)
-    } else if (currentStep === 7) {
-      setCurrentStep(6)
-      setCode(Array(OTP_LENGTH).fill(""))
-      setActiveInputIndex(0)
     } else if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1)
     }
   }
 
   const getButtonText = () => {
+    if (currentStep === 1) return "Continue"
+    if (currentStep === 2) return "Send OTP"
+    if (currentStep === 3) return "Verify"
     if (currentStep === 4) return "Continue"
-    if (currentStep === 5) return "Send OTP"
-    if (currentStep === 6) return "Verify"
-    if (currentStep === 7) return "Continue"
+    if (currentStep === 5 || currentStep === 6) return "" // These have their own buttons
     return ONBOARDING_STEPS[currentStep]?.buttonText || "Next"
   }
 
@@ -554,77 +709,7 @@ const OnboardingPage = () => {
           </div>
         )
       case 1:
-        return (
-          <div>
-            <div className="absolute -left-20 -top-80 sm:-left-[130px] sm:-top-[350px] flex items-center">
-              {renderImage()}
-              <RightFlowerIcon className="w-40 h-auto sm:w-auto sm:h-auto" />
-            </div>
-            <div className="text-right flex items-center justify-end w-full">
-              <h1 className="text-3xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8">
-                {currentStepData.title}
-              </h1>
-            </div>
-          </div>
-        )
-      case 2:
-        return (
-          <div className="h-full">
-            <div className="flex flex-col items-center gap-8 sm:gap-[60px]">
-              <div className="text-center flex items-center justify-center w-full">
-                <h1 className="text-3xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-6 sm:mb-8">
-                  {currentStepData.title}
-                </h1>
-              </div>
-              {renderImage()}
-            </div>
-          </div>
-        )
-      case 3:
-        // Dual-mode explanation step
-        return (
-          <div className="h-full flex flex-col items-center justify-center gap-6 sm:gap-8">
-            <div className="text-center">
-              <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-4">
-                {currentStepData.title}
-              </h1>
-              {currentStepData.subtitle && (
-                <p className="text-base sm:text-lg text-gray-600 mb-8">
-                  {currentStepData.subtitle}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full max-w-md">
-              <div className="flex-1 p-6 bg-[#F1FCEF] rounded-xl border-2 border-[#145B10]">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-[#145B10] rounded-lg">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-bold text-lg">Employer</h3>
-                </div>
-                <p className="text-sm text-gray-700">
-                  Find and hire service providers for your needs
-                </p>
-              </div>
-              <div className="flex-1 p-6 bg-[#F1FCEF] rounded-xl border-2 border-[#145B10]">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-[#145B10] rounded-lg">
-                    <Briefcase className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-bold text-lg">Provider</h3>
-                </div>
-                <p className="text-sm text-gray-700">
-                  Find job postings and work opportunities
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-gray-500 text-center mt-4">
-              Switch between views anytime using the toggle on the home page
-            </p>
-          </div>
-        )
-      case 4:
-        // User type selection
+        // Role selection
         return (
           <div className="h-full flex flex-col items-center justify-center gap-6 sm:gap-8">
             <div className="text-center mb-4">
@@ -639,53 +724,53 @@ const OnboardingPage = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full max-w-md">
               <button
-                onClick={() => setSelectedUserType("INDIVIDUAL")}
+                onClick={() => setSelectedRole("EMPLOYER")}
                 className={`flex-1 p-6 rounded-xl border-2 transition-all ${
-                  selectedUserType === "INDIVIDUAL"
+                  selectedRole === "EMPLOYER"
                     ? "bg-[#145B10] text-white border-[#145B10]"
                     : "bg-white text-gray-700 border-gray-300 hover:border-[#145B10]"
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className={`p-3 rounded-lg ${
-                    selectedUserType === "INDIVIDUAL" ? "bg-white/20" : "bg-[#F1FCEF]"
+                    selectedRole === "EMPLOYER" ? "bg-white/20" : "bg-[#F1FCEF]"
                   }`}>
                     <User className={`w-8 h-8 ${
-                      selectedUserType === "INDIVIDUAL" ? "text-white" : "text-[#145B10]"
+                      selectedRole === "EMPLOYER" ? "text-white" : "text-[#145B10]"
                     }`} />
                   </div>
-                  <h3 className="font-bold text-lg">Individual</h3>
+                  <h3 className="font-bold text-lg">I want to hire</h3>
                   <p className="text-sm text-center">
-                    Personal service provider
+                    Find workers
                   </p>
                 </div>
               </button>
               <button
-                onClick={() => setSelectedUserType("AGENCY")}
+                onClick={() => setSelectedRole("WORKER")}
                 className={`flex-1 p-6 rounded-xl border-2 transition-all ${
-                  selectedUserType === "AGENCY"
+                  selectedRole === "WORKER"
                     ? "bg-[#145B10] text-white border-[#145B10]"
                     : "bg-white text-gray-700 border-gray-300 hover:border-[#145B10]"
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className={`p-3 rounded-lg ${
-                    selectedUserType === "AGENCY" ? "bg-white/20" : "bg-[#F1FCEF]"
+                    selectedRole === "WORKER" ? "bg-white/20" : "bg-[#F1FCEF]"
                   }`}>
                     <Briefcase className={`w-8 h-8 ${
-                      selectedUserType === "AGENCY" ? "text-white" : "text-[#145B10]"
+                      selectedRole === "WORKER" ? "text-white" : "text-[#145B10]"
                     }`} />
                   </div>
-                  <h3 className="font-bold text-lg">Agency</h3>
+                  <h3 className="font-bold text-lg">I want to work</h3>
                   <p className="text-sm text-center">
-                    Business with multiple workers
+                    Offer services
                   </p>
                 </div>
               </button>
             </div>
           </div>
         )
-      case 5:
+      case 2:
         // Phone number entry
         return (
           <div>
@@ -750,7 +835,7 @@ const OnboardingPage = () => {
             )}
           </div>
         )
-      case 6:
+      case 3:
         // OTP verification
         return (
           <div className="relative w-full">
@@ -782,42 +867,59 @@ const OnboardingPage = () => {
                   Development: Use {HARDCODED_OTP} to verify (SMS service not configured yet)
                 </p>
               </span>
-              <div onPaste={handlePaste} className="flex gap-1 sm:gap-2">
-                {/* Show 6 inputs for OTP (supports both 5-digit hardcoded and 6-digit real) */}
-                {Array.from({ length: OTP_LENGTH }).map((_, index) => (
-                  <Input
-                    key={index}
-                    ref={(el) => {
-                      inputsRef.current[index] = el
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={code[index] || ""}
-                    onChange={(e) => handleChange(e.target.value, index)}
-                    onKeyDown={(e) => handleKeyDown(e, index)}
-                    onFocus={() => {
-                      const firstEmptyIndex = code.findIndex(d => !d);
-                      if (index === firstEmptyIndex || index === activeInputIndex) {
-                        handleInputFocus(index);
-                      } else {
-                        inputsRef.current[index]?.blur();
-                      }
-                    }}
-                    autoFocus={activeInputIndex === index}
-                    className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg font-medium border border-black rounded-md focus:ring-2 focus:ring-none focus:outline-none outline-none"
-                  />
-                ))}
+              <div className="relative">
+                <input
+                  ref={(el) => {
+                    inputsRef.current[0] = el
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={OTP_LENGTH}
+                  value={code.join("")}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH)
+                    const newCode = Array(OTP_LENGTH).fill("")
+                    for (let i = 0; i < value.length; i++) {
+                      newCode[i] = value[i]
+                    }
+                    setCode(newCode)
+                    setActiveInputIndex(Math.min(value.length, OTP_LENGTH - 1))
+
+                    if (value.length === OTP_LENGTH) {
+                      handleVerifyOtp(value)
+                    }
+                  }}
+                  autoFocus
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  aria-label="Verification code"
+                />
+                <div className="flex gap-1 sm:gap-2 pointer-events-none">
+                  {Array.from({ length: OTP_LENGTH }).map((_, index) => {
+                    const isFilled = !!code[index]
+                    const isActive = index === code.findIndex(d => !d) || (index === OTP_LENGTH - 1 && code.every(d => d))
+                    return (
+                      <div
+                        key={index}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg font-medium border rounded-md ${
+                          isActive ? "border-[#145B10] border-2 ring-2 ring-[#145B10]/20" : "border-black"
+                        } ${isFilled ? "bg-white" : "bg-white"}`}
+                      >
+                        {code[index] || ""}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
         )
-      case 7:
+      case 4:
         // Basic info collection
         return (
           <div className="relative w-full">
             <button
-              onClick={() => setCurrentStep(6)}
+              onClick={() => setCurrentStep(3)}
               className="absolute -top-60 sm:-top-80 left-0 p-2 text-[#1B5E20] font-semibold flex items-center gap-1"
             >
               <svg
@@ -877,7 +979,7 @@ const OnboardingPage = () => {
                         lastNameInputRef.current?.focus()
                       }
                     }}
-                    autoFocus={currentStep === 7 && !firstName}
+                    autoFocus={currentStep === 4 && !firstName}
                   />
                 </div>
                 
@@ -954,6 +1056,28 @@ const OnboardingPage = () => {
             </div>
           </div>
         )
+      case 5:
+        // Document upload - Worker only
+        return (
+          <div className="w-full flex flex-col items-center">
+            <DocumentUploadStep
+              onUploadSuccess={handleDocumentUpload}
+              onCancel={handleBack}
+              isLoading={isLoading}
+            />
+          </div>
+        )
+      case 6:
+        // Service category selection - Worker only
+        return (
+          <div className="w-full flex flex-col items-center">
+            <ServiceCategorySelector
+              onContinue={handleCategoriesSelected}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          </div>
+        )
       default:
         return null
     }
@@ -977,8 +1101,9 @@ const OnboardingPage = () => {
     )
   }
 
-  const introSteps = [0, 1, 2, 3] // Steps that can be skipped
+  const introSteps = [0] // Only the first intro slide shows Skip button
   const canSkip = introSteps.includes(currentStep)
+  const componentSteps = [5, 6] // Steps with their own components/buttons (document upload and service categories)
 
   return (
     <div className="relative h-screen overflow-hidden bg-white max-w-md mx-auto">
@@ -993,19 +1118,27 @@ const OnboardingPage = () => {
         </button>
       )}
 
-      {currentStep === 7 ? (
-        // For step 7, render without animation to prevent remounting
+      {componentSteps.includes(currentStep) ? (
+        // Steps 8 & 9: Components with their own buttons
+        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
+          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
+            {renderStep()}
+          </div>
+        </div>
+      ) : currentStep === 4 ? (
+        // Step 4 (basic info): Render without animation
         <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
           <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
             {renderStep()}
             <div className="mt-auto">
               <button
-                onClick={handleNext}
-                className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={
-                  isLoading ||
-                  !firstName.trim()
-                }
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNext()
+                }}
+                type="button"
+                className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+                disabled={isLoading || !firstName.trim()}
               >
                 {isLoading ? "Please wait..." : getButtonText()}
               </button>
@@ -1019,28 +1152,32 @@ const OnboardingPage = () => {
             initial={{ x: "100%", opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "-100%", opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
           >
-          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            {renderStep()}
-            <div className="mt-auto">
-              <button
-                onClick={handleNext}
-                className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={
-                  isLoading ||
-                  (currentStep === 6 && code.join("").length < OTP_LENGTH) ||
-                  (currentStep === 4 && !selectedUserType) ||
-                  (currentStep === 7 && !firstName.trim())
-                }
-              >
-                {isLoading ? "Please wait..." : getButtonText()}
-              </button>
+            <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
+              {renderStep()}
+              <div className="mt-auto">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleNext()
+                  }}
+                  type="button"
+                  className="w-full bg-[#1B5E20] text-[#ffffff] py-4 sm:py-[20px] rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+                  disabled={
+                    isLoading ||
+                    (currentStep === 3 && code.join("").length < OTP_LENGTH) ||
+                    (currentStep === 1 && !selectedRole) ||
+                    (currentStep === 4 && !firstName.trim())
+                  }
+                >
+                  {isLoading ? "Please wait..." : getButtonText()}
+                </button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
       )}
       <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
         {ONBOARDING_STEPS.map((_, index) => (
