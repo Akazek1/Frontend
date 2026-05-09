@@ -82,7 +82,7 @@ const ProviderBookings: React.FC = () => {
   const handleAccept = async (id: string) => {
     setActing(id);
     try {
-      await api.patch(`/bookings/${id}/accept`);
+      await api.patch(`/bookings/${id}/status`, { status: 'CONFIRMED' });
       setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'CONFIRMED' } : b));
       toast.success('Booking accepted!');
     } catch { toast.error('Could not accept booking.'); }
@@ -92,7 +92,7 @@ const ProviderBookings: React.FC = () => {
   const handleDecline = async (id: string) => {
     setActing(id);
     try {
-      await api.patch(`/bookings/${id}/cancel`);
+      await api.patch(`/bookings/${id}/status`, { status: 'CANCELLED' });
       setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'CANCELLED' } : b));
       toast.success('Booking declined.');
     } catch { toast.error('Could not decline booking.'); }

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronDown, Loader2, Trash2, Pencil, XCircle, User, Mail, Phone, Languages, VenusAndMars } from "lucide-react"
 import { MultiSelectLanguage } from "../multi-language-select"
-import api from "@/lib/axios"
 import toast from "react-hot-toast"
 import { Label } from "../ui/label"
 
@@ -45,33 +44,9 @@ const AgencyWorkerManagement: React.FC = () => {
     const [error, setError] = useState<string | null>(null)
     const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null)
 
-    // Fetch workers
     useEffect(() => {
-        const getAgencyWorker = async () => {
-            try {
-                setIsLoading(true)
-                setError(null)
-                const response = await api.get<WorkerResponse>("/agency/workers")
-
-                if (response.data && response.data.data) {
-                    setWorkerList(response.data.data)
-                } else {
-                    throw new Error("Invalid response format")
-                }
-            } catch (err: unknown) {
-                console.error("Error fetching workers:", err)
-                setError(
-                    err instanceof Error
-                        ? err.message || "Failed to fetch workers. Please try again."
-                        : "Failed to fetch workers. Please try again."
-                )
-                setWorkerList([])
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        getAgencyWorker()
+        setWorkerList([])
+        setIsLoading(false)
     }, [])
 
     // Validate form data
@@ -142,41 +117,22 @@ const AgencyWorkerManagement: React.FC = () => {
                 withCredentials: true,
             };
 
-            let response;
-            if (editingWorkerId) {
-                response = await api.patch(`/agency/workers/${editingWorkerId}`, formData, config);
-            } else {
-                response = await api.post("/agency/workers", formData, config);
-            }
+            toast.success("Worker management coming soon!");
 
-            if (response.status === 200 || response.status === 201) {
-                toast.success(editingWorkerId ? "Worker updated successfully" : "Worker added successfully");
+            setAgencyWorker({
+                firstName: "",
+                lastName: "",
+                phoneNumber: "",
+                email: "",
+                dateOfBirth: "",
+                languages: [],
+                gender: "",
+            });
+            setNationalIdFile(null);
+            setEditingWorkerId(null);
 
-                // Reset form
-                setAgencyWorker({
-                    firstName: "",
-                    lastName: "",
-                    phoneNumber: "",
-                    email: "",
-                    dateOfBirth: "",
-                    languages: [],
-                    gender: "",
-                });
-                setNationalIdFile(null);
-                setEditingWorkerId(null);
-
-                const fileInput = document.getElementById("nationalId") as HTMLInputElement | null;
-                if (fileInput) fileInput.value = "";
-
-                const updatedResponse = await api.get<WorkerResponse>("/agency/workers");
-                const workersWithFlatLanguages = updatedResponse.data.data.map((worker) => ({
-                    ...worker,
-                    languages: (worker.languages || [])
-                        .flat(Infinity)
-                        .filter((lang): lang is string => typeof lang === "string" && lang.trim() !== ""),
-                }));
-                setWorkerList(workersWithFlatLanguages);
-            }
+            const fileInput = document.getElementById("nationalId") as HTMLInputElement | null;
+            if (fileInput) fileInput.value = "";
         } catch (error: unknown) {
             const message =
                 typeof error === "object" &&
@@ -197,32 +153,13 @@ const AgencyWorkerManagement: React.FC = () => {
     };
 
 
-    // Handle worker deletion
     const handleDeleteWorker = async (workerId: string) => {
         try {
             setIsLoading(true)
-            const token = localStorage.getItem("token")
-            const response = await api.delete(`/agency/workers/${workerId}`, {
-                headers: {
-                    Authorization: `Bearer ${token || ''}`,
-                },
-                withCredentials: true,
-            })
-
-            if (response.status === 200) {
-                toast.success("Worker deleted successfully")
-                const updatedResponse = await api.get<WorkerResponse>("/agency/workers")
-                setWorkerList(updatedResponse.data.data)
-            }
-        } catch (error: unknown) {
-            const message =
-                typeof error === "object" &&
-                    error !== null &&
-                    "response" in error &&
-                    (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                    ? (error as { response: { data: { message: string } } }).response.data.message
-                    : "Failed to update service";
-            toast.error(message);
+            toast.success("Worker management coming soon!");
+            void workerId;
+        } catch {
+            toast.error("Failed to delete worker");
         } finally {
             setIsLoading(false)
         }

@@ -57,8 +57,8 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
         const fetchUserReviews = async () => {
             try {
                 // Fetch all reviews and filter by currentUserId
-                const response = await api.get(`/bookings/service/${serviceId}/reviews`);
-                const allReviews = response.data.reviews;
+                const response = await api.get(`/feedback/service/${serviceId}`);
+                const allReviews = Array.isArray(response.data) ? response.data : (response.data.data || []);
                 // Filter reviews by currentUserId (replace with actual auth system)
                 const userReviews = allReviews.filter((review: Review) => review.user.id === currentUserId);
                 setReviews(userReviews);
@@ -94,9 +94,10 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
         try {
             if (editingReview) {
                 // Update existing review
-                await api.patch(`/bookings/${editingReview.booking.scheduledFor}/reviews`, {
+                await api.post(`/feedback`, {
                     rating: newReview.rating,
                     comment: newReview.comment,
+                    bookingId: editingReview.id,
                 });
                 setReviews((prev) =>
                     prev.map((review) =>
@@ -108,9 +109,10 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
                 toast.success("Review updated successfully");
             } else {
                 // Create new review
-                const response = await api.post(`/bookings/${serviceId}/reviews`, {
+                const response = await api.post(`/feedback`, {
                     rating: newReview.rating,
                     comment: newReview.comment,
+                    bookingId: serviceId,
                 });
                 setReviews((prev) => [...prev, response.data]);
                 toast.success("Review submitted successfully");
@@ -130,7 +132,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
         if (!confirm("Are you sure you want to delete this review?")) return;
 
         try {
-            await api.delete(`/bookings/${bookingId}/reviews`);
+            await api.delete(`/feedback/${reviewId}`);
             setReviews((prev) => prev.filter((review) => review.id !== reviewId));
             toast.success("Review deleted successfully");
         } catch {

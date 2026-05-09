@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from "@/lib/axios";
-import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 interface Review {
@@ -37,8 +36,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ serviceId }) => {
     useEffect(() => {
         const fetchReviews = async () => {
             try {
-                const response = await api.get(`/bookings/service/${serviceId}/reviews`);
-                const reviewsData = response.data.data.reviews || [];
+                const response = await api.get(`/feedback/service/${serviceId}`);
+                const reviewsData = Array.isArray(response.data) ? response.data : (response.data.data || []);
                 setReviews(reviewsData);
 
                 // Calculate total reviews

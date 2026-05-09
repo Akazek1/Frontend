@@ -147,7 +147,7 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await api.get<{ data: Booking[] }>("/bookings/chats", {
+        const response = await api.get<{ data: Booking[] }>("/bookings", {
           withCredentials: true,
         });
 

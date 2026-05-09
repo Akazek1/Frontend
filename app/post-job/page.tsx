@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButtonHeader from "@/components/header/back-button-header";
-import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
@@ -56,27 +55,8 @@ const PostJobPage: React.FC = () => {
       toast.error("Please fill in all required fields.");
       return;
     }
-    setLoading(true);
-    try {
-      await api.post("/custom-jobs", {
-        title: form.title,
-        category: form.category,
-        description: form.description,
-        location: form.location,
-        budgetMin: form.budgetMin ? Number(form.budgetMin) : null,
-        budgetMax: form.budgetMax ? Number(form.budgetMax) : null,
-        preferredDate: form.date || null,
-        urgency: form.urgency,
-      });
-      toast.success("Job posted! Providers will reach out soon.");
-      router.back();
-    } catch {
-      // API not yet implemented — show optimistic success for now
-      toast.success("Job posted! Providers will reach out soon.");
-      router.back();
-    } finally {
-      setLoading(false);
-    }
+    toast.success("Job posting coming soon!");
+    router.back();
   };
 
   return (

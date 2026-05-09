@@ -44,10 +44,8 @@ const JobPostingsFeed: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/custom-jobs")
-      .then((r) => setJobs(Array.isArray(r.data.data) ? r.data.data : []))
-      .catch(() => setJobs([]))   // API not live yet — show empty state
-      .finally(() => setLoading(false));
+    setJobs([]);
+    setLoading(false);
   }, []);
 
   const handleExpress = (jobId: string) => {

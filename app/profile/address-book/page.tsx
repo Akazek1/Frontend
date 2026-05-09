@@ -139,7 +139,7 @@ const AddressBook = () => {
 
       if (editingAddressId) {
         // Update existing address
-        const response = await api.patch(`/users/addresses/${editingAddressId}`, payload);
+        const response = await api.patch(`/address-book/${editingAddressId}`, payload);
         setAddresses((prev) =>
           prev.map((addr) =>
             addr.id === editingAddressId ? { ...addr, ...response.data.data } : addr
@@ -148,7 +148,7 @@ const AddressBook = () => {
         toast.success("Address updated successfully");
       } else {
         // Create new address
-        const response = await api.post("/users/addresses", payload);
+        const response = await api.post("/address-book", payload);
         setAddresses((prev) => [...prev, response.data.data]);
         toast.success("Address added successfully");
       }
@@ -180,7 +180,7 @@ const AddressBook = () => {
   const handleDelete = async (addressId: string) => {
     setIsLoading(true);
     try {
-      await api.delete(`/users/addresses/${addressId}`);
+      await api.delete(`/address-book/${addressId}`);
       setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
       toast.success("Address deleted successfully");
     } catch (err: unknown) {

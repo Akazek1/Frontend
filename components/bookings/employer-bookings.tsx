@@ -102,7 +102,7 @@ const EmployerBookings: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await api.post(`/bookings/${reviewBookingId}/reviews`, { rating, comment });
+      await api.post(`/feedback`, { rating, comment, bookingId: reviewBookingId });
       toast.success('Review submitted!');
       setBookings((prev) =>
         prev.map((b) => b.id === reviewBookingId ? { ...b, review: { rating, comment } } : b)

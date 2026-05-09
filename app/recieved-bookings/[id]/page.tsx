@@ -123,16 +123,7 @@ const BookingDetails: React.FC = () => {
     }, [id]);
 
     const fetchTestOtp = async () => {
-        try {
-            const response = await api.get(`/bookings/${id}/otp`, {
-                withCredentials: true,
-            });
-            setTestOtp(response.data.otp);
-            return response.data.otp;
-        } catch (err) {
-            console.error('Failed to fetch test OTP:', err);
-            return null;
-        }
+        return null;
     };
 
     const handleSendOtp = async () => {

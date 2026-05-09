@@ -58,7 +58,7 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
         try {
             if (isCurrentlyBookmarked) {
                 // Remove bookmark
-                await api.delete(`/bookmarks/${itemType}/${itemId}`);
+                await api.delete(`/bookmarks/services/${itemId}`);
                 setBookmarkedIds((prev) => {
                     const newSet = new Set(prev);
                     newSet.delete(itemId);
@@ -67,7 +67,7 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
                 toast.success("Bookmark removed");
             } else {
                 // Add bookmark
-                await api.post(`/bookmarks/${itemType}/${itemId}`);
+                await api.post(`/bookmarks/services/${itemId}`);
                 setBookmarkedIds((prev) => new Set(prev).add(itemId));
                 toast.success("Bookmark added");
             }
