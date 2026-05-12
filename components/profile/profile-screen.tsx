@@ -5,6 +5,8 @@ import {
   Briefcase,
   ChevronRight,
   HelpingHand,
+  AlertTriangle,
+  Bell,
   MessageSquare,
   ShieldX,
 } from "lucide-react";
@@ -24,20 +26,22 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-  const menuItems = [
+  const mainActions = [
     { name: "Edit Profile", Icon: Icons.UserIcon, href: "/profile/edit" },
-    {
-      name: "Get Hired",
-      Icon: Briefcase,
-      href: "/profile/get-hired"
-    },
-    { name: "Bookmarks", Icon: Icons.BookMarkIcon, href: "/profile/bookmark" },
-    { name: "Transactions", Icon: Icons.WalletIcon, href: "/profile/transactions" },
-    { name: "Address Book", Icon: Icons.BookIcon, href: "/profile/address-book" },
+    { name: "Set Up Services", Icon: Briefcase, href: "/profile/get-hired" },
+    { name: "Saved Profiles", Icon: Icons.BookMarkIcon, href: "/profile/bookmark" },
+    { name: "Notifications", Icon: Bell, href: "/profile/notifications" },
+    { name: "Report an Issue", Icon: AlertTriangle, href: "/profile/report-issue" },
+    { name: "Share Feedback", Icon: MessageSquare, href: "/profile/feedback" },
+  ];
+
+  const supportItems = [
+    { name: "Help & Support", Icon: HelpingHand, href: "/profile/help-&-support" },
+  ];
+
+  const legalItems = [
     { name: "Privacy Policy", Icon: Icons.LockIcon, href: "/profile/privacy-policy" },
     { name: "Terms & Conditions", Icon: ShieldX, href: "/profile/terms-&-conditions" },
-    { name: "Help & Support", Icon: HelpingHand, href: "/profile/help-&-support" },
-    { name: "Share Feedback", Icon: MessageSquare, href: "/profile/feedback" },
   ];
 
   const handleLogout = async () => {
@@ -73,20 +77,66 @@ const ProfileScreen = () => {
 
       <Separator className="bg-[#EEEEEE]" />
 
-      <div className="space-y-5">
-        {menuItems.map(({ name, Icon, href }) => (
-          <Link
-            key={name}
-            href={href}
-            className="flex items-center justify-between rounded-lg transition-colors"
-          >
-            <div className="flex items-center gap-5">
-              <Icon className="w-6 h-6 text-[#212121] stroke-[#212121]" />
-              <span className="text-lg text-[#1B2431] leading-6">{name}</span>
-            </div>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        ))}
+      <div className="space-y-6">
+        {/* MAIN ACTIONS */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-[#145B10] uppercase tracking-wide">Main Actions</h3>
+          <div className="space-y-3">
+            {mainActions.map(({ name, Icon, href }) => (
+              <Link
+                key={name}
+                href={href}
+                className="flex items-center justify-between rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-5">
+                  <Icon className="w-6 h-6 text-[#212121] stroke-[#212121]" />
+                  <span className="text-lg text-[#1B2431] leading-6">{name}</span>
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* SUPPORT */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-[#145B10] uppercase tracking-wide">Support</h3>
+          <div className="space-y-3">
+            {supportItems.map(({ name, Icon, href }) => (
+              <Link
+                key={name}
+                href={href}
+                className="flex items-center justify-between rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-5">
+                  <Icon className="w-6 h-6 text-[#212121] stroke-[#212121]" />
+                  <span className="text-lg text-[#1B2431] leading-6">{name}</span>
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* LEGAL */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-[#145B10] uppercase tracking-wide">Legal</h3>
+          <div className="space-y-3">
+            {legalItems.map(({ name, Icon, href }) => (
+              <Link
+                key={name}
+                href={href}
+                className="flex items-center justify-between rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-5">
+                  <Icon className="w-6 h-6 text-[#212121] stroke-[#212121]" />
+                  <span className="text-lg text-[#1B2431] leading-6">{name}</span>
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ))}
+          </div>
+        </div>
 
         <div
           onClick={handleLogout}
