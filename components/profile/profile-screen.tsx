@@ -11,6 +11,9 @@ import {
   ShieldX,
   LogOut,
   Sparkles,
+  User,
+  Bookmark,
+  Lock,
 } from "lucide-react";
 import { Icons } from "../icons";
 import { Separator } from "../ui/separator";
@@ -31,31 +34,31 @@ type MenuItem = {
 };
 
 const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => (
-  <section className="space-y-2">
-    <h3 className="px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5F7C5B]">
+  <section className="space-y-1.5">
+    <h3 className="px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B7668]">
       {title}
     </h3>
-    <div className="overflow-hidden rounded-lg border border-[#DDEED9] bg-white shadow-[0_10px_24px_rgba(20,91,16,0.06)]">
+    <div className="overflow-hidden rounded-lg border border-[#E8F1E5] bg-white shadow-[0_4px_12px_rgba(20,91,16,0.04)]">
       {items.map(({ name, description, Icon, href }) => (
         <Link
           key={name}
           href={href}
-          className="group flex min-h-[72px] items-center justify-between gap-3 border-b border-[#EEF5EC] px-4 py-3 transition-colors last:border-b-0 hover:bg-[#F7FCF5] active:bg-[#EEF8EA]"
+          className="group flex min-h-[56px] items-center justify-between gap-2 border-b border-[#F3F8F0] px-3 py-2.5 transition-colors last:border-b-0 hover:bg-[#FAFCF9] active:bg-[#F3F8F0]"
         >
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#EEF8EA] text-[#145B10] transition-colors group-hover:bg-[#E1F2DD]">
-              <Icon className="h-5 w-5 stroke-current" />
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EEF8EA] text-[#167021] transition-colors group-hover:bg-[#E7F4E3]">
+              <Icon className="h-4.5 w-4.5" />
             </span>
             <span className="min-w-0">
-              <span className="block text-[15px] font-semibold leading-5 text-[#1B2431]">
+              <span className="block text-[14px] font-semibold leading-4 text-[#1B2431]">
                 {name}
               </span>
-              <span className="mt-0.5 block text-xs leading-4 text-[#6B7668]">
+              <span className="mt-0.5 block text-xs leading-3 text-[#878A82]">
                 {description}
               </span>
             </span>
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-[#9AAD96] transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#B0BBA8] transition-transform group-hover:translate-x-0.5" />
         </Link>
       ))}
     </div>
@@ -68,9 +71,9 @@ const ProfileScreen = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const mainActions = [
-    { name: "Edit Profile", description: "Update your personal details", Icon: Icons.UserIcon, href: "/profile/edit" },
+    { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile/edit" },
     { name: "Set Up Services", description: "Manage services and availability", Icon: Briefcase, href: "/profile/get-hired" },
-    { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Icons.BookMarkIcon, href: "/profile/bookmark" },
+    { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/profile/bookmark" },
     { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/profile/notifications" },
   ];
 
@@ -81,7 +84,7 @@ const ProfileScreen = () => {
   ];
 
   const legalItems = [
-    { name: "Privacy Policy", description: "How your information is handled", Icon: Icons.LockIcon, href: "/profile/privacy-policy" },
+    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/profile/privacy-policy" },
     { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/profile/terms-&-conditions" },
   ];
 
@@ -106,35 +109,37 @@ const ProfileScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF] px-4 pb-24 pt-4 sm:px-6">
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="flex items-center gap-3 text-2xl font-bold leading-[120%] text-[#1B2431]">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white shadow-sm">
-            <Image src={"/images/hwa-green-icon.png"} width={20} height={20} alt="Akazek" />
+    <div className="min-h-screen bg-[#F1FCEF] px-4 pb-24 pt-3 sm:px-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%] text-[#1B2431]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">
+            <Image src={"/images/hwa-green-icon.png"} width={18} height={18} alt="Akazek" />
           </span>
           More
         </h1>
       </div>
 
-      <div className="mb-5 rounded-lg border border-[#DDEED9] bg-white px-4 py-5 shadow-[0_12px_28px_rgba(20,91,16,0.08)]">
-        <ProfileImageUploader />
-        <Separator className="my-4 bg-[#EAF3E7]" />
-        <div className="flex items-start gap-3 rounded-md bg-[#F7FCF5] p-3">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#E7F4E3] text-[#145B10]">
-            <Sparkles className="h-4 w-4" />
+      <div className="mb-3 rounded-lg border border-[#E8F1E5] bg-white px-3 py-3 shadow-[0_4px_12px_rgba(20,91,16,0.04)]">
+        <div className="scale-90 origin-top">
+          <ProfileImageUploader />
+        </div>
+        <Separator className="my-2 bg-[#EEF5EC]" />
+        <div className="flex items-start gap-2 rounded-md bg-[#FAFCF9] p-2">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#EEF8EA] text-[#167021]">
+            <Sparkles className="h-3 w-3" />
           </span>
           <div>
-            <p className="text-sm font-semibold leading-5 text-[#1B2431]">
+            <p className="text-[11px] font-semibold leading-3 text-[#1B2431]">
               Keep your profile current
             </p>
-            <p className="mt-0.5 text-xs leading-4 text-[#6B7668]">
-              A complete profile helps build trust before bookings.
+            <p className="mt-0.5 text-[10px] leading-2.5 text-[#878A82]">
+              A complete profile helps build trust.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-3.5">
         <MenuSection title="Account" items={mainActions} />
         <MenuSection title="Support" items={supportItems} />
         <MenuSection title="Legal" items={legalItems} />
@@ -142,9 +147,9 @@ const ProfileScreen = () => {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex min-h-[56px] w-full items-center justify-center gap-3 rounded-lg border border-red-100 bg-white px-4 py-3 text-base font-semibold text-red-500 shadow-[0_10px_24px_rgba(247,85,85,0.08)] transition-colors hover:bg-red-50 active:bg-red-100"
+          className="flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-lg border border-red-100 bg-white px-4 py-2.5 text-sm font-semibold text-red-500 shadow-[0_4px_12px_rgba(247,85,85,0.06)] transition-colors hover:bg-red-50 active:bg-red-100"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-4.5 w-4.5" />
           Logout
         </button>
       </div>
