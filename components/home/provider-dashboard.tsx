@@ -118,10 +118,10 @@ const ProviderDashboard: React.FC = () => {
         <p className="text-[12px] font-bold mb-2" style={{ color: colors.text }}>Quick Actions</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Manage My Services",  icon: <ClipboardList className="w-4 h-4" style={{ color: colors.primary }} />, href: "/profile/get-hired" },
-            { label: "Edit Profile",        icon: <UserCheck className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/profile/edit" },
-            { label: "View All Bookings",   icon: <Briefcase className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/order-history" },
-            { label: "My Reviews",          icon: <Star className="w-4 h-4" style={{ color: colors.primary }} />,          href: "/profile/feedback" },
+            { label: "Manage My Services",  icon: <ClipboardList className="w-4 h-4" style={{ color: colors.primary }} />, href: "/more/services" },
+            { label: "Edit Profile",        icon: <UserCheck className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/profile" },
+            { label: "View All Bookings",   icon: <Briefcase className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/bookings" },
+            { label: "My Reviews",          icon: <Star className="w-4 h-4" style={{ color: colors.primary }} />,          href: "/more/feedback" },
           ].map(({ label, icon, href }) => (
             <Link key={label} href={href}>
               <div className="bg-white border border-gray-100 rounded-2xl px-3 py-3 shadow-sm flex items-center gap-2.5 hover:shadow-md transition-shadow">
@@ -141,7 +141,7 @@ const ProviderDashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-2">
           <p className="text-[12px] font-bold" style={{ color: colors.text }}>Recent Bookings</p>
           <button
-            onClick={() => router.push("/order-history")}
+            onClick={() => router.push("/bookings")}
             className="text-[11px] font-semibold"
             style={{ color: colors.primary }}
           >
@@ -160,7 +160,7 @@ const ProviderDashboard: React.FC = () => {
             <p className="text-[11px] mt-1" style={{ color: colors.textSecondary }}>
               Complete your profile and add a service so employers can find you.
             </p>
-            <Link href="/profile/get-hired">
+            <Link href="/more/services">
               <button className="mt-3 text-white text-[11px] font-semibold px-4 py-2 rounded-xl transition-colors" style={{ backgroundColor: colors.primary }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.primaryActive)} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.primary)}>
                 Set Up My Service
               </button>

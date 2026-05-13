@@ -6,9 +6,9 @@ export const navItems: NavItem[] = [
   { title: "Message", url: "/conversations", icon: "MessageIcon" },
   {
     title: "More",
-    url: "/profile",
+    url: "/more",
     icon: "SettingIcon",
-    matchPattern: "/profile/*",
+    matchPattern: "/more/*",
   },
 ];
 

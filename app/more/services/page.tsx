@@ -61,7 +61,7 @@ const GetHired: React.FC = () => {
                     user?.userType === "Agency" && !showWorkerForm ? (
                         <SquarePlus onClick={handleAddWorker} className="text-[#145B10] w-6 h-6 cursor-pointer" />
                     ) : (
-                        <Link href={"/profile/edit"} type="button" className="p-1.5 rounded-sm bg-transparent hover:bg-transparent text-[#145B10] border text-sm font-semibold border-[#145B10]">
+                        <Link href={"/profile"} type="button" className="p-1.5 rounded-sm bg-transparent hover:bg-transparent text-[#145B10] border text-sm font-semibold border-[#145B10]">
                             Edit Personal Info
                         </Link>
                     )

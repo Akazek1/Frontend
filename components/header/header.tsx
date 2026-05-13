@@ -159,8 +159,8 @@ const Header = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Avatar */}
-          <Link href="/profile">
+          {/* Avatar - go to More menu (account, settings, support) */}
+          <Link href="/more">
             {user?.profilePicture ? (
               <Image
                 src={user.profilePicture}

@@ -349,7 +349,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
 
             dispatch(updateUser(updatedUser));
             toast.success("Profile updated successfully");
-            router.push("/profile");
+            router.push("/more");
         } catch (err: unknown) {
             const errorMessage =
                 (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

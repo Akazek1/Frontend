@@ -344,7 +344,7 @@ const BookingSummary = () => {
                         ) : addresses.length === 0 ? (
                             <p className="text-[#616161] text-sm font-medium">
                                 No addresses found.{" "}
-                                <Link href="/profile/address-book" className="text-[#145B10] underline">
+                                <Link href="/more/addresses" className="text-[#145B10] underline">
                                     Add an address
                                 </Link>
                             </p>

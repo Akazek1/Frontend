@@ -206,21 +206,21 @@ const HelpAndSupport = () => {
         <h3 className="text-lg font-bold text-gray-900">Additional Resources</h3>
         <div className="space-y-3">
           <Link
-            href="/privacy-policy"
+            href="/more/privacy"
             className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <p className="font-semibold text-gray-900 text-sm">Privacy Policy</p>
             <p className="text-xs text-gray-600 mt-1">How we protect your personal information</p>
           </Link>
           <Link
-            href="/terms-&-conditions"
+            href="/more/terms"
             className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <p className="font-semibold text-gray-900 text-sm">Terms & Conditions</p>
             <p className="text-xs text-gray-600 mt-1">Our terms of service and user agreement</p>
           </Link>
           <Link
-            href="/feedback"
+            href="/more/feedback"
             className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <p className="font-semibold text-gray-900 text-sm">Send Feedback</p>

@@ -142,7 +142,7 @@ const RecievedBookings: React.FC<RecievedBookingsProps> = ({
                         <div
                             key={booking.id}
                             className="border rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition"
-                            onClick={() => router.push(`/recieved-bookings/${booking.id}`)}
+                            onClick={() => router.push(`/received-bookings/${booking.id}`)}
                         >
                             <Image
                                 width={300}

@@ -17,7 +17,7 @@ export const APP_CONFIG = {
   // Contact & Support
   contact: {
     email: "support@akazek.rw",
-    phone: "+250788000000", // Update with actual support number
+    phone: "+250788335947", // Update with actual support number
     website: "https://akazek.rw",
   },
 

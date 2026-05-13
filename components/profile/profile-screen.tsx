@@ -83,21 +83,21 @@ const ProfileScreen = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const mainActions = [
-    { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile/edit" },
-    { name: "Set Up Services", description: "Manage services and availability", Icon: Briefcase, href: "/profile/get-hired" },
-    { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/profile/bookmark" },
-    { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/profile/notifications" },
+    { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile" },
+    { name: "Set Up Services", description: "Manage services and availability", Icon: Briefcase, href: "/more/services" },
+    { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/more/saved" },
+    { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/more/notifications" },
   ];
 
   const supportItems = [
-    { name: "Help & Support", description: "Get answers or contact support", Icon: HelpingHand, href: "/profile/help-&-support" },
-    { name: "Report an Issue", description: "Tell us what needs attention", Icon: AlertTriangle, href: "/profile/report-issue" },
-    { name: "Share Feedback", description: "Help improve Akazek", Icon: MessageSquare, href: "/profile/feedback" },
+    { name: "Help & Support", description: "Get answers or contact support", Icon: HelpingHand, href: "/more/help" },
+    { name: "Report an Issue", description: "Tell us what needs attention", Icon: AlertTriangle, href: "/more/report" },
+    { name: "Share Feedback", description: "Help improve Akazek", Icon: MessageSquare, href: "/more/feedback" },
   ];
 
   const legalItems = [
-    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/profile/privacy-policy" },
-    { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/profile/terms-&-conditions" },
+    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/more/privacy" },
+    { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/more/terms" },
   ];
 
   const handleLogout = async () => {
