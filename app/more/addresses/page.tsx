@@ -227,7 +227,7 @@ const AddressBook = () => {
   return (
     <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen">
       {/* Header */}
-      <BackButtonHeader text="Address Book" backHref="/profile" />
+      <BackButtonHeader text="Address Book" backHref="/more" />
 
       {/* Add Address Button */}
       <div

@@ -68,7 +68,7 @@ const NotificationsPreferences = () => {
 
   return (
     <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen pb-16">
-      <BackButtonHeader text="Notifications" backHref="/profile" />
+      <BackButtonHeader text="Notifications" backHref="/more" />
 
       <div className="space-y-6">
         {/* Bookings Section */}

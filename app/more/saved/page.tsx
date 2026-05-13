@@ -56,7 +56,7 @@ const BookmarksPage = () => {
 
     return (
         <div className="p-6">
-            <BackButtonHeader text="Bookmarks" backHref="/profile" />
+            <BackButtonHeader text="Bookmarks" backHref="/more" />
             <div className="mt-4 space-y-4">
                 {isLoading ? (
                     <p className="text-center text-gray-500">Loading bookmarks...</p>

@@ -56,7 +56,7 @@ const GetHired: React.FC = () => {
     return (
         <div className="">
             <div className="p-4 sm:p-6 flex items-center justify-between">
-                <BackButtonHeader text="Get Hired" backHref="/profile" />
+                <BackButtonHeader text="Get Hired" backHref="/more" />
                 {
                     user?.userType === "Agency" && !showWorkerForm ? (
                         <SquarePlus onClick={handleAddWorker} className="text-[#145B10] w-6 h-6 cursor-pointer" />

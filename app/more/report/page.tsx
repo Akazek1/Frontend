@@ -129,7 +129,7 @@ const ReportIssue = () => {
 
   return (
     <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen pb-16">
-      <BackButtonHeader text="Report an Issue" backHref="/profile" />
+      <BackButtonHeader text="Report an Issue" backHref="/more" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Category */}

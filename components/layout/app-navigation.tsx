@@ -5,30 +5,19 @@ import { Icons } from "@/components/icons";
 import { navItems as defaultNavItems } from "@/constant"; // Keep this immutable
 import Link from "next/link";
 import { NavItem } from "@/types";
-import { RootState } from "@/store";
-import { useSelector } from "react-redux";
 import { useViewMode } from "@/context/view-mode-context";
 import { colors } from "@/constant/colors";
 
 const Navigation = () => {
   const pathname = usePathname();
-  const { user } = useSelector((state: RootState) => state.auth);
   const { viewMode } = useViewMode();
 
-  // Dynamically adjust nav items based on user type
+  // Dynamically adjust nav items based on view mode
   const navItems: NavItem[] = defaultNavItems.map((item) => {
     if (item.title === "Bookings") {
       return {
         ...item,
         title: viewMode === "provider" ? "Jobs" : "Bookings",
-      };
-    }
-
-    if (item.title === "Get Hired" && user?.userType?.toLowerCase() === "individual") {
-      return {
-        ...item,
-        title: "Request Service",
-        url: "/request-service"
       };
     }
     return item;

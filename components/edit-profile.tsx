@@ -45,6 +45,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
     const router = useRouter();
     const { user } = useSelector((state: RootState) => state.auth);
 
+    // Strip 250 country code prefix for clean display in input
+    const stripCountryCode = (phone: string) => phone.replace(/^250/, "");
+
     const [formData, setFormData] = useState<FormData>({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
@@ -52,7 +55,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
         dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
         email: user?.email || "",
         country: user?.country || "Rwanda",
-        phone: user?.phoneNumber || "", // Preserve phone number from user, don't overwrite
+        phone: stripCountryCode(user?.phoneNumber || ""), // Store without 250 prefix (added at save time)
         gender: user?.gender || "",
         languages: user?.languages || [],
         street: "",
@@ -81,7 +84,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split("T")[0] : "",
                         email: userData.email || "",
                         country: userData.country || "Rwanda",
-                        phone: userData.phoneNumber || "",
+                        phone: stripCountryCode(userData.phoneNumber || ""), // Strip 250 prefix for display
                         gender: userData.gender || "",
                         languages: userData.languages || [],
                         street: userData.address?.street || "",
@@ -241,25 +244,27 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 throw new Error("Invalid date of birth");
             }
 
-            // Format phone number: if it starts with 0 and has 10 digits, remove the 0 and prepend 250
-            let phoneNumber = String(formData.phone).trim();
-            const phoneDigitsOnly = phoneNumber.replace(/\D/g, "");
+            // Phone number is read-only (locked after signup), use the existing user phone number.
+            // This avoids validation failures when stored data is malformed (e.g. legacy double-prefix data).
+            // Source of truth: the user's existing phone number from auth state.
+            let phoneNumber = String(user?.phoneNumber || "").trim().replace(/\D/g, "");
 
-            if (phoneDigitsOnly.length === 10 && phoneDigitsOnly.startsWith("0")) {
-                // Remove leading 0 and prepend country code
-                phoneNumber = "250" + phoneDigitsOnly.slice(1);
-            } else if (phoneDigitsOnly.length === 9) {
-                // If only 9 digits, assume user meant to include 0 but forgot, prepend 250
-                phoneNumber = "250" + phoneDigitsOnly;
-            } else if (!phoneDigitsOnly.startsWith("250") && phoneDigitsOnly.length === 9) {
-                // If 9 digits and doesn't start with 250, prepend 250
-                phoneNumber = "250" + phoneDigitsOnly;
+            // Ensure proper format: should be 250 + 9 digits
+            if (phoneNumber && !phoneNumber.startsWith("250")) {
+                // Add 250 prefix if missing
+                phoneNumber = "250" + phoneNumber;
             }
 
-            // Validate phone number
+            // Normalize: if there's any prefix issue (e.g. 250250...), keep only the last 12 chars
+            if (phoneNumber.length > 12) {
+                phoneNumber = "250" + phoneNumber.slice(-9);
+            }
+
+            // Only validate if we have a phone number (it should always exist after signup)
             const validPhoneRegex = /^250\d{9}$/;
-            if (!validPhoneRegex.test(phoneNumber)) {
-                throw new Error("Phone number must be 10 digits starting with 0, or 9 digits without 0");
+            if (phoneNumber && !validPhoneRegex.test(phoneNumber)) {
+                // If phone is malformed in DB, log warning but don't block save of other fields
+                console.warn("Phone number format issue:", phoneNumber);
             }
 
             // Generate username if not provided
@@ -366,7 +371,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
 
     return (
         <div className={`px-3 sm:px-4 md:px-6 ${idEditable ? "pt-6 pb-16" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`} style={{ backgroundColor: colors.background }}>
-            {idEditable && <BackButtonHeader text="Edit Profile" backHref="/profile" className="pb-6" />}
+            {idEditable && <BackButtonHeader text="Edit Profile" backHref="/more" className="pb-6" />}
 
             <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
                 {/* First Name */}
@@ -500,12 +505,12 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             id="phone"
                             type="tel"
                             inputMode="numeric"
-                            value={formData.phone || user?.phoneNumber?.replace(/^250/, "") || ""}
+                            value={formData.phone}
                             placeholder="Phone Number"
                             readOnly
                             disabled
                             className="h-full w-full px-3 text-[#212121] font-semibold text-sm bg-gray-100 cursor-not-allowed border-none outline-none focus:outline-none focus:ring-0 focus:border-none active:outline-none active:ring-0 active:border-none shadow-none touch-manipulation"
-                            maxLength={10}
+                            maxLength={9}
                         />
                     </div>
                     <p className="text-xs text-gray-500">Phone number cannot be changed</p>
