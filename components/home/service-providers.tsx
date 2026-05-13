@@ -86,6 +86,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         available: service.isActive,
         verified: true,
         type: service.provider.userType === "AGENCY" ? "AGENCY" : "INDIVIDUAL",
+        providerId: service.providerId,
+        username: service.provider.username,
       };
     });
 
@@ -121,11 +123,13 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                 <ServiceCard
                   key={provider.id}
                   onClick={() => {
-                    if (!provider.id || provider.id === "NaN") {
-                      toast.error("Invalid provider ID");
+                    if (!provider.username && !provider.providerId) {
+                      toast.error("Invalid provider");
                       return;
                     }
-                    router.push(`/book/${provider.type}/${provider.id}`);
+                    // Route to provider profile page (not booking flow)
+                    const route = provider.username ? `/provider/${provider.username}` : `/provider/${provider.providerId}`;
+                    router.push(route);
                   }}
                   {...provider}
                 />
