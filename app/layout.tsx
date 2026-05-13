@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { Providers } from "@/store/provider";
 import { BookmarkProvider } from "@/context/bookmark-context"; // Ensure this import is correct
 import { ViewModeProvider } from "@/context/view-mode-context";
+import { APP_CONFIG } from "@/constant/app.config";
 
 // Load Geist fonts
 const geistSans = Geist({
@@ -27,8 +28,8 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
-  title: "HWA - House Working App",
-  description: "Welcome to House Working App",
+  title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+  description: APP_CONFIG.description,
 };
 
 export default function RootLayout({

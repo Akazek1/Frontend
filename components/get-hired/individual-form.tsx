@@ -114,7 +114,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
 }) => {
   const [selectedDayGroup, setSelectedDayGroup] = useState<string>("Weekdays")
   const [availabilityStatus, setAvailabilityStatus] = useState<string>("unavailable")
-  const [imagePreview, setImagePreview] = useState<string | null>(initialData.serviceImage ? null : null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [workerList, setWorkerList] = useState<any[]>([])
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>(initialData.workerId || "")
   const [isLoading, setIsLoading] = useState(false)
@@ -144,13 +144,22 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           throw new Error("Invalid response format")
         }
       } catch (err) {
-        console.error("Error fetching workers:", err)
-        setError(
-          typeof err === "object" && err !== null && "message" in err
-            ? (err as { message?: string }).message || "Failed to fetch workers. Please try again."
-            : "Failed to fetch workers. Please try again.",
-        )
-        setWorkerList([])
+        // Gracefully handle missing endpoint or authorization errors
+        const errorStatus = (err as any)?.response?.status
+        if (errorStatus === 404 || errorStatus === 403) {
+          // Endpoint not found or not authorized — don't show error, just skip worker list
+          console.warn("Agency worker endpoint not available")
+          setWorkerList([])
+          setError(null)
+        } else {
+          console.error("Error fetching workers:", err)
+          setError(
+            typeof err === "object" && err !== null && "message" in err
+              ? (err as { message?: string }).message || "Failed to fetch workers. Please try again."
+              : "Failed to fetch workers. Please try again.",
+          )
+          setWorkerList([])
+        }
       } finally {
         setIsLoading(false)
       }

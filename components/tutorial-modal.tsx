@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Briefcase, ArrowRight } from "lucide-react";
 import ViewModeToggle from "./view-mode-toggle";
 import { useViewMode } from "@/context/view-mode-context";
+import { APP_CONFIG } from "@/constant/app.config";
 
 interface TutorialModalProps {
   isOpen: boolean;
@@ -30,10 +31,10 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
+          className="bg-white rounded-2xl p-4 sm:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome to HWA! 🎉</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Welcome to {APP_CONFIG.name}! 🎉</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"

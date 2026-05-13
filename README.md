@@ -1,63 +1,37 @@
-## Commands to Run the Application
+# Akazek Frontend App
 
-### Install Dependencies
-```sh
+Next.js 15 consumer application for the Akazek marketplace.
+
+## 📚 Documentation
+
+**For complete setup and feature documentation, see:**
+
+### ➡️ **[Documentation/APPS.md](../Documentation/APPS.md#frontend-app)** — Frontend section
+
+This includes:
+- Feature status by page
+- Complete routes reference (15+ pages)
+- Quick start guide
+- Project structure
+- Environment variables
+- Troubleshooting
+
+### Also See:
+- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** — Complete setup guide and common tasks
+- **[OPTIMIZATION_GUIDE.md](./OPTIMIZATION_GUIDE.md)** — Image optimization and performance
+- **[../Documentation/STATUS.md](../Documentation/STATUS.md)** — Project-wide progress
+
+## Quick Start
+
+```bash
 npm install
-```
-Installs all required dependencies from `package.json`.
-
-### Run the Development Server
-```sh
+cp .env.local.example .env.local
+# Edit .env.local with API URL
 npm run dev
 ```
-Starts the app in development mode with hot reloading.
 
-### Build the Application
-```sh
-npm run build
-```
-Compiles the project for production use.
+**Frontend runs on:** `http://localhost:3001` (or next available port)
 
-### Start the Production Server
-```sh
-npm run start
-```
-Runs the compiled project in production mode.
+---
 
-
-# Changelog - HWA[FA]
-
-## [1.0.0] - 2025-04-02
-
-### Onboarding Pages
-- Implemented a smooth onboarding flow to guide new users through the platform setup.
-- Includes user profile setup and initial preferences selection.
-
-### Home Page
-- Designed and developed the main landing page with an intuitive UI/UX.
-- Highlights featured services and promotions.
-
-### Get Hired Page
-- A dedicated page for job seekers to explore opportunities.
-- Includes job listings and profile-building features.
-
-### All Messages Page
-- Integrated a messaging system where users can send and receive messages.
-- Implemented read/unread indicators for better communication tracking.
-
-### More Section (User Account & Settings)
-- **Edit Profile:** Users can update their personal details, including name, contact information, and profile picture.
-- **Transactions:** View transaction history with filters for payments, refunds, and purchases.
-- **Order History:** Track past orders with detailed summaries and status updates.
-- **Address Book:** Add, edit, and delete saved addresses for quick access during orders.
-- **Privacy Policy:** Dedicated page outlining data protection policies and user rights.
-- **Share Feedback:** Allows users to submit feedback on services and platform experience.
-
-### Individual Service Page
-- Provides in-depth details of specific services offered on the platform.
-- Includes service descriptions, pricing, user reviews, and booking options.
-
-### Search Page
-- Implemented a dynamic search functionality to help users find relevant content, services, or job listings quickly.
-- Supports filters and sorting options for improved results.
-
+**See [Documentation/APPS.md](../Documentation/APPS.md#frontend-app) for complete documentation.**
