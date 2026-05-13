@@ -8,6 +8,7 @@ import { NavItem } from "@/types";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { useViewMode } from "@/context/view-mode-context";
+import { colors } from "@/constant/colors";
 
 const Navigation = () => {
   const pathname = usePathname();
@@ -52,13 +53,19 @@ const Navigation = () => {
             <Link
               key={item.title}
               href={item.url}
-              className={`flex flex-col items-center text-[10px] leading-3 w-20 ${isActiveNav ? "text-[#167021] font-semibold" : "text-[#9E9E9E]"
-                }`}
+              className="flex flex-col items-center text-[10px] leading-3 w-20"
+              style={{
+                color: isActiveNav ? colors.primaryHover : colors.textLight,
+                fontWeight: isActiveNav ? "600" : "400",
+              }}
             >
               {IconComponent && (
                 <IconComponent
-                  className={`w-6 h-6 ${isActiveNav ? "stroke-white fill-[#145B10]" : "stroke-[#9E9E9E]"
-                    }`}
+                  className="w-6 h-6"
+                  style={{
+                    stroke: isActiveNav ? "white" : colors.textLight,
+                    fill: isActiveNav ? colors.primary : "none",
+                  }}
                 />
               )}
               <span>{item.title}</span>

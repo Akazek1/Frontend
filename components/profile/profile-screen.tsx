@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import ProfileImageUploader from "./profile-img-uloader";
 import { persistor } from "@/store";
 import authService from "@/services/auth-service";
+import { colors } from "@/constant/colors";
 
 type MenuItem = {
   name: string;
@@ -35,30 +36,41 @@ type MenuItem = {
 
 const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => (
   <section className="space-y-1.5">
-    <h3 className="px-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B7668]">
+    <h3 className="px-1 text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: colors.textMuted }}>
       {title}
     </h3>
-    <div className="overflow-hidden rounded-lg border border-[#E8F1E5] bg-white shadow-[0_4px_12px_rgba(20,91,16,0.04)]">
+    <div className="overflow-hidden rounded-lg bg-white shadow-[0_4px_12px_rgba(20,91,16,0.04)]" style={{ borderColor: colors.border }}>
       {items.map(({ name, description, Icon, href }) => (
         <Link
           key={name}
           href={href}
-          className="group flex min-h-[56px] items-center justify-between gap-2 border-b border-[#F3F8F0] px-3 py-2.5 transition-colors last:border-b-0 hover:bg-[#FAFCF9] active:bg-[#F3F8F0]"
+          className="group flex min-h-[56px] items-center justify-between gap-2 px-3 py-2.5 transition-colors last:border-b-0"
+          style={{
+            borderBottom: `1px solid ${colors.backgroundTertiary}`,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.backgroundSecondary)}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#EEF8EA] text-[#167021] transition-colors group-hover:bg-[#E7F4E3]">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors"
+              style={{
+                backgroundColor: colors.backgroundTertiary,
+                color: colors.primaryHover,
+              }}
+            >
               <Icon className="h-4.5 w-4.5" />
             </span>
             <span className="min-w-0">
-              <span className="block text-[14px] font-semibold leading-4 text-[#1B2431]">
+              <span className="block text-[14px] font-semibold leading-4" style={{ color: colors.text }}>
                 {name}
               </span>
-              <span className="mt-0.5 block text-xs leading-3 text-[#878A82]">
+              <span className="mt-0.5 block text-xs leading-3" style={{ color: colors.borderMuted }}>
                 {description}
               </span>
             </span>
           </div>
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#B0BBA8] transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" style={{ color: colors.borderSecondary }} />
         </Link>
       ))}
     </div>
@@ -109,9 +121,9 @@ const ProfileScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF] px-4 pb-24 pt-3 sm:px-6">
+    <div className="min-h-screen px-4 pb-24 pt-3 sm:px-6" style={{ backgroundColor: colors.background }}>
       <div className="mb-3 flex items-center justify-between">
-        <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%] text-[#1B2431]">
+        <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%]" style={{ color: colors.text }}>
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">
             <Image src={"/images/hwa-green-icon.png"} width={18} height={18} alt="Akazek" />
           </span>
@@ -119,20 +131,20 @@ const ProfileScreen = () => {
         </h1>
       </div>
 
-      <div className="mb-3 rounded-lg border border-[#E8F1E5] bg-white px-3 py-3 shadow-[0_4px_12px_rgba(20,91,16,0.04)]">
+      <div className="mb-3 rounded-lg bg-white px-3 py-3 shadow-[0_4px_12px_rgba(20,91,16,0.04)]" style={{ borderColor: colors.border }}>
         <div className="scale-90 origin-top">
           <ProfileImageUploader />
         </div>
-        <Separator className="my-2 bg-[#EEF5EC]" />
-        <div className="flex items-start gap-2 rounded-md bg-[#FAFCF9] p-2">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#EEF8EA] text-[#167021]">
+        <Separator className="my-2" style={{ backgroundColor: colors.backgroundTertiary }} />
+        <div className="flex items-start gap-2 rounded-md p-2" style={{ backgroundColor: colors.backgroundSecondary }}>
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: colors.backgroundTertiary, color: colors.primaryHover }}>
             <Sparkles className="h-3 w-3" />
           </span>
           <div>
-            <p className="text-[11px] font-semibold leading-3 text-[#1B2431]">
+            <p className="text-[11px] font-semibold leading-3" style={{ color: colors.text }}>
               Keep your profile current
             </p>
-            <p className="mt-0.5 text-[10px] leading-2.5 text-[#878A82]">
+            <p className="mt-0.5 text-[10px] leading-2.5" style={{ color: colors.borderMuted }}>
               A complete profile helps build trust.
             </p>
           </div>

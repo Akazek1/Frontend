@@ -38,9 +38,9 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
           <Button
             onClick={() => {
               onSelectCamera();
-              onClose();
+              setTimeout(onClose, 100); // Small delay to ensure file input is triggered
             }}
-            className="w-full h-14 flex items-center justify-center gap-3 bg-[#145B10] hover:bg-[#145B10]/90"
+            className="w-full h-14 flex items-center justify-center gap-3 bg-[#145B10] hover:bg-[#0F4D0C] active:bg-[#0F4D0C] transition-colors"
           >
             <Camera className="w-5 h-5" />
             <span>Take Photo</span>
@@ -49,10 +49,10 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
           <Button
             onClick={() => {
               onSelectGallery();
-              onClose();
+              setTimeout(onClose, 100); // Small delay to ensure file input is triggered
             }}
             variant="outline"
-            className="w-full h-14 flex items-center justify-center gap-3 border-2"
+            className="w-full h-14 flex items-center justify-center gap-3 border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors"
           >
             <ImageIcon className="w-5 h-5" />
             <span>Choose from Gallery</span>

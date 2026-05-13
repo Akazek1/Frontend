@@ -71,7 +71,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides = defaultSlides }) => 
   return (
     <div className="flex flex-col gap-2">
       <div
-        className="relative w-full rounded-2xl overflow-hidden flex items-stretch min-h-[180px] transition-colors duration-500"
+        className="relative w-full rounded-2xl overflow-hidden flex items-stretch min-h-[140px] sm:min-h-[180px] transition-colors duration-500"
         style={{ backgroundColor: slide.bgColor }}
         onPointerDown={() => setPaused(true)}
         onPointerUp={() => setPaused(false)}
@@ -82,7 +82,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides = defaultSlides }) => 
           className={`flex w-full transition-opacity duration-300 ${animating ? "opacity-0" : "opacity-100"}`}
         >
           {/* Left content */}
-          <div className="flex-1 flex flex-col justify-center px-5 py-5 gap-3 z-10">
+          <div className="flex-1 flex flex-col justify-center px-4 py-3 sm:px-5 sm:py-5 gap-2 sm:gap-3 z-10">
             {/* Trust badges */}
             <div className="flex flex-wrap gap-1.5">
               {slide.trustBadges.map((badge) => (
@@ -96,14 +96,14 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides = defaultSlides }) => 
             </div>
 
             {/* Headline */}
-            <h2 className="text-[18px] font-bold text-[#1B2431] leading-snug whitespace-pre-line">
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-[#1B2431] leading-snug whitespace-pre-line">
               {slide.headlineBefore}
               <span className="text-[#145B10]">{slide.headlineHighlight}</span>
               {slide.headlineAfter}
             </h2>
 
             {/* Subtitle */}
-            <p className="text-xs text-[#616161] leading-relaxed whitespace-pre-line">
+            <p className="text-[11px] sm:text-xs text-[#616161] leading-relaxed whitespace-pre-line">
               {slide.subtitle}
             </p>
 
@@ -125,7 +125,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides = defaultSlides }) => 
           </div>
 
           {/* Right image */}
-          <div className="relative w-[150px] flex-shrink-0 self-stretch overflow-hidden">
+          <div className="relative w-[120px] sm:w-[150px] flex-shrink-0 self-stretch overflow-hidden">
             <Image
               src={slide.image}
               alt="Banner"

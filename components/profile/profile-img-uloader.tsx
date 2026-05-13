@@ -271,15 +271,22 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 
     const handleAvatarClick = () => {
         if (isUploading) return;
+        setError(null); // Clear any previous errors when opening source selector
         setShowSourceSelector(true);
     };
 
     const handleSelectCamera = () => {
-        cameraInputRef.current?.click();
+        if (cameraInputRef.current && !isUploading) {
+            // Ensure input is not disabled and can receive clicks
+            cameraInputRef.current.click();
+        }
     };
 
     const handleSelectGallery = () => {
-        fileInputRef.current?.click();
+        if (fileInputRef.current && !isUploading) {
+            // Ensure input is not disabled and can receive clicks
+            fileInputRef.current.click();
+        }
     };
 
     return (
@@ -315,7 +322,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                     className="hidden"
                     onChange={(e) => {
                         handleFileSelect(e);
-                        // Reset camera input
+                        // Reset camera input so same image can be selected again
                         if (cameraInputRef.current) {
                             cameraInputRef.current.value = '';
                         }

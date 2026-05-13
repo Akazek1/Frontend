@@ -83,7 +83,7 @@ const Page = () => {
   }, [id]);
 
   const handleSlotConfirm = (selectedDate: string, selectedTime: string) => {
-    console.log("Selected Slot:", { date: selectedDate, time: selectedTime });
+    // Slot confirmation handled by SlotSelectionDialog component
   };
 
   const handleShare = () => {

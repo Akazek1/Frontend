@@ -20,6 +20,7 @@ import api from "@/lib/axios";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
+import { colors } from "@/constant/colors";
 
 // Interface for form data to ensure type safety
 interface FormData {
@@ -125,6 +126,37 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
         setErrors((prev) => ({ ...prev, languages: "" }));
     }, []);
 
+    // Generate username from first name and last name
+    const generateUsername = useCallback(async (firstName: string, lastName: string) => {
+        if (!firstName.trim()) return;
+
+        const firstPart = firstName.toLowerCase().slice(0, 5);
+        const lastPart = lastName.toLowerCase().slice(0, 4);
+        let baseUsername = firstPart + lastPart;
+
+        // If only first name, try to use more characters
+        if (!lastName.trim()) {
+            baseUsername = firstName.toLowerCase().slice(0, 9);
+        }
+
+        let username = baseUsername;
+        let counter = 1;
+
+        // Check if username exists, add number if it does
+        try {
+            let availabilityCheck = await api.get(`/users/username/${username}/check`);
+            while (!availabilityCheck.data.available && counter < 100) {
+                username = baseUsername + counter;
+                availabilityCheck = await api.get(`/users/username/${username}/check`);
+                counter++;
+            }
+        } catch {
+            // If check fails, just use the base username
+        }
+
+        return username;
+    }, []);
+
     const toggleLanguageDropdown = useCallback(() => {
         setIsLanguageDropdownOpen((prev) => !prev);
     }, []);
@@ -209,17 +241,65 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 throw new Error("Invalid date of birth");
             }
 
+            // Format phone number: if it starts with 0 and has 10 digits, remove the 0 and prepend 250
+            let phoneNumber = String(formData.phone).trim();
+            const phoneDigitsOnly = phoneNumber.replace(/\D/g, "");
+
+            if (phoneDigitsOnly.length === 10 && phoneDigitsOnly.startsWith("0")) {
+                // Remove leading 0 and prepend country code
+                phoneNumber = "250" + phoneDigitsOnly.slice(1);
+            } else if (phoneDigitsOnly.length === 9) {
+                // If only 9 digits, assume user meant to include 0 but forgot, prepend 250
+                phoneNumber = "250" + phoneDigitsOnly;
+            } else if (!phoneDigitsOnly.startsWith("250") && phoneDigitsOnly.length === 9) {
+                // If 9 digits and doesn't start with 250, prepend 250
+                phoneNumber = "250" + phoneDigitsOnly;
+            }
+
+            // Validate phone number
+            const validPhoneRegex = /^250\d{9}$/;
+            if (!validPhoneRegex.test(phoneNumber)) {
+                throw new Error("Phone number must be 10 digits starting with 0, or 9 digits without 0");
+            }
+
+            // Generate username if not provided
+            let username = formData.username;
+            if (!username && formData.firstName) {
+                const firstPart = formData.firstName.toLowerCase().slice(0, 5);
+                const lastPart = formData.lastName?.toLowerCase().slice(0, 4) || "";
+                username = firstPart + lastPart;
+
+                // Check if available, add number if taken
+                try {
+                  let availCheck = await api.get(`/users/username/${username}/check`);
+                  if (!availCheck.data.available) {
+                    let counter = 1;
+                    while (!availCheck.data.available && counter < 100) {
+                      const newUsername = username + counter;
+                      availCheck = await api.get(`/users/username/${newUsername}/check`);
+                      if (availCheck.data.available) {
+                        username = newUsername;
+                        break;
+                      }
+                      counter++;
+                    }
+                  }
+                } catch {
+                  // If check fails, just use the generated username
+                }
+            }
+
             // Validate username if provided
-            if (formData.username) {
+            if (username) {
                 const usernameRegex = /^[a-z0-9_-]{3,30}$/;
-                if (!usernameRegex.test(formData.username)) {
+                if (!usernameRegex.test(username)) {
                     throw new Error("Username must be 3-30 characters, lowercase letters, numbers, underscores, or hyphens only");
                 }
-                
+
                 // Check username availability
                 try {
-                    const checkResponse = await api.get(`/users/username/${formData.username}/check`);
-                    if (!checkResponse.data.available && user?.username !== formData.username) {
+                    const checkResponse = await api.get(`/users/username/${username}/check`);
+                    if (!checkResponse.data.available && user?.username !== username) {
                         throw new Error("Username is already taken");
                     }
                 } catch (checkErr: any) {
@@ -233,10 +313,10 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
             }
 
             const payload = {
-                phoneNumber: String(formData.phone),
+                phoneNumber,
                 firstName: String(formData.firstName),
                 lastName: String(formData.lastName),
-                username: formData.username ? String(formData.username) : undefined,
+                username: username ? String(username) : undefined,
                 email: String(formData.email),
                 gender,
                 dateOfBirth: dateOfBirth.toISOString(),
@@ -285,7 +365,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
     const availableLanguages = ["Kinyarwanda", "English", "French", "Swahili"];
 
     return (
-        <div className={`bg-[#F1FCEF] px-3 sm:px-4 md:px-6 ${idEditable ? "pt-6 pb-16" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`}>
+        <div className={`px-3 sm:px-4 md:px-6 ${idEditable ? "pt-6 pb-16" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`} style={{ backgroundColor: colors.background }}>
             {idEditable && <BackButtonHeader text="Edit Profile" backHref="/profile" className="pb-6" />}
 
             <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
@@ -298,8 +378,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         value={formData.firstName}
                         disabled={!idEditable}
                         onChange={handleChange}
-                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.firstName ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.firstName ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
                         placeholder="Enter first name"
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                     {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName}</p>}
                 </div>
@@ -313,8 +394,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         value={formData.lastName}
                         disabled={!idEditable}
                         onChange={handleChange}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10] touch-manipulation"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 touch-manipulation"
                         placeholder="Enter last name (Optional)"
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                 </div>
 
@@ -334,9 +416,10 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             setFormData((prev) => ({ ...prev, username: value }));
                             setErrors((prev) => ({ ...prev, username: "" }));
                         }}
-                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.username ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.username ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
                         placeholder="your-username"
                         maxLength={30}
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                     {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
                     {formData.username && (
@@ -357,7 +440,8 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             value={formData.dateOfBirth}
                             disabled={!idEditable}
                             onChange={handleChange}
-                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.dateOfBirth ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.dateOfBirth ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
+                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                         />
                         <CalendarIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
@@ -375,8 +459,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             value={formData.email}
                             disabled={!idEditable}
                             onChange={handleChange}
-                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.email ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.email ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
                             placeholder="Enter email"
+                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                         />
                         <Mail className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
@@ -391,7 +476,8 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         name="country"
                         value="Rwanda"
                         disabled
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10] text-gray-500 touch-manipulation"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 text-gray-500 touch-manipulation"
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                     {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
                 </div>
@@ -435,7 +521,8 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     >
                         <SelectTrigger
                             id="gender"
-                            className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.gender ? "border-red-500" : "border-none"} focus:ring-[#145B10] touch-manipulation`}
+                            className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.gender ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
+                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                         >
                             <SelectValue placeholder="Select gender" />
                             <ChevronDown className="w-4 h-4 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-150" />
@@ -454,7 +541,14 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">Languages Spoken</Label>
                     <div
                         onClick={toggleLanguageDropdown}
-                        className={`${idEditable ? "" : "pointer-events-none opacity-50"} relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.languages ? "border-red-500" : "border-none"} focus:ring-[#145B10] cursor-pointer flex items-center justify-between touch-manipulation`}
+                        className={`${idEditable ? "" : "pointer-events-none opacity-50"} relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.languages ? "border-red-500" : "border-none"} focus:ring-2 cursor-pointer flex items-center justify-between touch-manipulation`}
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            toggleLanguageDropdown();
+                          }
+                        }}
                     >
                         <span className="truncate">
                             {formData.languages.length > 0 ? formData.languages.join(", ") : "Select languages"}
@@ -490,8 +584,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         type="file"
                         onChange={handleCertificateChange}
                         disabled={!idEditable}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10] touch-manipulation"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 touch-manipulation"
                         accept="application/pdf"
+                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                     {formData.certificate && (
                         <p className="text-xs text-gray-500 mt-1 truncate">
@@ -506,7 +601,16 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     <Button
                         size="lg"
                         type="submit"
-                        className="w-full bg-[#167021] text-white rounded-full font-bold text-base py-2.5 px-4 h-14 hover:bg-[#0F4D0C] transition-colors touch-manipulation"
+                        className="w-full text-white rounded-full font-bold text-base py-2.5 px-4 h-14 transition-colors touch-manipulation"
+                        style={{
+                          backgroundColor: colors.primaryHover,
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = colors.primaryActive;
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = colors.primaryHover;
+                        }}
                         disabled={isLoading}
                     >
                         {isLoading ? (

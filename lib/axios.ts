@@ -1,7 +1,19 @@
 import axios from "axios";
 
+// Determine the API base URL
+let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+// If running in browser and accessing localhost on a non-localhost origin, use the current host
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  const hostname = window.location.hostname;
+  // If page is accessed from a non-localhost IP/hostname, redirect API calls there too
+  if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+    baseURL = `http://${hostname}:3001`;
+  }
+}
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },

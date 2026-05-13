@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -21,8 +22,8 @@ interface BookmarkProviderProps {
 export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) => {
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const pathname = usePathname();
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-
 
     useEffect(() => {
         const fetchBookmarks = async () => {
@@ -44,10 +45,11 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
             }
         };
 
-        if (isAuthenticated) {
+        const isOnboardingPage = pathname?.startsWith("/onboarding");
+        if (isAuthenticated && !isOnboardingPage) {
             fetchBookmarks();
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, pathname]);
 
 
 

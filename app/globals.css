@@ -31,6 +31,8 @@ body {
     transform: rotate(1turn);
   }
 }
+/* CSS Variables kept for future dark mode ThemeProvider integration.
+   Components now use semantic color constants defined in /constant/colors.ts */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -88,7 +90,7 @@ body {
 }
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
@@ -106,27 +108,8 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 .font-urbanist {
   font-family: "Urbanist", sans-serif;
-}
-
-/* Hide scrollbar but keep scrolling */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
 }
 
 

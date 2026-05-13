@@ -97,12 +97,12 @@ export const useAuth = () => {
       } else {
         toast.error("Invalid OTP please try again.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("OTP verification failed:", error);
-      // Show the actual error message from backend if available
-      const errorMessage = error?.response?.data?.message || error?.message || "OTP verification failed";
-      toast.error(errorMessage);
-      return false;
+      const err = error as Error & { response?: { data?: { message?: string } } }
+      const errorMessage = err?.response?.data?.message || err?.message || "OTP verification failed"
+      toast.error(errorMessage)
+      return false
     }
   };
 

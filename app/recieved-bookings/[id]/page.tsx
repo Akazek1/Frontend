@@ -144,10 +144,7 @@ const BookingDetails: React.FC = () => {
                 setOtpSent(true);
                 setIsOtpModalOpen(true);
                 if (TEST_PHONE_NUMBERS.includes(booking?.user.phoneNumber || '')) {
-                    const testOtpValue = await fetchTestOtp();
-                    console.log(`Test OTP for ${booking?.user.phoneNumber}: ${testOtpValue}`);
-                } else {
-                    console.log(`Real OTP sent to ${booking?.user.phoneNumber}`);
+                    await fetchTestOtp();
                 }
             }
         } catch (err) {
@@ -188,7 +185,6 @@ const BookingDetails: React.FC = () => {
             setTestOtp(null);
             setUpdateError(null);
             setIsOtpModalOpen(false);
-            console.log('Status updated successfully:', response.data);
         } catch (err) {
             const error = err as AxiosError;
             setUpdateError('Failed to update status');

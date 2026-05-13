@@ -82,11 +82,13 @@ const authService = {
 
   // Get current user
   getCurrentUser: async (): Promise<AuthResponse["data"]["user"]> => {
-    const response = await api.get<{ data: { user: AuthResponse["data"]["user"] } }>(
-      "/auth/me"
-    );
-    // Backend wraps response in { data, statusCode, message, timestamp }
-    return response.data.data?.user || (response.data as any).user;
+    interface GetUserResponse {
+      data: {
+        user: AuthResponse["data"]["user"]
+      }
+    }
+    const response = await api.get<GetUserResponse>("/auth/me")
+    return response.data.data?.user
   },
 
   // Check if user is authenticated

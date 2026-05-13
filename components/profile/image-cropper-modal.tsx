@@ -60,13 +60,13 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     [zoom, rotation, crop, imageSize]
   );
 
-  // Get image dimensions when image loads and reset state
+  // Get image dimensions when image loads and reset state with centered crop
   React.useEffect(() => {
     if (image) {
       const img = new Image();
       img.onload = () => {
         setImageSize({ width: img.width, height: img.height });
-        // Reset crop position and zoom when new image loads
+        // Reset all state for new image
         setCrop({ x: 0, y: 0 });
         setZoom(1);
         setRotation(0);
@@ -77,10 +77,22 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     }
   }, [image]);
 
-  // Capture media size from react-easy-crop
+  // Capture media size from react-easy-crop and auto-adjust zoom to fit
   const onMediaLoaded = useCallback((mediaSize: { width: number; height: number; naturalWidth: number; naturalHeight: number }) => {
     console.log("Media loaded in react-easy-crop:", mediaSize);
     setMediaSize(mediaSize);
+
+    // Auto-adjust zoom to show the entire image initially if it's very large
+    if (mediaSize.width > 1200 || mediaSize.height > 1200) {
+      const fitZoom = Math.min(
+        1000 / mediaSize.width,
+        1000 / mediaSize.height,
+        1
+      );
+      if (fitZoom < 1) {
+        setZoom(Math.max(0.3, fitZoom));
+      }
+    }
   }, []);
 
   // Simple, reliable image cropping function
@@ -308,7 +320,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div ref={containerRef} className="relative w-full h-[250px] sm:h-[300px] bg-gray-100">
+        <div ref={containerRef} className="relative w-full h-[250px] sm:h-[300px] bg-gray-100 flex items-center justify-center overflow-hidden">
           <Cropper
             image={image}
             crop={crop}
@@ -324,11 +336,13 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             showGrid={false}
             minZoom={0.3}
             maxZoom={3}
-            restrictPosition={false}
-            objectFit="contain"
+            restrictPosition={true}
+            objectFit="cover"
             style={{
               containerStyle: {
                 backgroundColor: '#f3f4f6',
+                width: '100%',
+                height: '100%',
               },
               mediaStyle: {
                 maxWidth: 'none',

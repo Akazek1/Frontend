@@ -10,15 +10,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     hideNavigationPaths.includes(pathname) || pathname.startsWith("/conversations/inbox");
 
   return (
-    <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col min-h-screen">
-      {/* Main content area without overflow restrictions */}
-      <main className="flex-1">{children}</main>
+    <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
+      {/* Main content area with scrolling */}
+      <main className="flex-1 overflow-y-auto pb-24">{children}</main>
 
       {/* Fixed Navigation */}
       {!shouldHideNavigation && (
-        <div className="max-w-[428px] fixed bottom-0 left-0 right-0 mx-auto w-full bg-white shadow-md z-20">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto w-full bg-white shadow-lg z-50 border-t border-gray-200">
           <Navigation />
-        </div>
+        </nav>
       )}
     </div>
   );

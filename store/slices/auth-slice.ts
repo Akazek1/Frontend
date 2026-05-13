@@ -153,7 +153,6 @@ const authSlice = createSlice({
       .addCase(sendOtp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-        toast.error(state.error || "Failed to send OTP");
       })
 
       // Verify OTP cases
@@ -187,7 +186,6 @@ const authSlice = createSlice({
       .addCase(verifyOtp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-        toast.error(state.error || "OTP verification failed");
       })
 
       // Logout case
