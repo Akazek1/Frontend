@@ -221,10 +221,10 @@ const BookingDetails: React.FC = () => {
                 <Circle className="text-red-500 text-4xl mb-4" />
                 <p className="text-red-500 text-center mb-4">{error || 'Booking not found'}</p>
                 <Button
-                    onClick={() => router.push('/bookings')}
+                    onClick={() => router.push('/jobs')}
                     className="px-6 py-2 bg-[#145B10] text-white rounded-lg hover:bg-[#0e4710] transition-colors"
                 >
-                    Back to Bookings
+                    Back to Jobs
                 </Button>
             </div>
         );

@@ -13,11 +13,16 @@ const Navigation = () => {
   const { viewMode } = useViewMode();
 
   // Dynamically adjust nav items based on view mode
+  // - Provider mode: Bookings nav -> "Jobs" (/jobs route)
+  // - Employer mode: Bookings nav -> "Bookings" (/bookings route)
   const navItems: NavItem[] = defaultNavItems.map((item) => {
     if (item.title === "Bookings") {
+      const isProvider = viewMode === "provider";
       return {
         ...item,
-        title: viewMode === "provider" ? "Jobs" : "Bookings",
+        title: isProvider ? "Jobs" : "Bookings",
+        url: isProvider ? "/jobs" : "/bookings",
+        matchPattern: isProvider ? "/jobs/*" : "/bookings/*",
       };
     }
     return item;

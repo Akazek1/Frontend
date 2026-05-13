@@ -120,7 +120,7 @@ const ProviderDashboard: React.FC = () => {
           {[
             { label: "Manage My Services",  icon: <ClipboardList className="w-4 h-4" style={{ color: colors.primary }} />, href: "/more/services" },
             { label: "Edit Profile",        icon: <UserCheck className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/profile" },
-            { label: "View All Bookings",   icon: <Briefcase className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/bookings" },
+            { label: "View All Jobs",       icon: <Briefcase className="w-4 h-4" style={{ color: colors.primary }} />,     href: "/jobs" },
             { label: "My Reviews",          icon: <Star className="w-4 h-4" style={{ color: colors.primary }} />,          href: "/more/feedback" },
           ].map(({ label, icon, href }) => (
             <Link key={label} href={href}>
@@ -136,12 +136,12 @@ const ProviderDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent received bookings */}
+      {/* Recent received jobs */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[12px] font-bold" style={{ color: colors.text }}>Recent Bookings</p>
+          <p className="text-[12px] font-bold" style={{ color: colors.text }}>Recent Jobs</p>
           <button
-            onClick={() => router.push("/bookings")}
+            onClick={() => router.push("/jobs")}
             className="text-[11px] font-semibold"
             style={{ color: colors.primary }}
           >
