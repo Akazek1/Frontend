@@ -12,7 +12,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
       {/* Main content area with scrolling */}
-      <main className="flex-1 overflow-y-auto pb-24">{children}</main>
+      <main className={`flex-1 ${shouldHideNavigation ? "overflow-hidden" : "overflow-y-auto scrollbar-hide pb-24"}`}>{children}</main>
 
       {/* Fixed Navigation */}
       {!shouldHideNavigation && (

@@ -8,6 +8,8 @@ import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
+import { getBookingType, getProviderHandle, getServiceCardImage } from "@/lib/service-display";
+import APP_CONFIG from "@/constant/app.config";
 
 interface ServiceProviderProps {
   showHeader: boolean;
@@ -50,29 +52,13 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         ? [service.serviceAreas as string]
         : [];
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const providerPic = (service.provider as any).profilePicture;
-      const titleKey = service.title.toLowerCase();
-      const fallbackImage =
-        titleKey.includes("clean") ? "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("cook") ? "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("nanny") || titleKey.includes("babysit") || titleKey.includes("child") ? "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("repair") || titleKey.includes("electric") || titleKey.includes("plumb") ? "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("paint") ? "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("garden") ? "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400"
-        : titleKey.includes("laundry") ? "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&q=80&w=400"
-        : "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=400";
-      const image = service.serviceImage || providerPic || fallbackImage;
-
-      const firstName = service.provider.firstName.toLowerCase().replace(/\s+/g, "");
-      const lastName = service.provider.lastName.toLowerCase().replace(/\s+/g, "");
-      const handle = `@${firstName}_${lastName}${service.id.slice(0, 4)}`;
+      const image = getServiceCardImage(service);
 
       return {
         id: service.id,
         image,
         name: `${service.provider.firstName} ${service.provider.lastName}`,
-        handle,
+        handle: getProviderHandle(service.provider),
         title: service.title,
         experience: service.description || "",
         languages: Array.isArray(service?.provider?.languages)
@@ -82,12 +68,13 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         price: formatPrice(service.priceMin, service.priceMax, service.priceType),
         rating: service?.reviews?.averageRating || 0,
         reviews: service?.reviews?.totalReviews || 0,
-        distance: "",
+        distance: APP_CONFIG.serviceDetail.fallbackDistance,
         available: service.isActive,
         verified: true,
-        type: service.provider.userType === "AGENCY" ? "AGENCY" : "INDIVIDUAL",
+        type: getBookingType(service),
         providerId: service.providerId,
         username: service.provider.username,
+        profileImage: service.provider.profilePicture || service.provider.profileImg,
       };
     });
 
@@ -123,14 +110,9 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                 <ServiceCard
                   key={provider.id}
                   onClick={() => {
-                    if (!provider.username && !provider.providerId) {
-                      toast.error("Invalid provider");
-                      return;
-                    }
-                    // Route to provider profile page (not booking flow)
-                    const route = provider.username ? `/provider/${provider.username}` : `/provider/${provider.providerId}`;
-                    router.push(route);
+                    router.push(`/service/${provider.id}`);
                   }}
+                  onHireClick={() => router.push(`/book/${provider.type}/${provider.id}`)}
                   {...provider}
                 />
               ))

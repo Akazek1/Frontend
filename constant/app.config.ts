@@ -14,6 +14,26 @@ export const APP_CONFIG = {
     logo: "/logo.png",
   },
 
+  media: {
+    defaultServiceImage: "/default-service.svg",
+    defaultProfileImage: "/default-profile.svg",
+  },
+
+  profile: {
+    countries: ["Rwanda"],
+    languages: ["Kinyarwanda", "English", "French", "Swahili"],
+    genders: [
+      { value: "MALE", label: "Male" },
+      { value: "FEMALE", label: "Female" },
+      { value: "OTHER", label: "Other" },
+    ],
+  },
+
+  serviceDetail: {
+    fallbackDistance: "2.5 km away",
+    fallbackAvailabilityText: "Availability is confirmed during booking",
+  },
+
   // Contact & Support
   contact: {
     email: "support@akazek.rw",

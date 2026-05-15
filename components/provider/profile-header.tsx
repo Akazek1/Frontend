@@ -140,7 +140,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
           onClick={() => setShowPhotoModal(false)}
         >
-          <div className="relative w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex h-[85vh] w-full max-w-2xl items-center justify-center" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowPhotoModal(false)}
               className="absolute -top-10 right-0 text-white text-2xl font-bold"
@@ -152,7 +152,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               alt={name}
               width={600}
               height={600}
-              className="w-full rounded-2xl object-cover"
+              className="max-h-full w-auto max-w-full rounded-2xl object-contain"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "/default-profile.svg";
               }}

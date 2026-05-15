@@ -53,12 +53,15 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Clear token and redirect to login
         if (typeof window !== "undefined") {
           localStorage.removeItem("token");
           document.cookie =
             "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          window.location.href = "/onboarding";
+          // Don't redirect if already on the onboarding page — let the
+          // onboarding context handle auth errors in its own catch blocks.
+          if (!window.location.pathname.startsWith("/onboarding")) {
+            window.location.href = "/onboarding";
+          }
         }
       } catch (refreshError) {
         return Promise.reject(refreshError);

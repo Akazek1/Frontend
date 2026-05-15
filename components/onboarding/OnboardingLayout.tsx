@@ -56,7 +56,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
   if (showSplash) {
     return (
-      <div className="relative h-screen bg-gradient-to-l from-[#145B10] to-[#729D70] flex items-center justify-center">
+      <div className="relative h-full bg-gradient-to-l from-[#145B10] to-[#729D70] flex items-center justify-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 1 }}>
           <AppIcon />
         </motion.div>
@@ -73,7 +73,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden bg-white max-w-md mx-auto">
+    <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
       {/* Main content */}
       <div className="h-full">
         {children}

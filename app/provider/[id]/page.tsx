@@ -12,6 +12,7 @@ import { ProfileHeader } from "@/components/provider/profile-header";
 import { ImageGallery } from "@/components/provider/image-gallery";
 import { ReportModal } from "@/components/provider/report-modal";
 import { formatPrice } from "@/lib/utils";
+import { getProviderHandle, getServiceCardImage, shouldUnoptimizeImage } from "@/lib/service-display";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,6 +33,11 @@ type Provider = {
   trustScore?: number;
 };
 
+type ProviderApi = Partial<Provider> & {
+  id: string;
+  provider?: ProviderApi;
+};
+
 function ProviderProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -43,7 +49,7 @@ function ProviderProfilePage() {
   const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
-    function mapProvider(data: any): Provider {
+    function mapProvider(data: ProviderApi): Provider {
       return {
         id: data.id,
         firstName: data.firstName || "",
@@ -55,7 +61,7 @@ function ProviderProfilePage() {
         profileImages: data.profileImages || [],
         isVerified: data.isVerified,
         createdAt: data.createdAt,
-        userType: data.userType,
+        userType: data.userType || "INDIVIDUAL",
         phoneNumber: data.phoneNumber,
         languages: data.languages || [],
         trustScore: data.trustScore,
@@ -90,8 +96,9 @@ function ProviderProfilePage() {
           setServices(servicesData);
           setError(null);
         }
-      } catch (err: any) {
-        const message = err?.response?.data?.message || err?.message || "Failed to fetch provider";
+      } catch (err: unknown) {
+        const providerError = err as { response?: { data?: { message?: string } }; message?: string };
+        const message = providerError?.response?.data?.message || providerError?.message || "Failed to fetch provider";
         setError(message);
         toast.error(message);
       } finally {
@@ -152,7 +159,7 @@ function ProviderProfilePage() {
 
         {provider.bio ? (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">About {provider.firstName}</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">About the provider</h3>
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{provider.bio}</p>
           </div>
         ) : null}
@@ -250,10 +257,11 @@ function ProviderProfilePage() {
                   >
                     <div className="relative w-full h-40 bg-gray-100">
                       <Image
-                        src={service.serviceImage || "/default-service.svg"}
+                        src={getServiceCardImage(service) || "/default-service.svg"}
                         alt={service.title}
                         fill
                         className="object-cover"
+                        unoptimized={shouldUnoptimizeImage(getServiceCardImage(service) || "/default-service.svg")}
                         sizes="(max-width: 768px) 100vw, 600px"
                       />
                       {service.isActive ? (
@@ -265,7 +273,10 @@ function ProviderProfilePage() {
 
                     <div className="p-5 space-y-3">
                       <div className="flex items-start justify-between gap-3">
-                        <h4 className="text-base font-bold text-gray-900 capitalize">{service.title}</h4>
+                        <div className="min-w-0">
+                          <h4 className="text-base font-bold text-gray-900 capitalize">{service.title}</h4>
+                          <p className="text-xs text-gray-500">{getProviderHandle(service.provider)}</p>
+                        </div>
                         {rating > 0 ? (
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <Star className="w-4 h-4 fill-yellow-400 stroke-yellow-400" />
@@ -302,10 +313,10 @@ function ProviderProfilePage() {
                         <p className="text-lg font-bold text-[#145B10]">{price}</p>
                         <button
                           type="button"
-                          onClick={() => router.push("/book/" + provider.userType + "/" + service.id)}
+                          onClick={() => router.push(`/service/${service.id}`)}
                           className="bg-[#145B10] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#0f4a0c] transition-colors"
                         >
-                          Request to Hire
+                          View Details
                         </button>
                       </div>
                     </div>

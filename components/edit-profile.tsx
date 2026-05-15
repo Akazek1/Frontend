@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { ChevronDown, Loader2, CalendarIcon, Mail } from "lucide-react";
+import { ChevronDown, Loader2, CalendarIcon, Mail, User, Phone, Languages, FileText, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,8 @@ import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import { colors } from "@/constant/colors";
+import APP_CONFIG from "@/constant/app.config";
+import ProfileImageUploader from "@/components/profile/profile-img-uloader";
 
 // Interface for form data to ensure type safety
 interface FormData {
@@ -127,37 +129,6 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
             return { ...prev, languages };
         });
         setErrors((prev) => ({ ...prev, languages: "" }));
-    }, []);
-
-    // Generate username from first name and last name
-    const generateUsername = useCallback(async (firstName: string, lastName: string) => {
-        if (!firstName.trim()) return;
-
-        const firstPart = firstName.toLowerCase().slice(0, 5);
-        const lastPart = lastName.toLowerCase().slice(0, 4);
-        let baseUsername = firstPart + lastPart;
-
-        // If only first name, try to use more characters
-        if (!lastName.trim()) {
-            baseUsername = firstName.toLowerCase().slice(0, 9);
-        }
-
-        let username = baseUsername;
-        let counter = 1;
-
-        // Check if username exists, add number if it does
-        try {
-            let availabilityCheck = await api.get(`/users/username/${username}/check`);
-            while (!availabilityCheck.data.available && counter < 100) {
-                username = baseUsername + counter;
-                availabilityCheck = await api.get(`/users/username/${username}/check`);
-                counter++;
-            }
-        } catch {
-            // If check fails, just use the base username
-        }
-
-        return username;
     }, []);
 
     const toggleLanguageDropdown = useCallback(() => {
@@ -307,11 +278,12 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     if (!checkResponse.data.available && user?.username !== username) {
                         throw new Error("Username is already taken");
                     }
-                } catch (checkErr: any) {
-                    if (checkErr.response?.status === 400) {
-                        throw new Error(checkErr.response?.data?.message || "Invalid username format");
+                } catch (checkErr: unknown) {
+                    const usernameCheckError = checkErr as { response?: { status?: number; data?: { message?: string } }; message?: string };
+                    if (usernameCheckError.response?.status === 400) {
+                        throw new Error(usernameCheckError.response?.data?.message || "Invalid username format");
                     }
-                    if (checkErr.message?.includes("already taken")) {
+                    if (usernameCheckError.message?.includes("already taken")) {
                         throw checkErr;
                     }
                 }
@@ -367,13 +339,40 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
     };
 
 
-    const availableLanguages = ["Kinyarwanda", "English", "French", "Swahili"];
+    const availableLanguages = APP_CONFIG.profile.languages;
+    const genderOptions = APP_CONFIG.profile.genders;
 
     return (
-        <div className={`px-3 sm:px-4 md:px-6 ${idEditable ? "pt-6 pb-16" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`} style={{ backgroundColor: colors.background }}>
+        <div className={`px-4 sm:px-6 ${idEditable ? "pt-4 pb-24" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`} style={{ backgroundColor: colors.background }}>
             {idEditable && <BackButtonHeader text="Edit Profile" backHref="/more" className="pb-6" />}
 
             <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
+                {idEditable && (
+                    <div className="rounded-lg bg-white p-4 shadow-sm" style={{ border: `1px solid ${colors.border}` }}>
+                        <div className="flex items-start gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: colors.backgroundTertiary, color: colors.primary }}>
+                                <User className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <h1 className="text-base font-bold leading-5" style={{ color: colors.text }}>Personal information</h1>
+                                <p className="mt-1 text-xs leading-5" style={{ color: colors.textMuted }}>
+                                    Keep your public profile accurate. Your phone number stays locked for account safety.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {idEditable && (
+                    <div className="rounded-lg bg-white p-4 shadow-sm" style={{ border: `1px solid ${colors.border}` }}>
+                        <ProfileImageUploader />
+                    </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
+                    <User className="h-4 w-4" style={{ color: colors.primary }} />
+                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Identity</h2>
+                </div>
                 {/* First Name */}
                 <div className="space-y-1">
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">First Name</Label>
@@ -453,6 +452,11 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     {errors.dateOfBirth && <p className="text-red-500 text-xs">{errors.dateOfBirth}</p>}
                 </div>
 
+                <div className="flex items-center gap-2 pt-3">
+                    <Mail className="h-4 w-4" style={{ color: colors.primary }} />
+                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Contact</h2>
+                </div>
+
                 {/* Email */}
                 <div className="space-y-1">
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">Email</Label>
@@ -473,6 +477,11 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
                 </div>
 
+                <div className="flex items-center gap-2 pt-3">
+                    <MapPin className="h-4 w-4" style={{ color: colors.primary }} />
+                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Location</h2>
+                </div>
+
                 {/* Country */}
                 <div className="space-y-1">
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">Country</Label>
@@ -490,8 +499,8 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 {/* Phone Number - Read Only */}
                 <div className={`space-y-1`}>
                     <Label className={`font-semibold text-xs text-secondary-foreground`}>Phone Number</Label>
-                    <div className="flex items-center border border-black rounded-lg overflow-hidden w-full h-14 bg-gray-100">
-                        <div className="flex items-center gap-1.5 pl-2 pr-4 h-full border-r border-black bg-white">
+                    <div className="flex items-center rounded-lg overflow-hidden w-full h-14 bg-gray-100" style={{ border: `1px solid ${colors.borderSecondary}` }}>
+                        <div className="flex items-center gap-1.5 pl-2 pr-4 h-full bg-white" style={{ borderRight: `1px solid ${colors.borderSecondary}` }}>
                             <Image
                                 height={14}
                                 width={20}
@@ -513,7 +522,15 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             maxLength={9}
                         />
                     </div>
-                    <p className="text-xs text-gray-500">Phone number cannot be changed</p>
+                    <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Phone className="h-3.5 w-3.5" />
+                        Phone number cannot be changed
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-2 pt-3">
+                    <Languages className="h-4 w-4" style={{ color: colors.primary }} />
+                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Profile details</h2>
                 </div>
 
                 {/* Gender */}
@@ -533,9 +550,9 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                             <ChevronDown className="w-4 h-4 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-150" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="MALE">Male</SelectItem>
-                            <SelectItem value="FEMALE">Female</SelectItem>
-                            <SelectItem value="OTHER">Other</SelectItem>
+                            {genderOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     {errors.gender && <p className="text-red-500 text-xs">{errors.gender}</p>}
@@ -581,6 +598,11 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     {errors.languages && <p className="text-red-500 text-xs">{errors.languages}</p>}
                 </div>
 
+                <div className="flex items-center gap-2 pt-3">
+                    <FileText className="h-4 w-4" style={{ color: colors.primary }} />
+                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Verification</h2>
+                </div>
+
                 {/* Certificate Upload */}
                 <div className="space-y-1">
                     <Label className="font-semibold text-secondary-foreground/50 text-xs">National ID (PDF)</Label>
@@ -590,7 +612,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                         onChange={handleCertificateChange}
                         disabled={!idEditable}
                         className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 touch-manipulation"
-                        accept="application/pdf"
+                        accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
                         style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
                     />
                     {formData.certificate && (
@@ -606,7 +628,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     <Button
                         size="lg"
                         type="submit"
-                        className="w-full text-white rounded-full font-bold text-base py-2.5 px-4 h-14 transition-colors touch-manipulation"
+                        className="sticky bottom-4 z-10 w-full text-white rounded-lg font-bold text-base py-2.5 px-4 h-14 transition-colors touch-manipulation shadow-lg"
                         style={{
                           backgroundColor: colors.primaryHover,
                         }}

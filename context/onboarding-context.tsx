@@ -323,14 +323,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (user.firstName && user.firstName.trim() !== "") {
         document.cookie = "profileComplete=true; path=/; max-age=31536000"
         if (redirectUrl) {
-          router.push(redirectUrl)
+          window.location.href = redirectUrl
         } else {
           const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
           if (isFirstLogin) {
             localStorage.setItem("hasSeenTutorial", "true")
-            router.push("/?tutorial=true")
+            window.location.href = "/?tutorial=true"
           } else {
-            router.push("/")
+            window.location.href = "/"
           }
         }
       } else {
@@ -455,14 +455,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           toast.success("Welcome! Let's get started.")
 
           if (redirectUrl) {
-            router.push(redirectUrl)
+            window.location.href = redirectUrl
           } else {
             const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
             if (isFirstLogin) {
               localStorage.setItem("hasSeenTutorial", "true")
-              router.push("/?tutorial=true")
+              window.location.href = "/?tutorial=true"
             } else {
-              router.push("/")
+              window.location.href = "/"
             }
           }
         } else {
@@ -470,8 +470,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      const err = error as Error & { response?: { data?: { message?: string } } }
-      toast.error(err.response?.data?.message || "Failed to save information. Please try again.")
+      const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
+      const status = err.response?.status
+      const raw = err.response?.data?.message
+      const msg = Array.isArray(raw) ? raw[0] : raw
+
+      if (status === 401) {
+        toast.error("Session expired. Please verify your phone number again.")
+        setCurrentStep(2)
+        return
+      }
+
+      toast.error(msg || "Failed to save information. Please try again.")
     }
   }, [firstName, lastName, email, selectedRole, verifiedUser, authUser, dispatch, redirectUrl, router])
 
@@ -496,7 +506,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("hasSeenTutorial", "true")
       }
 
-      router.push("/?tutorial=true")
+      window.location.href = "/?tutorial=true"
     } catch (error: any) {
       toast.error("Failed to complete setup. Please try again.")
     }

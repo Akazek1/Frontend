@@ -2,10 +2,12 @@
 import { Star, MapPin, MessageCircle, BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { useBookmark } from "@/context/bookmark-context";
+import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 
 interface ServiceCardProps {
   id: string;
   image: string;
+  profileImage?: string;
   name: string;
   handle?: string;
   title: string;
@@ -20,6 +22,7 @@ interface ServiceCardProps {
   verified?: boolean;
   tags?: string[];
   onClick: () => void;
+  onHireClick?: () => void;
   onRemoveBookmark?: () => void;
   isBookmarked?: boolean;
 }
@@ -27,6 +30,7 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({
   id,
   image,
+  profileImage,
   name,
   handle,
   title,
@@ -40,6 +44,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   verified,
   tags = [],
   onClick,
+  onHireClick,
   onRemoveBookmark,
   isBookmarked: isBookmarkedProp,
 }) => {
@@ -58,13 +63,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
   const handleHireClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick();
+    (onHireClick || onClick)();
   };
 
   const formatReviews = (n: number) => {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
     return n.toString();
   };
+
+  const thumbnailSrc = image || profileImage || "";
+  const thumbnailAlt = image ? title : name || "Service";
 
   return (
     <div
@@ -73,16 +81,20 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     >
       {/* Left image */}
       <div className="relative flex-shrink-0 w-[110px] self-stretch">
-        <Image
-          src={image || "/default-service.svg"}
-          alt={name || "Provider"}
-          fill
-          sizes="110px"
-          loading="lazy"
-          unoptimized={image.endsWith(".svg") || image === "/default-service.svg"}
-          onError={(e) => { (e.target as HTMLImageElement).src = "/default-service.svg"; }}
-          className="object-cover object-top"
-        />
+        {thumbnailSrc ? (
+          <Image
+            src={thumbnailSrc}
+            alt={thumbnailAlt}
+            fill
+            sizes="110px"
+            loading="lazy"
+            unoptimized={shouldUnoptimizeImage(thumbnailSrc)}
+            onError={(e) => { (e.target as HTMLImageElement).src = serviceImageFallback; }}
+            className="object-cover object-top"
+          />
+        ) : (
+          <div className="h-full w-full animate-pulse bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100" />
+        )}
         <span
           className={`absolute bottom-0 left-0 right-0 text-[10px] font-semibold py-1 text-center ${
             available ? "bg-[#145B10]/85 text-white" : "bg-red-600/85 text-white"

@@ -24,14 +24,28 @@ export interface Service {
   priceType: string;
   category: { id: string; name: string; nameKn?: string; nameFr?: string; icon?: string } | string;
   serviceImage: string | null;
+  serviceImages?: string[];
   isActive: boolean;
+  providerId?: string;
   provider: {
     id: string;
+    username?: string;
     firstName: string;
     lastName: string;
     email: string;
     userType: "AGENCY" | "INDIVIDUAL";
+    roles?: string[];
     languages?: string[];
+    profilePicture?: string;
+    profileImg?: string;
+    profileImages?: string[];
+    isVerified?: boolean;
+    gender?: string;
+    dateOfBirth?: string;
+    bio?: string;
+    phoneNumber?: string;
+    trustScore?: number;
+    createdAt?: string;
   };
   worker?: {
     id: string;
@@ -50,6 +64,7 @@ export interface Service {
 export interface Provider {
   id: string;
   image: string;
+  profileImage?: string;
   name: string;
   handle: string;
   title: string;
@@ -64,4 +79,6 @@ export interface Provider {
   verified: boolean;
   type: string;
   phoneNumber?: string;
+  providerId?: string;
+  username?: string;
 }

@@ -201,7 +201,7 @@ const SearchResults = ({ query: initialQuery, onBack }: SearchResultsProps) => {
             {services.map((service) => (
               <Link
                 key={service.id}
-                href={`/book/${service?.provider?.userType}/${service?.id}`}
+                href={`/service/${service?.id}`}
                 className="p-2 border bg-white border-[#E5E5E5] rounded-lg hover:border-[#145B10] transition-colors flex items-center gap-5"
               >
                 <Avatar className={`w-[50px] h-[50px]`}>

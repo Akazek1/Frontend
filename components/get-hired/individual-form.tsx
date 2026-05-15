@@ -38,6 +38,7 @@ interface Service {
   scopeOfService: string
   areaServed?: string
   serviceImage: string | null
+  serviceImages?: string[]
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -89,7 +90,8 @@ interface IndividualData {
   areaServed?: string
   title: string
   availability: Availability[]
-  serviceImage: File | null
+  serviceImage: File | string | null
+  serviceImages: (File | string)[]
   workerId?: string // Added workerId field
 }
 
@@ -115,6 +117,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   const [selectedDayGroup, setSelectedDayGroup] = useState<string>("Weekdays")
   const [availabilityStatus, setAvailabilityStatus] = useState<string>("unavailable")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [workerList, setWorkerList] = useState<any[]>([])
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>(initialData.workerId || "")
   const [isLoading, setIsLoading] = useState(false)
@@ -171,18 +174,33 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   }, [isWorker])
 
   useEffect(() => {
-    if (initialData.serviceImage instanceof File) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setImagePreview(reader.result)
-        }
-      }
-      reader.readAsDataURL(initialData.serviceImage)
-    } else {
-      setImagePreview(initialData.serviceImage)
+    const sourceImages = initialData.serviceImages.length > 0 ? initialData.serviceImages : initialData.serviceImage ? [initialData.serviceImage] : []
+    if (sourceImages.length === 0) {
+      setImagePreview(null)
+      setImagePreviews([])
+      return
     }
-  }, [initialData.serviceImage])
+
+    Promise.all(
+      sourceImages.map(
+        (image) =>
+          new Promise<string>((resolve) => {
+            if (typeof image === "string") {
+              resolve(image)
+              return
+            }
+
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : "")
+            reader.readAsDataURL(image)
+          }),
+      ),
+    ).then((previews) => {
+      const nextPreviews = previews.filter(Boolean)
+      setImagePreviews(nextPreviews)
+      setImagePreview(nextPreviews[0] || null)
+    })
+  }, [initialData.serviceImage, initialData.serviceImages])
 
   const handleAvailabilityChange = (days: number[], field: keyof Availability | "status", value: string | boolean) => {
     setData((prev) => ({
@@ -207,7 +225,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   }
 
   const handleImageSelect = (file: File) => {
-    setData((prev) => ({ ...prev, serviceImage: file }))
+    setData((prev) => ({ ...prev, serviceImage: file, serviceImages: [file] }))
     const reader = new FileReader()
     reader.onloadend = () => {
       if (typeof reader.result === "string") {
@@ -215,6 +233,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       }
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleImagesSelect = (files: File[]) => {
+    setData((prev) => ({ ...prev, serviceImage: files[0] || null, serviceImages: files }))
   }
 
   return (
@@ -257,7 +279,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </>
       )}
 
-      <ImagePicker onImageSelect={handleImageSelect} initialPreview={imagePreview} />
+      <ImagePicker onImageSelect={handleImageSelect} onImagesSelect={handleImagesSelect} initialPreview={imagePreview} initialPreviews={imagePreviews} multiple />
 
       <div className="space-y-0.5">
         <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Category</Label>
@@ -537,6 +559,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     title: "",
     availability: defaultAvailability,
     serviceImage: null,
+    serviceImages: [],
     workerId: "", // Added workerId to initial state
   })
 
@@ -579,7 +602,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         setServices(fetchedServices)
         const previews: Record<string, string | null> = {}
         fetchedServices.forEach((service: Service) => {
-          previews[service.id] = service.serviceImage
+          previews[service.id] = service.serviceImages?.[0] || service.serviceImage
         })
         setImagePreviews(previews)
       } catch {
@@ -618,6 +641,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         title: service.title || "",
         availability,
         serviceImage: service.serviceImage,
+        serviceImages: service.serviceImages || [],
         workerId: service.workerId || "", // Include workerId in update data
       },
     }))
@@ -625,7 +649,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     // Set preview image (string URL from server)
     setImagePreviews((prev) => ({
       ...prev,
-      [service.id]: service.serviceImage ?? "",
+      [service.id]: service.serviceImages?.[0] || service.serviceImage || "",
     }))
   }
 
@@ -663,6 +687,12 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       formData.append("serviceImage", individualData.serviceImage)
     }
 
+    individualData.serviceImages.forEach((image) => {
+      if (image instanceof File) {
+        formData.append("serviceImages", image)
+      }
+    })
+
     formData.append(
       "availability",
       JSON.stringify(
@@ -694,11 +724,12 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         title: "",
         availability: defaultAvailability,
         serviceImage: null,
+        serviceImages: [],
         workerId: "", // Reset workerId
       })
       setImagePreviews((prev) => ({
         ...prev,
-        [newService.id]: newService.serviceImage,
+        [newService.id]: newService.serviceImages?.[0] || newService.serviceImage,
       }))
     } catch (error: unknown) {
       const message =
@@ -752,6 +783,12 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       formData.append("serviceImage", data.serviceImage)
     }
 
+    data.serviceImages.forEach((image) => {
+      if (image instanceof File) {
+        formData.append("serviceImages", image)
+      }
+    })
+
     try {
       const response = await retryWithBackoff(() =>
         api.patch(`/services/${serviceId}`, formData, {
@@ -773,6 +810,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
               areaServed: data.areaServed,
               title: data.title,
               serviceImage: updatedService.serviceImage || service.serviceImage,
+              serviceImages: updatedService.serviceImages || service.serviceImages,
               workerId: data.workerId || service.workerId, // Update workerId
               availability: data.availability
                 .filter((avail) => avail.enabled)
@@ -792,7 +830,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
 
       setImagePreviews((prev) => ({
         ...prev,
-        [serviceId]: updatedService.serviceImage || prev[serviceId],
+        [serviceId]: updatedService.serviceImages?.[0] || updatedService.serviceImage || prev[serviceId],
       }))
 
       setEditModalOpen(false)

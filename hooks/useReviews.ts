@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import api from "@/lib/axios"
-import { toast } from "react-hot-toast"
 
 export interface Review {
   id: string
@@ -37,9 +36,19 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
           ? response.data
           : response.data.data || []
 
+        const normalizedReviews = reviewsData.map((review: Review & { author?: Review["user"] }) => ({
+          ...review,
+          user: review.user || review.author || {
+            id: "",
+            firstName: "Previous",
+            lastName: "Employer",
+            profilePicture: "",
+          },
+        }))
+
         const filteredReviews = filterByUserId
-          ? reviewsData.filter((review: Review) => review.user.id === filterByUserId)
-          : reviewsData
+          ? normalizedReviews.filter((review: Review) => review.user.id === filterByUserId)
+          : normalizedReviews
 
         setReviews(filteredReviews)
         setTotalReviews(filteredReviews.length)
@@ -50,8 +59,9 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
               filteredReviews.length
             : 0
         setAverageRating(avgRating)
-      } catch (error: any) {
-        if (error?.response?.status === 404) {
+      } catch (error: unknown) {
+        const reviewsError = error as { response?: { status?: number } }
+        if (reviewsError?.response?.status === 404) {
           setReviews([])
           setTotalReviews(0)
           setAverageRating(0)

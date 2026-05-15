@@ -168,7 +168,7 @@ export default function Categories() {
           items={categories}
           visibleItems={4.5}
           gap={12}
-          renderItem={(item) => (
+          renderItem={(item: Category) => (
             <button
               onClick={() => handleCategoryClick(item.title)}
               className="flex flex-col items-center gap-1.5 cursor-pointer"
