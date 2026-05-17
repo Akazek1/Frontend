@@ -6,8 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
 import type { RootState } from "@/store";
 import { useSelector } from "react-redux";
-import { CalendarDays, CheckCheck, MessageCircle, ShieldCheck } from "lucide-react";
+import { CalendarDays, Check, CheckCheck, MessageCircle, ShieldCheck, Clock } from "lucide-react";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { BOOKING_STATUS } from "@/constant";
+
+import { initializeSocket, getSocket } from "@/lib/socket";
 
 interface Message {
   id: string;
@@ -16,6 +19,7 @@ interface Message {
   content: string;
   createdAt: string;
   isRead: boolean;
+  isDelivered: boolean;
   sender: {
     id: string;
     firstName: string;
@@ -24,190 +28,174 @@ interface Message {
 }
 
 interface Booking {
-  userId?: string;
   bookingId: string;
+  status: string;
   service: {
     id: string;
     title: string;
-    providerId?: string;
-    provider: {
-      id?: string;
-      username?: string;
-      firstName: string;
-      lastName: string;
-      profilePicture?: string;
-      isVerified?: boolean;
-    };
+  };
+  partner: {
+    id: string;
+    username?: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string;
+    isVerified?: boolean;
   };
   latestMessage?: Message;
   unreadCount?: number;
-  user?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
 }
 
 interface ChatInboxProps {
   searchQuery: string;
 }
 
-const now = new Date();
-const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60 * 1000).toISOString();
-
-const demoBookings: Booking[] = [
-  {
-    userId: "demo-user",
-    bookingId: "demo-cleaning",
-    service: {
-      id: "service-cleaning",
-      title: "Professional House Cleaning",
-      provider: {
-        username: "janviere",
-        firstName: "Janviere",
-        lastName: "Uwase",
-        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
-        isVerified: true,
-      },
-    },
-    user: { id: "demo-employer", firstName: "Grace", lastName: "Mutesi" },
-    unreadCount: 2,
-    latestMessage: {
-      id: "msg-1",
-      bookingId: "demo-cleaning",
-      senderId: "demo-provider",
-      content: "I can come tomorrow morning at 9:00. Please confirm the address.",
-      createdAt: minutesAgo(8),
-      isRead: false,
-      sender: { id: "demo-provider", firstName: "Janviere", lastName: "Uwase" },
-    },
-  },
-  {
-    userId: "demo-user",
-    bookingId: "demo-fulltime",
-    service: {
-      id: "service-fulltime",
-      title: "Full-Time House Helper",
-      provider: {
-        username: "claudine_h",
-        firstName: "Claudine",
-        lastName: "Iradukunda",
-        profilePicture: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400",
-        isVerified: true,
-      },
-    },
-    user: { id: "demo-employer", firstName: "Eric", lastName: "Ndayisaba" },
-    unreadCount: 0,
-    latestMessage: {
-      id: "msg-2",
-      bookingId: "demo-fulltime",
-      senderId: "demo-user",
-      content: "Thank you. I will prepare the task list before you arrive.",
-      createdAt: minutesAgo(95),
-      isRead: true,
-      sender: { id: "demo-user", firstName: "You", lastName: "" },
-    },
-  },
-  {
-    userId: "demo-user",
-    bookingId: "demo-plumbing",
-    service: {
-      id: "service-plumbing",
-      title: "Plumbing Repairs & Installation",
-      provider: {
-        username: "yvette_p",
-        firstName: "Yvette",
-        lastName: "Uwamahoro",
-        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
-        isVerified: true,
-      },
-    },
-    user: { id: "demo-employer", firstName: "Patrick", lastName: "Karekezi" },
-    unreadCount: 1,
-    latestMessage: {
-      id: "msg-3",
-      bookingId: "demo-plumbing",
-      senderId: "demo-provider",
-      content: "Please send a photo of the leak before I come over.",
-      createdAt: minutesAgo(1440),
-      isRead: false,
-      sender: { id: "demo-provider", firstName: "Yvette", lastName: "Uwamahoro" },
-    },
-  },
-];
-
 export default function ChatInbox({ searchQuery }: ChatInboxProps) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "All";
   const router = useRouter();
-  const [bookings, setBookings] = useState<Booking[]>(demoBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
-  const [usingDemoContent, setUsingDemoContent] = useState(true);
-  const { token } = useSelector((state: RootState) => state.auth);
-  const userId = useSelector((state: RootState) => state.auth.user?.id ?? "demo-user");
+  const [presenceMap, setPresenceMap] = useState<Record<string, boolean>>({});
+  const { user, token } = useSelector((state: RootState) => state.auth);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get<{ data: Booking[] }>("/bookings");
+
+      const nextBookings = Array.isArray(response.data.data)
+        ? response.data.data
+            .filter((booking) => booking.latestMessage)
+            .sort((a, b) => {
+              const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0;
+              const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0;
+              return bTime - aTime;
+            })
+        : [];
+
+      setBookings(nextBookings);
+      
+      // Batch check initial presence
+      if (nextBookings.length > 0) {
+         const socket = getSocket();
+         if (socket && socket.connected) {
+           nextBookings.forEach(b => {
+             socket.emit("checkPresence", b.partner.id, (res: { isOnline: boolean }) => {
+               setPresenceMap(prev => ({ ...prev, [b.partner.id]: res.isOnline }));
+             });
+           });
+         }
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
-      setBookings(demoBookings);
-      setUsingDemoContent(true);
+      setBookings([]);
       return;
     }
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await api.get<{ data: Booking[] }>("/bookings", {
-          withCredentials: true,
-        });
-
-        const nextBookings = Array.isArray(response.data.data)
-          ? response.data.data.filter((booking) => booking.latestMessage)
-          : [];
-
-        if (nextBookings.length > 0) {
-          setBookings(nextBookings);
-          setUsingDemoContent(false);
-        } else {
-          setBookings(demoBookings);
-          setUsingDemoContent(true);
-        }
-      } catch {
-        setBookings(demoBookings);
-        setUsingDemoContent(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [token]);
+
+    // Setup real-time listeners for the inbox
+    if (user?.id) {
+       const socket = initializeSocket(token, user.id);
+       
+       socket.on("newMessage", (message: Message) => {
+         setBookings((prev) => {
+           const existingIdx = prev.findIndex(b => b.bookingId === message.bookingId);
+           
+           if (existingIdx !== -1) {
+             const updated = [...prev];
+             const booking = { ...updated[existingIdx] };
+             booking.latestMessage = message;
+             
+             if (message.senderId !== user?.id) {
+               booking.unreadCount = (booking.unreadCount || 0) + 1;
+             }
+             
+             updated[existingIdx] = booking;
+             return updated.sort((a, b) => {
+                const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0;
+                const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0;
+                return bTime - aTime;
+             });
+           } else {
+             fetchData();
+             return prev;
+           }
+         });
+       });
+
+       socket.on("messagesDelivered", (data: { bookingId: string }) => {
+         setBookings((prev) => 
+           prev.map(b => (b.bookingId === data.bookingId && b.latestMessage?.senderId === user?.id) 
+             ? { ...b, latestMessage: { ...b.latestMessage!, isDelivered: true } } 
+             : b
+           )
+         );
+       });
+
+       socket.on("messagesRead", (data: { bookingId: string, readerId: string }) => {
+         if (data.readerId !== user?.id) {
+           setBookings((prev) => 
+             prev.map(b => b.bookingId === data.bookingId 
+               ? { ...b, latestMessage: { ...b.latestMessage!, isRead: true, isDelivered: true } } 
+               : b
+             )
+           );
+         }
+       });
+
+       socket.on("userOnline", (userId: string) => {
+         setPresenceMap(prev => ({ ...prev, [userId]: true }));
+       });
+
+       socket.on("userOffline", (userId: string) => {
+         setPresenceMap(prev => ({ ...prev, [userId]: false }));
+       });
+
+       return () => {
+         socket.off("newMessage");
+         socket.off("messagesDelivered");
+         socket.off("messagesRead");
+         socket.off("userOnline");
+         socket.off("userOffline");
+       };
+    }
+  }, [token, user?.id]);
 
   const filteredBookings = useMemo(() => {
+    if (!bookings) return [];
+    
     const tabFiltered = bookings.filter((booking) => {
       if (currentTab.toLowerCase() === "read") return booking.latestMessage?.isRead === true;
-      if (currentTab.toLowerCase() === "unread") return booking.latestMessage?.isRead === false;
+      if (currentTab.toLowerCase() === "unread") return booking.latestMessage?.isRead === false && booking.latestMessage?.senderId !== user?.id;
       return true;
     });
 
     const query = searchQuery.trim().toLowerCase();
     const searchFiltered = query
       ? tabFiltered.filter((booking) => {
-          const provider = booking.service.provider;
-          const name = `${provider.firstName} ${provider.lastName}`.toLowerCase();
+          const partner = booking.partner;
+          if (!partner) return false;
+          const name = `${partner.firstName} ${partner.lastName}`.toLowerCase();
           return (
             name.includes(query) ||
-            booking.service.title.toLowerCase().includes(query) ||
+            booking.service?.title?.toLowerCase().includes(query) ||
             booking.latestMessage?.content.toLowerCase().includes(query)
           );
         })
       : tabFiltered;
 
-    return [...searchFiltered].sort((a, b) => {
-      const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0;
-      const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [bookings, currentTab, searchQuery]);
+    return searchFiltered;
+  }, [bookings, currentTab, searchQuery, user?.id]);
 
   const formatTimestamp = (isoDate: string): string => {
     const date = new Date(isoDate);
@@ -223,22 +211,6 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
 
   return (
     <div className="w-full space-y-4">
-      {usingDemoContent && (
-        <div className="rounded-2xl border border-[#145B10]/10 bg-white p-3 shadow-sm">
-          <div className="flex gap-3">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
-              <ShieldCheck className="h-4 w-4 text-[#145B10]" />
-            </span>
-            <div>
-              <p className="text-[13px] font-bold text-[#1B2431]">Message preview</p>
-              <p className="mt-0.5 text-[11px] leading-4 text-[#616161]">
-                These sample conversations show how booking chat will feel before the backend chat list is connected.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <p className="text-[13px] font-bold text-[#1B2431]">
           {currentTab === "All" ? "Recent conversations" : `${currentTab} conversations`}
@@ -260,10 +232,12 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
             const msg = booking.latestMessage;
             if (!msg) return null;
 
-            const provider = booking.service.provider;
-            const displayName = `${provider.firstName} ${provider.lastName}`.trim();
-            const initials = `${provider.firstName?.[0] || ""}${provider.lastName?.[0] || ""}` || "AK";
-            const unread = (booking.unreadCount || 0) > 0 || !msg.isRead;
+            const partner = booking.partner;
+            if (!partner) return null; 
+            
+            const displayName = `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim();
+            const initials = `${partner.firstName?.[0] || ""}${partner.lastName?.[0] || ""}` || "AK";
+            const isUnreadByMe = msg.senderId !== user?.id && !msg.isRead;
 
             return (
               <button
@@ -272,62 +246,77 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
                 className="flex w-full gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition-colors hover:bg-gray-50"
                 onClick={() => router.push(`/conversations/inbox/${booking.bookingId}`)}
               >
-                <span
-                  role={provider.username ? "link" : undefined}
-                  aria-label={provider.username ? `View ${displayName}'s profile` : undefined}
-                  className="flex-shrink-0"
+                <span 
+                  className="relative flex-shrink-0"
                   onClick={(e) => {
-                    if (!provider.username) return;
-                    e.stopPropagation();
-                    router.push(`/${provider.username}`);
+                    if (partner.username) {
+                      e.stopPropagation();
+                      router.push(`/${partner.username.replace(/^@/, "")}`);
+                    }
                   }}
                 >
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={provider.profilePicture || ""} className="object-cover" />
+                  <Avatar className="h-12 w-12 cursor-pointer hover:opacity-80 transition-opacity">
+                    <AvatarImage src={partner.profilePicture || ""} className="object-cover" />
                     <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
+                  {presenceMap[partner.id] && (
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow-sm" />
+                  )}
                 </span>
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
                     <span className="min-w-0">
                       <span className="flex items-center gap-1 min-w-0">
-                        {provider.username ? (
-                          <span
-                            role="link"
-                            onClick={(e) => {
+                        <span 
+                          onClick={(e) => {
+                            if (partner.username) {
                               e.stopPropagation();
-                              router.push(`/${provider.username}`);
-                            }}
-                            className="block truncate text-[14px] font-bold text-[#1B2431] hover:text-[#145B10] hover:underline cursor-pointer"
-                          >
-                            {displayName}
-                          </span>
-                        ) : (
-                          <span className="block truncate text-[14px] font-bold text-[#1B2431]">{displayName}</span>
-                        )}
-                        {provider.isVerified ? <VerifiedBadge size={14} /> : null}
+                              router.push(`/${partner.username.replace(/^@/, "")}`);
+                            }
+                          }}
+                          className="block truncate text-[14px] font-bold text-[#1B2431] hover:text-[#145B10] cursor-pointer"
+                        >
+                          {displayName}
+                        </span>
+                        {partner.isVerified ? <VerifiedBadge size={14} /> : null}
                       </span>
                       <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-[#757575]">
                         <CalendarDays className="h-3 w-3" />
-                        {booking.service.title}
+                        {booking.service?.title || "Booking"}
+                        <span className="mx-1">•</span>
+                        <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                          booking.status === BOOKING_STATUS.PENDING ? 'bg-orange-50 text-orange-600' :
+                          booking.status === BOOKING_STATUS.CONFIRMED ? 'bg-blue-50 text-blue-600' :
+                          booking.status === BOOKING_STATUS.IN_PROGRESS ? 'bg-green-50 text-green-600' :
+                          booking.status === BOOKING_STATUS.COMPLETED ? 'bg-gray-100 text-gray-600' :
+                          'bg-red-50 text-red-600'
+                        }`}>
+                          {booking.status}
+                        </span>
                       </span>
                     </span>
-                    <span className="flex flex-shrink-0 flex-col items-end gap-1">
+                    <span className="flex flex-shrink-0 flex-col items-end gap-1.5">
                       <span className="text-[10px] font-semibold text-[#9E9E9E]">{formatTimestamp(msg.createdAt)}</span>
                       {booking.unreadCount && booking.unreadCount > 0 ? (
                         <span className="min-w-5 rounded-full bg-[#145B10] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
                           {booking.unreadCount}
                         </span>
-                      ) : (
-                        <CheckCheck className="h-3.5 w-3.5 text-[#9E9E9E]" />
+                      ) : msg.senderId === user?.id && (
+                        msg.isRead ? (
+                          <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1]" />
+                        ) : msg.isDelivered ? (
+                          <CheckCheck className="h-3.5 w-3.5 text-[#9E9E9E]" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#9E9E9E]" />
+                        )
                       )}
                     </span>
                   </span>
 
-                  <span className={`mt-1 block truncate text-[12px] leading-5 ${unread ? "font-semibold text-[#1B2431]" : "text-[#616161]"}`}>
+                  <span className={`mt-1 block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-[#1B2431]" : "text-[#616161]"}`}>
                     {msg.content}
                   </span>
                 </span>

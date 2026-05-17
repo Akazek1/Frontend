@@ -1,28 +1,17 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackButtonHeader from "@/components/header/back-button-header";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import api from "@/lib/axios";
+import jobsService from "@/services/jobs-service";
 
-const CATEGORIES = [
-  "House Cleaning",
-  "Cooking",
-  "Nanny / Childcare",
-  "Electrician",
-  "Plumbing",
-  "Painting",
-  "Carpentry",
-  "Gardening",
-  "Laundry",
-  "Driver",
-  "Security Guard",
-  "Pet Care",
-  "AC Repair",
-  "Tutoring",
-  "Errands",
-  "Other",
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
 const DISTRICTS = [
   "Gasabo", "Kicukiro", "Nyarugenge",
@@ -35,28 +24,58 @@ const DISTRICTS = [
 const PostJobPage: React.FC = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     title: "",
-    category: "",
+    categoryId: "",
     description: "",
-    location: "",
+    district: "",
     budgetMin: "",
     budgetMax: "",
-    date: "",
-    urgency: "flexible",
+    startDate: "",
+    scheduleType: "one-time",
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get("/services/categories");
+        setCategories(response.data.data || response.data || []);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.category || !form.description || !form.location) {
+    if (!form.title || !form.categoryId || !form.description || !form.district) {
       toast.error("Please fill in all required fields.");
       return;
     }
-    toast.success("Job posting coming soon!");
-    router.back();
+
+    setLoading(true);
+    try {
+      await jobsService.createJob({
+        title: form.title,
+        description: form.description,
+        categoryId: form.categoryId,
+        budgetMin: form.budgetMin ? Number(form.budgetMin) : undefined,
+        budgetMax: form.budgetMax ? Number(form.budgetMax) : undefined,
+        startDate: form.startDate || undefined,
+        scheduleType: form.scheduleType,
+      });
+      toast.success("Job posted successfully!");
+      router.push("/jobs");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to post job.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,13 +110,13 @@ const PostJobPage: React.FC = () => {
               Category <span className="text-red-500">*</span>
             </label>
             <select
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
+              value={form.categoryId}
+              onChange={(e) => set("categoryId", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] bg-white focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
             >
               <option value="">Select a category</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -127,8 +146,8 @@ const PostJobPage: React.FC = () => {
               District <span className="text-red-500">*</span>
             </label>
             <select
-              value={form.location}
-              onChange={(e) => set("location", e.target.value)}
+              value={form.district}
+              onChange={(e) => set("district", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] bg-white focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
             >
               <option value="">Select your district</option>
@@ -140,27 +159,27 @@ const PostJobPage: React.FC = () => {
 
           {/* Preferred date */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">Preferred date</label>
+            <label className="text-[12px] font-semibold text-[#1B2431]">Preferred start date</label>
             <input
               type="date"
-              value={form.date}
+              value={form.startDate}
               min={new Date().toISOString().split("T")[0]}
-              onChange={(e) => set("date", e.target.value)}
+              onChange={(e) => set("startDate", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
             />
           </div>
 
-          {/* Urgency */}
+          {/* Schedule Type */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">Urgency</label>
-            <div className="flex gap-2">
-              {["urgent", "this week", "flexible"].map((opt) => (
+            <label className="text-[12px] font-semibold text-[#1B2431]">Schedule</label>
+            <div className="flex flex-wrap gap-2">
+              {["one-time", "daily", "weekly", "monthly", "live-in"].map((opt) => (
                 <button
                   type="button"
                   key={opt}
-                  onClick={() => set("urgency", opt)}
-                  className={`flex-1 py-2 rounded-xl text-[11px] font-semibold capitalize border transition-colors ${
-                    form.urgency === opt
+                  onClick={() => set("scheduleType", opt)}
+                  className={`px-3 py-2 rounded-xl text-[11px] font-semibold capitalize border transition-colors ${
+                    form.scheduleType === opt
                       ? "bg-[#145B10] text-white border-[#145B10]"
                       : "bg-white text-[#616161] border-gray-200"
                   }`}

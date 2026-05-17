@@ -34,19 +34,19 @@ export const initializeSocket = (token: string, userId: string) => {
   });
 
   socket.on("connect", () => {
-    
+    console.log("✅ Socket connected:", socket?.id);
   });
 
-  socket.on("disconnect", () => {
-   
+  socket.on("disconnect", (reason) => {
+    console.log("❌ Socket disconnected:", reason);
   });
 
-  socket.on("connect_error", () => {
-   
+  socket.on("connect_error", (error) => {
+    console.error("⚠️ Socket connection error:", error.message);
   });
 
-  socket.on("reconnect", () => {
-    
+  socket.on("reconnect", (attempt) => {
+    console.log("🔄 Socket reconnected after", attempt, "attempts");
   });
 
   socket.on("reconnect_error", (error) => {

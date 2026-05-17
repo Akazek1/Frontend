@@ -215,8 +215,9 @@ const BookingSummary = () => {
 
         const response = await api.post("/bookings", payload);
         if (response.status === 201) {
-            toast.success("Booking created successfully");
-            router.push(`/`);
+            const booking = response.data.data || response.data;
+            toast.success("Booking request sent successfully");
+            router.push(`/conversations/inbox/${booking.id}`);
         }
     } catch (err) {
         console.error("Error creating booking:", err);

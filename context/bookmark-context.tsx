@@ -22,6 +22,7 @@ interface BookmarkProviderProps {
 export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) => {
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [bookingsFetched, setBookingsFetched] = useState<boolean>(false);
     const pathname = usePathname();
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
@@ -38,6 +39,7 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
                         .filter((bookmark: Bookmark) => bookmark.serviceId && typeof bookmark.serviceId === "string")
                         .map((bookmark: Bookmark) => bookmark.serviceId as string)
                 );
+                setBookingsFetched(true); // Flag to prevent re-fetch
                 setBookmarkedIds(ids);
             } catch (error) {
                 console.error("Failed to fetch bookmarks:", error);
@@ -45,11 +47,10 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
             }
         };
 
-        const isOnboardingPage = pathname?.startsWith("/onboarding");
-        if (isAuthenticated && !isOnboardingPage) {
+        if (isAuthenticated && !bookingsFetched) {
             fetchBookmarks();
         }
-    }, [isAuthenticated, pathname]);
+    }, [isAuthenticated, bookingsFetched]);
 
 
 

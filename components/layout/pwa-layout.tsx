@@ -5,7 +5,7 @@ import Navigation from "@/components/layout/app-navigation";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
-  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register"];
+  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
     /^\/[^/]+\/services\/[^/]+$/.test(pathname);

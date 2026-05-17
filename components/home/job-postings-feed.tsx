@@ -44,8 +44,36 @@ const JobPostingsFeed: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setJobs([]);
-    setLoading(false);
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("/jobs");
+        const data = response.data.data || response.data;
+        const formattedJobs = (Array.isArray(data) ? data : []).map((job: any) => ({
+          id: job.id,
+          title: job.title,
+          category: job.category?.name || "Other",
+          description: job.description,
+          location: job.address?.city || "Kigali",
+          budgetMin: job.budgetMin,
+          budgetMax: job.budgetMax,
+          urgency: "flexible", // Fallback since schema might not have it yet
+          preferredDate: job.startDate,
+          createdAt: job.createdAt,
+          poster: {
+            firstName: job.employer?.firstName || "Unknown",
+            lastName: job.employer?.lastName || "Employer",
+          },
+        }));
+        setJobs(formattedJobs);
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
   const handleExpress = (jobId: string) => {

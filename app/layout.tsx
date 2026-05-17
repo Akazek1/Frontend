@@ -36,19 +36,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="antialiased">
         <Providers>
           <ViewModeProvider>
-            <Layout>
-              <BookmarkProvider>
+            <BookmarkProvider>
+              <Layout>
                 <Toaster position="top-center" />
                 {children}
-              </BookmarkProvider>
-            </Layout>
+              </Layout>
+            </BookmarkProvider>
           </ViewModeProvider>
         </Providers>
       </body>

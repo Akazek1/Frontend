@@ -12,6 +12,16 @@ export const navItems: NavItem[] = [
   },
 ];
 
+export const BOOKING_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export const CHAT_WINDOW_HOURS = 72;
+
 export const PrivacyPolicyData = [
   {
     id: 1,

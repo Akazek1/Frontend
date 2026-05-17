@@ -42,8 +42,8 @@ interface OnboardingContextType {
   setLastName: (name: string) => void
   email: string
   setEmail: (email: string) => void
-  selectedRole: "EMPLOYER" | "WORKER" | null
-  setSelectedRole: (role: "EMPLOYER" | "WORKER" | null) => void
+  selectedRoles: ("EMPLOYER" | "WORKER")[]
+  setSelectedRoles: (roles: ("EMPLOYER" | "WORKER")[]) => void
   selectedCategories: string[]
   setSelectedCategories: (categories: string[]) => void
 
@@ -92,7 +92,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState(-1)
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [selectedRole, setSelectedRole] = useState<"EMPLOYER" | "WORKER" | null>(null)
+  const [selectedRoles, setSelectedRoles] = useState<("EMPLOYER" | "WORKER")[]>([])
   const [isReturningUser, setIsReturningUser] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -309,6 +309,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             profilePicture: null,
           }
           setVerifiedUser(mockVerifiedUser)
+          if (redirectUrl && redirectUrl.startsWith("/onboarding/organization")) {
+            window.location.href = redirectUrl
+            return
+          }
           setCurrentStep(4)
           return
         }
@@ -319,6 +323,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       setVerifiedUser(user)
+
+      if (redirectUrl && redirectUrl.startsWith("/onboarding/organization")) {
+        window.location.href = redirectUrl
+        return
+      }
 
       if (user.firstName && user.firstName.trim() !== "") {
         document.cookie = "profileComplete=true; path=/; max-age=31536000"
@@ -375,99 +384,105 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    if (!selectedRole) {
-      toast.error("Role not selected. Please go back and select a role.")
+    if (selectedRoles.length === 0) {
+      toast.error("Please select at least one role.")
       return
     }
 
-    // Check verification status from context or Redux
-    const isVerified = verifiedUser?.isMobileVerified || authUser?.isMobileVerified
-
-    if (!isVerified) {
-      toast.error("Phone verification required. Please complete OTP verification.")
-      return
-    }
+    const isNewUser = !verifiedUser?.id || verifiedUser.id === null
 
     try {
-      interface UpdateProfilePayload {
-        firstName: string
-        lastName?: string
-        email?: string
-      }
+      let updatedUser: any
 
-      const updatePayload: UpdateProfilePayload = {
-        firstName: firstName.trim(),
-      }
-
-      if (lastName.trim()) {
-        updatePayload.lastName = lastName.trim()
-      }
-
-      if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) {
-        updatePayload.email = email.trim()
-      }
-
-      interface ProfileResponse {
-        data: {
-          lastName?: string
-          username?: string
-          email?: string
+      if (isNewUser) {
+        // New user — create account via /auth/complete-signup
+        const signupPayload: Record<string, unknown> = {
+          firstName: firstName.trim(),
+          roles: selectedRoles,
         }
-      }
+        if (lastName.trim()) signupPayload.lastName = lastName.trim()
+        if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) signupPayload.email = email.trim()
 
-      const profileResponse = await api.patch<ProfileResponse>("/users/profile", updatePayload, {
-        withCredentials: true,
-      })
+        const signupResponse = await api.post("/auth/complete-signup", signupPayload, {
+          withCredentials: true,
+        })
 
-      if (profileResponse.data) {
-        const updatedUserData = profileResponse.data.data || profileResponse.data
+        const responseData = signupResponse.data?.data || signupResponse.data
+        const newToken = responseData.token
+        const newUser = responseData.user
+
+        if (newToken) {
+          localStorage.setItem("token", newToken)
+          document.cookie = `token=${newToken}; path=/; max-age=31536000`
+        }
+
+        updatedUser = {
+          ...newUser,
+          roles: selectedRoles,
+        }
+      } else {
+        // Returning user — update profile + roles
+        const updatePayload: Record<string, string> = {
+          firstName: firstName.trim(),
+        }
+        if (lastName.trim()) updatePayload.lastName = lastName.trim()
+        if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) updatePayload.email = email.trim()
+
+        const profileResponse = await api.patch("/users/profile", updatePayload, {
+          withCredentials: true,
+        })
+
+        const updatedUserData = (profileResponse.data as any)?.data || profileResponse.data
 
         await api.post(
           "/users/role-selection",
-          { role: selectedRole },
+          { roles: selectedRoles },
           { withCredentials: true }
         )
 
-        const updatedUser = {
+        updatedUser = {
           ...verifiedUser,
           firstName: firstName.trim(),
-          lastName: lastName.trim() || updatedUserData.lastName || verifiedUser.lastName,
-          username: updatedUserData.username || verifiedUser.username,
-          email: email.trim() || verifiedUser.email || updatedUserData.email,
-          phoneNumber: verifiedUser.phoneNumber,
-          roles: [selectedRole],
+          lastName: lastName.trim() || updatedUserData.lastName || verifiedUser?.lastName,
+          username: updatedUserData.username || verifiedUser?.username,
+          email: email.trim() || verifiedUser?.email || updatedUserData.email,
+          phoneNumber: verifiedUser?.phoneNumber,
+          roles: selectedRoles,
         }
+      }
 
-        dispatch(updateUser(updatedUser))
+      dispatch(updateUser(updatedUser))
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(updatedUser))
-        }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(updatedUser))
+      }
 
-        if (selectedRole === "EMPLOYER") {
+      // Skip doc upload + categories if user only selected EMPLOYER (no WORKER role)
+      if (!selectedRoles.includes("WORKER")) {
+        if (!isNewUser) {
           await api.patch(
             "/users/complete-onboarding",
             { role: "EMPLOYER" },
             { withCredentials: true }
           )
-
-          document.cookie = "profileComplete=true; path=/; max-age=31536000"
-          toast.success("Welcome! Let's get started.")
-
-          if (redirectUrl) {
-            window.location.href = redirectUrl
-          } else {
-            const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
-            if (isFirstLogin) {
-              localStorage.setItem("hasSeenTutorial", "true")
-              window.location.href = "/?tutorial=true"
-            } else {
-              window.location.href = "/"
-            }
-          }
-        } else {
-          setCurrentStep(5)
         }
+
+        document.cookie = "profileComplete=true; path=/; max-age=31536000"
+        toast.success("Welcome! Let's get started.")
+
+        if (redirectUrl) {
+          window.location.href = redirectUrl
+        } else {
+          const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
+          if (isFirstLogin) {
+            localStorage.setItem("hasSeenTutorial", "true")
+            window.location.href = "/?tutorial=true"
+          } else {
+            window.location.href = "/"
+          }
+        }
+      } else {
+        setCurrentStep(5)
       }
     } catch (error) {
       const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
@@ -483,7 +498,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       toast.error(msg || "Failed to save information. Please try again.")
     }
-  }, [firstName, lastName, email, selectedRole, verifiedUser, authUser, dispatch, redirectUrl, router])
+  }, [firstName, lastName, email, selectedRoles, verifiedUser, authUser, dispatch, redirectUrl, router])
 
   const handleDocumentUpload = useCallback((document: DocumentData) => {
     setUploadedDocument(document)
@@ -514,8 +529,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleNext = useCallback(async () => {
     if (currentStep === 1) {
-      if (!selectedRole) {
-        toast.error("Please select a role")
+      if (selectedRoles.length === 0) {
+        toast.error("Please select at least one role")
         return
       }
       setCurrentStep(2)
@@ -545,7 +560,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (currentStep < 6) {
       setCurrentStep((prev) => prev + 1)
     }
-  }, [currentStep, selectedRole, code, handleSendOtp, handleVerifyOtp, handleSaveBasicInfo])
+  }, [currentStep, selectedRoles, code, handleSendOtp, handleVerifyOtp, handleSaveBasicInfo])
 
   const handleBack = useCallback(() => {
     if (currentStep === 3) {
@@ -586,8 +601,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setLastName,
     email,
     setEmail,
-    selectedRole,
-    setSelectedRole,
+    selectedRoles,
+    setSelectedRoles,
     selectedCategories,
     setSelectedCategories,
     verifiedUser,
