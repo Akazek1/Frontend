@@ -2,13 +2,14 @@
 
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from "@/lib/axios";
 import { Check, CheckCheck, Info, Loader2, Phone, Send } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface Message {
   id: string;
@@ -38,9 +39,11 @@ interface Booking {
     title: string;
     providerId?: string;
     provider: {
+      username?: string;
       firstName: string;
       lastName: string;
       profilePicture?: string;
+      isVerified?: boolean;
     };
   };
 }
@@ -55,8 +58,14 @@ const demoConversations: Record<string, Booking> = {
     user: { id: "demo-user", firstName: "You", lastName: "" },
     service: {
       id: "service-cleaning",
-      title: "Home cleaning",
-      provider: { firstName: "Aline", lastName: "Uwase", profilePicture: "" },
+      title: "Professional House Cleaning",
+      provider: {
+        username: "janviere",
+        firstName: "Janviere",
+        lastName: "Uwase",
+        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
+        isVerified: true,
+      },
     },
     messages: [
       {
@@ -66,7 +75,7 @@ const demoConversations: Record<string, Booking> = {
         content: "Hello, I received your cleaning request.",
         createdAt: minutesAgo(32),
         isRead: true,
-        sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+        sender: { id: "demo-provider", firstName: "Janviere", lastName: "Uwase" },
       },
       {
         id: "demo-cleaning-2",
@@ -84,32 +93,38 @@ const demoConversations: Record<string, Booking> = {
         content: "I can come tomorrow morning at 9:00. Please confirm the address.",
         createdAt: minutesAgo(8),
         isRead: false,
-        sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+        sender: { id: "demo-provider", firstName: "Janviere", lastName: "Uwase" },
       },
     ],
   },
-  "demo-nanny": {
-    id: "demo-nanny",
+  "demo-fulltime": {
+    id: "demo-fulltime",
     userId: "demo-user",
     user: { id: "demo-user", firstName: "You", lastName: "" },
     service: {
-      id: "service-nanny",
-      title: "Child care",
-      provider: { firstName: "Vestine", lastName: "Mukamana", profilePicture: "" },
+      id: "service-fulltime",
+      title: "Full-Time House Helper",
+      provider: {
+        username: "claudine_h",
+        firstName: "Claudine",
+        lastName: "Iradukunda",
+        profilePicture: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400",
+        isVerified: true,
+      },
     },
     messages: [
       {
-        id: "demo-nanny-1",
-        bookingId: "demo-nanny",
+        id: "demo-fulltime-1",
+        bookingId: "demo-fulltime",
         senderId: "demo-provider",
-        content: "I have experience with toddlers and can help after school.",
+        content: "I have 4 years of experience with families. Happy to start next week.",
         createdAt: minutesAgo(130),
         isRead: true,
-        sender: { id: "demo-provider", firstName: "Vestine", lastName: "Mukamana" },
+        sender: { id: "demo-provider", firstName: "Claudine", lastName: "Iradukunda" },
       },
       {
-        id: "demo-nanny-2",
-        bookingId: "demo-nanny",
+        id: "demo-fulltime-2",
+        bookingId: "demo-fulltime",
         senderId: "demo-user",
         content: "Thank you. I will prepare the task list before you arrive.",
         createdAt: minutesAgo(95),
@@ -118,24 +133,30 @@ const demoConversations: Record<string, Booking> = {
       },
     ],
   },
-  "demo-electrician": {
-    id: "demo-electrician",
+  "demo-plumbing": {
+    id: "demo-plumbing",
     userId: "demo-user",
     user: { id: "demo-user", firstName: "You", lastName: "" },
     service: {
-      id: "service-electrician",
-      title: "Electrical repair",
-      provider: { firstName: "Jean", lastName: "Hirwa", profilePicture: "" },
+      id: "service-plumbing",
+      title: "Plumbing Repairs & Installation",
+      provider: {
+        username: "yvette_p",
+        firstName: "Yvette",
+        lastName: "Uwamahoro",
+        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
+        isVerified: true,
+      },
     },
     messages: [
       {
-        id: "demo-electrician-1",
-        bookingId: "demo-electrician",
+        id: "demo-plumbing-1",
+        bookingId: "demo-plumbing",
         senderId: "demo-provider",
-        content: "Please send a photo of the switch before I come.",
+        content: "Please send a photo of the leak before I come over.",
         createdAt: minutesAgo(1440),
         isRead: false,
-        sender: { id: "demo-provider", firstName: "Jean", lastName: "Hirwa" },
+        sender: { id: "demo-provider", firstName: "Yvette", lastName: "Uwamahoro" },
       },
     ],
   },
@@ -153,8 +174,9 @@ const Conversation: React.FC = () => {
   const { token, user } = useSelector((state: RootState) => state.auth);
   const currentUserId = user?.id || "demo-user";
 
+  const router = useRouter();
   const participant = useMemo(() => {
-    if (!booking) return { name: "Conversation", initials: "AK", service: "" };
+    if (!booking) return { name: "Conversation", initials: "AK", service: "", username: undefined, isVerified: false, image: "" };
     const provider = booking.service.provider;
     const name = `${provider.firstName} ${provider.lastName}`.trim();
     return {
@@ -162,8 +184,16 @@ const Conversation: React.FC = () => {
       initials: `${provider.firstName?.[0] || ""}${provider.lastName?.[0] || ""}` || "AK",
       service: booking.service.title,
       image: provider.profilePicture || "",
+      username: provider.username,
+      isVerified: !!provider.isVerified,
     };
   }, [booking]);
+
+  const goToProfile = () => {
+    if (participant.username) {
+      router.push(`/${participant.username}`);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -272,14 +302,35 @@ const Conversation: React.FC = () => {
         <div className="flex items-center justify-between gap-3">
           <BackButtonHeader text="" backHref="/conversations" />
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={participant.image} className="object-cover" />
-              <AvatarFallback className="bg-[#145B10] text-[12px] font-bold text-white">
-                {participant.initials}
-              </AvatarFallback>
-            </Avatar>
+            <button
+              type="button"
+              onClick={goToProfile}
+              disabled={!participant.username}
+              aria-label={participant.username ? `View ${participant.name}'s profile` : undefined}
+              className="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#145B10] disabled:cursor-default"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={participant.image} className="object-cover" />
+                <AvatarFallback className="bg-[#145B10] text-[12px] font-bold text-white">
+                  {participant.initials}
+                </AvatarFallback>
+              </Avatar>
+            </button>
             <div className="min-w-0">
-              <p className="truncate text-[15px] font-bold text-[#1B2431]">{participant.name}</p>
+              <div className="flex items-center gap-1 min-w-0">
+                {participant.username ? (
+                  <button
+                    type="button"
+                    onClick={goToProfile}
+                    className="truncate text-[15px] font-bold text-[#1B2431] hover:text-[#145B10] hover:underline"
+                  >
+                    {participant.name}
+                  </button>
+                ) : (
+                  <p className="truncate text-[15px] font-bold text-[#1B2431]">{participant.name}</p>
+                )}
+                {participant.isVerified ? <VerifiedBadge size={16} /> : null}
+              </div>
               <p className="truncate text-[11px] text-[#757575]">{participant.service}</p>
             </div>
           </div>

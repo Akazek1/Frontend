@@ -4,68 +4,11 @@ import { useRouter } from "next/navigation";
 import Scroller from "../scroller";
 import api from "@/lib/axios";
 import { Loader2 } from "lucide-react";
+import { getCategoryIcon } from "@/constant/category-icons";
 
 interface Category {
   title: string;
 }
-
-const C = "145B10";
-
-const ICON_MAP: Record<string, string> = {
-  // Cleaning
-  clean:    `https://img.icons8.com/ios/48/${C}/broom.png`,
-  broom:    `https://img.icons8.com/ios/48/${C}/broom.png`,
-  vacuum:   `https://img.icons8.com/ios/48/${C}/vacuum-cleaner.png`,
-  // Cooking
-  cook:     `https://img.icons8.com/ios/48/${C}/chef-hat.png`,
-  chef:     `https://img.icons8.com/ios/48/${C}/chef-hat.png`,
-  food:     `https://img.icons8.com/ios/48/${C}/restaurant.png`,
-  // Childcare
-  nanny:    `https://img.icons8.com/ios/48/${C}/nanny.png`,
-  babysit:  `https://img.icons8.com/ios/48/${C}/baby-feet.png`,
-  child:    `https://img.icons8.com/ios/48/${C}/baby-feet.png`,
-  // Electrical
-  electr:   `https://img.icons8.com/ios/48/${C}/electricity.png`,
-  // Plumbing
-  plumb:    `https://img.icons8.com/ios/48/${C}/plumber.png`,
-  pipe:     `https://img.icons8.com/ios/48/${C}/plumbing.png`,
-  // Painting
-  paint:    `https://img.icons8.com/ios/48/${C}/roller-brush.png`,
-  // Carpentry / Repairs
-  carpen:   `https://img.icons8.com/ios/48/${C}/carpenter.png`,
-  repair:   `https://img.icons8.com/ios/48/${C}/screwdriver.png`,
-  handyman: `https://img.icons8.com/ios/48/${C}/wrench.png`,
-  // Gardening
-  garden:   `https://img.icons8.com/ios/48/${C}/garden.png`,
-  plant:    `https://img.icons8.com/ios/48/${C}/potted-plant.png`,
-  grass:    `https://img.icons8.com/ios/48/${C}/grass.png`,
-  // Laundry
-  laundry:  `https://img.icons8.com/ios/48/${C}/washing-machine.png`,
-  // AC / Appliances
-  ac:       `https://img.icons8.com/ios/48/${C}/air-conditioner.png`,
-  air:      `https://img.icons8.com/ios/48/${C}/air-conditioner.png`,
-  appli:    `https://img.icons8.com/ios/48/${C}/fan.png`,
-  // Driving
-  drive:    `https://img.icons8.com/ios/48/${C}/driver.png`,
-  taxi:     `https://img.icons8.com/ios/48/${C}/taxi.png`,
-  car:      `https://img.icons8.com/ios/48/${C}/car.png`,
-  // Security
-  guard:    `https://img.icons8.com/ios/48/${C}/security-guard.png`,
-  secur:    `https://img.icons8.com/ios/48/${C}/shield.png`,
-  // Pet
-  pet:      `https://img.icons8.com/ios/48/${C}/dog.png`,
-  dog:      `https://img.icons8.com/ios/48/${C}/dog.png`,
-  // Tutoring
-  tutor:    `https://img.icons8.com/ios/48/${C}/teacher.png`,
-  teach:    `https://img.icons8.com/ios/48/${C}/school.png`,
-  lesson:   `https://img.icons8.com/ios/48/${C}/book.png`,
-  // Errands / Delivery
-  errand:   `https://img.icons8.com/ios/48/${C}/shopping-basket.png`,
-  deliv:    `https://img.icons8.com/ios/48/${C}/delivery.png`,
-  shop:     `https://img.icons8.com/ios/48/${C}/shopping-cart.png`,
-};
-
-const DEFAULT_ICON = `https://img.icons8.com/ios/48/${C}/wrench.png`;
 
 // Shown when the API has fewer items — covers the full range of services
 const FALLBACK_CATEGORIES: Category[] = [
@@ -85,14 +28,6 @@ const FALLBACK_CATEGORIES: Category[] = [
   { title: "Tutoring" },
   { title: "Errands" },
 ];
-
-function getIcon(title: string): string {
-  const lower = title.toLowerCase();
-  for (const [key, url] of Object.entries(ICON_MAP)) {
-    if (lower.includes(key)) return url;
-  }
-  return DEFAULT_ICON;
-}
 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
@@ -176,7 +111,7 @@ export default function Categories() {
               <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-[#E8F5E9]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={getIcon(item.title)}
+                  src={getCategoryIcon(item.title)}
                   alt={item.title}
                   width={28}
                   height={28}

@@ -37,6 +37,15 @@ export function getBookingType(service?: Partial<Service> | null) {
   return provider?.roles?.includes("AGENCY") ? "AGENCY" : "INDIVIDUAL";
 }
 
+/**
+ * Build the canonical /{handle}/services/{id} path for a service detail page.
+ * The handle segment is derived from the provider's username or name.
+ */
+export function getServiceDetailPath(service?: Partial<Service> | null) {
+  const handle = getProviderHandle(service?.provider).replace(/^@/, "");
+  return `/${handle}/services/${service?.id || ""}`;
+}
+
 export function shouldUnoptimizeImage(src?: string) {
   return Boolean(src && (src.endsWith(".svg") || src.startsWith("/")));
 }

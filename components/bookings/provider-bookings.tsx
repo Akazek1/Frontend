@@ -6,6 +6,7 @@ import { RootState } from '@/store';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import Image from 'next/image';
+import Link from 'next/link';
 import BackButtonHeader from '@/components/header/back-button-header';
 import {
   Loader2, CalendarDays, Banknote, Briefcase,
@@ -19,7 +20,8 @@ interface Booking {
   scheduledFor: string;
   price: number;
   service: { title: string; serviceImage: string };
-  receiver: { firstName: string; lastName: string; profilePicture: string };
+  receiver?: { username?: string; firstName: string; lastName: string; profilePicture: string };
+  employer?: { username?: string; firstName: string; lastName: string; profilePicture: string };
 }
 
 type Tab = 'All' | 'Requests' | 'Active' | 'Completed' | 'Cancelled';
@@ -195,7 +197,23 @@ const ProviderBookings: React.FC = () => {
                       </div>
 
                       <p className="text-[11px] text-[#616161]">
-                        From: {b.receiver?.firstName} {b.receiver?.lastName}
+                        From:{" "}
+                        {(() => {
+                          const person = b.employer || b.receiver;
+                          if (!person) return null;
+                          const fullName = `${person.firstName || ""} ${person.lastName || ""}`.trim();
+                          if (person.username) {
+                            return (
+                              <Link
+                                href={`/${person.username}`}
+                                className="font-semibold text-[#1B2431] hover:text-[#145B10] hover:underline"
+                              >
+                                {fullName}
+                              </Link>
+                            );
+                          }
+                          return <span className="font-semibold text-[#1B2431]">{fullName}</span>;
+                        })()}
                       </p>
 
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">

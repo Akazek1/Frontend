@@ -110,7 +110,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                 <ServiceCard
                   key={provider.id}
                   onClick={() => {
-                    router.push(`/service/${provider.id}`);
+                    router.push(`/${provider.handle.replace("@", "")}/services/${provider.id}`);
                   }}
                   onHireClick={() => router.push(`/book/${provider.type}/${provider.id}`)}
                   {...provider}

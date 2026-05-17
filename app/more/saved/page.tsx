@@ -9,7 +9,7 @@ import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
 import { useBookmark } from "@/context/bookmark-context";
 import { formatPrice } from "@/lib/utils";
-import { getBookingType, getServiceCardImage } from "@/lib/service-display";
+import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
 
 interface BookmarksResponse {
     service: Service;
@@ -69,6 +69,7 @@ const BookmarksPage = () => {
                             image={getServiceCardImage(service)}
                             profileImage={service?.provider?.profilePicture}
                             name={`${service?.provider?.firstName || "Unknown"} ${service?.provider?.lastName || "Provider"}`}
+                            handle={getProviderHandle(service.provider)}
                             title={service?.title || "Untitled Service"}
                             experience="5+ years"
                             languages={Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "N/A"}
@@ -79,7 +80,7 @@ const BookmarksPage = () => {
                             distance="2.5 miles"
                             available={true}
                             verified={service?.provider?.userType === "AGENCY"}
-                            onClick={() => router.push(`/service/${service.id}`)}
+                            onClick={() => router.push(getServiceDetailPath(service))}
                             onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                             onRemoveBookmark={() => handleRemoveBookmark(service.id)} 
                             isBookmarked={isBookmarked(service.id)} // Pass bookmark status

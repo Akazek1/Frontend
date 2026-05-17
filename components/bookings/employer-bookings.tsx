@@ -14,6 +14,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Booking {
   id: string;
@@ -25,7 +26,7 @@ interface Booking {
     title: string;
     serviceImage?: string;
   };
-  worker: { id: string; firstName: string; lastName: string } | null;
+  worker: { id: string; username?: string; firstName: string; lastName: string } | null;
   address?: { city?: string; street?: string };
   review: null | { rating: number; comment: string };
 }
@@ -228,7 +229,17 @@ const EmployerBookings: React.FC = () => {
                     </div>
 
                     <p className="text-[11px] text-[#616161]">
-                      {isUpcoming ? `Provider: ${worker}` : `Served by: ${worker}`}
+                      {isUpcoming ? "Provider: " : "Served by: "}
+                      {b.worker?.username ? (
+                        <Link
+                          href={`/${b.worker.username}`}
+                          className="font-semibold text-[#1B2431] hover:text-[#145B10] hover:underline"
+                        >
+                          {worker}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold text-[#1B2431]">{worker}</span>
+                      )}
                     </p>
 
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">

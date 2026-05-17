@@ -1,7 +1,8 @@
 "use client";
-import { Star, BadgeCheck, Flag } from "lucide-react";
+import { Star, Flag } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface ProfileHeaderProps {
   name: string;
@@ -83,9 +84,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {/* Name + Verification */}
           <div className="flex items-start gap-2 mb-2 flex-wrap">
             <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-            {isVerified && (
-              <BadgeCheck className="w-6 h-6 fill-blue-500 stroke-white flex-shrink-0 mt-1" />
-            )}
+            {isVerified && <VerifiedBadge size={24} className="mt-1" />}
           </div>
 
           {/* Demographics */}

@@ -6,13 +6,28 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register"];
+  const isServiceDetail =
+    /^\/service\/[^/]+$/.test(pathname) ||
+    /^\/[^/]+\/services\/[^/]+$/.test(pathname);
   const shouldHideNavigation =
-    hideNavigationPaths.includes(pathname) || pathname.startsWith("/conversations/inbox");
+    hideNavigationPaths.includes(pathname) ||
+    pathname.startsWith("/conversations/inbox") ||
+    isServiceDetail;
 
   return (
     <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
       {/* Main content area with scrolling */}
-      <main className={`flex-1 ${shouldHideNavigation ? "overflow-hidden" : "overflow-y-auto scrollbar-hide pb-24"}`}>{children}</main>
+      <main
+        className={`flex-1 ${
+          shouldHideNavigation
+            ? isServiceDetail
+              ? "overflow-y-auto scrollbar-hide"
+              : "overflow-hidden"
+            : "overflow-y-auto scrollbar-hide pb-24"
+        }`}
+      >
+        {children}
+      </main>
 
       {/* Fixed Navigation */}
       {!shouldHideNavigation && (

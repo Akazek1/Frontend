@@ -428,7 +428,7 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                     {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
                     {formData.username && (
                         <p className="text-xs text-gray-500">
-                            Your profile link: {typeof window !== "undefined" ? window.location.origin : ""}/provider/{formData.username}
+                            Your profile link: {typeof window !== "undefined" ? window.location.origin : ""}/{formData.username}
                         </p>
                     )}
                 </div>

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Service } from "@/types";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
-import { getBookingType, getServiceCardImage } from "@/lib/service-display";
+import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
 
 
 const ServicePage = () => {
@@ -74,6 +74,7 @@ const ServicePage = () => {
                                 image={getServiceCardImage(service)}
                                 profileImage={service.provider.profilePicture}
                                 name={`${service.provider.firstName} ${service.provider.lastName}`}
+                                handle={getProviderHandle(service.provider)}
                                 title={service.title}
                                 experience="5+ years"
                                 languages={Array.isArray(service.worker?.languages) ? service.worker.languages.join(", ") : ""}
@@ -84,7 +85,7 @@ const ServicePage = () => {
                                 distance="2.5 miles"
                                 available={true}
                                 verified={service.provider.userType === "AGENCY"} 
-                                onClick={() => router.push(`/service/${service.id}`)}
+                                onClick={() => router.push(getServiceDetailPath(service))}
                                 onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                             />
                         ))}

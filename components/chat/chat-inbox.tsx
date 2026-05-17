@@ -7,6 +7,7 @@ import api from "@/lib/axios";
 import type { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { CalendarDays, CheckCheck, MessageCircle, ShieldCheck } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
 
 interface Message {
   id: string;
@@ -31,9 +32,11 @@ interface Booking {
     providerId?: string;
     provider: {
       id?: string;
+      username?: string;
       firstName: string;
       lastName: string;
       profilePicture?: string;
+      isVerified?: boolean;
     };
   };
   latestMessage?: Message;
@@ -58,11 +61,13 @@ const demoBookings: Booking[] = [
     bookingId: "demo-cleaning",
     service: {
       id: "service-cleaning",
-      title: "Home cleaning",
+      title: "Professional House Cleaning",
       provider: {
-        firstName: "Aline",
+        username: "janviere",
+        firstName: "Janviere",
         lastName: "Uwase",
-        profilePicture: "",
+        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
+        isVerified: true,
       },
     },
     user: { id: "demo-employer", firstName: "Grace", lastName: "Mutesi" },
@@ -74,26 +79,28 @@ const demoBookings: Booking[] = [
       content: "I can come tomorrow morning at 9:00. Please confirm the address.",
       createdAt: minutesAgo(8),
       isRead: false,
-      sender: { id: "demo-provider", firstName: "Aline", lastName: "Uwase" },
+      sender: { id: "demo-provider", firstName: "Janviere", lastName: "Uwase" },
     },
   },
   {
     userId: "demo-user",
-    bookingId: "demo-nanny",
+    bookingId: "demo-fulltime",
     service: {
-      id: "service-nanny",
-      title: "Child care",
+      id: "service-fulltime",
+      title: "Full-Time House Helper",
       provider: {
-        firstName: "Vestine",
-        lastName: "Mukamana",
-        profilePicture: "",
+        username: "claudine_h",
+        firstName: "Claudine",
+        lastName: "Iradukunda",
+        profilePicture: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400",
+        isVerified: true,
       },
     },
     user: { id: "demo-employer", firstName: "Eric", lastName: "Ndayisaba" },
     unreadCount: 0,
     latestMessage: {
       id: "msg-2",
-      bookingId: "demo-nanny",
+      bookingId: "demo-fulltime",
       senderId: "demo-user",
       content: "Thank you. I will prepare the task list before you arrive.",
       createdAt: minutesAgo(95),
@@ -103,26 +110,28 @@ const demoBookings: Booking[] = [
   },
   {
     userId: "demo-user",
-    bookingId: "demo-electrician",
+    bookingId: "demo-plumbing",
     service: {
-      id: "service-electrician",
-      title: "Electrical repair",
+      id: "service-plumbing",
+      title: "Plumbing Repairs & Installation",
       provider: {
-        firstName: "Jean",
-        lastName: "Hirwa",
-        profilePicture: "",
+        username: "yvette_p",
+        firstName: "Yvette",
+        lastName: "Uwamahoro",
+        profilePicture: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400",
+        isVerified: true,
       },
     },
     user: { id: "demo-employer", firstName: "Patrick", lastName: "Karekezi" },
     unreadCount: 1,
     latestMessage: {
       id: "msg-3",
-      bookingId: "demo-electrician",
+      bookingId: "demo-plumbing",
       senderId: "demo-provider",
-      content: "Please send a photo of the switch before I come.",
+      content: "Please send a photo of the leak before I come over.",
       createdAt: minutesAgo(1440),
       isRead: false,
-      sender: { id: "demo-provider", firstName: "Jean", lastName: "Hirwa" },
+      sender: { id: "demo-provider", firstName: "Yvette", lastName: "Uwamahoro" },
     },
   },
 ];
@@ -263,17 +272,44 @@ export default function ChatInbox({ searchQuery }: ChatInboxProps) {
                 className="flex w-full gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition-colors hover:bg-gray-50"
                 onClick={() => router.push(`/conversations/inbox/${booking.bookingId}`)}
               >
-                <Avatar className="h-12 w-12 flex-shrink-0">
-                  <AvatarImage src={provider.profilePicture || ""} className="object-cover" />
-                  <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <span
+                  role={provider.username ? "link" : undefined}
+                  aria-label={provider.username ? `View ${displayName}'s profile` : undefined}
+                  className="flex-shrink-0"
+                  onClick={(e) => {
+                    if (!provider.username) return;
+                    e.stopPropagation();
+                    router.push(`/${provider.username}`);
+                  }}
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={provider.profilePicture || ""} className="object-cover" />
+                    <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </span>
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
                     <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-bold text-[#1B2431]">{displayName}</span>
+                      <span className="flex items-center gap-1 min-w-0">
+                        {provider.username ? (
+                          <span
+                            role="link"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/${provider.username}`);
+                            }}
+                            className="block truncate text-[14px] font-bold text-[#1B2431] hover:text-[#145B10] hover:underline cursor-pointer"
+                          >
+                            {displayName}
+                          </span>
+                        ) : (
+                          <span className="block truncate text-[14px] font-bold text-[#1B2431]">{displayName}</span>
+                        )}
+                        {provider.isVerified ? <VerifiedBadge size={14} /> : null}
+                      </span>
                       <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-[#757575]">
                         <CalendarDays className="h-3 w-3" />
                         {booking.service.title}

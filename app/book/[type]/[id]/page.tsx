@@ -91,7 +91,7 @@ const Page = () => {
     // This ensures unique links even if providers have the same name
     if (providerUsername) {
       const baseUrl = window.location.origin;
-      const shareLink = `${baseUrl}/provider/${providerUsername}`;
+      const shareLink = `${baseUrl}/${providerUsername}`;
       navigator.clipboard
         .writeText(shareLink)
         .then(() => {
@@ -103,7 +103,7 @@ const Page = () => {
     } else if (providerId) {
       // Fallback to ID if username not available
       const baseUrl = window.location.origin;
-      const shareLink = `${baseUrl}/provider/${providerId}`;
+      const shareLink = `${baseUrl}/${providerId}`;
       navigator.clipboard
         .writeText(shareLink)
         .then(() => {
