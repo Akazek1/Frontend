@@ -7,6 +7,9 @@ import Link from "next/link";
 import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+import { getProviderHandle } from "@/lib/service-display";
+import { useAuth } from "@/hooks/useAuth";
+
 const languages = [
   { code: "EN", name: "English", hint: "Default app language" },
   { code: "RW", name: "Kinyarwanda", hint: "Simple local wording" },
@@ -159,8 +162,8 @@ const Header = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Avatar - go to More menu (account, settings, support) */}
-          <Link href="/more">
+          {/* Avatar - go to personal profile or onboarding if not logged in */}
+          <Link href={user ? `/${getProviderHandle(user).replace(/^@/, "")}` : "/onboarding"}>
             {user?.profilePicture ? (
               <Image
                 src={user.profilePicture}

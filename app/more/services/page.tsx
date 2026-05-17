@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import AgencyWorkerForm from "@/components/get-hired/agency-worker-form";
 import Link from "next/link";
 import EditProfile from "@/components/edit-profile";
+import { hasRole, isEmployer } from "@/lib/roles";
 
 
 const GetHired: React.FC = () => {
@@ -23,29 +24,15 @@ const GetHired: React.FC = () => {
     const { updateUserProfile } = useAuth();
     const [showWorkerForm, setShowWorkerForm] = useState(false)
 
-    // Determine if user is coming for the first time
-    const [selectedUserType, setSelectedUserType] = useState<"Individual" | "Agency">(user?.userType as "Individual" | "Agency" || "Individual");
+    // Determine if user is an employer/agency
+    const userIsEmployer = isEmployer(user?.roles);
+    const [selectedUserType, setSelectedUserType] = useState<"Individual" | "Agency">(userIsEmployer ? "Agency" : "Individual");
 
 
     const handleUserTypeChange = async (value: "Individual" | "Agency") => {
         setSelectedUserType(value);
-
-        try {
-            // Update the user profile on the server
-            const success = await updateUserProfile({
-                userType: value,
-            }, user);
-
-            if (success) {
-                // Update Redux state
-                dispatch(updateUser({ userType: value }));
-            }
-        } catch (error) {
-            const message = (error as Error).message || "Failed to update user type";
-            toast.error(message);
-            // Revert the local state if the API call fails
-            setSelectedUserType(user?.userType as "Individual" | "Agency" || "Individual");
-        }
+        // This would typically call /users/role-selection if we wanted to allow switching
+        // For now, we follow the plan to use the new roles array.
     };
 
 
@@ -58,7 +45,7 @@ const GetHired: React.FC = () => {
             <div className="p-4 sm:p-6 flex items-center justify-between">
                 <BackButtonHeader text="Get Hired" backHref="/more" />
                 {
-                    user?.userType === "Agency" && !showWorkerForm ? (
+                    userIsEmployer && !showWorkerForm ? (
                         <SquarePlus onClick={handleAddWorker} className="text-[#145B10] w-6 h-6 cursor-pointer" />
                     ) : (
                         <Link href={"/profile"} type="button" className="p-1.5 rounded-sm bg-transparent hover:bg-transparent text-[#145B10] border text-sm font-semibold border-[#145B10]">
@@ -76,7 +63,7 @@ const GetHired: React.FC = () => {
                         <div className="space-y-0.5">
                             <Label className="font-semibold text-secondary-foreground/50 text-xs">User Type</Label>
                             <Select
-                                value={user?.userType || selectedUserType}
+                                value={userIsEmployer ? "Agency" : "Individual"}
                                 disabled
                                 onValueChange={handleUserTypeChange}
                             >
@@ -91,7 +78,7 @@ const GetHired: React.FC = () => {
                             </Select>
                         </div>
                     </div>
-                    {user?.userType === "Individual" ? (
+                    {!userIsEmployer ? (
                         // Individual Profile Form
                         <div className="">
                            <EditProfile idEditable={false} />

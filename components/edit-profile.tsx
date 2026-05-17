@@ -298,7 +298,6 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 gender,
                 dateOfBirth: dateOfBirth.toISOString(),
                 languages: formData.languages.map(String),
-                userType: user?.userType === "Agency" ? "AGENCY" : "INDIVIDUAL",
                 // certificate: formData.certificate ?? null,
             };
 
@@ -314,7 +313,6 @@ const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
                 firstName: userData.firstName,
                 lastName: userData.lastName,
                 email: userData.email,
-                userType: userData.userType,
                 isProfileComplete: userData.isProfileComplete ?? user?.isProfileComplete,
                 isMobileVerified: userData.isMobileVerified ?? user?.isMobileVerified,
                 isEmailVerified: userData.isEmailVerified ?? user?.isEmailVerified,

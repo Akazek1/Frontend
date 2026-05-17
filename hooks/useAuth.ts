@@ -17,6 +17,7 @@ import type {
   AuthResponse,
   SendOtpRequest,
   VerifyOtpRequest,
+  UserRole,
 } from "@/services/auth-service";
 import { toast } from "react-hot-toast";
 
@@ -25,6 +26,12 @@ export const useAuth = () => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, error, otpSent, phoneNumber } =
     useSelector((state: RootState) => state.auth);
+
+  const roles = user?.roles || [];
+
+  const hasRole = (role: UserRole) => {
+    return roles.includes(role);
+  };
 
   // Check authentication status on mount
   useEffect(() => {
@@ -112,55 +119,24 @@ export const useAuth = () => {
     router.push("/onboarding"); // Redirect to onboarding page after logout
   };
 
-  // Update user profile with userType locally
+  // Update user profile locally
   const updateUserProfile = async (
-    data: { userType: string },
-    user: AuthResponse["data"]["user"] | null
+    data: Partial<AuthResponse["data"]["user"]>,
+    currentUser: AuthResponse["data"]["user"] | null
   ) => {
     try {
-      if (!data.userType) {
-        toast.error("User type is required");
-        return false;
-      }
-
-      const toTitleCase = (str: string) =>
-        str
-          .toLowerCase()
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
-
-      const normalizedUserType = toTitleCase(data.userType.trim());
-
-      const validUserTypes = ["Individual", "Agency"] as const;
-
-      if (
-        !validUserTypes.includes(
-          normalizedUserType as (typeof validUserTypes)[number]
-        )
-      ) {
-        toast.error("Invalid user type");
-        return false;
-      }
-
       if (isLoading) {
         toast.error("Please wait, another request is in progress");
         return false;
       }
 
-      dispatch(
-        updateUser({
-          userType: normalizedUserType as (typeof validUserTypes)[number],
-          isProfileComplete: true,
-        })
-      );
+      dispatch(updateUser(data));
 
       // Use the passed-in user directly
-      if (typeof window !== "undefined" && user) {
+      if (typeof window !== "undefined" && currentUser) {
         const updatedUser = {
-          ...user,
-          userType: normalizedUserType,
-          isProfileComplete: true,
+          ...currentUser,
+          ...data,
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
       } else {
@@ -186,11 +162,13 @@ export const useAuth = () => {
 
   return {
     user,
+    roles,
     isAuthenticated,
     isLoading,
     error,
     otpSent,
     phoneNumber,
+    hasRole,
     sendOtp: handleSendOtp,
     verifyOtp: handleVerifyOtp,
     logout: handleLogout,

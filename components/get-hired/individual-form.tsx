@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label"
 
 import ImagePicker from "../image-picker"
 import ServiceCard from "../service-card"
+import { isEmployer } from "@/lib/roles"
 
 // Service interface for services fetched from or sent to the backend
 interface Service {
@@ -47,7 +48,7 @@ interface Service {
     firstName: string
     lastName: string
     email: string
-    userType: string
+    roles?: string[]
   }
   providerId: string
   worker: {
@@ -927,7 +928,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                   reviews={service?.reviews?.totalReviews || 0}
                   distance="2.5 km"
                   available={service.isActive}
-                  verified={service?.provider?.userType === "VERIFIED"}
+                  verified={isEmployer(service?.provider?.roles)}
                   onClick={() => handleEditClick(service)}
                 />
                 <div className="flex items-center justify-between gap-2">

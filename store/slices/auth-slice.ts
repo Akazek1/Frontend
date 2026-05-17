@@ -31,7 +31,16 @@ const getStoredUser = () => {
     if (!storedUser || storedUser === "undefined" || storedUser === "null") {
       return null;
     }
-    return JSON.parse(storedUser);
+    const user = JSON.parse(storedUser);
+
+    // Migration: Convert old userType to roles array
+    if (user && !user.roles && user.userType) {
+      user.roles = [user.userType === "Agency" ? "EMPLOYER" : "WORKER"];
+      delete user.userType;
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+
+    return user;
   } catch (error) {
     console.error("Error parsing stored user:", error);
     // Clear invalid data

@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export type ViewMode = "provider" | "employer";
 
@@ -18,21 +19,34 @@ interface ViewModeProviderProps {
 const VIEW_MODE_STORAGE_KEY = "hwa_view_mode";
 
 export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) => {
-  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
-    // Initialize from localStorage if available, default to "employer"
-    if (typeof window !== "undefined") {
+  const { user, roles, isAuthenticated } = useAuth();
+  const [viewMode, setViewModeState] = useState<ViewMode>("employer");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize from localStorage or roles
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isInitialized) {
       const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-      return (saved === "provider" || saved === "employer") ? saved : "employer";
+      
+      if (saved === "provider" || saved === "employer") {
+        setViewModeState(saved);
+        setIsInitialized(true);
+      } else if (isAuthenticated && roles.length > 0) {
+        // Default based on roles
+        const onlyWorker = roles.length === 1 && roles[0] === "WORKER";
+        const newMode = onlyWorker ? "provider" : "employer";
+        setViewModeState(newMode);
+        setIsInitialized(true);
+      }
     }
-    return "employer";
-  });
+  }, [isAuthenticated, roles, isInitialized]);
 
   // Save to localStorage whenever viewMode changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && isInitialized) {
       localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
     }
-  }, [viewMode]);
+  }, [viewMode, isInitialized]);
 
   const setViewMode = (mode: ViewMode) => {
     setViewModeState(mode);

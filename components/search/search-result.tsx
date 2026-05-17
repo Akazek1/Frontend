@@ -83,7 +83,7 @@ interface Service {
     firstName: string;
     lastName: string;
     email: string;
-    userType: string;
+    roles?: string[];
     profileImg: string;
   };
   worker: {

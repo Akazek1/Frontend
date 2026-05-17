@@ -34,7 +34,6 @@ interface Booking {
             firstName: string;
             lastName: string;
             email: string;
-            userType: string;
             profilePicture: string;
         };
     };
@@ -73,7 +72,6 @@ interface Booking {
         lastName: string;
         phoneNumber: string;
         email: string;
-        userType: string;
         profilePicture: string;
     };
 }

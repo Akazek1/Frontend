@@ -10,6 +10,7 @@ import { Service } from "@/types";
 import { useBookmark } from "@/context/bookmark-context";
 import { formatPrice } from "@/lib/utils";
 import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
+import { isEmployer } from "@/lib/roles";
 
 interface BookmarksResponse {
     service: Service;
@@ -79,7 +80,7 @@ const BookmarksPage = () => {
                             reviews={service?.reviews?.totalReviews || 0}
                             distance="2.5 miles"
                             available={true}
-                            verified={service?.provider?.userType === "AGENCY"}
+                            verified={isEmployer(service?.provider?.roles)}
                             onClick={() => router.push(getServiceDetailPath(service))}
                             onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                             onRemoveBookmark={() => handleRemoveBookmark(service.id)} 

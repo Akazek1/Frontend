@@ -18,6 +18,7 @@ import { useBookmark } from "@/context/bookmark-context";
 import { Provider, Service } from "@/types";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
+import { isEmployer } from "@/lib/roles";
 
 
 
@@ -65,7 +66,7 @@ const Page = () => {
           distance: "2 miles",
           available: true,
           verified: true,
-          type: service.provider.userType === "AGENCY" ? "AGENCY" : "INDIVIDUAL",
+          type: isEmployer(service.provider.roles) ? "AGENCY" : "INDIVIDUAL",
         };
 
         setProvider(mappedProvider);

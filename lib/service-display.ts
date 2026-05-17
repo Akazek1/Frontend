@@ -1,5 +1,6 @@
 import APP_CONFIG from "@/constant/app.config";
 import { Service } from "@/types";
+import { isEmployer } from "./roles";
 
 type ServiceProvider = Service["provider"] | undefined;
 
@@ -33,8 +34,7 @@ export function getProviderHandle(provider?: Service["provider"] | null) {
 
 export function getBookingType(service?: Partial<Service> | null) {
   const provider = service?.provider;
-  if (provider?.userType === "AGENCY" || provider?.userType === "INDIVIDUAL") return provider.userType;
-  return provider?.roles?.includes("AGENCY") ? "AGENCY" : "INDIVIDUAL";
+  return isEmployer(provider?.roles) ? "AGENCY" : "INDIVIDUAL";
 }
 
 /**

@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { isEmployer } from "@/lib/roles";
 
 // Define the address interface
 interface Address {
@@ -92,7 +93,7 @@ const BookingSummary = () => {
                     distance: "2 miles",
                     available: true,
                     verified: true,
-                    type: service.provider.userType === "AGENCY" ? "Agency" : "Professional",
+                    type: isEmployer(service.provider.roles) ? "Agency" : "Professional",
                 };
 
                 setProvider(mappedProvider);

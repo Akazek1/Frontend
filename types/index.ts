@@ -33,7 +33,6 @@ export interface Service {
     firstName: string;
     lastName: string;
     email: string;
-    userType: "AGENCY" | "INDIVIDUAL";
     roles?: string[];
     languages?: string[];
     profilePicture?: string;

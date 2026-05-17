@@ -10,6 +10,8 @@ export interface VerifyOtpRequest {
   otp: string;
 }
 
+export type UserRole = "WORKER" | "EMPLOYER" | "ADMIN" | "SUB_ADMIN";
+
 export interface AuthResponse {
   data: {
     token: string;
@@ -19,8 +21,7 @@ export interface AuthResponse {
       firstName: string;
       lastName: string;
       email: string;
-      userType: "Individual" | "Agency";
-      isProfileComplete: boolean;
+      roles: UserRole[];
       isMobileVerified: boolean;
       isEmailVerified: boolean;
       profilePicture?: string;
