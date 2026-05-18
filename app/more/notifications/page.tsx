@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Separator } from "@/components/ui/separator";
@@ -34,11 +35,12 @@ const NotificationsPreferences = () => {
     try {
       setIsLoading(true);
       const response = await api.get("/users/profile");
-      const notificationPrefs = response.data.data?.notificationPreferences || preferences;
-      setPreferences(notificationPrefs);
+      const saved = response.data.data?.notificationPreferences;
+      if (saved && typeof saved === "object") {
+        setPreferences((prev) => ({ ...prev, ...saved }));
+      }
     } catch (err) {
       console.error("Error fetching preferences:", err);
-      toast.error("Failed to load notification preferences");
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +71,14 @@ const NotificationsPreferences = () => {
   return (
     <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen pb-16">
       <BackButtonHeader text="Notifications" backHref="/more" />
+
+      <Link
+        href="/more/notifications/history"
+        className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3"
+      >
+        <span className="text-[14px] font-semibold text-[#1B2431]">View notification history</span>
+        <ChevronRight className="w-4 h-4 text-[#145B10]" />
+      </Link>
 
       <div className="space-y-6">
         {/* Bookings Section */}

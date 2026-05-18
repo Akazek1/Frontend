@@ -22,6 +22,7 @@ export interface Job {
     lastName: string;
     profilePicture?: string;
     isVerified: boolean;
+    bio?: string;
   };
   _count?: { applications: number };
 }

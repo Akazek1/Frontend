@@ -7,7 +7,7 @@ const ViewModeToggle: React.FC = () => {
   const { viewMode, toggleViewMode } = useViewMode();
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 w-full">
+    <div className="flex flex-row gap-3 w-full">
       <button
         onClick={() => viewMode !== "employer" && toggleViewMode()}
         className={`flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl transition-all duration-200 ${

@@ -1,9 +1,11 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  usePushNotifications();
 
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization"];
   const isServiceDetail =

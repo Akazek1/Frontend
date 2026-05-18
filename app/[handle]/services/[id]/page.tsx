@@ -48,6 +48,7 @@ import {
     WORK_PHOTOS_VISIBLE,
 } from "@/constant/service-detail";
 import { Service } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
 
 const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
     Briefcase,
@@ -71,6 +72,7 @@ function ServiceDetailPage() {
     const params = useParams();
     const router = useRouter();
     const serviceId = params.id as string;
+    const { user } = useAuth();
 
     const [service, setService] = useState<Service | null>(null);
     const [providerServices, setProviderServices] = useState<Service[]>([]);
@@ -78,6 +80,8 @@ function ServiceDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [bioExpanded, setBioExpanded] = useState(false);
     const [bookmarked, setBookmarked] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [hasRequested, setHasRequested] = useState(false);
 
     useEffect(() => {
         async function fetchService() {
@@ -105,6 +109,30 @@ function ServiceDetailPage() {
             }
         }
         fetchService();
+    }, [serviceId]);
+
+    useEffect(() => {
+        if (!serviceId) return;
+        const fetchExisting = async () => {
+            try {
+                const res = await api.get("/bookings");
+                const bookings = Array.isArray(res.data?.data)
+                    ? res.data.data
+                    : Array.isArray(res.data)
+                    ? res.data
+                    : [];
+                const inactive = new Set(["CANCELLED", "REJECTED"]);
+                const found = bookings.some(
+                    (b: any) =>
+                        b?.service?.id === serviceId &&
+                        !inactive.has(String(b.status).toUpperCase())
+                );
+                setHasRequested(found);
+            } catch {
+                // silent
+            }
+        };
+        fetchExisting();
     }, [serviceId]);
 
     const provider = service?.provider;
@@ -156,9 +184,32 @@ function ServiceDetailPage() {
     const distanceText = SERVICE_DETAIL_FALLBACKS.distanceText;
     const city = SERVICE_DETAIL_FALLBACKS.city;
 
-    const bookingType = service ? getBookingType(service) : "INDIVIDUAL";
     const messageHref = "/conversations";
-    const bookHref = service ? `/book/${bookingType}/${service.id}` : "#";
+
+    const isOwnService = Boolean(
+        user?.id && service && (service.providerId === user.id || service.provider?.id === user.id)
+    );
+
+    const handleHireRequest = async () => {
+        if (!service || submitting || hasRequested) return;
+        if (isOwnService) {
+            const { toast } = await import("react-hot-toast");
+            toast.error("You can't book your own service.");
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await api.post("/bookings", { serviceId: service.id });
+            const { toast } = await import("react-hot-toast");
+            toast.success(`Booking request sent to ${firstName}!`);
+            setHasRequested(true);
+        } catch (err: any) {
+            const { toast } = await import("react-hot-toast");
+            toast.error(err?.response?.data?.message || "Failed to send request.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -582,15 +633,25 @@ function ServiceDetailPage() {
                         <MessageCircle className="h-5 w-5" />
                         {SERVICE_DETAIL_LABELS.message}
                     </Link>
-                    <Link
-                        href={bookHref}
-                        className="flex h-12 flex-[1.6] items-center justify-center rounded-xl text-[15px] font-bold text-white"
-                        style={{ backgroundColor: colors.primary }}
+                    <button
+                        onClick={handleHireRequest}
+                        disabled={submitting || hasRequested || isOwnService}
+                        className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                        style={{ backgroundColor: isOwnService || hasRequested ? "#9CA3AF" : colors.primary }}
                     >
-                        {SERVICE_DETAIL_LABELS.requestToHire}
-                    </Link>
+                        {submitting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : isOwnService ? (
+                            "Your service"
+                        ) : hasRequested ? (
+                            SERVICE_DETAIL_LABELS.requestSent
+                        ) : (
+                            SERVICE_DETAIL_LABELS.requestToHire
+                        )}
+                    </button>
                 </div>
             </div>
+
         </div>
     );
 }

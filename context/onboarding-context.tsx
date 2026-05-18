@@ -8,7 +8,7 @@ import { AppDispatch } from "@/store"
 import { updateUser } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
 import { toast } from "react-hot-toast"
-import type { AuthResponse } from "@/services/auth-service"
+import type { AuthResponse, UserRole } from "@/services/auth-service"
 
 const OTP_LENGTH = 6
 
@@ -305,8 +305,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             username: `devuser${Date.now()}`,
             isMobileVerified: true,
             isEmailVerified: false,
-            roles: [],
-            profilePicture: null,
+            roles: [] as UserRole[],
+            profilePicture: undefined,
           }
           setVerifiedUser(mockVerifiedUser)
           if (redirectUrl && redirectUrl.startsWith("/onboarding/organization")) {
@@ -361,8 +361,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           username: `devuser${Date.now()}`,
           isMobileVerified: true,
           isEmailVerified: false,
-          roles: [],
-          profilePicture: null,
+          roles: [] as UserRole[],
+          profilePicture: undefined,
         }
         setVerifiedUser(mockVerifiedUser)
         setCurrentStep(4)

@@ -93,11 +93,7 @@ const HomeContent = () => {
         {!isSearching && (
           <SearchBar
             onSearch={handleSearch}
-            placeholder={
-              viewMode === "employer"
-                ? "Search baby sitter, carpenter etc"
-                : "Search job postings…"
-            }
+            placeholder="Search job postings, employers, categories..."
           />
         )}
       </div>
@@ -114,7 +110,10 @@ const HomeContent = () => {
             <ServiceProvider showHeader={true} />
           </>
         ) : (
-          <JobPostingsFeed />
+          <>
+            <Categories />
+            <JobPostingsFeed />
+          </>
         )}
       </div>
     </>

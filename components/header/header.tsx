@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
 import { RootState } from "@/store";
-import { Bell, Check, Clock, Globe, MapPin, MessageCircle, ShieldCheck, User } from "lucide-react";
+import { Bell, Briefcase, Calendar, Check, CheckCircle, Globe, MapPin, User, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getProviderHandle } from "@/lib/service-display";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationItem, formatRelativeTime, useNotifications } from "@/hooks/useNotifications";
 
 const languages = [
   { code: "EN", name: "English", hint: "Default app language" },
@@ -17,30 +19,39 @@ const languages = [
   { code: "SW", name: "Swahili", hint: "Available soon" },
 ];
 
-const notifications = [
-  {
-    title: "Booking request sent",
-    body: "Your request for home cleaning is waiting for provider confirmation.",
-    time: "Just now",
-    icon: Clock,
-  },
-  {
-    title: "Verification reminder",
-    body: "Add your ID photo later to improve trust on your profile.",
-    time: "Today",
-    icon: ShieldCheck,
-  },
-  {
-    title: "New message preview",
-    body: "Messages will appear here when chat is enabled.",
-    time: "Demo",
-    icon: MessageCircle,
-  },
-];
+function iconForType(type?: string) {
+  switch (type) {
+    case "NEW_APPLICATION":
+      return Briefcase;
+    case "JOB_AWARDED":
+      return CheckCircle;
+    case "BOOKING_CONFIRMED":
+      return Calendar;
+    case "BOOKING_CANCELLED":
+      return XCircle;
+    default:
+      return Bell;
+  }
+}
+
+function routeForNotification(n: NotificationItem): string | null {
+  const meta = n.metadata || {};
+  if (meta.bookingId) return `/bookings/${meta.bookingId}`;
+  if (meta.jobId) return `/jobs/${meta.jobId}`;
+  return null;
+}
 
 const Header = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
+  const router = useRouter();
+  const { items, unreadCount, refetch, markRead } = useNotifications({ limit: 5 });
+
+  const handleNotificationClick = async (n: NotificationItem) => {
+    if (!n.readAt) await markRead(n.id);
+    const href = routeForNotification(n);
+    if (href) router.push(href);
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -113,7 +124,7 @@ const Header = () => {
           </Popover>
 
           {/* Bell */}
-          <Popover>
+          <Popover onOpenChange={(open) => { if (open) refetch(); }}>
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -121,44 +132,55 @@ const Header = () => {
                 className="relative bg-white/70 border border-gray-200 rounded-full p-2 shadow-sm"
               >
                 <Bell className="w-4 h-4 text-[#1B2431]" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[320px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">
               <div className="border-b border-gray-100 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <p className="text-[14px] font-bold text-[#1B2431]">Notifications</p>
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">3 new</span>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">{unreadCount} new</span>
+                  )}
                 </div>
-                <p className="mt-0.5 text-[11px] text-[#757575]">Fixed preview content for the future feature.</p>
               </div>
               <div className="max-h-[320px] overflow-y-auto p-2">
-                {notifications.map((notification) => {
-                  const Icon = notification.icon;
-                  return (
-                    <button
-                      key={notification.title}
-                      type="button"
-                      className="flex w-full gap-3 rounded-xl px-2 py-3 text-left hover:bg-gray-50"
-                    >
-                      <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
-                        <Icon className="h-4 w-4 text-[#145B10]" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold text-[#1B2431]">{notification.title}</span>
-                        <span className="mt-0.5 block text-[11px] leading-4 text-[#616161]">{notification.body}</span>
-                        <span className="mt-1 block text-[10px] font-semibold text-[#9E9E9E]">{notification.time}</span>
-                      </span>
-                    </button>
-                  );
-                })}
+                {items.length === 0 ? (
+                  <p className="px-3 py-6 text-center text-[12px] text-[#757575]">No notifications yet.</p>
+                ) : (
+                  items.map((notification) => {
+                    const Icon = iconForType(notification.metadata?.type);
+                    const isUnread = !notification.readAt;
+                    return (
+                      <button
+                        key={notification.id}
+                        type="button"
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`flex w-full gap-3 rounded-xl px-2 py-3 text-left hover:bg-gray-50 ${isUnread ? "bg-[#F1FCEF]/50" : ""}`}
+                      >
+                        <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
+                          <Icon className="h-4 w-4 text-[#145B10]" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={`block text-[13px] text-[#1B2431] ${isUnread ? "font-bold" : "font-semibold"}`}>{notification.title}</span>
+                          <span className="mt-0.5 block text-[11px] leading-4 text-[#616161]">{notification.body}</span>
+                          <span className="mt-1 block text-[10px] font-semibold text-[#9E9E9E]">{formatRelativeTime(notification.createdAt)}</span>
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
               </div>
-              <button
-                type="button"
-                className="w-full border-t border-gray-100 py-3 text-center text-[12px] font-bold text-[#145B10] hover:bg-[#F1FCEF]"
+              <Link
+                href="/more/notifications/history"
+                className="block w-full border-t border-gray-100 py-3 text-center text-[12px] font-bold text-[#145B10] hover:bg-[#F1FCEF]"
               >
                 View all notifications
-              </button>
+              </Link>
             </PopoverContent>
           </Popover>
 
@@ -186,7 +208,7 @@ const Header = () => {
         <h1 className="text-[20px] font-bold text-[#1B2431] leading-tight">
           {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
         </h1>
-        <p className="text-[13px] text-[#757575] mt-0.5">How can we help you today?</p>
+        <p className="text-[13px] text-[#757575] mt-0.5">Find jobs, earn and grow with Akazek.</p>
       </div>
     </div>
   );

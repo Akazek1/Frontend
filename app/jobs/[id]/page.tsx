@@ -29,11 +29,12 @@ const JobDetailPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const [job, setJob] = useState<Job | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmHire, setConfirmHire] = useState<{ appId: string; workerName: string } | null>(null);
 
   const isOwner = user?.id === job?.employerId;
 
@@ -44,7 +45,7 @@ const JobDetailPage = () => {
       try {
         const jobData = await jobsService.getJobById(id as string);
         setJob(jobData);
-        
+
         if (user?.id === jobData.employerId) {
           const apps = await jobsService.getApplicationsForJob(id as string);
           setApplications(apps);
@@ -60,18 +61,41 @@ const JobDetailPage = () => {
     fetchData();
   }, [id, user?.id, router]);
 
-  const handleUpdateStatus = async (appId: string, status: string) => {
+  const handleDecline = async (appId: string) => {
     setActionLoading(appId);
     try {
-      await jobsService.updateApplicationStatus(appId, status);
-      toast.success(`Application ${status.toLowerCase()}ed`);
-      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: status as any } : a));
-      
-      if (status === "ACCEPTED") {
-         toast.success("A booking has been created for this job!");
+      await jobsService.updateApplicationStatus(appId, "REJECTED");
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: "REJECTED" as any } : a));
+      toast.success("Application declined.");
+    } catch {
+      toast.error("Failed to decline application.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleHireConfirmed = async () => {
+    if (!confirmHire) return;
+    const { appId } = confirmHire;
+    setConfirmHire(null);
+    setActionLoading(appId);
+    try {
+      const result = await jobsService.updateApplicationStatus(appId, "ACCEPTED");
+      // Mark accepted app, reject all sibling pending apps in local state
+      setApplications(prev => prev.map(a =>
+        a.id === appId
+          ? { ...a, status: "ACCEPTED" as any }
+          : a.status === "PENDING"
+            ? { ...a, status: "REJECTED" as any }
+            : a
+      ));
+      setJob(prev => prev ? { ...prev, status: "AWARDED" as any } : prev);
+      toast.success("Worker hired! Redirecting to your booking…");
+      if (result?.bookingId) {
+        router.push(`/bookings/${result.bookingId}`);
       }
-    } catch (err) {
-      toast.error("Failed to update status");
+    } catch {
+      toast.error("Failed to hire worker. Please try again.");
     } finally {
       setActionLoading(null);
     }
@@ -242,25 +266,30 @@ const JobDetailPage = () => {
                     <div className="flex gap-3">
                       {app.status === "PENDING" ? (
                         <>
-                          <button 
-                            onClick={() => handleUpdateStatus(app.id, "REJECTED")}
+                          <button
+                            onClick={() => handleDecline(app.id)}
                             disabled={!!actionLoading}
                             className="flex-1 h-11 rounded-[18px] border-2 border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 font-black text-[12px] uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                           >
-                            <X className="w-4 h-4" /> Decline
+                            {actionLoading === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                            Decline
                           </button>
-                          <button 
-                            onClick={() => handleUpdateStatus(app.id, "ACCEPTED")}
+                          <button
+                            onClick={() => setConfirmHire({ appId: app.id, workerName: `${app.worker?.firstName} ${app.worker?.lastName}` })}
                             disabled={!!actionLoading}
                             className="flex-3 h-11 rounded-[18px] bg-[#145B10] hover:bg-[#0F4D0C] text-white font-black text-[12px] uppercase tracking-widest transition-all shadow-lg shadow-[#145B10]/10 flex items-center justify-center gap-2 grow-[2]"
                           >
-                            {actionLoading === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            Hire Worker
+                            <Check className="w-4 h-4" /> Hire Worker
                           </button>
                         </>
                       ) : (
-                        <div className="w-full h-11 rounded-[18px] bg-gray-50 flex items-center justify-center gap-2 text-gray-300 font-black text-[11px] uppercase tracking-[0.2em] italic border border-gray-100 shadow-inner">
-                          <ShieldCheck className="w-4 h-4 opacity-50" /> Processed
+                        <div className={`w-full h-11 rounded-[18px] flex items-center justify-center gap-2 font-black text-[11px] uppercase tracking-[0.2em] italic border shadow-inner ${
+                          app.status === "ACCEPTED"
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : "bg-gray-50 text-gray-300 border-gray-100"
+                        }`}>
+                          <ShieldCheck className="w-4 h-4 opacity-70" />
+                          {app.status === "ACCEPTED" ? "Hired" : "Declined"}
                         </div>
                       )}
                     </div>
@@ -279,6 +308,37 @@ const JobDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Hire confirmation modal */}
+      {confirmHire && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
+          <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-[#E8F5E9] flex items-center justify-center">
+                <Check className="w-7 h-7 text-[#145B10]" />
+              </div>
+              <h3 className="text-[17px] font-black text-[#1B2431]">Hire {confirmHire.workerName}?</h3>
+              <p className="text-[13px] text-gray-400 leading-relaxed">
+                This will create a booking and notify {confirmHire.workerName.split(" ")[0]}. Other pending applicants will be automatically declined.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmHire(null)}
+                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-black text-[13px] hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleHireConfirmed}
+                className="flex-1 h-12 rounded-[18px] bg-[#145B10] text-white font-black text-[13px] hover:bg-[#0F4D0C] shadow-lg shadow-[#145B10]/20 transition-all flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Hire"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

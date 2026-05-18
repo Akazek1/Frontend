@@ -20,7 +20,7 @@ function OnboardingContent() {
     isLoading,
     code,
     firstName,
-    selectedRole,
+    selectedRoles,
   } = useOnboarding()
 
   const componentSteps = [5, 6]
@@ -122,7 +122,7 @@ function OnboardingContent() {
                   disabled={
                     isLoading ||
                     (currentStep === 3 && code.join("").length < OTP_LENGTH) ||
-                    (currentStep === 1 && !selectedRole) ||
+                    (currentStep === 1 && selectedRoles.length === 0) ||
                     (currentStep === 4 && !firstName.trim())
                   }
                 >

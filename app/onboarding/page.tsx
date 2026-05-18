@@ -83,7 +83,7 @@ function OnboardingContent() {
         <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
           <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
             {renderStep()}
-            <div className="mt-auto">
+            <div className="mt-auto space-y-3">
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -94,6 +94,16 @@ function OnboardingContent() {
                 disabled={isLoading || !firstName.trim()}
               >
                 {isLoading ? "Please wait..." : getButtonText()}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleBack()
+                }}
+                type="button"
+                className="w-full bg-white text-[#1B5E20] border-2 border-[#1B5E20] py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
+              >
+                Back
               </button>
             </div>
           </div>

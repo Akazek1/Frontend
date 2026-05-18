@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    staleTimes: {
+      dynamic: 60,  // cache dynamically-rendered pages for 60s (was 0 in Next 15)
+      static: 300,  // cache statically-rendered pages for 5m
+    },
+  },
   eslint: {
     // Disable linting during build to allow development to progress
     // ESLint issues should be fixed but don't block the build

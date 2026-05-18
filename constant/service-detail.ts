@@ -24,6 +24,7 @@ export const SERVICE_DETAIL_LABELS = {
   seeAll: "See all",
   message: "Message",
   requestToHire: "Request to Hire",
+  requestSent: "Request Sent",
   noReviewsYet: "No reviews yet.",
   serviceNotFound: "Service not found",
 } as const;

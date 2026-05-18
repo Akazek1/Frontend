@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { SERVICE_DETAIL_LABELS } from "@/constant/service-detail";
 
 interface ServiceCardProps {
   id: string;
@@ -27,6 +28,8 @@ interface ServiceCardProps {
   onHireClick?: () => void;
   onRemoveBookmark?: () => void;
   isBookmarked?: boolean;
+  hasRequested?: boolean;
+  isOwnService?: boolean;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -49,6 +52,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   onHireClick,
   onRemoveBookmark,
   isBookmarked: isBookmarkedProp,
+  hasRequested = false,
+  isOwnService = false,
 }) => {
   const router = useRouter();
   const { isBookmarked: isBookmarkedContext, toggleBookmark, isLoading } = useBookmark("services");
@@ -72,6 +77,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
   const handleHireClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (hasRequested || isOwnService) return;
     (onHireClick || onClick)();
   };
 
@@ -207,9 +213,20 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </div>
           <button
             onClick={handleHireClick}
-            className="flex-shrink-0 bg-[#145B10] text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#0f4a0c] transition-colors duration-200 whitespace-nowrap"
+            disabled={hasRequested || isOwnService}
+            className={`flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap ${
+              isOwnService
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : hasRequested
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-[#145B10] text-white hover:bg-[#0f4a0c]"
+            }`}
           >
-            Request to Hire
+            {isOwnService
+              ? "Your service"
+              : hasRequested
+              ? SERVICE_DETAIL_LABELS.requestSent
+              : SERVICE_DETAIL_LABELS.requestToHire}
           </button>
         </div>
       </div>

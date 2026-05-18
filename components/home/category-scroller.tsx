@@ -85,7 +85,7 @@ export default function Categories() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-[#1B2431] font-semibold text-[16px]">Services Categories</h2>
+        <h2 className="text-[#1B2431] font-semibold text-[16px]">Popular Categories</h2>
         <button
           onClick={() => router.push("/service?category=all")}
           className="text-[12px] text-[#145B10] font-semibold"
