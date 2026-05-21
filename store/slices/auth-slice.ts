@@ -3,6 +3,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
+import { getAuthToken } from "@/lib/auth-utils";
 import authService, {
   type SendOtpRequest,
   type VerifyOtpRequest,
@@ -63,9 +64,8 @@ if (typeof document !== "undefined" && storedUser) {
 // Initial state
 const initialState: AuthState = {
   user: storedUser,
-  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
-  isAuthenticated:
-    typeof window !== "undefined" ? !!localStorage.getItem("token") : false,
+  token: getAuthToken(),
+  isAuthenticated: !!getAuthToken(),
   isLoading: false,
   error: null,
   otpSent: false,

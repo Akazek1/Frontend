@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Building2, Briefcase, ChevronLeft, CheckCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
+import { getAuthToken } from "@/lib/auth-utils"
 
 type OrgType = "SERVICE_COMPANY" | "PLACEMENT_AGENCY"
 type Step = "type" | "details" | "success"
@@ -171,7 +172,7 @@ export default function OrgOnboardingPage() {
   const [createdOrgId, setCreatedOrgId] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    const token = getAuthToken()
     if (!token) {
       router.replace("/onboarding?redirect=/onboarding/organization")
     }

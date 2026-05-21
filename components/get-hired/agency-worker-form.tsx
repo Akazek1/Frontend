@@ -8,6 +8,7 @@ import { ChevronDown, Loader2, Trash2, Pencil, XCircle, User, Mail, Phone, Langu
 import { MultiSelectLanguage } from "../multi-language-select"
 import toast from "react-hot-toast"
 import { Label } from "../ui/label"
+import { getAuthToken } from "@/lib/auth-utils"
 
 // Define interfaces
 interface AgencyWorker {
@@ -108,7 +109,7 @@ const AgencyWorkerManagement: React.FC = () => {
                 formData.append("file", file)
             }
 
-            const token = localStorage.getItem("token");
+            const token = getAuthToken();
             const config = {
                 headers: {
                     Authorization: `Bearer ${token || ""}`,

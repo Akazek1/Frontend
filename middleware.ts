@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const isProfileComplete = request.cookies.get("profileComplete")?.value === "true";
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/conversations", "/service", "/organization"];
+  const protectedRoutes = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/conversations", "/organization"];
 
   // Public routes that don't require authentication
   const publicRoutes = ["/provider"];
@@ -61,7 +61,6 @@ export const config = {
     "/bookings/:path*",
     "/jobs/:path*",
     "/conversations/:path*",
-    "/service/:path*",
     "/organization/:path*",
     "/onboarding",
   ],

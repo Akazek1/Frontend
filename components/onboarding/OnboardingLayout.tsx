@@ -6,6 +6,7 @@ import AppIcon from "@/public/svg/app-icon.svg"
 import BubbleLoader from "@/components/loader/Bubble-Loader"
 import { useOnboarding } from "@/context/onboarding-context"
 import { useSearchParams } from "next/navigation"
+import { getAuthToken } from "@/lib/auth-utils"
 
 const ONBOARDING_STEPS_COUNT = 7
 
@@ -27,7 +28,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
   const stepParam = searchParams.get("step")
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+    const token = getAuthToken()
     const storedUserRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null
     let storedUser: any = null
     if (storedUserRaw && storedUserRaw !== "undefined" && storedUserRaw !== "null") {

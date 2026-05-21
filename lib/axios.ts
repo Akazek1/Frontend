@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthToken } from "@/lib/auth-utils";
 
 // Determine the API base URL
 let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -25,7 +26,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      getAuthToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

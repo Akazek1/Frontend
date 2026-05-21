@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { getAuthToken } from "@/lib/auth-utils";
 
 // Define types for auth requests and responses
 export interface SendOtpRequest {
@@ -95,7 +96,7 @@ const authService = {
 
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
-    return localStorage.getItem("token") !== null;
+    return getAuthToken() !== null;
   },
 };
 
