@@ -8,8 +8,6 @@ import { useOnboarding } from "@/context/onboarding-context"
 import { useSearchParams } from "next/navigation"
 import { getAuthToken } from "@/lib/auth-utils"
 
-const ONBOARDING_STEPS_COUNT = 7
-
 interface OnboardingLayoutProps {
   children: React.ReactNode
 }
@@ -22,6 +20,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     setCurrentStep,
     verifiedUser,
     setVerifiedUser,
+    setSelectedRoles,
   } = useOnboarding()
 
   const searchParams = useSearchParams()
@@ -43,17 +42,24 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     if (stepParam === "complete-profile" || profileIncomplete) {
       if (storedUser) setVerifiedUser(storedUser)
       setShowSplash(false)
-      setCurrentStep(4)
+      setCurrentStep(3) // name step
+      return
+    }
+
+    if (stepParam === "login") {
+      setSelectedRoles(["EMPLOYER"]) // default role for login mode
+      setShowSplash(false)
+      setCurrentStep(1) // skip role selection, go to phone
       return
     }
 
     const timer = setTimeout(() => {
       setShowSplash(false)
-      setCurrentStep(0)
+      setCurrentStep(0) // role selection
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser])
+  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser, setSelectedRoles])
 
   if (showSplash) {
     return (
@@ -73,26 +79,29 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
+  // Show progress dots only for the core steps (0–3); doc/categories have their own UI
+  const showProgress = currentStep >= 0 && currentStep <= 3
+
   return (
     <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
-      {/* Main content */}
       <div className="h-full">
         {children}
       </div>
 
-      {/* Progress indicator at bottom */}
-      <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
-        {Array.from({ length: ONBOARDING_STEPS_COUNT }).map((_, index) => (
-          <div
-            key={index}
-            className={`h-2 rounded-full ${
-              index === currentStep
-                ? "bg-[#1B5E20] w-6 sm:w-8 transition-all duration-300"
-                : "bg-[#E0E0E0] w-2"
-            }`}
-          />
-        ))}
-      </div>
+      {showProgress && (
+        <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentStep
+                  ? "bg-[#1B5E20] w-6 sm:w-8"
+                  : "bg-[#E0E0E0] w-2"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

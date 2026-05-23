@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react"
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { useDispatch } from "react-redux"
@@ -57,6 +57,7 @@ interface OnboardingContextType {
   isReturningUser: boolean
   setIsReturningUser: (returning: boolean) => void
   isLoading: boolean
+  resendCooldown: number
 
   // Handlers
   handleSendOtp: () => Promise<void>
@@ -66,7 +67,7 @@ interface OnboardingContextType {
   handleCategoriesSelected: (categories: string[]) => Promise<void>
   handleNext: () => Promise<void>
   handleBack: () => void
-  handleSkipIntro: () => void
+  handleResendOtp: () => Promise<void>
 
   // Refs
   inputsRef: React.MutableRefObject<Array<HTMLInputElement | null>>
@@ -101,6 +102,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [uploadedDocument, setUploadedDocument] = useState<DocumentData | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [activeInputIndex, setActiveInputIndex] = useState(0)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -114,6 +116,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const rawRedirect = searchParams.get("redirect")
   const redirectUrl = rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : null
+
+  // Resend cooldown countdown
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const id = setTimeout(() => setResendCooldown(prev => Math.max(0, prev - 1)), 1000)
+    return () => clearTimeout(id)
+  }, [resendCooldown])
 
   // Form input handlers
   const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,7 +246,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const proceedToOtpStep = () => {
       setPhoneNumber(cleanedPhoneNumber)
-      setCurrentStep(3)
+      setCurrentStep(2) // OTP step
       setTimeout(() => {
         inputsRef.current[0]?.focus()
       }, 500)
@@ -251,8 +260,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // sendOtp returned false (auth hook swallowed the error). In dev mode,
-      // assume backend is offline and proceed with mock OTP flow.
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
         proceedToOtpStep()
@@ -278,6 +285,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [phoneNumber, sendOtp])
 
+  const handleResendOtp = useCallback(async () => {
+    if (resendCooldown > 0) return
+    setCode(Array(OTP_LENGTH).fill(""))
+    setActiveInputIndex(0)
+    setResendCooldown(60)
+    await handleSendOtp()
+  }, [resendCooldown, handleSendOtp])
+
   const handleVerifyOtp = useCallback(async (otpCode: string) => {
     try {
       let cleanedPhone = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
@@ -291,11 +306,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const user = await verifyOtp({ phoneNumber: formattedPhone, otp: otpCode })
 
       if (!user) {
-        // verifyOtp returned false. In dev mode, accept "111111" as a test OTP
-        // so the rest of the flow can be tested without a backend.
         if (process.env.NODE_ENV === "development" && otpCode === "111111") {
           toast.success("OTP verified (dev mode)")
-          // Create mock verified user for dev mode testing
           const mockVerifiedUser = {
             id: "dev-user-id",
             phoneNumber: formattedPhone,
@@ -313,7 +325,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
             window.location.href = redirectUrl
             return
           }
-          setCurrentStep(4)
+          setCurrentStep(3) // name step
           return
         }
         setCode(Array(OTP_LENGTH).fill(""))
@@ -343,7 +355,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        setCurrentStep(4)
+        setCurrentStep(3) // name step
       }
     } catch (error: any) {
       const isNetworkError =
@@ -351,7 +363,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       if (isNetworkError && process.env.NODE_ENV === "development" && otpCode === "111111") {
         toast.success("OTP verified (dev mode)")
-        // Create mock verified user for dev mode testing
         const mockVerifiedUser = {
           id: "dev-user-id",
           phoneNumber,
@@ -365,7 +376,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           profilePicture: undefined,
         }
         setVerifiedUser(mockVerifiedUser)
-        setCurrentStep(4)
+        setCurrentStep(3) // name step
         return
       }
 
@@ -384,10 +395,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    if (selectedRoles.length === 0) {
-      toast.error("Please select at least one role.")
-      return
-    }
+    // Default to EMPLOYER if no role selected (login mode skipped role selection)
+    const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
 
     const isNewUser = !verifiedUser?.id || verifiedUser.id === null
 
@@ -395,10 +404,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       let updatedUser: any
 
       if (isNewUser) {
-        // New user — create account via /auth/complete-signup
         const signupPayload: Record<string, unknown> = {
           firstName: firstName.trim(),
-          roles: selectedRoles,
+          roles,
         }
         if (lastName.trim()) signupPayload.lastName = lastName.trim()
         if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) signupPayload.email = email.trim()
@@ -418,10 +426,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         updatedUser = {
           ...newUser,
-          roles: selectedRoles,
+          roles,
         }
       } else {
-        // Returning user — update profile + roles
         const updatePayload: Record<string, string> = {
           firstName: firstName.trim(),
         }
@@ -436,7 +443,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
         await api.post(
           "/users/role-selection",
-          { roles: selectedRoles },
+          { roles },
           { withCredentials: true }
         )
 
@@ -447,7 +454,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           username: updatedUserData.username || verifiedUser?.username,
           email: email.trim() || verifiedUser?.email || updatedUserData.email,
           phoneNumber: verifiedUser?.phoneNumber,
-          roles: selectedRoles,
+          roles,
         }
       }
 
@@ -457,8 +464,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("user", JSON.stringify(updatedUser))
       }
 
-      // Skip doc upload + categories if user only selected EMPLOYER (no WORKER role)
-      if (!selectedRoles.includes("WORKER")) {
+      if (!roles.includes("WORKER")) {
         if (!isNewUser) {
           await api.patch(
             "/users/complete-onboarding",
@@ -482,7 +488,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        setCurrentStep(5)
+        setCurrentStep(4) // doc upload step
       }
     } catch (error) {
       const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
@@ -492,7 +498,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       if (status === 401) {
         toast.error("Session expired. Please verify your phone number again.")
-        setCurrentStep(2)
+        setCurrentStep(1) // back to phone
         return
       }
 
@@ -502,7 +508,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleDocumentUpload = useCallback((document: DocumentData) => {
     setUploadedDocument(document)
-    setCurrentStep(6)
+    setCurrentStep(5) // categories step
   }, [])
 
   const handleCategoriesSelected = useCallback(async (categories: string[]) => {
@@ -528,21 +534,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, [router])
 
   const handleNext = useCallback(async () => {
-    if (currentStep === 1) {
+    if (currentStep === 0) { // role selection
       if (selectedRoles.length === 0) {
-        toast.error("Please select at least one role")
+        toast.error("Please select a role to continue")
         return
       }
-      setCurrentStep(2)
+      setCurrentStep(1) // phone
       return
     }
 
-    if (currentStep === 2) {
+    if (currentStep === 1) { // phone
       await handleSendOtp()
       return
     }
 
-    if (currentStep === 3) {
+    if (currentStep === 2) { // OTP
       const otpCode = code.join("")
       if (otpCode.length === OTP_LENGTH) {
         await handleVerifyOtp(otpCode)
@@ -552,37 +558,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    if (currentStep === 4) {
+    if (currentStep === 3) { // name / basic info
       await handleSaveBasicInfo()
       return
     }
 
-    if (currentStep < 6) {
-      setCurrentStep((prev) => prev + 1)
+    if (currentStep < 5) {
+      setCurrentStep(prev => prev + 1)
     }
   }, [currentStep, selectedRoles, code, handleSendOtp, handleVerifyOtp, handleSaveBasicInfo])
 
   const handleBack = useCallback(() => {
-    if (currentStep === 3) {
-      setCurrentStep(2)
+    if (currentStep <= 0) return
+    if (currentStep === 2) { // OTP → phone: clear code
       setCode(Array(OTP_LENGTH).fill(""))
       setActiveInputIndex(0)
-    } else if (currentStep === 4) {
-      setCurrentStep(3)
-      setCode(Array(OTP_LENGTH).fill(""))
-      setActiveInputIndex(0)
-    } else if (currentStep === 5) {
-      setCurrentStep(4)
-    } else if (currentStep === 6) {
-      setCurrentStep(5)
-    } else if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1)
     }
+    setCurrentStep(prev => prev - 1)
   }, [currentStep])
-
-  const handleSkipIntro = useCallback(() => {
-    setCurrentStep(1)
-  }, [])
 
   const value: OnboardingContextType = {
     currentStep,
@@ -612,6 +605,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     isReturningUser,
     setIsReturningUser,
     isLoading,
+    resendCooldown,
     handleSendOtp,
     handleVerifyOtp,
     handleSaveBasicInfo,
@@ -619,7 +613,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleCategoriesSelected,
     handleNext,
     handleBack,
-    handleSkipIntro,
+    handleResendOtp,
     inputsRef,
     firstNameInputRef,
     lastNameInputRef,

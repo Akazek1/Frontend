@@ -11,6 +11,9 @@ export function OTPVerification() {
     inputsRef,
     handleBack,
     handleVerifyOtp,
+    handleResendOtp,
+    resendCooldown,
+    phoneNumber,
   } = useOnboarding()
 
   return (
@@ -33,13 +36,15 @@ export function OTPVerification() {
         </svg>
         Back
       </button>
-      <div className="flex flex-col items-center gap-10 sm:gap-20 pt-12">
-        <span className="flex flex-col items-center gap-2 mb-6 sm:mb-8">
+      <div className="flex flex-col items-center gap-8 sm:gap-14 pt-12">
+        <span className="flex flex-col items-center gap-2">
           <h2 className="font-bold text-2xl sm:text-3xl text-[#212121]">Enter Verification Code</h2>
-          <p className="text-sm font-bold text-center text-[#212121] max-w-[300px]">
-            Enter the {OTP_LENGTH}-digit verification code sent to your phone
+          <p className="text-sm font-medium text-center text-gray-500 max-w-[300px]">
+            We sent a {OTP_LENGTH}-digit code to{" "}
+            <span className="text-[#212121] font-semibold">+250 {phoneNumber}</span>
           </p>
         </span>
+
         <div className="relative" onClick={() => inputsRef.current[0]?.focus()}>
           <input
             ref={(el) => {
@@ -88,6 +93,15 @@ export function OTPVerification() {
             })}
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={resendCooldown > 0}
+          className="text-sm font-medium text-[#145B10] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+        </button>
       </div>
     </div>
   )

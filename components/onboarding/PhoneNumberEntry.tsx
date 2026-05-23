@@ -9,7 +9,6 @@ export function PhoneNumberEntry() {
 
   const imageUrl =
     "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=800"
-  const imageWrapper = "p-5 bg-[#F1FCEF] rounded-full"
 
   return (
     <div>
@@ -18,7 +17,7 @@ export function PhoneNumberEntry() {
           <GreenAppIcon className="w-12 h-14 sm:w-16 sm:h-20" />
         </div>
       </div>
-      <div className={`${imageWrapper} flex items-center justify-between w-max mx-auto mb-6 sm:mb-10`}>
+      <div className="p-5 bg-[#F1FCEF] rounded-full flex items-center justify-between w-max mx-auto mb-6 sm:mb-10">
         <Image
           height={400}
           width={400}
@@ -61,6 +60,12 @@ export function PhoneNumberEntry() {
           Welcome back! Enter the OTP to continue.
         </p>
       )}
+      <p className="text-xs text-gray-400 mt-4 text-center leading-relaxed">
+        By continuing, you agree to our{" "}
+        <a href="/terms" className="text-[#145B10] underline">Terms of Service</a>
+        {" "}and{" "}
+        <a href="/privacy" className="text-[#145B10] underline">Privacy Policy</a>
+      </p>
     </div>
   )
 }

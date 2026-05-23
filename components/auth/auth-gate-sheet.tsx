@@ -27,7 +27,7 @@ export function AuthGateSheet() {
 
   const handleLogin = () => {
     closeAuthGate();
-    router.push(`/onboarding?redirect=${redirectParam}`);
+    router.push(`/onboarding?step=login&redirect=${redirectParam}`);
   };
 
   const handleSignup = () => {
