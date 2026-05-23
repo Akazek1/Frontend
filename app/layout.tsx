@@ -7,6 +7,8 @@ import { Toaster } from "react-hot-toast";
 import { Providers } from "@/store/provider";
 import { BookmarkProvider } from "@/context/bookmark-context"; // Ensure this import is correct
 import { ViewModeProvider } from "@/context/view-mode-context";
+import { AuthGateProvider } from "@/context/auth-gate-context";
+import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
 import { APP_CONFIG } from "@/constant/app.config";
 
 // Load Geist fonts
@@ -44,10 +46,13 @@ export default function RootLayout({
         <Providers>
           <ViewModeProvider>
             <BookmarkProvider>
-              <Layout>
-                <Toaster position="top-center" />
-                {children}
-              </Layout>
+              <AuthGateProvider>
+                <Layout>
+                  <Toaster position="top-center" />
+                  {children}
+                </Layout>
+                <AuthGateSheet />
+              </AuthGateProvider>
             </BookmarkProvider>
           </ViewModeProvider>
         </Providers>

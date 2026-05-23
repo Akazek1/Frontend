@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 
 export type ViewMode = "provider" | "employer";
 
@@ -36,6 +37,10 @@ export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) 
         const onlyWorker = roles.length === 1 && roles[0] === "WORKER";
         const newMode = onlyWorker ? "provider" : "employer";
         setViewModeState(newMode);
+        setIsInitialized(true);
+      } else if (!isAuthenticated && isGuestBrowsingEnabled()) {
+        // Guests default to the jobs feed ("Find work") per the redesign.
+        setViewModeState("provider");
         setIsInitialized(true);
       }
     }

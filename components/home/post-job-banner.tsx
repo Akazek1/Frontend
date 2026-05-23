@@ -1,10 +1,23 @@
 "use client";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
-const PostJobBanner: React.FC = () => (
-  <Link href="/post-job">
-    <div className="flex items-center gap-3 bg-white border border-[#145B10]/20 rounded-2xl px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer">
+const PostJobBanner: React.FC = () => {
+  const router = useRouter();
+  const { requireAuth } = useRequireAuth();
+
+  // Posting a job requires an account — guests are sent to onboarding first.
+  const handleClick = () => requireAuth(() => router.push("/post-job"));
+
+  return (
+    <div
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}
+      className="flex items-center gap-3 bg-white border border-[#145B10]/20 rounded-2xl px-4 py-2.5 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+    >
       <div className="w-9 h-9 rounded-lg bg-[#145B10]/10 flex items-center justify-center flex-shrink-0">
         <PlusCircle className="w-4 h-4 text-[#145B10]" />
       </div>
@@ -18,7 +31,7 @@ const PostJobBanner: React.FC = () => (
         Post →
       </span>
     </div>
-  </Link>
-);
+  );
+};
 
 export default PostJobBanner;

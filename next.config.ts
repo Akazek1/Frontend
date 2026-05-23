@@ -13,11 +13,20 @@ const nextConfig: NextConfig = {
     // ESLint issues should be fixed but don't block the build
     ignoreDuringBuilds: true,
   },
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
+
+    // Disable polling if in development to prevent HMR errors
+    if (!isServer) {
+      config.watchOptions = {
+        poll: false,
+        ignored: /node_modules/,
+      };
+    }
+
     return config;
   },
   images: {

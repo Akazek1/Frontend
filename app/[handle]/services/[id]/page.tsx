@@ -12,6 +12,7 @@ import {
     ClipboardCheck,
     Clock,
     Coins,
+    Flag,
     Home as HomeIcon,
     Loader2,
     MapPin,
@@ -49,6 +50,9 @@ import {
 } from "@/constant/service-detail";
 import { Service } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { ReportModal } from "@/components/provider/report-modal";
+import toast from "react-hot-toast";
 
 const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
     Briefcase,
@@ -73,6 +77,7 @@ function ServiceDetailPage() {
     const router = useRouter();
     const serviceId = params.id as string;
     const { user } = useAuth();
+    const { requireAuth } = useRequireAuth();
 
     const [service, setService] = useState<Service | null>(null);
     const [providerServices, setProviderServices] = useState<Service[]>([]);
@@ -82,6 +87,7 @@ function ServiceDetailPage() {
     const [bookmarked, setBookmarked] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [hasRequested, setHasRequested] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     useEffect(() => {
         async function fetchService() {
@@ -256,12 +262,49 @@ function ServiceDetailPage() {
                     <button
                         type="button"
                         aria-label="Share"
-                        onClick={() => {
+                        onClick={async () => {
+                            const url = window.location.href;
+                            // 1) Native share sheet — must be called before any
+                            // `await` to keep the user-activation it requires.
                             if (typeof navigator !== "undefined" && navigator.share) {
-                                navigator
-                                    .share({ title: providerName, url: window.location.href })
-                                    .catch(() => undefined);
+                                try {
+                                    await navigator.share({ title: providerName, url });
+                                    return;
+                                } catch (e) {
+                                    // User dismissed the sheet — don't fall through.
+                                    if ((e as { name?: string })?.name === "AbortError") return;
+                                }
                             }
+                            // 2) Async clipboard (secure contexts, focused tab).
+                            try {
+                                if (navigator.clipboard && window.isSecureContext) {
+                                    await navigator.clipboard.writeText(url);
+                                    toast.success("Link copied to clipboard");
+                                    return;
+                                }
+                            } catch {
+                                /* fall through to legacy copy */
+                            }
+                            // 3) Legacy execCommand copy (works in more contexts).
+                            try {
+                                const ta = document.createElement("textarea");
+                                ta.value = url;
+                                ta.setAttribute("readonly", "");
+                                ta.style.position = "fixed";
+                                ta.style.opacity = "0";
+                                document.body.appendChild(ta);
+                                ta.select();
+                                const ok = document.execCommand("copy");
+                                document.body.removeChild(ta);
+                                if (ok) {
+                                    toast.success("Link copied to clipboard");
+                                    return;
+                                }
+                            } catch {
+                                /* fall through to manual copy */
+                            }
+                            // 4) Last resort — surface the link so it can be copied.
+                            toast(`Copy this link: ${url}`, { duration: 6000 });
                         }}
                         className="p-1"
                     >
@@ -270,7 +313,7 @@ function ServiceDetailPage() {
                     <button
                         type="button"
                         aria-label="Bookmark"
-                        onClick={() => setBookmarked((v) => !v)}
+                        onClick={() => requireAuth(() => setBookmarked((v) => !v))}
                         className="p-1"
                     >
                         <Bookmark
@@ -614,7 +657,29 @@ function ServiceDetailPage() {
 
                 {/* Reviews */}
                 <ReviewsBlock serviceId={service.id} />
+
+                {/* Report — only for visitors, not the provider themselves */}
+                {!isOwnService && (
+                    <div className="mt-6 mb-2 flex justify-center">
+                        <button
+                            type="button"
+                            onClick={() => requireAuth(() => setIsReportOpen(true), "report")}
+                            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                            <Flag className="w-3.5 h-3.5" />
+                            Report this service
+                        </button>
+                    </div>
+                )}
             </main>
+
+            {isReportOpen && provider && (
+                <ReportModal
+                    targetId={provider.id}
+                    targetName={providerName}
+                    onClose={() => setIsReportOpen(false)}
+                />
+            )}
 
             {/* Sticky bottom action bar — constrained to phone container */}
             <div
@@ -622,8 +687,9 @@ function ServiceDetailPage() {
                 style={{ borderTop: `1px solid ${colors.border}` }}
             >
                 <div className="flex items-center gap-3">
-                    <Link
-                        href={messageHref}
+                    <button
+                        type="button"
+                        onClick={() => requireAuth(() => router.push(messageHref), "message")}
                         className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
                         style={{
                             border: `1.5px solid ${colors.primary}`,
@@ -632,9 +698,9 @@ function ServiceDetailPage() {
                     >
                         <MessageCircle className="h-5 w-5" />
                         {SERVICE_DETAIL_LABELS.message}
-                    </Link>
+                    </button>
                     <button
-                        onClick={handleHireRequest}
+                        onClick={() => requireAuth(handleHireRequest, "hire")}
                         disabled={submitting || hasRequested || isOwnService}
                         className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
                         style={{ backgroundColor: isOwnService || hasRequested ? "#9CA3AF" : colors.primary }}
