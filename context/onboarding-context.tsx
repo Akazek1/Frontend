@@ -20,14 +20,20 @@ interface DocumentData {
   [key: string]: unknown
 }
 
+// Step layout:
+// 0 = RoleSelection
+// 1 = BasicInfoForm (name + email — collected BEFORE phone)
+// 2 = PhoneNumberEntry + T&C checkbox
+// 3 = OTPVerification
+// 4 = DocumentUploadStep (workers only)
+// 5 = ServiceCategorySelector (workers only)
+
 interface OnboardingContextType {
-  // Step navigation
   currentStep: number
   setCurrentStep: (step: number) => void
   showSplash: boolean
   setShowSplash: (show: boolean) => void
 
-  // Phone & OTP
   phoneNumber: string
   setPhoneNumber: (phone: string) => void
   code: string[]
@@ -35,7 +41,6 @@ interface OnboardingContextType {
   activeInputIndex: number
   setActiveInputIndex: (index: number) => void
 
-  // Form data
   firstName: string
   setFirstName: (name: string) => void
   lastName: string
@@ -47,19 +52,19 @@ interface OnboardingContextType {
   selectedCategories: string[]
   setSelectedCategories: (categories: string[]) => void
 
-  // Verified user data
+  termsAccepted: boolean
+  setTermsAccepted: (v: boolean) => void
+
   verifiedUser: UserData
   setVerifiedUser: (user: UserData) => void
   uploadedDocument: DocumentData | null
   setUploadedDocument: (doc: DocumentData | null) => void
 
-  // UI state
   isReturningUser: boolean
   setIsReturningUser: (returning: boolean) => void
   isLoading: boolean
   resendCooldown: number
 
-  // Handlers
   handleSendOtp: () => Promise<void>
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
@@ -69,13 +74,11 @@ interface OnboardingContextType {
   handleBack: () => void
   handleResendOtp: () => Promise<void>
 
-  // Refs
   inputsRef: React.MutableRefObject<Array<HTMLInputElement | null>>
   firstNameInputRef: React.MutableRefObject<HTMLInputElement | null>
   lastNameInputRef: React.MutableRefObject<HTMLInputElement | null>
   emailInputRef: React.MutableRefObject<HTMLInputElement | null>
 
-  // Callbacks for form
   handleFirstNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleLastNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -88,6 +91,8 @@ interface OnboardingContextType {
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined)
 
+const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
+
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(-1)
@@ -98,6 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [verifiedUser, setVerifiedUser] = useState<UserData>(null)
   const [uploadedDocument, setUploadedDocument] = useState<DocumentData | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -107,7 +113,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useDispatch<AppDispatch>()
-  const { sendOtp, verifyOtp, updateUserProfile, isLoading, user: authUser } = useAuth()
+  const { sendOtp, verifyOtp, isLoading } = useAuth()
 
   const inputsRef = useRef<Array<HTMLInputElement | null>>(Array(OTP_LENGTH).fill(null))
   const firstNameInputRef = useRef<HTMLInputElement | null>(null)
@@ -156,9 +162,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
 
     const fullCode = newCode.join("")
-    const filledDigits = newCode.filter((val) => val.length > 0).length
-
-    if (fullCode.length === OTP_LENGTH && filledDigits === OTP_LENGTH) {
+    if (fullCode.length === OTP_LENGTH && newCode.every(v => v.length > 0)) {
       handleVerifyOtp(fullCode)
     }
   }, [code])
@@ -167,15 +171,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (e.key === "Backspace") {
       e.preventDefault()
       const newCode = [...code]
-
       if (code[index]) {
         newCode[index] = ""
         setCode(newCode)
         if (index > 0) {
           setActiveInputIndex(index - 1)
-          setTimeout(() => {
-            inputsRef.current[index - 1]?.focus()
-          }, 0)
+          setTimeout(() => { inputsRef.current[index - 1]?.focus() }, 0)
         }
       } else if (index > 0) {
         newCode[index - 1] = ""
@@ -196,92 +197,61 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleOtpPaste = useCallback((e: React.ClipboardEvent) => {
     const pasteData = e.clipboardData.getData("text").slice(0, OTP_LENGTH).split("")
-    const newCode = [...code]
-
-    for (let i = 0; i < OTP_LENGTH; i++) {
-      newCode[i] = pasteData[i] || ""
-    }
+    const newCode = Array(OTP_LENGTH).fill("").map((_, i) => pasteData[i] || "")
     setCode(newCode)
-
     const nextIndex = Math.min(pasteData.length - 1, OTP_LENGTH - 1)
     setActiveInputIndex(nextIndex)
     inputsRef.current[nextIndex]?.focus()
-
-    if (pasteData.length === OTP_LENGTH) {
-      const finalCode = pasteData.join("")
-      handleVerifyOtp(finalCode)
-    }
-
+    if (pasteData.length === OTP_LENGTH) handleVerifyOtp(pasteData.join(""))
     e.preventDefault()
   }, [code])
 
   const handleOtpInputFocus = useCallback((index: number) => {
-    if (activeInputIndex === index) return
-    setActiveInputIndex(index)
+    if (activeInputIndex !== index) setActiveInputIndex(index)
   }, [activeInputIndex])
 
-  // Business logic handlers
   const handleSendOtp = useCallback(async () => {
     if (!phoneNumber) {
       toast.error("Please enter a phone number")
       return
     }
 
-    let cleanedPhoneNumber = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
-
-    if (cleanedPhoneNumber.startsWith("250")) {
-      cleanedPhoneNumber = cleanedPhoneNumber.substring(3)
-    }
-
-    if (cleanedPhoneNumber.length === 10 && cleanedPhoneNumber.startsWith("0")) {
-      cleanedPhoneNumber = cleanedPhoneNumber.substring(1)
-    }
-
-    if (cleanedPhoneNumber.length !== 9) {
+    let cleaned = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
+    if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
+    if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
+    if (cleaned.length !== 9) {
       toast.error("Please enter a valid phone number: 9 digits or 10 digits starting with 0")
       return
     }
 
-    const formattedPhoneNumber = `250${cleanedPhoneNumber}`
-
-    const proceedToOtpStep = () => {
-      setPhoneNumber(cleanedPhoneNumber)
-      setCurrentStep(2) // OTP step
-      setTimeout(() => {
-        inputsRef.current[0]?.focus()
-      }, 500)
+    const formatted = `250${cleaned}`
+    const proceed = () => {
+      setPhoneNumber(cleaned)
+      setCurrentStep(3) // OTP step
+      setTimeout(() => { inputsRef.current[0]?.focus() }, 500)
     }
 
     try {
-      const success = await sendOtp({ phoneNumber: formattedPhoneNumber })
-
-      if (success) {
-        proceedToOtpStep()
-        return
-      }
-
+      const success = await sendOtp({ phoneNumber: formatted })
+      if (success) { proceed(); return }
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
-        proceedToOtpStep()
+        proceed()
         return
       }
-
       toast.error("Failed to send OTP. Please try again.")
     } catch (error) {
       const err = error as Error & { code?: string; response?: { data?: { message?: string } } }
-      const isNetworkError = err.code === "ERR_NETWORK" || err.message?.includes("Network Error")
-
-      if (isNetworkError && process.env.NODE_ENV === "development") {
+      const isNetwork = err.code === "ERR_NETWORK" || err.message?.includes("Network Error")
+      if (isNetwork && process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
-        proceedToOtpStep()
+        proceed()
         return
       }
-
-      if (isNetworkError) {
-        toast.error("Cannot connect to server. Is the backend running on port 3001?")
-      } else {
-        toast.error(err.response?.data?.message || "Failed to send OTP")
-      }
+      toast.error(isNetwork
+        ? "Cannot connect to server. Is the backend running on port 3001?"
+        : (err.response?.data?.message || "Failed to send OTP")
+      )
     }
   }, [phoneNumber, sendOtp])
 
@@ -293,39 +263,57 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     await handleSendOtp()
   }, [resendCooldown, handleSendOtp])
 
+  const redirectHome = useCallback((isNew = false) => {
+    document.cookie = "profileComplete=true; path=/; max-age=31536000"
+    if (redirectUrl) {
+      window.location.href = redirectUrl
+      return
+    }
+    if (isNew || !localStorage.getItem("hasSeenTutorial")) {
+      localStorage.setItem("hasSeenTutorial", "true")
+      window.location.href = "/?tutorial=true"
+    } else {
+      window.location.href = "/"
+    }
+  }, [redirectUrl])
+
   const handleVerifyOtp = useCallback(async (otpCode: string) => {
-    try {
-      let cleanedPhone = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
+    const cleanPhone = (() => {
+      let c = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
+      if (c.startsWith("250")) c = c.substring(3)
+      return c.length === 9 ? `250${c}` : c
+    })()
 
-      if (cleanedPhone.startsWith("250")) {
-        cleanedPhone = cleanedPhone.substring(3)
+    const completeSignupForNewUser = async (user: NonNullable<UserData>) => {
+      const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
+      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles }
+      if (lastName.trim()) payload.lastName = lastName.trim()
+      if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
+
+      const res = await api.post("/auth/complete-signup", payload, { withCredentials: true })
+      const data = res.data?.data || res.data
+      if (data.token) {
+        localStorage.setItem("token", data.token)
+        document.cookie = `token=${data.token}; path=/; max-age=31536000`
       }
+      const updatedUser = { ...data.user, roles }
+      dispatch(updateUser(updatedUser))
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      return roles
+    }
 
-      const formattedPhone = cleanedPhone.length === 9 ? `250${cleanedPhone}` : cleanedPhone
-
-      const user = await verifyOtp({ phoneNumber: formattedPhone, otp: otpCode })
+    try {
+      const user = await verifyOtp({ phoneNumber: cleanPhone, otp: otpCode })
 
       if (!user) {
+        // Dev mode fallback
         if (process.env.NODE_ENV === "development" && otpCode === "111111") {
           toast.success("OTP verified (dev mode)")
-          const mockVerifiedUser = {
-            id: "dev-user-id",
-            phoneNumber: formattedPhone,
-            firstName: "",
-            lastName: "",
-            email: "",
-            username: `devuser${Date.now()}`,
-            isMobileVerified: true,
-            isEmailVerified: false,
-            roles: [] as UserRole[],
-            profilePicture: undefined,
+          if (firstName.trim()) {
+            setCurrentStep(4)
+          } else {
+            setCurrentStep(1) // collect name first
           }
-          setVerifiedUser(mockVerifiedUser)
-          if (redirectUrl && redirectUrl.startsWith("/onboarding/organization")) {
-            window.location.href = redirectUrl
-            return
-          }
-          setCurrentStep(3) // name step
           return
         }
         setCode(Array(OTP_LENGTH).fill(""))
@@ -336,175 +324,100 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       setVerifiedUser(user)
 
-      if (redirectUrl && redirectUrl.startsWith("/onboarding/organization")) {
+      if (redirectUrl?.startsWith("/onboarding/organization")) {
         window.location.href = redirectUrl
         return
       }
 
       if (user.firstName && user.firstName.trim() !== "") {
-        document.cookie = "profileComplete=true; path=/; max-age=31536000"
-        if (redirectUrl) {
-          window.location.href = redirectUrl
+        // Returning user with complete profile → home
+        redirectHome(false)
+        return
+      }
+
+      if (firstName.trim()) {
+        // New user — we already collected their name at step 1
+        const roles = await completeSignupForNewUser(user)
+        if (roles.includes("WORKER")) {
+          setCurrentStep(4) // doc upload
         } else {
-          const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
-          if (isFirstLogin) {
-            localStorage.setItem("hasSeenTutorial", "true")
-            window.location.href = "/?tutorial=true"
-          } else {
-            window.location.href = "/"
-          }
+          toast.success("Welcome! Let's get started.")
+          redirectHome(true)
         }
       } else {
-        setCurrentStep(3) // name step
+        // Login mode edge case: no name collected → show name step
+        setCurrentStep(1)
       }
     } catch (error: any) {
-      const isNetworkError =
-        error?.code === "ERR_NETWORK" || error?.message?.includes("Network Error")
+      const isNetwork = error?.code === "ERR_NETWORK" || error?.message?.includes("Network Error")
 
-      if (isNetworkError && process.env.NODE_ENV === "development" && otpCode === "111111") {
+      if (isNetwork && process.env.NODE_ENV === "development" && otpCode === "111111") {
         toast.success("OTP verified (dev mode)")
-        const mockVerifiedUser = {
-          id: "dev-user-id",
-          phoneNumber,
-          firstName: "",
-          lastName: "",
-          email: "",
-          username: `devuser${Date.now()}`,
-          isMobileVerified: true,
-          isEmailVerified: false,
-          roles: [] as UserRole[],
-          profilePicture: undefined,
+        if (firstName.trim()) {
+          setCurrentStep(4)
+        } else {
+          setCurrentStep(1)
         }
-        setVerifiedUser(mockVerifiedUser)
-        setCurrentStep(3) // name step
         return
       }
 
       const raw = error?.response?.data?.message
-      const msg = Array.isArray(raw) ? raw[0] : raw
-      toast.error(msg || "Invalid OTP. Please try again.")
+      toast.error((Array.isArray(raw) ? raw[0] : raw) || "Invalid OTP. Please try again.")
       setCode(Array(OTP_LENGTH).fill(""))
       setActiveInputIndex(0)
       setTimeout(() => inputsRef.current[0]?.focus(), 50)
     }
-  }, [phoneNumber, verifyOtp, redirectUrl, router])
+  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, selectedRoles, dispatch, redirectHome])
 
+  // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
     if (!firstName.trim()) {
       toast.error("Please enter your name")
       return
     }
+    if (email.trim() && !isValidEmail(email.trim())) {
+      toast.error("Please enter a valid email address")
+      return
+    }
 
-    // Default to EMPLOYER if no role selected (login mode skipped role selection)
     const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
 
-    const isNewUser = !verifiedUser?.id || verifiedUser.id === null
-
     try {
-      let updatedUser: any
+      const updatePayload: Record<string, string> = { firstName: firstName.trim() }
+      if (lastName.trim()) updatePayload.lastName = lastName.trim()
+      if (email.trim() && isValidEmail(email.trim())) updatePayload.email = email.trim()
 
-      if (isNewUser) {
-        const signupPayload: Record<string, unknown> = {
-          firstName: firstName.trim(),
-          roles,
-        }
-        if (lastName.trim()) signupPayload.lastName = lastName.trim()
-        if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) signupPayload.email = email.trim()
+      const res = await api.patch("/users/profile", updatePayload, { withCredentials: true })
+      const updated = (res.data as any)?.data || res.data
 
-        const signupResponse = await api.post("/auth/complete-signup", signupPayload, {
-          withCredentials: true,
-        })
+      await api.post("/users/role-selection", { roles }, { withCredentials: true })
+      await api.patch("/users/complete-onboarding", { role: "EMPLOYER" }, { withCredentials: true })
 
-        const responseData = signupResponse.data?.data || signupResponse.data
-        const newToken = responseData.token
-        const newUser = responseData.user
-
-        if (newToken) {
-          localStorage.setItem("token", newToken)
-          document.cookie = `token=${newToken}; path=/; max-age=31536000`
-        }
-
-        updatedUser = {
-          ...newUser,
-          roles,
-        }
-      } else {
-        const updatePayload: Record<string, string> = {
-          firstName: firstName.trim(),
-        }
-        if (lastName.trim()) updatePayload.lastName = lastName.trim()
-        if (email.trim() && /\S+@\S+\.\S+/.test(email.trim())) updatePayload.email = email.trim()
-
-        const profileResponse = await api.patch("/users/profile", updatePayload, {
-          withCredentials: true,
-        })
-
-        const updatedUserData = (profileResponse.data as any)?.data || profileResponse.data
-
-        await api.post(
-          "/users/role-selection",
-          { roles },
-          { withCredentials: true }
-        )
-
-        updatedUser = {
-          ...verifiedUser,
-          firstName: firstName.trim(),
-          lastName: lastName.trim() || updatedUserData.lastName || verifiedUser?.lastName,
-          username: updatedUserData.username || verifiedUser?.username,
-          email: email.trim() || verifiedUser?.email || updatedUserData.email,
-          phoneNumber: verifiedUser?.phoneNumber,
-          roles,
-        }
+      const updatedUser = {
+        ...verifiedUser,
+        firstName: firstName.trim(),
+        lastName: lastName.trim() || updated.lastName || verifiedUser?.lastName,
+        username: updated.username || verifiedUser?.username,
+        email: email.trim() || verifiedUser?.email || updated.email,
+        phoneNumber: verifiedUser?.phoneNumber,
+        roles,
       }
 
       dispatch(updateUser(updatedUser))
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(updatedUser))
-      }
-
-      if (!roles.includes("WORKER")) {
-        if (!isNewUser) {
-          await api.patch(
-            "/users/complete-onboarding",
-            { role: "EMPLOYER" },
-            { withCredentials: true }
-          )
-        }
-
-        document.cookie = "profileComplete=true; path=/; max-age=31536000"
-        toast.success("Welcome! Let's get started.")
-
-        if (redirectUrl) {
-          window.location.href = redirectUrl
-        } else {
-          const isFirstLogin = !localStorage.getItem("hasSeenTutorial")
-          if (isFirstLogin) {
-            localStorage.setItem("hasSeenTutorial", "true")
-            window.location.href = "/?tutorial=true"
-          } else {
-            window.location.href = "/"
-          }
-        }
-      } else {
-        setCurrentStep(4) // doc upload step
-      }
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      toast.success("Welcome!")
+      redirectHome(false)
     } catch (error) {
       const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
-      const status = err.response?.status
-      const raw = err.response?.data?.message
-      const msg = Array.isArray(raw) ? raw[0] : raw
-
-      if (status === 401) {
+      if (err.response?.status === 401) {
         toast.error("Session expired. Please verify your phone number again.")
-        setCurrentStep(1) // back to phone
+        setCurrentStep(2)
         return
       }
-
-      toast.error(msg || "Failed to save information. Please try again.")
+      const raw = err.response?.data?.message
+      toast.error((Array.isArray(raw) ? raw[0] : raw) || "Failed to save information. Please try again.")
     }
-  }, [firstName, lastName, email, selectedRoles, verifiedUser, authUser, dispatch, redirectUrl, router])
+  }, [firstName, lastName, email, selectedRoles, verifiedUser, dispatch, redirectHome])
 
   const handleDocumentUpload = useCallback((document: DocumentData) => {
     setUploadedDocument(document)
@@ -514,24 +427,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const handleCategoriesSelected = useCallback(async (categories: string[]) => {
     setSelectedCategories(categories)
     try {
-      await api.patch(
-        "/users/complete-onboarding",
-        { role: "WORKER" },
-        { withCredentials: true }
-      )
-
+      await api.patch("/users/complete-onboarding", { role: "WORKER" }, { withCredentials: true })
       toast.success("Welcome! You're all set.")
-
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
-      if (typeof window !== "undefined") {
-        localStorage.setItem("hasSeenTutorial", "true")
-      }
-
+      localStorage.setItem("hasSeenTutorial", "true")
       window.location.href = "/?tutorial=true"
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to complete setup. Please try again.")
     }
-  }, [router])
+  }, [])
 
   const handleNext = useCallback(async () => {
     if (currentStep === 0) { // role selection
@@ -539,16 +443,38 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         toast.error("Please select a role to continue")
         return
       }
-      setCurrentStep(1) // phone
+      setCurrentStep(1)
       return
     }
 
-    if (currentStep === 1) { // phone
+    if (currentStep === 1) { // name + email
+      if (!firstName.trim()) {
+        toast.error("Please enter your first name")
+        return
+      }
+      if (email.trim() && !isValidEmail(email.trim())) {
+        toast.error("Please enter a valid email address")
+        return
+      }
+      // If already authenticated (complete-profile or login-mode recovery), update profile
+      if (verifiedUser?.id) {
+        await handleSaveBasicInfo()
+      } else {
+        setCurrentStep(2)
+      }
+      return
+    }
+
+    if (currentStep === 2) { // phone + T&C
+      if (!termsAccepted) {
+        toast.error("Please accept the Terms of Service to continue")
+        return
+      }
       await handleSendOtp()
       return
     }
 
-    if (currentStep === 2) { // OTP
+    if (currentStep === 3) { // OTP
       const otpCode = code.join("")
       if (otpCode.length === OTP_LENGTH) {
         await handleVerifyOtp(otpCode)
@@ -558,19 +484,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    if (currentStep === 3) { // name / basic info
-      await handleSaveBasicInfo()
-      return
-    }
-
     if (currentStep < 5) {
       setCurrentStep(prev => prev + 1)
     }
-  }, [currentStep, selectedRoles, code, handleSendOtp, handleVerifyOtp, handleSaveBasicInfo])
+  }, [currentStep, selectedRoles, firstName, email, verifiedUser, termsAccepted, code,
+      handleSaveBasicInfo, handleSendOtp, handleVerifyOtp])
 
   const handleBack = useCallback(() => {
     if (currentStep <= 0) return
-    if (currentStep === 2) { // OTP → phone: clear code
+    if (currentStep === 3) { // OTP → phone: clear code
       setCode(Array(OTP_LENGTH).fill(""))
       setActiveInputIndex(0)
     }
@@ -598,6 +520,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setSelectedRoles,
     selectedCategories,
     setSelectedCategories,
+    termsAccepted,
+    setTermsAccepted,
     verifiedUser,
     setVerifiedUser,
     uploadedDocument,
@@ -637,8 +561,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
 export function useOnboarding() {
   const context = useContext(OnboardingContext)
-  if (!context) {
-    throw new Error("useOnboarding must be used within OnboardingProvider")
-  }
+  if (!context) throw new Error("useOnboarding must be used within OnboardingProvider")
   return context
 }

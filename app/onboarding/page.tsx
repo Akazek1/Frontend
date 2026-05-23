@@ -5,13 +5,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { OnboardingProvider, useOnboarding } from "@/context/onboarding-context"
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout"
 import { RoleSelection } from "@/components/onboarding/RoleSelection"
+import { BasicInfoForm } from "@/components/onboarding/BasicInfoForm"
 import { PhoneNumberEntry } from "@/components/onboarding/PhoneNumberEntry"
 import { OTPVerification } from "@/components/onboarding/OTPVerification"
-import { BasicInfoForm } from "@/components/onboarding/BasicInfoForm"
 import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
 import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 
-// Steps 4 and 5 render their own full-screen layout (doc upload, category selection)
+// Steps 4 and 5 render their own full-screen layout
 const FULL_SCREEN_STEPS = [4, 5]
 const OTP_LENGTH = 6
 
@@ -26,14 +26,15 @@ function OnboardingContent() {
     code,
     firstName,
     selectedRoles,
+    termsAccepted,
   } = useOnboarding()
 
   const renderStep = () => {
     switch (currentStep) {
       case 0: return <RoleSelection />
-      case 1: return <PhoneNumberEntry />
-      case 2: return <OTPVerification />
-      case 3: return <BasicInfoForm />
+      case 1: return <BasicInfoForm />
+      case 2: return <PhoneNumberEntry />
+      case 3: return <OTPVerification />
       case 4:
         return (
           <DocumentUploadStep
@@ -56,21 +57,22 @@ function OnboardingContent() {
 
   const getButtonText = () => {
     if (currentStep === 0) return "Continue"
-    if (currentStep === 1) return "Send OTP"
-    if (currentStep === 2) return "Verify"
-    if (currentStep === 3) return "Continue"
+    if (currentStep === 1) return "Continue"
+    if (currentStep === 2) return "Send OTP"
+    if (currentStep === 3) return "Verify"
     return ""
   }
 
   const isNextDisabled = () => {
     if (isLoading) return true
     if (currentStep === 0 && selectedRoles.length === 0) return true
-    if (currentStep === 2 && code.join("").length < OTP_LENGTH) return true
-    if (currentStep === 3 && !firstName.trim()) return true
+    if (currentStep === 1 && !firstName.trim()) return true
+    if (currentStep === 2 && !termsAccepted) return true
+    if (currentStep === 3 && code.join("").length < OTP_LENGTH) return true
     return false
   }
 
-  // Full-screen steps (doc upload, categories) manage their own layout
+  // Full-screen steps (doc, categories) manage their own layout
   if (FULL_SCREEN_STEPS.includes(currentStep)) {
     return (
       <OnboardingLayout>
@@ -83,8 +85,8 @@ function OnboardingContent() {
     )
   }
 
-  // Name step (step 3) shows both Continue and Back buttons
-  if (currentStep === 3) {
+  // Name step (step 1): form with Back + Continue
+  if (currentStep === 1) {
     return (
       <OnboardingLayout>
         <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
@@ -113,7 +115,7 @@ function OnboardingContent() {
     )
   }
 
-  // Steps 0, 1, 2: animated slide-in with single Continue button
+  // Steps 0, 2, 3: animated slide with single Continue button
   return (
     <OnboardingLayout>
       <AnimatePresence mode="wait">

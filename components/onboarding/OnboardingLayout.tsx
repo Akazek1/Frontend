@@ -18,7 +18,6 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     setShowSplash,
     currentStep,
     setCurrentStep,
-    verifiedUser,
     setVerifiedUser,
     setSelectedRoles,
   } = useOnboarding()
@@ -31,25 +30,21 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     const storedUserRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null
     let storedUser: any = null
     if (storedUserRaw && storedUserRaw !== "undefined" && storedUserRaw !== "null") {
-      try {
-        storedUser = JSON.parse(storedUserRaw)
-      } catch {
-        // ignore parse errors
-      }
+      try { storedUser = JSON.parse(storedUserRaw) } catch { /* ignore */ }
     }
     const profileIncomplete = !!token && (!storedUser?.firstName || !storedUser.firstName.trim())
 
     if (stepParam === "complete-profile" || profileIncomplete) {
       if (storedUser) setVerifiedUser(storedUser)
       setShowSplash(false)
-      setCurrentStep(3) // name step
+      setCurrentStep(1) // name step (collected before phone now)
       return
     }
 
     if (stepParam === "login") {
       setSelectedRoles(["EMPLOYER"]) // default role for login mode
       setShowSplash(false)
-      setCurrentStep(1) // skip role selection, go to phone
+      setCurrentStep(2) // skip role + name, go straight to phone
       return
     }
 
@@ -79,7 +74,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
-  // Show progress dots only for the core steps (0–3); doc/categories have their own UI
+  // Progress dots only for core steps 0–3
   const showProgress = currentStep >= 0 && currentStep <= 3
 
   return (
