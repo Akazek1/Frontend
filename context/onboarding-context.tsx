@@ -65,7 +65,7 @@ interface OnboardingContextType {
   isLoading: boolean
   resendCooldown: number
 
-  handleSendOtp: () => Promise<void>
+  handleSendOtp: () => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
@@ -210,10 +210,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (activeInputIndex !== index) setActiveInputIndex(index)
   }, [activeInputIndex])
 
-  const handleSendOtp = useCallback(async () => {
+  const handleSendOtp = useCallback(async (): Promise<boolean> => {
     if (!phoneNumber) {
       toast.error("Please enter a phone number")
-      return
+      return false
     }
 
     let cleaned = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
@@ -221,37 +221,34 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
     if (cleaned.length !== 9) {
       toast.error("Please enter a valid phone number: 9 digits or 10 digits starting with 0")
-      return
+      return false
     }
 
     const formatted = `250${cleaned}`
-    const proceed = () => {
-      setPhoneNumber(cleaned)
-      setCurrentStep(3) // OTP step
-      setTimeout(() => { inputsRef.current[0]?.focus() }, 500)
-    }
+    // Store the cleaned number so verifyOtp can format it correctly
+    setPhoneNumber(cleaned)
 
     try {
       const success = await sendOtp({ phoneNumber: formatted })
-      if (success) { proceed(); return }
+      if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
-        proceed()
-        return
+        return true
       }
       toast.error("Failed to send OTP. Please try again.")
+      return false
     } catch (error) {
       const err = error as Error & { code?: string; response?: { data?: { message?: string } } }
       const isNetwork = err.code === "ERR_NETWORK" || err.message?.includes("Network Error")
       if (isNetwork && process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
-        proceed()
-        return
+        return true
       }
       toast.error(isNetwork
         ? "Cannot connect to server. Is the backend running on port 3001?"
         : (err.response?.data?.message || "Failed to send OTP")
       )
+      return false
     }
   }, [phoneNumber, sendOtp])
 
@@ -434,57 +431,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const handleNext = useCallback(async () => {
-    if (currentStep === 0) { // role selection
+    if (currentStep === 0) { // role selection → signup form
       if (selectedRoles.length === 0) {
         toast.error("Please select a role to continue")
         return
       }
       setCurrentStep(1)
-      return
     }
-
-    if (currentStep === 1) { // name + email
-      if (!firstName.trim()) {
-        toast.error("Please enter your first name")
-        return
-      }
-      if (email.trim() && !isValidEmail(email.trim())) {
-        toast.error("Please enter a valid email address")
-        return
-      }
-      // If already authenticated (complete-profile or login-mode recovery), update profile
-      if (verifiedUser?.id) {
-        await handleSaveBasicInfo()
-      } else {
-        setCurrentStep(2)
-      }
-      return
-    }
-
-    if (currentStep === 2) { // phone + T&C
-      if (!termsAccepted) {
-        toast.error("Please accept the Terms of Service to continue")
-        return
-      }
-      await handleSendOtp()
-      return
-    }
-
-    if (currentStep === 3) { // OTP
-      const otpCode = code.join("")
-      if (otpCode.length === OTP_LENGTH) {
-        await handleVerifyOtp(otpCode)
-      } else {
-        toast.error(`Please enter the complete ${OTP_LENGTH}-digit verification code`)
-      }
-      return
-    }
-
-    if (currentStep < 5) {
-      setCurrentStep(prev => prev + 1)
-    }
-  }, [currentStep, selectedRoles, firstName, email, verifiedUser, termsAccepted, code,
-      handleSaveBasicInfo, handleSendOtp, handleVerifyOtp])
+    // Steps 1 and 2 manage their own buttons/OTP inline
+  }, [currentStep, selectedRoles])
 
   const handleBack = useCallback(() => {
     if (currentStep <= 0) return

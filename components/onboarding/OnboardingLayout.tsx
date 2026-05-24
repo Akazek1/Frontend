@@ -74,8 +74,8 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
-  // Progress dots only for core steps 0–3
-  const showProgress = currentStep >= 0 && currentStep <= 3
+  // Progress dots for role selection (0) and signup form (1) only
+  const showProgress = currentStep === 0 || currentStep === 1
 
   return (
     <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
@@ -85,7 +85,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
       {showProgress && (
         <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {Array.from({ length: 2 }).map((_, index) => (
             <div
               key={index}
               className={`h-2 rounded-full transition-all duration-300 ${

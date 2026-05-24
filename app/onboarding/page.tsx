@@ -5,15 +5,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { OnboardingProvider, useOnboarding } from "@/context/onboarding-context"
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout"
 import { RoleSelection } from "@/components/onboarding/RoleSelection"
-import { BasicInfoForm } from "@/components/onboarding/BasicInfoForm"
-import { PhoneNumberEntry } from "@/components/onboarding/PhoneNumberEntry"
-import { OTPVerification } from "@/components/onboarding/OTPVerification"
+import { SignupForm } from "@/components/onboarding/SignupForm"
+import { LoginForm } from "@/components/onboarding/LoginForm"
 import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
 import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 
-// Steps 4 and 5 render their own full-screen layout
+// Steps 4 and 5 manage their own full-screen layout
 const FULL_SCREEN_STEPS = [4, 5]
-const OTP_LENGTH = 6
 
 function OnboardingContent() {
   const {
@@ -23,18 +21,14 @@ function OnboardingContent() {
     handleDocumentUpload,
     handleCategoriesSelected,
     isLoading,
-    code,
-    firstName,
     selectedRoles,
-    termsAccepted,
   } = useOnboarding()
 
   const renderStep = () => {
     switch (currentStep) {
       case 0: return <RoleSelection />
-      case 1: return <BasicInfoForm />
-      case 2: return <PhoneNumberEntry />
-      case 3: return <OTPVerification />
+      case 1: return <SignupForm />
+      case 2: return <LoginForm />
       case 4:
         return (
           <DocumentUploadStep
@@ -55,24 +49,7 @@ function OnboardingContent() {
     }
   }
 
-  const getButtonText = () => {
-    if (currentStep === 0) return "Continue"
-    if (currentStep === 1) return "Continue"
-    if (currentStep === 2) return "Send OTP"
-    if (currentStep === 3) return "Verify"
-    return ""
-  }
-
-  const isNextDisabled = () => {
-    if (isLoading) return true
-    if (currentStep === 0 && selectedRoles.length === 0) return true
-    if (currentStep === 1 && !firstName.trim()) return true
-    if (currentStep === 2 && !termsAccepted) return true
-    if (currentStep === 3 && code.join("").length < OTP_LENGTH) return true
-    return false
-  }
-
-  // Full-screen steps (doc, categories) manage their own layout
+  // Steps 4 and 5: full-screen, manage their own layout
   if (FULL_SCREEN_STEPS.includes(currentStep)) {
     return (
       <OnboardingLayout>
@@ -85,37 +62,18 @@ function OnboardingContent() {
     )
   }
 
-  // Name step (step 1): form with Back + Continue
-  if (currentStep === 1) {
+  // Steps 1 and 2: self-contained forms (manage their own buttons and OTP inline)
+  if (currentStep === 1 || currentStep === 2) {
     return (
       <OnboardingLayout>
-        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
-          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            {renderStep()}
-            <div className="mt-auto space-y-3">
-              <button
-                onClick={(e) => { e.preventDefault(); handleNext() }}
-                type="button"
-                className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
-                disabled={isNextDisabled()}
-              >
-                {isLoading ? "Please wait..." : getButtonText()}
-              </button>
-              <button
-                onClick={(e) => { e.preventDefault(); handleBack() }}
-                type="button"
-                className="w-full bg-white text-[#1B5E20] border-2 border-[#1B5E20] py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
-              >
-                Back
-              </button>
-            </div>
-          </div>
+        <div className="h-full overflow-y-auto pb-8">
+          {renderStep()}
         </div>
       </OnboardingLayout>
     )
   }
 
-  // Steps 0, 2, 3: animated slide with single Continue button
+  // Step 0: role selection with Continue button
   return (
     <OnboardingLayout>
       <AnimatePresence mode="wait">
@@ -134,9 +92,9 @@ function OnboardingContent() {
                 onClick={(e) => { e.preventDefault(); handleNext() }}
                 type="button"
                 className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
-                disabled={isNextDisabled()}
+                disabled={selectedRoles.length === 0}
               >
-                {isLoading ? "Please wait..." : getButtonText()}
+                Continue
               </button>
             </div>
           </div>
