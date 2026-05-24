@@ -10,12 +10,16 @@ const EMPLOYER_TAGS = ["Cleaning", "Childcare", "Cooking", "Repairs"]
 const WORKER_TAGS = ["Find jobs", "Earn income", "Offer services"]
 
 export function RoleSelection() {
-  const { selectedRoles, setSelectedRoles, handleNext, isLoading } = useOnboarding()
+  const { selectedRoles, setSelectedRoles, setCurrentStep } = useOnboarding()
   const router = useRouter()
 
   const isEmployer = selectedRoles.includes("EMPLOYER")
   const isWorker = selectedRoles.includes("WORKER")
-  const hasSelection = isEmployer || isWorker
+
+  const selectAndContinue = (role: Role) => {
+    setSelectedRoles([role])
+    setCurrentStep(1)
+  }
 
   return (
     <div className="w-full h-full overflow-y-auto bg-[#F7FCF5]">
@@ -95,7 +99,7 @@ export function RoleSelection() {
         {/* ── Employer card ── */}
         <button
           type="button"
-          onClick={() => setSelectedRoles(["EMPLOYER"])}
+          onClick={() => selectAndContinue("EMPLOYER")}
           className={`w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
             isEmployer
               ? "border-[#2E7D32] bg-[#F0FAF0] shadow-sm"
@@ -143,7 +147,7 @@ export function RoleSelection() {
         {/* ── Worker card ── */}
         <button
           type="button"
-          onClick={() => setSelectedRoles(["WORKER"])}
+          onClick={() => selectAndContinue("WORKER")}
           className={`w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
             isWorker
               ? "border-[#F59E0B] bg-[#FFFBEB] shadow-sm"
@@ -239,17 +243,6 @@ export function RoleSelection() {
         </div>
       </div>
 
-      {/* ── Sticky Continue button ── */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 pb-6 pt-3 bg-gradient-to-t from-[#F7FCF5] via-[#F7FCF5]/95 to-transparent">
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!hasSelection || isLoading}
-          className="w-full bg-[#1B5E20] text-white py-4 rounded-[100px] font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors shadow-lg"
-        >
-          Continue
-        </button>
-      </div>
     </div>
   )
 }
