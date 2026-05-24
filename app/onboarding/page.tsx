@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import { OnboardingProvider, useOnboarding } from "@/context/onboarding-context"
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout"
 import { RoleSelection } from "@/components/onboarding/RoleSelection"
@@ -16,12 +15,10 @@ const FULL_SCREEN_STEPS = [4, 5]
 function OnboardingContent() {
   const {
     currentStep,
-    handleNext,
     handleBack,
     handleDocumentUpload,
     handleCategoriesSelected,
     isLoading,
-    selectedRoles,
   } = useOnboarding()
 
   const renderStep = () => {
@@ -62,44 +59,12 @@ function OnboardingContent() {
     )
   }
 
-  // Steps 1 and 2: self-contained forms (manage their own buttons and OTP inline)
-  if (currentStep === 1 || currentStep === 2) {
-    return (
-      <OnboardingLayout>
-        <div className="h-full overflow-y-auto pb-8">
-          {renderStep()}
-        </div>
-      </OnboardingLayout>
-    )
-  }
-
-  // Step 0: role selection with Continue button
+  // Steps 0, 1, 2: self-contained — manage their own buttons, scroll, and OTP
   return (
     <OnboardingLayout>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ x: "100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "-100%", opacity: 0 }}
-          transition={{ duration: 0.4 }}
-          className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
-        >
-          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            {renderStep()}
-            <div className="mt-auto">
-              <button
-                onClick={(e) => { e.preventDefault(); handleNext() }}
-                type="button"
-                className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
-                disabled={selectedRoles.length === 0}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+      <div className="h-full overflow-y-auto">
+        {renderStep()}
+      </div>
     </OnboardingLayout>
   )
 }

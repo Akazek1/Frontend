@@ -74,8 +74,8 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
-  // Progress dots for role selection (0) and signup form (1) only
-  const showProgress = currentStep === 0 || currentStep === 1
+  // Progress dot only for signup form (step 1) — step 0 has its own rich layout
+  const showProgress = currentStep === 1
 
   return (
     <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
@@ -85,16 +85,8 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
       {showProgress && (
         <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentStep
-                  ? "bg-[#1B5E20] w-6 sm:w-8"
-                  : "bg-[#E0E0E0] w-2"
-              }`}
-            />
-          ))}
+          {/* Single active dot — shows on signup form only */}
+          <div className="h-2 w-6 sm:w-8 rounded-full bg-[#1B5E20]" />
         </div>
       )}
     </div>
