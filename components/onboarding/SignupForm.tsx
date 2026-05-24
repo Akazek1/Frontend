@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
+import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
 
 const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
@@ -25,6 +26,8 @@ export function SignupForm() {
   } = useOnboarding()
 
   const [emailError, setEmailError] = useState("")
+  const [phoneError, setPhoneError] = useState("")
+  const [checking, setChecking] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
 
   // complete-profile path: user is already authenticated
@@ -51,6 +54,33 @@ export function SignupForm() {
     }
     if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 9) { return }
     if (!termsAccepted) { return }
+
+    // Check if this phone number already has an account
+    let cleaned = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
+    if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
+    if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
+    const formatted = `250${cleaned}`
+
+    setPhoneError("")
+    setChecking(true)
+    try {
+      const res = await api.get(`/auth/check-user/${formatted}`)
+      const { exists } = res.data?.data || res.data
+      if (exists) {
+        setPhoneError("exists")
+        setChecking(false)
+        return
+      }
+    } catch {
+      // In dev mode, allow continuing if the check endpoint is unavailable
+      if (process.env.NODE_ENV !== "development") {
+        setPhoneError("Could not verify number. Please try again.")
+        setChecking(false)
+        return
+      }
+    } finally {
+      setChecking(false)
+    }
 
     const sent = await handleSendOtp()
     if (sent) setOtpSent(true)
@@ -198,7 +228,11 @@ export function SignupForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className={`flex items-center border rounded-xl overflow-hidden w-full transition-all ${otpSent ? "opacity-60" : "focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20 border-gray-300"}`}>
+          <div className={`flex items-center border rounded-xl overflow-hidden w-full transition-all ${
+            phoneError ? "border-red-400" :
+            otpSent ? "border-gray-200 opacity-60" :
+            "border-gray-300 focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20"
+          }`}>
             <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
               <Image height={40} width={40} src="https://flagcdn.com/w40/rw.png" alt="Rwanda" className="w-6 h-4 object-cover rounded-sm" />
               <span className="text-gray-700 font-semibold text-sm">+250</span>
@@ -208,12 +242,22 @@ export function SignupForm() {
               inputMode="numeric"
               placeholder="Phone number"
               value={phoneNumber}
-              onChange={(e) => handlePhoneChange(e.target.value)}
+              onChange={(e) => { setPhoneError(""); handlePhoneChange(e.target.value) }}
               className="px-4 py-3 sm:py-4 w-full text-gray-900 font-semibold placeholder:text-gray-400 placeholder:font-normal border-none focus:outline-none focus:ring-0 shadow-none bg-transparent"
               maxLength={10}
               disabled={otpSent}
             />
           </div>
+          {phoneError === "exists" ? (
+            <p className="text-xs text-red-500 mt-1.5">
+              An account with this number already exists.{" "}
+              <a href="/onboarding?step=login" className="text-[#145B10] font-semibold underline underline-offset-2">
+                Log in instead
+              </a>
+            </p>
+          ) : phoneError ? (
+            <p className="text-xs text-red-500 mt-1.5">{phoneError}</p>
+          ) : null}
         </div>
 
         {/* T&C */}
@@ -317,10 +361,10 @@ export function SignupForm() {
             <button
               type="button"
               onClick={handleSignUp}
-              disabled={signUpDisabled}
+              disabled={signUpDisabled || checking}
               className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
             >
-              {isLoading ? "Please wait..." : "Sign Up"}
+              {checking ? "Checking..." : isLoading ? "Please wait..." : "Sign Up"}
             </button>
           ) : (
             <button

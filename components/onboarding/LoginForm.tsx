@@ -205,6 +205,16 @@ export function LoginForm() {
           Change phone number
         </button>
       )}
+
+      {/* Sign-up escape hatch */}
+      {!otpSent && (
+        <p className="text-center text-sm text-gray-500 pt-2">
+          Don&apos;t have an account?{" "}
+          <a href="/onboarding" className="text-[#145B10] font-semibold underline underline-offset-2">
+            Sign up
+          </a>
+        </p>
+      )}
     </div>
   )
 }
