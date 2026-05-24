@@ -18,8 +18,13 @@ export interface FilterValues {
   minPrice?: number;
   maxPrice?: number;
   serviceType?: string;
+  availability?: string;
+  location?: string;
+  distanceKm?: number;
   minRating?: number;
 }
+
+const LOCATIONS = ["Kicukiro", "Nyarugenge", "Gasabo", "Kigali", "Remera"];
 
 const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, initialFilters }) => {
   const [filters, setFilters] = useState<FilterValues>(initialFilters);
@@ -88,11 +93,68 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="RESIDENTIAL">Residential</SelectItem>
-                <SelectItem value="COMMERCIAL">Commercial</SelectItem>
-                <SelectItem value="BOTH">Both</SelectItem>
+                <SelectItem value="INDIVIDUAL">Individual</SelectItem>
+                <SelectItem value="AGENCY">Agency</SelectItem>
+                <SelectItem value="COMPANY">Company</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Availability */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-gray-700">Availability</Label>
+            <Select
+              value={filters.availability || "all"}
+              onValueChange={(value) => setFilters({ ...filters, availability: value === "all" ? undefined : value })}
+            >
+              <SelectTrigger className="w-full rounded-xl border-gray-200">
+                <SelectValue placeholder="Any Availability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Availability</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="unavailable">Unavailable</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Area and Distance */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-bold text-gray-700">Area</Label>
+              <Select
+                value={filters.location || "all"}
+                onValueChange={(value) => setFilters({ ...filters, location: value === "all" ? undefined : value })}
+              >
+                <SelectTrigger className="w-full rounded-xl border-gray-200">
+                  <SelectValue placeholder="Any Area" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Area</SelectItem>
+                  {LOCATIONS.map((location) => (
+                    <SelectItem key={location} value={location}>{location}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <Label className="text-sm font-bold text-gray-700">Distance</Label>
+              <Select
+                value={filters.distanceKm?.toString() || "all"}
+                onValueChange={(value) => setFilters({ ...filters, distanceKm: value === "all" ? undefined : Number(value) })}
+              >
+                <SelectTrigger className="w-full rounded-xl border-gray-200">
+                  <SelectValue placeholder="Any Distance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Distance</SelectItem>
+                  <SelectItem value="2">2 km</SelectItem>
+                  <SelectItem value="5">5 km</SelectItem>
+                  <SelectItem value="10">10 km</SelectItem>
+                  <SelectItem value="25">25 km</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Rating */}

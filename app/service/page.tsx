@@ -26,6 +26,9 @@ const ServicePage = () => {
         minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined,
         maxPrice: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined,
         serviceType: searchParams.get("serviceType") || undefined,
+        availability: searchParams.get("availability") || undefined,
+        location: searchParams.get("location") || undefined,
+        distanceKm: searchParams.get("distanceKm") ? Number(searchParams.get("distanceKm")) : undefined,
         minRating: searchParams.get("minRating") ? Number(searchParams.get("minRating")) : undefined,
     });
 
@@ -39,6 +42,9 @@ const ServicePage = () => {
             if (filters.minPrice) params.append("minPrice", filters.minPrice.toString());
             if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString());
             if (filters.serviceType) params.append("serviceType", filters.serviceType);
+            if (filters.availability) params.append("available", filters.availability === "available" ? "true" : "false");
+            if (filters.location) params.append("location", filters.location);
+            if (filters.distanceKm) params.append("distanceKm", filters.distanceKm.toString());
             if (filters.minRating) params.append("minRating", filters.minRating.toString());
 
             const response = await api.get(`/services?${params.toString()}`);
@@ -71,6 +77,9 @@ const ServicePage = () => {
         if (newFilters.minPrice) params.set("minPrice", newFilters.minPrice.toString()); else params.delete("minPrice");
         if (newFilters.maxPrice) params.set("maxPrice", newFilters.maxPrice.toString()); else params.delete("maxPrice");
         if (newFilters.serviceType) params.set("serviceType", newFilters.serviceType); else params.delete("serviceType");
+        if (newFilters.availability) params.set("availability", newFilters.availability); else params.delete("availability");
+        if (newFilters.location) params.set("location", newFilters.location); else params.delete("location");
+        if (newFilters.distanceKm) params.set("distanceKm", newFilters.distanceKm.toString()); else params.delete("distanceKm");
         if (newFilters.minRating) params.set("minRating", newFilters.minRating.toString()); else params.delete("minRating");
         router.push(`/service?${params.toString()}`);
     };
@@ -80,24 +89,31 @@ const ServicePage = () => {
             {/* Header with Back Arrow */}
             <BackButtonHeader text={category || "Services"} backHref="/" />
 
-            {/* Search Bar & Filter Button */}
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1">
+            <div className="rounded-3xl border border-[#DDEDDD] bg-white p-3 shadow-sm">
+                <div className="relative">
                     <Icons.SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#878787]" />
                     <input
                         type="text"
-                        placeholder="Search services..."
-                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl placeholder:text-sm placeholder:text-[#878787] focus:outline-none focus:ring-2 focus:ring-[#145B10]/20 shadow-sm"
+                        placeholder="Search name, service, category, area"
+                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-[#1B2431] outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:bg-white focus:ring-2 focus:ring-[#145B10]/20"
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
                 </div>
-                <button 
-                    onClick={() => setIsFilterModalOpen(true)}
-                    className="p-3 bg-white border border-gray-200 rounded-2xl shadow-sm hover:bg-gray-50 transition-colors"
-                >
-                    <Icons.FilerIcon className="w-5 h-5 fill-[#145B10]" />
-                </button>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7A827A]">Refine results</p>
+                        <p className="truncate text-[12px] text-[#4B554B]">Service type, area, price, availability</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-[#145B10] px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#0F4D0C]"
+                    >
+                        <Icons.FilerIcon className="w-4 h-4 fill-white" />
+                        Filter
+                    </button>
+                </div>
             </div>
 
             {/* Loading State */}

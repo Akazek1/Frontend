@@ -25,6 +25,7 @@ import {
     Star,
     UtensilsCrossed,
     Users,
+    X,
 } from "lucide-react";
 
 import api from "@/lib/axios";
@@ -88,6 +89,8 @@ function ServiceDetailPage() {
     const [submitting, setSubmitting] = useState(false);
     const [hasRequested, setHasRequested] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [isHireModalOpen, setIsHireModalOpen] = useState(false);
+    const [hireNotes, setHireNotes] = useState("");
 
     useEffect(() => {
         async function fetchService() {
@@ -196,21 +199,29 @@ function ServiceDetailPage() {
         user?.id && service && (service.providerId === user.id || service.provider?.id === user.id)
     );
 
-    const handleHireRequest = async () => {
-        if (!service || submitting || hasRequested) return;
+    const openHireModal = () => {
+        if (!service || hasRequested) return;
         if (isOwnService) {
-            const { toast } = await import("react-hot-toast");
             toast.error("You can't book your own service.");
             return;
         }
+        setHireNotes("");
+        setIsHireModalOpen(true);
+    };
+
+    const handleHireSubmit = async () => {
+        if (!service || submitting || hasRequested) return;
         setSubmitting(true);
         try {
-            await api.post("/bookings", { serviceId: service.id });
-            const { toast } = await import("react-hot-toast");
+            await api.post("/bookings", {
+                serviceId: service.id,
+                ...(hireNotes.trim() ? { notes: hireNotes.trim() } : {}),
+            });
             toast.success(`Booking request sent to ${firstName}!`);
             setHasRequested(true);
+            setIsHireModalOpen(false);
+            setHireNotes("");
         } catch (err: any) {
-            const { toast } = await import("react-hot-toast");
             toast.error(err?.response?.data?.message || "Failed to send request.");
         } finally {
             setSubmitting(false);
@@ -681,6 +692,50 @@ function ServiceDetailPage() {
                 />
             )}
 
+            {isHireModalOpen && service && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
+                    <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[#145B10] uppercase tracking-wider">Request to Hire</p>
+                                <h3 className="text-[17px] font-black text-[#1B2431] mt-0.5">{providerName}</h3>
+                                <p className="text-[13px] text-gray-400">{service.title}</p>
+                            </div>
+                            <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div>
+                            <label className="text-[12px] font-semibold text-[#1B2431] block mb-1.5">
+                                Message <span className="text-gray-400 font-normal">(optional)</span>
+                            </label>
+                            <textarea
+                                value={hireNotes}
+                                onChange={(e) => setHireNotes(e.target.value)}
+                                placeholder="Describe what you need, preferred schedule, or any specific requirements…"
+                                rows={3}
+                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30 resize-none"
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }}
+                                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleHireSubmit}
+                                disabled={submitting}
+                                className="flex-1 h-12 rounded-[18px] bg-[#145B10] text-white font-bold text-[13px] hover:bg-[#0F4D0C] shadow-lg shadow-[#145B10]/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Request"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Sticky bottom action bar — constrained to phone container */}
             <div
                 className="fixed bottom-0 left-0 right-0 z-30 mx-auto w-full max-w-[428px] bg-white px-4 py-3"
@@ -700,7 +755,7 @@ function ServiceDetailPage() {
                         {SERVICE_DETAIL_LABELS.message}
                     </button>
                     <button
-                        onClick={() => requireAuth(handleHireRequest, "hire")}
+                        onClick={() => requireAuth(openHireModal, "hire")}
                         disabled={submitting || hasRequested || isOwnService}
                         className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
                         style={{ backgroundColor: isOwnService || hasRequested ? "#9CA3AF" : colors.primary }}

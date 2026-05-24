@@ -16,12 +16,14 @@ import TutorialModal from "@/components/tutorial-modal";
 import { useViewMode } from "@/context/view-mode-context";
 import { useAuth } from "@/hooks/useAuth";
 import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
+import { SlidersHorizontal } from "lucide-react";
 import { colors } from "@/constant/colors";
 
 
 const HomeContent = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [openFiltersOnSearch, setOpenFiltersOnSearch] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const { viewMode } = useViewMode();
@@ -56,12 +58,19 @@ const HomeContent = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setOpenFiltersOnSearch(false);
+    setIsSearching(true);
+  };
+
+  const handleFilterClick = () => {
+    setOpenFiltersOnSearch(true);
     setIsSearching(true);
   };
 
   const handleBack = () => {
     setIsSearching(false);
     setSearchQuery("");
+    setOpenFiltersOnSearch(false);
   };
 
   const headerStyle: React.CSSProperties = isHeaderSticky
@@ -89,17 +98,29 @@ const HomeContent = () => {
         {isGuest ? <GuestHeader /> : <Header />}
         <ViewModeToggle />
         {!isSearching && (
-          <SearchBar
-            onSearch={handleSearch}
-            placeholder="Search job postings, employers, categories..."
-          />
+          <div className="flex items-center gap-2.5">
+            <SearchBar
+              onSearch={handleSearch}
+              placeholder="Search by provider name, service, category..."
+              className="min-w-0 flex-1"
+            />
+            <button
+              type="button"
+              onClick={handleFilterClick}
+              className="flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#DDE3DD] bg-white px-4 shadow-sm transition active:scale-95 hover:border-[#145B10] hover:bg-[#F1F8F1]"
+              aria-label="Open filters"
+            >
+              <SlidersHorizontal className="h-[18px] w-[18px] text-[#145B10]" />
+              <span className="text-[13px] font-bold text-[#1B2431]">Filter</span>
+            </button>
+          </div>
         )}
       </div>
 
       {/* Scrollable content — banner, categories and cards scroll away and back */}
       <div className="px-3 sm:px-6 pb-24 space-y-5 mt-2">
         {isSearching ? (
-          <SearchResults query={searchQuery} onBack={handleBack} />
+          <SearchResults query={searchQuery} onBack={handleBack} initialFilterOpen={openFiltersOnSearch} />
         ) : viewMode === "employer" ? (
           <>
             <PromoBanner />

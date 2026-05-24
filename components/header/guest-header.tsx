@@ -21,7 +21,7 @@ const GuestHeader: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/onboarding"
+            href="/onboarding?step=login"
             className="rounded-full border border-[#145B10] px-3.5 py-1.5 text-[13px] font-semibold text-[#145B10] hover:bg-[#F1FCEF] transition-colors"
           >
             Log in
