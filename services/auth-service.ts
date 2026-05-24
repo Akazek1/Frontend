@@ -16,6 +16,7 @@ export type UserRole = "WORKER" | "EMPLOYER" | "ADMIN" | "SUB_ADMIN";
 export interface AuthResponse {
   data: {
     token: string;
+    isNewUser?: boolean;
     user: {
       id: string;
       phoneNumber: string;

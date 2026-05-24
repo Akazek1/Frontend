@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
-import { updateUser } from "@/store/slices/auth-slice"
+import { updateUser, setSession } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
 import { toast } from "react-hot-toast"
 import type { AuthResponse, UserRole } from "@/services/auth-service"
@@ -284,7 +284,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       return c.length === 9 ? `250${c}` : c
     })()
 
-    const completeSignupForNewUser = async (user: NonNullable<UserData>) => {
+    const completeSignupForNewUser = async (_user: NonNullable<UserData>) => {
       const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
       const payload: Record<string, unknown> = { firstName: firstName.trim(), roles }
       if (lastName.trim()) payload.lastName = lastName.trim()
@@ -292,13 +292,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       const res = await api.post("/auth/complete-signup", payload, { withCredentials: true })
       const data = res.data?.data || res.data
-      if (data.token) {
-        localStorage.setItem("token", data.token)
-        document.cookie = `token=${data.token}; path=/; max-age=31536000`
-      }
-      const updatedUser = { ...data.user, roles }
-      dispatch(updateUser(updatedUser))
-      localStorage.setItem("user", JSON.stringify(updatedUser))
+      const newUser = { ...data.user, roles }
+      // setSession atomically marks the user as authenticated with the real JWT
+      dispatch(setSession({ user: newUser, token: data.token }))
       return roles
     }
 

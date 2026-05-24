@@ -135,15 +135,24 @@ const authSlice = createSlice({
     },
     updateUser(state, action: PayloadAction<Partial<AuthState["user"]>>) {
       if (state.user) {
-        state.user = {
-          ...state.user,
-          ...action.payload,
-        };
-
-        // Update localStorage too
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(state.user));
-        }
+        state.user = { ...state.user, ...action.payload };
+      } else {
+        state.user = action.payload as AuthState["user"];
+      }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(state.user));
+      }
+    },
+    // Called after complete-signup succeeds — sets real session from a signup-token state
+    setSession(state, action: PayloadAction<{ user: AuthState["user"]; token: string }>) {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(action.payload.user));
+        localStorage.setItem("token", action.payload.token);
+        document.cookie = `token=${action.payload.token}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = "profileComplete=true; path=/; max-age=31536000";
       }
     },
   },
@@ -171,26 +180,37 @@ const authSlice = createSlice({
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
         state.otpSent = false;
         state.phoneNumber = null;
 
-        // Save user and token to localStorage and mirror token into a cookie
-        // so the Next.js middleware can gate protected routes.
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(action.payload.user));
-          localStorage.setItem("token", action.payload.token);
-          document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`;
-          if (action.payload.user?.firstName) {
-            document.cookie = "profileComplete=true; path=/; max-age=31536000";
-          } else {
-            document.cookie = "profileComplete=; path=/; max-age=0";
+        if (action.payload.isNewUser) {
+          // Phone verified but no account yet — hold the signup token only.
+          // isAuthenticated stays false until complete-signup succeeds.
+          state.token = action.payload.token;
+          state.user = null;
+          state.isAuthenticated = false;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", action.payload.token);
+            // 30-min cookie matches the signup token's own expiry
+            document.cookie = `token=${action.payload.token}; path=/; max-age=1800; SameSite=Lax`;
           }
+        } else {
+          // Returning user — fully authenticated
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(action.payload.user));
+            localStorage.setItem("token", action.payload.token);
+            document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`;
+            if (action.payload.user?.firstName) {
+              document.cookie = "profileComplete=true; path=/; max-age=31536000";
+            } else {
+              document.cookie = "profileComplete=; path=/; max-age=0";
+            }
+          }
+          toast.success("Welcome back!");
         }
-
-        toast.success("OTP verified successfully");
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.isLoading = false;
@@ -228,5 +248,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, setPhoneNumber, updateUser } = authSlice.actions;
+export const { resetAuthState, setPhoneNumber, updateUser, setSession } = authSlice.actions;
 export default authSlice.reducer;
