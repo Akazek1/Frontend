@@ -3,6 +3,7 @@ import { Star, MapPin, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { SERVICE_DETAIL_LABELS } from "@/constant/service-detail";
@@ -58,6 +59,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const router = useRouter();
   const { isBookmarked: isBookmarkedContext, toggleBookmark, isLoading } = useBookmark("services");
   const isServiceBookmarked = isBookmarkedProp !== undefined ? isBookmarkedProp : isBookmarkedContext(id);
+  const { requireAuth } = useRequireAuth();
 
   const handleProfileClick = (e: React.MouseEvent) => {
     if (!handle) return;
@@ -65,14 +67,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     router.push(`/${handle.replace(/^@/, "")}`);
   };
 
-  const handleBookmarkClick = async (e: React.MouseEvent) => {
+  const handleBookmarkClick = (e: React.MouseEvent) => {
     if (isLoading) return;
     e.stopPropagation();
-    if (isServiceBookmarked && onRemoveBookmark) {
-      await onRemoveBookmark();
-    } else {
-      await toggleBookmark(id);
-    }
+    requireAuth(async () => {
+      if (isServiceBookmarked && onRemoveBookmark) {
+        await onRemoveBookmark();
+      } else {
+        await toggleBookmark(id);
+      }
+    }, "bookmark");
   };
 
   const handleHireClick = (e: React.MouseEvent) => {

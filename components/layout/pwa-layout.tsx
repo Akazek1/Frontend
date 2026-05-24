@@ -2,19 +2,24 @@
 import { usePathname } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   usePushNotifications();
 
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
     /^\/[^/]+\/services\/[^/]+$/.test(pathname);
+  const isJobDetail = /^\/jobs\/[^/]+/.test(pathname);
   const shouldHideNavigation =
     hideNavigationPaths.includes(pathname) ||
     pathname.startsWith("/conversations/inbox") ||
-    isServiceDetail;
+    isServiceDetail ||
+    (isJobDetail && !isAuthenticated);
 
   return (
     <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
@@ -22,7 +27,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <main
         className={`flex-1 ${
           shouldHideNavigation
-            ? isServiceDetail
+            ? (isServiceDetail || isJobDetail)
               ? "overflow-y-auto scrollbar-hide"
               : "overflow-hidden"
             : "overflow-y-auto scrollbar-hide pb-24"

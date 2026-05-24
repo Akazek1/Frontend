@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/header/header";
+import GuestHeader from "@/components/header/guest-header";
 import Categories from "@/components/home/category-scroller";
 import PromoBanner from "@/components/home/promo-banner";
 import SearchResults from "@/components/search/search-result";
@@ -13,6 +14,8 @@ import JobPostingsFeed from "@/components/home/job-postings-feed";
 import ViewModeToggle from "@/components/view-mode-toggle";
 import TutorialModal from "@/components/tutorial-modal";
 import { useViewMode } from "@/context/view-mode-context";
+import { useAuth } from "@/hooks/useAuth";
+import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 import { colors } from "@/constant/colors";
 
 
@@ -22,6 +25,8 @@ const HomeContent = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const { viewMode } = useViewMode();
+  const { isAuthenticated } = useAuth();
+  const isGuest = !isAuthenticated && isGuestBrowsingEnabled();
   const searchParams = useSearchParams();
 
   const headerRef = React.useRef<HTMLDivElement>(null);
@@ -88,7 +93,7 @@ const HomeContent = () => {
         className="px-3 sm:px-6 pt-3 pb-3 space-y-3 shadow-sm transition-shadow duration-300"
         style={headerStyle}
       >
-        <Header />
+        {isGuest ? <GuestHeader /> : <Header />}
         <ViewModeToggle />
         {!isSearching && (
           <SearchBar

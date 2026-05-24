@@ -3,11 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import { MapPin, Loader2, Briefcase, Bookmark, Zap, Star, Clock } from "lucide-react";
+import { MapPin, Loader2, Briefcase, Zap, Star, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import jobsService from "@/services/jobs-service";
 import type { RootState } from "@/store";
 import { getCategoryIcon } from "@/constant/category-icons";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface JobPost {
   id: string;
@@ -69,6 +70,7 @@ const JobPostingsFeed: React.FC = () => {
   const [isApplying, setIsApplying]         = useState<string | null>(null);
   const user         = useSelector((state: RootState) => state.auth.user);
   const router       = useRouter();
+  const { requireAuth } = useRequireAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -83,7 +85,8 @@ const JobPostingsFeed: React.FC = () => {
             if (Array.isArray(myApps))
               setAppliedJobIds(new Set(myApps.map((a: any) => a.jobId)));
           } catch (e: any) {
-            if (e.response?.status !== 403) console.error(e);
+            const status = e.response?.status
+            if (status !== 401 && status !== 403) console.error(e);
           }
         }
 
@@ -178,7 +181,11 @@ const JobPostingsFeed: React.FC = () => {
           : `${job.poster.firstName} ${job.poster.lastName}`.trim() || "Private Employer";
 
         return (
-          <div key={job.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2">
+          <div
+            key={job.id}
+            onClick={() => router.push(`/jobs/${job.id}`)}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2 cursor-pointer hover:border-[#145B10]/30 hover:shadow-md transition-all group"
+          >
 
             {/* ── Row 1: icon | title + badges ── */}
             <div className="flex items-start gap-3">
@@ -246,7 +253,7 @@ const JobPostingsFeed: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => handleExpress(job.id)}
+                  onClick={() => requireAuth(() => handleExpress(job.id), "apply", `/jobs/${job.id}`)}
                   disabled={!!isApplying}
                   className="flex items-center justify-center gap-1.5 min-w-[128px] py-2 rounded-full text-[12px] font-bold bg-[#145B10] text-white hover:bg-[#0f4a0c] shadow-sm transition-all active:scale-95"
                 >

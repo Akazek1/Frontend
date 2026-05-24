@@ -1,47 +1,32 @@
 "use client"
 
 import React from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import { OnboardingProvider, useOnboarding } from "@/context/onboarding-context"
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout"
-import { IntroSlide } from "@/components/onboarding/IntroSlide"
 import { RoleSelection } from "@/components/onboarding/RoleSelection"
-import { PhoneNumberEntry } from "@/components/onboarding/PhoneNumberEntry"
-import { OTPVerification } from "@/components/onboarding/OTPVerification"
-import { BasicInfoForm } from "@/components/onboarding/BasicInfoForm"
+import { SignupForm } from "@/components/onboarding/SignupForm"
+import { LoginForm } from "@/components/onboarding/LoginForm"
 import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
 import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 
-const OTP_LENGTH = 6
+// Steps 4 and 5 manage their own full-screen layout
+const FULL_SCREEN_STEPS = [4, 5]
 
 function OnboardingContent() {
   const {
     currentStep,
-    handleNext,
     handleBack,
     handleDocumentUpload,
     handleCategoriesSelected,
     isLoading,
-    code,
-    firstName,
-    selectedRoles,
   } = useOnboarding()
-
-  const componentSteps = [5, 6]
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0:
-        return <IntroSlide />
-      case 1:
-        return <RoleSelection />
-      case 2:
-        return <PhoneNumberEntry />
-      case 3:
-        return <OTPVerification />
+      case 0: return <RoleSelection />
+      case 1: return <SignupForm />
+      case 2: return <LoginForm />
       case 4:
-        return <BasicInfoForm />
-      case 5:
         return (
           <DocumentUploadStep
             onUploadSuccess={handleDocumentUpload}
@@ -49,7 +34,7 @@ function OnboardingContent() {
             isLoading={isLoading}
           />
         )
-      case 6:
+      case 5:
         return (
           <ServiceCategorySelector
             onContinue={handleCategoriesSelected}
@@ -57,91 +42,29 @@ function OnboardingContent() {
             isLoading={isLoading}
           />
         )
-      default:
-        return null
+      default: return null
     }
   }
 
-  const getButtonText = () => {
-    if (currentStep === 1) return "Continue"
-    if (currentStep === 2) return "Send OTP"
-    if (currentStep === 3) return "Verify"
-    if (currentStep === 4) return "Continue"
-    if (componentSteps.includes(currentStep)) return ""
-    return "Next"
+  // Steps 4 and 5: full-screen, manage their own layout
+  if (FULL_SCREEN_STEPS.includes(currentStep)) {
+    return (
+      <OnboardingLayout>
+        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
+          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
+            {renderStep()}
+          </div>
+        </div>
+      </OnboardingLayout>
+    )
   }
 
+  // Steps 0, 1, 2: self-contained — manage their own buttons, scroll, and OTP
   return (
     <OnboardingLayout>
-      {componentSteps.includes(currentStep) ? (
-        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
-          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            {renderStep()}
-          </div>
-        </div>
-      ) : currentStep === 4 ? (
-        <div className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center">
-          <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-            {renderStep()}
-            <div className="mt-auto space-y-3">
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNext()
-                }}
-                type="button"
-                className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
-                disabled={isLoading || !firstName.trim()}
-              >
-                {isLoading ? "Please wait..." : getButtonText()}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleBack()
-                }}
-                type="button"
-                className="w-full bg-white text-[#1B5E20] border-2 border-[#1B5E20] py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "-100%", opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="absolute bottom-32 w-full h-full px-4 sm:px-6 flex flex-col justify-center items-center"
-          >
-            <div className="flex flex-col absolute bottom-0 space-y-8 sm:space-y-[56px] w-full px-4 sm:px-6">
-              {renderStep()}
-              <div className="mt-auto">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleNext()
-                  }}
-                  type="button"
-                  className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
-                  disabled={
-                    isLoading ||
-                    (currentStep === 3 && code.join("").length < OTP_LENGTH) ||
-                    (currentStep === 1 && selectedRoles.length === 0) ||
-                    (currentStep === 4 && !firstName.trim())
-                  }
-                >
-                  {isLoading ? "Please wait..." : getButtonText()}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
+      <div className="h-full overflow-y-auto">
+        {renderStep()}
+      </div>
     </OnboardingLayout>
   )
 }

@@ -1,66 +1,96 @@
 "use client"
 
 import Image from "next/image"
-import GreenAppIcon from "@/public/svg/green-app-icon.svg"
+import { Phone } from "lucide-react"
 import { useOnboarding } from "@/context/onboarding-context"
 
 export function PhoneNumberEntry() {
-  const { phoneNumber, handlePhoneChange, handleSendOtp, isReturningUser } = useOnboarding()
-
-  const imageUrl =
-    "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=800"
-  const imageWrapper = "p-5 bg-[#F1FCEF] rounded-full"
+  const {
+    phoneNumber,
+    handlePhoneChange,
+    handleSendOtp,
+    termsAccepted,
+    setTermsAccepted,
+  } = useOnboarding()
 
   return (
-    <div>
-      <div className="mb-2">
-        <div className="text-[#1B5E20] flex items-center justify-center text-4xl font-serif">
-          <GreenAppIcon className="w-12 h-14 sm:w-16 sm:h-20" />
+    <div className="w-full">
+      {/* Icon header */}
+      <div className="flex justify-center mb-6">
+        <div className="p-4 bg-[#F1FCEF] rounded-2xl">
+          <Phone className="w-8 h-8 text-[#145B10]" strokeWidth={1.5} />
         </div>
       </div>
-      <div className={`${imageWrapper} flex items-center justify-between w-max mx-auto mb-6 sm:mb-10`}>
-        <Image
-          height={400}
-          width={400}
-          src={imageUrl}
-          alt="Phone entry"
-          className="w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] object-cover rounded-full"
-        />
-      </div>
-      <div className="flex items-center border border-black rounded-xl overflow-hidden w-full">
-        <div className="flex items-center gap-2 pl-3 pr-5 py-3 sm:py-4 border-r border-black">
+
+      <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">
+        What's your number?
+      </h2>
+      <p className="text-sm text-gray-500 text-center mb-6">
+        We'll send a verification code to confirm it's you
+      </p>
+
+      {/* Phone input */}
+      <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden w-full mb-4 focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20 transition-all">
+        <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
           <Image
             height={40}
             width={40}
             src="https://flagcdn.com/w40/rw.png"
-            alt="Rwanda Flag"
+            alt="Rwanda"
             className="w-6 h-4 object-cover rounded-sm"
           />
-          <span className="text-[#212121] font-semibold text-sm">+250</span>
+          <span className="text-gray-700 font-semibold text-sm">+250</span>
         </div>
         <input
           type="tel"
           inputMode="numeric"
-          placeholder="Phone Number"
+          placeholder="Phone number"
           value={phoneNumber}
           onChange={(e) => handlePhoneChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && phoneNumber.length >= 9) {
-              handleSendOtp()
-            }
+            if (e.key === "Enter" && phoneNumber.length >= 9) handleSendOtp()
           }}
-          className="px-4 py-3 sm:py-4 w-full text-[#212121] font-semibold placeholder:text-[#212121] placeholder:font-semibold placeholder:text-sm
-              border-none focus:outline-none focus:ring-0 focus:border-transparent
-              active:outline-none active:ring-0 active:border-transparent shadow-none"
+          className="px-4 py-3 sm:py-4 w-full text-gray-900 font-semibold placeholder:text-gray-400 placeholder:font-normal
+            border-none focus:outline-none focus:ring-0 shadow-none bg-transparent"
           autoFocus
           maxLength={10}
         />
       </div>
-      {isReturningUser && (
-        <p className="text-sm text-[#145B10] mt-2 text-center">
-          Welcome back! Enter the OTP to continue.
-        </p>
-      )}
+
+      {/* T&C checkbox — required */}
+      <label className="flex items-start gap-3 cursor-pointer select-none">
+        <div className="relative mt-0.5 shrink-0">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="sr-only"
+          />
+          <div
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+              termsAccepted
+                ? "bg-[#145B10] border-[#145B10]"
+                : "bg-white border-gray-300"
+            }`}
+          >
+            {termsAccepted && (
+              <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+        </div>
+        <span className="text-sm text-gray-500 leading-relaxed">
+          I have read and agree to the{" "}
+          <a href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+            Privacy Policy
+          </a>
+        </span>
+      </label>
     </div>
   )
 }

@@ -11,6 +11,7 @@ import { Provider, Service } from "@/types";
 import { getBookingType, getProviderHandle, getServiceCardImage } from "@/lib/service-display";
 import APP_CONFIG from "@/constant/app.config";
 import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface HireModal {
   serviceId: string;
@@ -26,6 +27,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
   const { user } = useAuth();
   const currentUserId = user?.id;
+  const { requireAuth } = useRequireAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,11 +179,11 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                       return;
                     }
                     if (requestedServiceIds.has(provider.id)) return;
-                    setHireModal({
+                    requireAuth(() => setHireModal({
                       serviceId: provider.id,
                       providerName: provider.name,
                       serviceTitle: provider.title,
-                    });
+                    }), "hire");
                   }}
                   {...provider}
                   hasRequested={requestedServiceIds.has(provider.id)}

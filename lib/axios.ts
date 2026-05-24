@@ -2,16 +2,7 @@ import axios from "axios";
 import { getAuthToken } from "@/lib/auth-utils";
 
 // Determine the API base URL
-let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-// If running in browser and accessing localhost on a non-localhost origin, use the current host
-if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  const hostname = window.location.hostname;
-  // If page is accessed from a non-localhost IP/hostname, redirect API calls there too
-  if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-    baseURL = `http://${hostname}:3001`;
-  }
-}
+let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
 
 const api = axios.create({
   baseURL,
@@ -49,12 +40,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 errors (unauthorized) - token expired
+    // Handle 401 errors (unauthorized) - token expired.
+    // Only treat this as an expired session if a token actually existed.
+    // A guest (no token) browsing public pages may hit an authed endpoint
+    // and get a 401 — that must NOT bounce them to onboarding; let the
+    // calling component handle it quietly.
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+      const hadToken = !!getAuthToken();
 
       try {
-        if (typeof window !== "undefined") {
+        if (hadToken && typeof window !== "undefined") {
           localStorage.removeItem("token");
           document.cookie =
             "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

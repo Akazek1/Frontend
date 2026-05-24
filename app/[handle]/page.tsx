@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { useParams, notFound } from "next/navigation";
+import { Loader2, Flag } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Service } from "@/types";
@@ -11,6 +11,9 @@ import { AboutMe } from "@/components/profile/about-me";
 import { PersonalInfo } from "@/components/profile/personal-info";
 import { WhyClientsChooseMe } from "@/components/profile/why-clients-choose-me";
 import { ServicesGrid } from "@/components/profile/services-grid";
+import { ReportModal } from "@/components/provider/report-modal";
+import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 type AddressLite = {
   street?: string;
@@ -55,6 +58,11 @@ export default function HandleProfilePage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUserNotFound, setIsUserNotFound] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
+  const { user } = useAuth();
+  const { requireAuth } = useRequireAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -86,11 +94,15 @@ export default function HandleProfilePage() {
           setError(null);
         }
       } catch (err) {
-        const e = err as { response?: { data?: { message?: string } }; message?: string };
-        const message = e?.response?.data?.message || e?.message || "Profile not found";
-        if (!cancelled) {
-          setError(message);
-          toast.error(message);
+        const e = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+        if (e?.response?.status === 404) {
+          if (!cancelled) setIsUserNotFound(true);
+        } else {
+          const message = e?.response?.data?.message || e?.message || "Profile not found";
+          if (!cancelled) {
+            setError(message);
+            toast.error(message);
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -111,6 +123,8 @@ export default function HandleProfilePage() {
     );
   }
 
+  if (isUserNotFound) notFound();
+
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-[#FAFCF9] p-6">
@@ -123,6 +137,10 @@ export default function HandleProfilePage() {
   const addr = profile.addresses?.[0];
   const homeLocation = formatLocation(addr);
   const availableToday = (profile.availability?.length || 0) > 0;
+
+  // Owner = logged-in user viewing their own profile
+  const isOwner = !!(user?.id && profile.id && user.id === profile.id);
+  const displayName = profile.firstName || name;
 
   return (
     <div className="min-h-screen bg-[#FAFCF9] pb-8">
@@ -138,6 +156,7 @@ export default function HandleProfilePage() {
         country={addr?.country}
         languages={profile.languages}
         memberSince={profile.createdAt}
+        isOwner={isOwner}
       />
 
       <AboutMe bio={profile.bio} />
@@ -154,6 +173,28 @@ export default function HandleProfilePage() {
       <WhyClientsChooseMe qualities={profile.topQualities} roles={profile.roles} />
 
       <ServicesGrid services={services} />
+
+      {/* Report — only visible to other users, not the profile owner */}
+      {!isOwner && (
+        <div className="px-4 pt-6 pb-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => requireAuth(() => setIsReportOpen(true), "report")}
+            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            Report {displayName}
+          </button>
+        </div>
+      )}
+
+      {isReportOpen && (
+        <ReportModal
+          targetId={profile.id}
+          targetName={displayName}
+          onClose={() => setIsReportOpen(false)}
+        />
+      )}
     </div>
   );
 }

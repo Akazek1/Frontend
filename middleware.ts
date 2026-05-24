@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 
 export function middleware(request: NextRequest) {
   // Check for token in cookies or Authorization header
@@ -10,25 +11,49 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = !!token;
   const isProfileComplete = request.cookies.get("profileComplete")?.value === "true";
 
+  // Phase 1 redesign: when guest browsing is enabled, the home and the jobs
+  // feed/detail become publicly browseable; everything else stays gated.
+  // When the flag is off, behavior is identical to before.
+  const guestBrowsing = isGuestBrowsingEnabled();
+
   // Protected routes that require authentication
-  const protectedRoutes = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/conversations", "/organization"];
+  const protectedRoutesBase = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/conversations", "/organization", "/post-job", "/received-bookings"];
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/provider"];
+  const publicRoutesBase = ["/provider"];
 
-  const isPublicRoute = publicRoutes.some(
-    (route) => request.nextUrl.pathname.startsWith(route + "/")
-  );
+  const protectedRoutes = protectedRoutesBase;
+  const publicRoutes = publicRoutesBase;
+  const homeProtected = !guestBrowsing;
 
-  const isProtectedRoute = ["/", ...protectedRoutes].some(
+  // Under guest browsing, /jobs/[id] (job detail) is public for browsing,
+  // but /jobs exact (worker dashboard) stays protected.
+  const isJobDetailPublic =
+    guestBrowsing && request.nextUrl.pathname.startsWith("/jobs/");
+
+  const isPublicRoute =
+    isJobDetailPublic ||
+    publicRoutes.some(
+      (route) =>
+        request.nextUrl.pathname === route ||
+        request.nextUrl.pathname.startsWith(route + "/")
+    );
+
+  const protectedRoots = homeProtected ? ["/", ...protectedRoutes] : protectedRoutes;
+
+  const isProtectedRoute = protectedRoots.some(
     (route) =>
       request.nextUrl.pathname === route ||
       request.nextUrl.pathname.startsWith(route + "/")
   ) && !isPublicRoute; // Exclude public routes from protection
 
-  // If trying to access a protected route without being logged in, redirect to onboarding
-  // Store the intended URL so we can redirect back after login
+  // If trying to access a protected route without being logged in:
+  // - Guest browsing ON  → send to home (guest can browse freely; auth gate handles action prompts)
+  // - Guest browsing OFF → send to onboarding with redirect param (original behaviour)
   if (isProtectedRoute && !isAuthenticated) {
+    if (guestBrowsing) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
     const onboardingUrl = new URL("/onboarding", request.url);
     onboardingUrl.searchParams.set("redirect", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(onboardingUrl);
@@ -62,6 +87,9 @@ export const config = {
     "/jobs/:path*",
     "/conversations/:path*",
     "/organization/:path*",
+    "/post-job/:path*",
+    "/post-job",
+    "/received-bookings/:path*",
     "/onboarding",
   ],
 };

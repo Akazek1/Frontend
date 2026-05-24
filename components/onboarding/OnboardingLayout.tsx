@@ -8,8 +8,6 @@ import { useOnboarding } from "@/context/onboarding-context"
 import { useSearchParams } from "next/navigation"
 import { getAuthToken } from "@/lib/auth-utils"
 
-const ONBOARDING_STEPS_COUNT = 7
-
 interface OnboardingLayoutProps {
   children: React.ReactNode
 }
@@ -20,8 +18,8 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     setShowSplash,
     currentStep,
     setCurrentStep,
-    verifiedUser,
     setVerifiedUser,
+    setSelectedRoles,
   } = useOnboarding()
 
   const searchParams = useSearchParams()
@@ -32,28 +30,31 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     const storedUserRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null
     let storedUser: any = null
     if (storedUserRaw && storedUserRaw !== "undefined" && storedUserRaw !== "null") {
-      try {
-        storedUser = JSON.parse(storedUserRaw)
-      } catch {
-        // ignore parse errors
-      }
+      try { storedUser = JSON.parse(storedUserRaw) } catch { /* ignore */ }
     }
     const profileIncomplete = !!token && (!storedUser?.firstName || !storedUser.firstName.trim())
 
     if (stepParam === "complete-profile" || profileIncomplete) {
       if (storedUser) setVerifiedUser(storedUser)
       setShowSplash(false)
-      setCurrentStep(4)
+      setCurrentStep(1) // name step (collected before phone now)
+      return
+    }
+
+    if (stepParam === "login") {
+      setSelectedRoles(["EMPLOYER"]) // default role for login mode
+      setShowSplash(false)
+      setCurrentStep(2) // skip role + name, go straight to phone
       return
     }
 
     const timer = setTimeout(() => {
       setShowSplash(false)
-      setCurrentStep(0)
+      setCurrentStep(0) // role selection
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser])
+  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser, setSelectedRoles])
 
   if (showSplash) {
     return (
@@ -73,26 +74,21 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
+  // Progress dot only for signup form (step 1) — step 0 has its own rich layout
+  const showProgress = currentStep === 1
+
   return (
     <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
-      {/* Main content */}
       <div className="h-full">
         {children}
       </div>
 
-      {/* Progress indicator at bottom */}
-      <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
-        {Array.from({ length: ONBOARDING_STEPS_COUNT }).map((_, index) => (
-          <div
-            key={index}
-            className={`h-2 rounded-full ${
-              index === currentStep
-                ? "bg-[#1B5E20] w-6 sm:w-8 transition-all duration-300"
-                : "bg-[#E0E0E0] w-2"
-            }`}
-          />
-        ))}
-      </div>
+      {showProgress && (
+        <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
+          {/* Single active dot — shows on signup form only */}
+          <div className="h-2 w-6 sm:w-8 rounded-full bg-[#1B5E20]" />
+        </div>
+      )}
     </div>
   )
 }

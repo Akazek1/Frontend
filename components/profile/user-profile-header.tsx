@@ -3,13 +3,14 @@
 import {
   ArrowLeft,
   Upload,
-  MoreHorizontal,
+  Pencil,
   ShieldCheck,
   MapPin,
   MessageSquare,
   Calendar,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
@@ -26,6 +27,7 @@ export interface UserProfileHeaderProps {
   country?: string;
   languages?: string[];
   memberSince?: string;
+  isOwner?: boolean;
 }
 
 const formatMonth = (iso?: string) => {
@@ -50,6 +52,7 @@ export function UserProfileHeader({
   country,
   languages = [],
   memberSince,
+  isOwner = false,
 }: UserProfileHeaderProps) {
   const router = useRouter();
   const idVerified = governmentIdStatus === "APPROVED";
@@ -68,7 +71,7 @@ export function UserProfileHeader({
 
   return (
     <section className="px-4 pt-4 pb-2">
-      {/* Top bar: back, share, overflow */}
+      {/* Top bar: back, share, and either Edit (owner) or nothing (visitor) */}
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
@@ -87,13 +90,16 @@ export function UserProfileHeader({
           >
             <Upload className="w-5 h-5 text-[#1B2431]" />
           </button>
-          <button
-            type="button"
-            className="p-2 rounded-full hover:bg-gray-100"
-            aria-label="More options"
-          >
-            <MoreHorizontal className="w-5 h-5 text-[#1B2431]" />
-          </button>
+          {isOwner && (
+            <Link
+              href="/profile"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#145B10] text-[#145B10] text-[13px] font-semibold hover:bg-[#F1FCEF] transition-colors"
+              aria-label="Edit profile"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit
+            </Link>
+          )}
         </div>
       </div>
 

@@ -16,6 +16,7 @@ export type UserRole = "WORKER" | "EMPLOYER" | "ADMIN" | "SUB_ADMIN";
 export interface AuthResponse {
   data: {
     token: string;
+    isNewUser?: boolean;
     user: {
       id: string;
       phoneNumber: string;
@@ -55,21 +56,11 @@ const authService = {
     }
   },
 
-  // Verify OTP
+  // Verify OTP — token storage is handled entirely by the Redux slice
+  // (which knows whether to use 30-min expiry for signup tokens or 1-day for real sessions)
   verifyOtp: async (data: VerifyOtpRequest): Promise<AuthResponse["data"]> => {
     try {
       const response = await api.post<AuthResponse>("/auth/verify-otp", data);
-
-      // Store token in localStorage and cookie
-      if (response.data.data?.token) {
-        const token = response.data.data.token;
-        localStorage.setItem("token", token);
-        document.cookie = `token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-      } else {
-        console.warn("Token not found in response:", response.data);
-      }
-
-      // ✅ Return only the relevant data: { token, user }
       return response.data.data;
     } catch (error) {
       console.error("Error in verifyOtp service:", error);

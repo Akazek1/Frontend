@@ -3,24 +3,27 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { 
-  CalendarDays, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  CheckCircle2, 
-  Loader2, 
+import { ReportModal } from "@/components/provider/report-modal";
+import {
+  CalendarDays,
+  MapPin,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  Loader2,
   User,
   ShieldCheck,
   Check,
   X,
   Briefcase,
   Sparkles,
-  Timer
+  Timer,
+  Flag,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
@@ -35,7 +38,9 @@ const JobDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmHire, setConfirmHire] = useState<{ appId: string; workerName: string } | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
+  const { requireAuth } = useRequireAuth();
   const isOwner = user?.id === job?.employerId;
 
   useEffect(() => {
@@ -50,10 +55,15 @@ const JobDetailPage = () => {
           const apps = await jobsService.getApplicationsForJob(id as string);
           setApplications(apps);
         }
-      } catch (err) {
-        console.error("Failed to fetch job details:", err);
-        toast.error("Job not found");
-        router.push("/jobs");
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          // Not authenticated — send to login, then come back
+          router.push(`/onboarding?step=login&redirect=/jobs/${id}`);
+        } else {
+          console.error("Failed to fetch job details:", err);
+          toast.error("Job not found");
+          router.push("/jobs");
+        }
       } finally {
         setLoading(false);
       }
@@ -115,7 +125,7 @@ const JobDetailPage = () => {
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
       {/* Premium Header */}
       <div className="bg-white px-6 pt-10 pb-6 rounded-b-[40px] shadow-sm border-b border-gray-100 sticky top-0 z-20">
-        <BackButtonHeader text="Job Detail" backHref="/jobs" />
+        <BackButtonHeader text="Job Detail" fallbackHref="/jobs" />
         <p className="text-[12px] text-gray-400 font-medium mt-1 ml-10">Review job requirements and applicants</p>
       </div>
 
@@ -308,6 +318,29 @@ const JobDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Report — only visible to non-owners */}
+      {!isOwner && (
+        <div className="px-4 pt-2 pb-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => requireAuth(() => setIsReportOpen(true), "report")}
+            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            Report this job
+          </button>
+        </div>
+      )}
+
+      {/* Report modal */}
+      {isReportOpen && job && (
+        <ReportModal
+          targetId={job.employerId}
+          targetName={`${job.employer.firstName} ${job.employer.lastName}`}
+          onClose={() => setIsReportOpen(false)}
+        />
+      )}
 
       {/* Hire confirmation modal */}
       {confirmHire && (

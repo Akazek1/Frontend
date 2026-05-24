@@ -10,26 +10,24 @@ interface PageProp {
   text: string;
   className?: string | undefined;
   backHref?: string; // Optional: explicit back URL. If not provided, uses browser history (router.back())
+  fallbackHref?: string; // Where to go if no browser history (defaults to /more)
 }
 
 const BackButtonHeader: React.FC<PageProp> = ({
   text,
   className,
   backHref,
+  fallbackHref = "/more",
 }) => {
   const router = useRouter();
 
-  // Smart back behavior:
-  // - If backHref is provided, use it as a Link (allows right-click "Open in new tab")
-  // - Otherwise, use browser history via router.back() with a fallback to /more
   const handleBackClick = (e: React.MouseEvent) => {
     if (!backHref) {
       e.preventDefault();
-      // Try browser history first; fallback to /more if no history
       if (window.history.length > 1) {
         router.back();
       } else {
-        router.push("/more");
+        router.push(fallbackHref);
       }
     }
   };
