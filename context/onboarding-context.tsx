@@ -384,7 +384,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const updated = (res.data as any)?.data || res.data
 
       await api.post("/users/role-selection", { roles }, { withCredentials: true })
-      await api.patch("/users/complete-onboarding", { role: "EMPLOYER" }, { withCredentials: true })
+      await api.patch("/users/complete-onboarding", { role: roles[0] }, { withCredentials: true })
 
       const updatedUser = {
         ...verifiedUser,
