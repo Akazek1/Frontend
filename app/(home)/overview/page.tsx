@@ -38,27 +38,20 @@ const HomeContent = () => {
     }
   }, [searchParams]);
 
-  // Handle sticky header with scroll
+  // Handle sticky header with scroll — registered once, avoids re-registration on state change
   useEffect(() => {
     const mainElement = document.querySelector("main") as HTMLElement;
     if (!mainElement) return;
 
     const handleScroll = () => {
       if (!headerRef.current) return;
-
-      const scrollTop = mainElement.scrollTop;
-      const shouldBeSticky = scrollTop > 30;
-      
-      if (shouldBeSticky && !isHeaderSticky) {
-        setIsHeaderSticky(true);
-      } else if (!shouldBeSticky && isHeaderSticky) {
-        setIsHeaderSticky(false);
-      }
+      const shouldBeSticky = mainElement.scrollTop > 30;
+      setIsHeaderSticky((prev) => (prev === shouldBeSticky ? prev : shouldBeSticky));
     };
 
     mainElement.addEventListener("scroll", handleScroll);
     return () => mainElement.removeEventListener("scroll", handleScroll);
-  }, [isHeaderSticky]);
+  }, []);
 
 
   const handleSearch = (query: string) => {

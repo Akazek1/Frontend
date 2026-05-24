@@ -41,24 +41,10 @@ export default function Categories() {
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get("/services");
-      const services = response.data.data;
-
-      const seen = new Set<string>();
-      const apiCategories: Category[] = [];
-
-      interface Service {
-        category: { name: string } | string;
-      }
-
-      services.forEach((service: Service) => {
-        const title =
-          typeof service.category === "object" ? service.category.name : service.category;
-        if (title && !seen.has(title)) {
-          seen.add(title);
-          apiCategories.push({ title });
-        }
-      });
+      const response = await api.get("/services/categories");
+      const apiCategories: Category[] = (response.data.data || []).map(
+        (cat: { name: string }) => ({ title: cat.name })
+      );
 
       // Merge API categories first, then append fallbacks not already covered
       const merged = [...apiCategories];

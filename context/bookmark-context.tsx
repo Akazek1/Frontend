@@ -1,6 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -11,6 +10,7 @@ interface BookmarkContextType {
     toggleBookmark: (itemId: string, itemType: string) => Promise<void>;
     isBookmarked: (itemId: string) => boolean;
     isLoading: boolean;
+    loadBookmarks: () => void;
 }
 
 const BookmarkContext = createContext<BookmarkContextType | undefined>(undefined);
@@ -23,32 +23,30 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
     const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [bookingsFetched, setBookingsFetched] = useState<boolean>(false);
-    const pathname = usePathname();
+    const fetchingRef = useRef(false);
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
-    useEffect(() => {
-        const fetchBookmarks = async () => {
-            try {
-                const response = await api.get("/bookmarks/services", { withCredentials: true });
-                type Bookmark = { serviceId?: string };
-                const bookmarks: Bookmark[] = Array.isArray(response.data.data)
-                    ? response.data.data
-                    : [];
-                const ids = new Set(
-                    bookmarks
-                        .filter((bookmark: Bookmark) => bookmark.serviceId && typeof bookmark.serviceId === "string")
-                        .map((bookmark: Bookmark) => bookmark.serviceId as string)
-                );
-                setBookingsFetched(true); // Flag to prevent re-fetch
-                setBookmarkedIds(ids);
-            } catch (error) {
-                console.error("Failed to fetch bookmarks:", error);
-                setBookmarkedIds(new Set());
-            }
-        };
-
-        if (isAuthenticated && !bookingsFetched) {
-            fetchBookmarks();
+    const loadBookmarks = useCallback(async () => {
+        if (!isAuthenticated || bookingsFetched || fetchingRef.current) return;
+        fetchingRef.current = true;
+        try {
+            const response = await api.get("/bookmarks/services", { withCredentials: true });
+            type Bookmark = { serviceId?: string };
+            const bookmarks: Bookmark[] = Array.isArray(response.data.data)
+                ? response.data.data
+                : [];
+            const ids = new Set(
+                bookmarks
+                    .filter((bookmark: Bookmark) => bookmark.serviceId && typeof bookmark.serviceId === "string")
+                    .map((bookmark: Bookmark) => bookmark.serviceId as string)
+            );
+            setBookingsFetched(true);
+            setBookmarkedIds(ids);
+        } catch (error) {
+            console.error("Failed to fetch bookmarks:", error);
+            setBookmarkedIds(new Set());
+        } finally {
+            fetchingRef.current = false;
         }
     }, [isAuthenticated, bookingsFetched]);
 
@@ -85,7 +83,7 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
     const isBookmarked = useCallback((itemId: string) => bookmarkedIds.has(itemId), [bookmarkedIds]);
 
     return (
-        <BookmarkContext.Provider value={{ bookmarkedIds, toggleBookmark, isBookmarked, isLoading }}>
+        <BookmarkContext.Provider value={{ bookmarkedIds, toggleBookmark, isBookmarked, isLoading, loadBookmarks }}>
             {children}
         </BookmarkContext.Provider>
     );
@@ -97,7 +95,11 @@ export const useBookmark = (itemType: string = "services") => {
         throw new Error("useBookmark must be used within a BookmarkProvider");
     }
 
-    const { toggleBookmark, isBookmarked, isLoading } = context;
+    const { toggleBookmark, isBookmarked, isLoading, loadBookmarks } = context;
+
+    useEffect(() => {
+        loadBookmarks();
+    }, [loadBookmarks]);
 
     const toggle = (itemId: string) => toggleBookmark(itemId, itemType);
 
