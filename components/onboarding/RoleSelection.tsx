@@ -1,13 +1,10 @@
 "use client"
 
-import { Shield, MessageSquare, Star, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
+import { Shield, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useOnboarding } from "@/context/onboarding-context"
 
 type Role = "EMPLOYER" | "WORKER"
-
-const EMPLOYER_TAGS = ["Cleaning", "Childcare", "Cooking", "Repairs"]
-const WORKER_TAGS = ["Find jobs", "Earn income", "Offer services"]
 
 export function RoleSelection() {
   const { selectedRoles, setSelectedRoles, setCurrentStep } = useOnboarding()
@@ -84,7 +81,7 @@ export function RoleSelection() {
       </div>
 
       {/* ── Content ── */}
-      <div className="px-4 pt-4 pb-28 space-y-3">
+      <div className="px-4 pt-4 pb-8 space-y-3">
 
         {/* Section heading */}
         <div className="text-center py-2">
@@ -126,15 +123,6 @@ export function RoleSelection() {
                 Find and hire reliable workers for your home and family.
               </p>
 
-              {/* Service tags */}
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {EMPLOYER_TAGS.map(tag => (
-                  <span key={tag} className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
               {/* Trust badge */}
               <div className="flex items-center gap-1">
                 <Shield className="w-3 h-3 text-[#2E7D32]" />
@@ -174,15 +162,6 @@ export function RoleSelection() {
                 Offer your services, find jobs and earn income.
               </p>
 
-              {/* Service tags */}
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {WORKER_TAGS.map(tag => (
-                  <span key={tag} className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
               {/* Value prop */}
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-3 h-3 text-[#D97706]" />
@@ -209,22 +188,6 @@ export function RoleSelection() {
             Register now ›
           </span>
         </button>
-
-        {/* ── Feature highlights ── */}
-        <div className="bg-gray-50 rounded-2xl p-3 grid grid-cols-3 divide-x divide-gray-200">
-          <div className="flex flex-col items-center gap-1.5 pr-2">
-            <Shield className="w-5 h-5 text-[#2E7D32]" />
-            <p className="text-[10px] text-gray-500 text-center leading-tight">Verified users for your safety</p>
-          </div>
-          <div className="flex flex-col items-center gap-1.5 px-2">
-            <MessageSquare className="w-5 h-5 text-[#2E7D32]" />
-            <p className="text-[10px] text-gray-500 text-center leading-tight">Direct messaging inside the app</p>
-          </div>
-          <div className="flex flex-col items-center gap-1.5 pl-2">
-            <Star className="w-5 h-5 text-[#2E7D32]" />
-            <p className="text-[10px] text-gray-500 text-center leading-tight">Fair and transparent</p>
-          </div>
-        </div>
 
         {/* ── Login link ── */}
         <p className="text-center text-sm text-gray-500 pt-1">

@@ -85,7 +85,8 @@ const JobPostingsFeed: React.FC = () => {
             if (Array.isArray(myApps))
               setAppliedJobIds(new Set(myApps.map((a: any) => a.jobId)));
           } catch (e: any) {
-            if (e.response?.status !== 403) console.error(e);
+            const status = e.response?.status
+            if (status !== 401 && status !== 403) console.error(e);
           }
         }
 

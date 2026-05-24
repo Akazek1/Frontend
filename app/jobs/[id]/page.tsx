@@ -55,10 +55,15 @@ const JobDetailPage = () => {
           const apps = await jobsService.getApplicationsForJob(id as string);
           setApplications(apps);
         }
-      } catch (err) {
-        console.error("Failed to fetch job details:", err);
-        toast.error("Job not found");
-        router.push("/jobs");
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          // Not authenticated — send to login, then come back
+          router.push(`/onboarding?step=login&redirect=/jobs/${id}`);
+        } else {
+          console.error("Failed to fetch job details:", err);
+          toast.error("Job not found");
+          router.push("/jobs");
+        }
       } finally {
         setLoading(false);
       }
