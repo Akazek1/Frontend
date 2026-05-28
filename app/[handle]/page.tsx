@@ -41,6 +41,7 @@ type UserProfile = {
   createdAt?: string;
   healthStatus?: string;
   preferredWorkTime?: string;
+  educationLevel?: string;
   topQualities?: string[];
   addresses?: AddressLite[];
   availability?: Array<{ id: string; dayOfWeek?: number; startTime?: string; endTime?: string }>;
@@ -168,6 +169,7 @@ export default function HandleProfilePage() {
         homeLocation={homeLocation}
         healthStatus={profile.healthStatus}
         preferredWorkTime={profile.preferredWorkTime}
+        educationLevel={profile.educationLevel}
       />
 
       <WhyClientsChooseMe qualities={profile.topQualities} roles={profile.roles} />

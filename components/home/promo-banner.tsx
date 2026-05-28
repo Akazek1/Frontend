@@ -16,6 +16,17 @@ export interface HeroSlide {
   bgColor: string;
 }
 
+interface ApiBanner {
+  id: string;
+  title: string | null;
+  subtitle: string | null;
+  imageUrl: string;
+  ctaText: string | null;
+  ctaLink: string | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
 const defaultSlides: HeroSlide[] = [
   {
     id: "default",
@@ -31,13 +42,52 @@ const defaultSlides: HeroSlide[] = [
   },
 ];
 
+function apiBannersToSlides(banners: ApiBanner[]): HeroSlide[] {
+  const active = banners
+    .filter((b) => b.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  if (!active.length) return defaultSlides;
+  return active.map((b) => ({
+    id: b.id,
+    trustBadges: [],
+    headlineBefore: "",
+    headlineHighlight: b.title || "",
+    headlineAfter: "",
+    subtitle: b.subtitle || "",
+    primaryCta: { label: b.ctaText || "Learn More", href: b.ctaLink || "/" },
+    secondaryCta: { label: "Browse Services", href: "/service?category=all" },
+    image: b.imageUrl,
+    bgColor: "#F0FAF0",
+  }));
+}
+
+function useDynamicBanners(): HeroSlide[] {
+  const [slides, setSlides] = useState<HeroSlide[]>(defaultSlides);
+  useEffect(() => {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+    fetch(`${baseURL}/admin/banners`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (!json) return;
+        const banners: ApiBanner[] = json?.data ?? json;
+        if (Array.isArray(banners) && banners.length) {
+          setSlides(apiBannersToSlides(banners));
+        }
+      })
+      .catch(() => {});
+  }, []);
+  return slides;
+}
+
 const AUTOPLAY_INTERVAL = 4000;
 
 interface PromoBannerProps {
   slides?: HeroSlide[];
 }
 
-const PromoBanner: React.FC<PromoBannerProps> = ({ slides = defaultSlides }) => {
+const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
+  const dynamicSlides = useDynamicBanners();
+  const slides = propSlides ?? dynamicSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [animating, setAnimating] = useState(false);

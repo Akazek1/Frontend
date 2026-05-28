@@ -1,35 +1,35 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, Briefcase, Calendar, CheckCircle, Loader2, XCircle } from "lucide-react";
+import { Bell, Briefcase, Calendar, CheckCircle, Loader2, MessageCircle, Star, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { NotificationItem, formatRelativeTime } from "@/hooks/useNotifications";
+import { NotificationItem, formatRelativeTime, getNotificationHref, getNotificationType } from "@/hooks/useNotifications";
 
 const PAGE_SIZE = 20;
 
 function iconForType(type?: string) {
   switch (type) {
     case "NEW_APPLICATION":
+    case "HIRE_REQUEST":
       return Briefcase;
     case "JOB_AWARDED":
       return CheckCircle;
     case "BOOKING_CONFIRMED":
       return Calendar;
     case "BOOKING_CANCELLED":
+    case "APPLICATION_REJECTED":
+    case "JOB_FILLED":
       return XCircle;
+    case "NEW_REVIEW":
+      return Star;
+    case "NEW_MESSAGE":
+      return MessageCircle;
     default:
       return Bell;
   }
-}
-
-function routeFor(n: NotificationItem): string | null {
-  const meta = n.metadata || {};
-  if (meta.bookingId) return `/bookings/${meta.bookingId}`;
-  if (meta.jobId) return `/jobs/${meta.jobId}`;
-  return null;
 }
 
 const NotificationHistoryPage = () => {
@@ -73,7 +73,7 @@ const NotificationHistoryPage = () => {
         console.error(err);
       }
     }
-    const href = routeFor(n);
+    const href = getNotificationHref(n);
     if (href) router.push(href);
   };
 
@@ -115,7 +115,7 @@ const NotificationHistoryPage = () => {
       ) : (
         <div className="space-y-3">
           {items.map((n) => {
-            const Icon = iconForType(n.metadata?.type);
+            const Icon = iconForType(getNotificationType(n));
             const isUnread = !n.readAt;
             return (
               <button

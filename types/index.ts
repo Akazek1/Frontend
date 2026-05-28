@@ -42,6 +42,7 @@ export interface Service {
     gender?: string;
     dateOfBirth?: string;
     bio?: string;
+    educationLevel?: string;
     phoneNumber?: string;
     trustScore?: number;
     createdAt?: string;

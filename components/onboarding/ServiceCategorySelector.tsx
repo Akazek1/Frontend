@@ -33,7 +33,7 @@ export const ServiceCategorySelector = ({
   const loadCategories = async () => {
     try {
       setIsLoadingCategories(true)
-      const response = await api.get("/categories", {
+      const response = await api.get("/services/categories", {
         withCredentials: true,
       })
       // Handle both direct array and wrapped response

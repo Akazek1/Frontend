@@ -44,13 +44,13 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     if (stepParam === "login") {
       setSelectedRoles(["EMPLOYER"]) // default role for login mode
       setShowSplash(false)
-      setCurrentStep(2) // skip role + name, go straight to phone
+      setCurrentStep(2) // LoginForm
       return
     }
 
     const timer = setTimeout(() => {
       setShowSplash(false)
-      setCurrentStep(0) // role selection
+      setCurrentStep(0) // RoleSelection
     }, 500)
 
     return () => clearTimeout(timer)

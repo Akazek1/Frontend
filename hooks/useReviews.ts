@@ -5,7 +5,22 @@ export interface Review {
   id: string
   rating: number
   comment: string
+  reply?: string | null
+  repliedAt?: string | null
+  replyUpdatedAt?: string | null
   user: {
+    id: string
+    firstName: string
+    lastName: string
+    profilePicture?: string
+  }
+  author?: {
+    id: string
+    firstName: string
+    lastName: string
+    profilePicture?: string
+  }
+  target?: {
     id: string
     firstName: string
     lastName: string
@@ -16,6 +31,16 @@ export interface Review {
     updatedAt: string
   }
 }
+
+const normalizeReview = (review: Review): Review => ({
+  ...review,
+  user: review.user || review.author || {
+    id: "",
+    firstName: "Previous",
+    lastName: "Employer",
+    profilePicture: "",
+  },
+})
 
 interface UseReviewsOptions {
   serviceId: string
@@ -36,15 +61,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
           ? response.data
           : response.data.data || []
 
-        const normalizedReviews = reviewsData.map((review: Review & { author?: Review["user"] }) => ({
-          ...review,
-          user: review.user || review.author || {
-            id: "",
-            firstName: "Previous",
-            lastName: "Employer",
-            profilePicture: "",
-          },
-        }))
+        const normalizedReviews = reviewsData.map(normalizeReview)
 
         const filteredReviews = filterByUserId
           ? normalizedReviews.filter((review: Review) => review.user.id === filterByUserId)
@@ -94,7 +111,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
         )
       } else {
         const response = await api.post(`/feedback`, payload)
-        setReviews((prev) => [...prev, response.data])
+        setReviews((prev) => [...prev, normalizeReview(response.data)])
       }
 
       return true
@@ -113,6 +130,21 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
     }
   }
 
+  const replyToReview = async (reviewId: string, reply: string) => {
+    try {
+      const response = await api.patch(`/feedback/${reviewId}/reply`, { reply })
+      const updated = response.data?.data || response.data
+      setReviews((prev) =>
+        prev.map((review) =>
+          review.id === reviewId ? normalizeReview({ ...review, ...updated }) : review
+        )
+      )
+      return true
+    } catch {
+      return false
+    }
+  }
+
   return {
     reviews,
     averageRating,
@@ -120,5 +152,6 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
     loading,
     submitReview,
     deleteReview,
+    replyToReview,
   }
 }

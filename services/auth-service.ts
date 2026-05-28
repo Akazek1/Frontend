@@ -28,9 +28,16 @@ export interface AuthResponse {
       isEmailVerified: boolean;
       profilePicture?: string;
       isProfileComplete?: boolean;
+      employerOnboardingComplete?: boolean;
+      workerOnboardingComplete?: boolean;
       dateOfBirth?: string;
       gender?: string;
       languages?: string[];
+      bio?: string;
+      educationLevel?: string;
+      healthStatus?: string;
+      preferredWorkTime?: string;
+      topQualities?: string[];
       country?: string;
       username?: string;
     };

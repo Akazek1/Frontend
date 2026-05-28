@@ -124,7 +124,7 @@ function ServiceDetailPage() {
         if (!serviceId) return;
         const fetchExisting = async () => {
             try {
-                const res = await api.get("/bookings");
+                const res = await api.get("/bookings", { params: { role: "employer" } });
                 const bookings = Array.isArray(res.data?.data)
                     ? res.data.data
                     : Array.isArray(res.data)
@@ -162,6 +162,7 @@ function ServiceDetailPage() {
         provider?.languages && provider.languages.length > 0
             ? provider.languages
             : SERVICE_DETAIL_FALLBACKS.languages;
+    const educationLevel = provider?.educationLevel;
 
     const idVerified = provider?.isVerified ?? SERVICE_DETAIL_FALLBACKS.idVerified;
     const backgroundChecked = SERVICE_DETAIL_FALLBACKS.backgroundChecked;
@@ -258,7 +259,7 @@ function ServiceDetailPage() {
     }
 
     return (
-        <div className="min-h-screen pb-28" style={{ backgroundColor: "#FFFFFF" }}>
+        <div className="min-h-screen w-full overflow-x-hidden pb-28" style={{ backgroundColor: "#FFFFFF" }}>
             {/* Top bar */}
             <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-2 pt-4">
                 <button
@@ -336,7 +337,7 @@ function ServiceDetailPage() {
                 </div>
             </div>
 
-            <main className="mx-auto max-w-md px-4 pt-2">
+            <main className="mx-auto w-full max-w-md px-4 pt-2">
                 {/* Profile header */}
                 <section className="flex items-start gap-4">
                     {/* Avatar with Available Today pill */}
@@ -512,6 +513,36 @@ function ServiceDetailPage() {
                         </div>
                     </div>
                 </section>
+
+                {educationLevel ? (
+                    <section
+                        className="mt-3 rounded-2xl bg-white p-4"
+                        style={{ border: `1px solid ${colors.border}` }}
+                    >
+                        <div className="flex items-start gap-3">
+                            <div
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                style={{
+                                    backgroundColor: colors.backgroundTertiary,
+                                    color: colors.primary,
+                                }}
+                            >
+                                <ClipboardCheck className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-[15px] font-bold" style={{ color: colors.text }}>
+                                    Education
+                                </h2>
+                                <p className="mt-1 text-[13px]" style={{ color: colors.textSecondary }}>
+                                    {educationLevel}
+                                </p>
+                                <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
+                                    Shared by {firstName}; no document required.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                ) : null}
 
                 {/* Stats strip */}
                 <section
@@ -789,7 +820,11 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
         id: string;
         rating: number;
         comment: string;
-        user: { firstName: string; lastName: string; profilePicture?: string };
+        reply?: string | null;
+        repliedAt?: string | null;
+        user?: { firstName: string; lastName: string; profilePicture?: string };
+        author?: { firstName: string; lastName: string; profilePicture?: string };
+        target?: { firstName: string; lastName: string; profilePicture?: string };
         booking: { updatedAt: string };
     };
     const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -800,7 +835,7 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
         let active = true;
         async function load() {
             try {
-                const res = await api.get(`/reviews?serviceId=${serviceId}`);
+                const res = await api.get(`/feedback/service/${serviceId}`);
                 const data = res.data?.data || res.data || {};
                 const list: ReviewItem[] = Array.isArray(data.reviews)
                     ? data.reviews
@@ -827,6 +862,7 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
     }, [serviceId]);
 
     const first = reviews[0];
+    const firstAuthor = first?.user || first?.author;
 
     return (
         <section className="mt-5">
@@ -863,14 +899,14 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
                                 color: colors.primary,
                             }}
                         >
-                            {(first.user?.firstName || "?").charAt(0)}
+                            {(firstAuthor?.firstName || "?").charAt(0)}
                         </div>
                         <div className="min-w-0 flex-1">
                             <p
                                 className="text-[14px] font-bold"
                                 style={{ color: colors.text }}
                             >
-                                {first.user?.firstName} {first.user?.lastName?.charAt(0)}.
+                                {firstAuthor?.firstName} {firstAuthor?.lastName?.charAt(0)}.
                             </p>
                             <p
                                 className="text-[12px]"
@@ -904,6 +940,28 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
                             >
                                 {first.comment}
                             </p>
+                            {first.reply && (
+                                <div
+                                    className="mt-3 rounded-xl p-3"
+                                    style={{
+                                        backgroundColor: colors.backgroundTertiary,
+                                        border: `1px solid ${colors.border}`,
+                                    }}
+                                >
+                                    <p
+                                        className="text-[12px] font-bold"
+                                        style={{ color: colors.text }}
+                                    >
+                                        Response from {first.target?.firstName || "provider"}
+                                    </p>
+                                    <p
+                                        className="mt-1 text-[13px] leading-snug"
+                                        style={{ color: colors.textSecondary }}
+                                    >
+                                        {first.reply}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

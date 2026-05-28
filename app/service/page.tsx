@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "@/lib/axios";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -7,7 +7,6 @@ import { Service } from "@/types";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
 import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
-import { isEmployer } from "@/lib/roles";
 import { Icons } from "@/components/icons";
 import FilterModal, { FilterValues } from "@/components/search/filter-modal";
 
@@ -19,8 +18,10 @@ const ServicePage = () => {
     const [services, setServices] = useState<Service[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [filters, setFilters] = useState<FilterValues>({
         minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined,
@@ -67,7 +68,10 @@ const ServicePage = () => {
     }, [fetchServices]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        const value = e.target.value;
+        setInputValue(value);
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => setSearchTerm(value), 350);
     };
 
     const handleApplyFilters = (newFilters: FilterValues) => {
@@ -96,7 +100,7 @@ const ServicePage = () => {
                         type="text"
                         placeholder="Search name, service, category, area"
                         className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-[#1B2431] outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:bg-white focus:ring-2 focus:ring-[#145B10]/20"
-                        value={searchTerm}
+                        value={inputValue}
                         onChange={handleSearchChange}
                     />
                 </div>
@@ -112,6 +116,11 @@ const ServicePage = () => {
                     >
                         <Icons.FilerIcon className="w-4 h-4 fill-white" />
                         Filter
+                        {Object.values(filters).filter(Boolean).length > 0 && (
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-[#145B10]">
+                                {Object.values(filters).filter(Boolean).length}
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
@@ -145,15 +154,15 @@ const ServicePage = () => {
                                     name={`${service.provider.firstName} ${service.provider.lastName}`}
                                     handle={getProviderHandle(service.provider)}
                                     title={service.title}
-                                    experience="5+ years"
-                                    languages={Array.isArray(service.worker?.languages) ? service.worker.languages.join(", ") : ""}
+                                    experience={service.provider.bio || ""}
+                                    languages={Array.isArray(service.provider.languages) ? service.provider.languages.join(", ") : ""}
                                     location={Array.isArray(service.serviceAreas) ? (service.serviceAreas[0] || "") : service.serviceAreas || ""}
                                     price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
-                                    rating={service.reviews.averageRating || 0}
-                                    reviews={service.reviews.totalReviews || 0}
-                                    distance="2.5 miles"
-                                    available={true}
-                                    verified={isEmployer(service.provider.roles)} 
+                                    rating={service.reviews?.averageRating || 0}
+                                    reviews={service.reviews?.totalReviews || 0}
+                                    distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
+                                    available={service.isActive}
+                                    verified={service.provider.isVerified}
                                     onClick={() => router.push(getServiceDetailPath(service))}
                                     onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                                 />

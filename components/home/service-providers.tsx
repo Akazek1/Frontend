@@ -62,7 +62,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await api.get("/bookings");
+        const response = await api.get("/bookings", { params: { role: "employer" } });
         const bookings = Array.isArray(response.data.data)
           ? response.data.data
           : Array.isArray(response.data)

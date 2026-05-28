@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import api from "@/lib/axios";
+import { initializeSocket } from "@/lib/socket";
 
 export interface NotificationItem {
   id: string;
@@ -12,7 +13,36 @@ export interface NotificationItem {
   status: "PENDING" | "SENT" | "FAILED" | "READ";
   readAt: string | null;
   createdAt: string;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | string | null;
+}
+
+export function parseNotificationMetadata(metadata: NotificationItem["metadata"]) {
+  if (!metadata) return {};
+  if (typeof metadata === "string") {
+    try {
+      const parsed = JSON.parse(metadata);
+      return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  }
+  return metadata;
+}
+
+export function getNotificationType(notification: NotificationItem): string | undefined {
+  const type = parseNotificationMetadata(notification.metadata).type;
+  return typeof type === "string" ? type : undefined;
+}
+
+export function getNotificationHref(notification: NotificationItem): string | null {
+  const meta = parseNotificationMetadata(notification.metadata);
+
+  const bookingId = meta.bookingId ? String(meta.bookingId) : "";
+  const jobId = meta.jobId ? String(meta.jobId) : "";
+
+  if (bookingId) return `/conversations/inbox/${encodeURIComponent(bookingId)}`;
+  if (jobId) return `/jobs/${encodeURIComponent(jobId)}`;
+  return null;
 }
 
 interface UseNotificationsOptions {
@@ -21,7 +51,7 @@ interface UseNotificationsOptions {
 }
 
 export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOptions = {}) {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -44,6 +74,28 @@ export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOption
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  // Real-time: prepend new notifications pushed via socket.
+  // We call initializeSocket (idempotent) rather than getSocket() so this works
+  // even when this effect runs before the global useSocketConnection effect.
+  useEffect(() => {
+    if (!isAuthenticated || !token || !user?.id) return;
+
+    const socket = initializeSocket(token, user.id);
+
+    const handleNewNotification = (notification: NotificationItem) => {
+      setItems((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        return [notification, ...prev].slice(0, limit);
+      });
+      setTotal((t) => t + 1);
+    };
+
+    socket.on("newNotification", handleNewNotification);
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+    };
+  }, [isAuthenticated, token, user?.id, limit]);
 
   const unreadCount = items.filter((n) => !n.readAt && n.status !== "READ").length;
 

@@ -19,7 +19,7 @@ import type { RootState } from '@/store';
 
 const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
   PENDING:   { label: 'Under Review', icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
-  ACCEPTED:  { label: 'Hired',        icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
+  ACCEPTED:  { label: 'Offer Received', icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
   REJECTED:  { label: 'Not Selected', icon: <XCircle className="w-3 h-3" />,      chip: 'bg-red-50 text-red-600'     },
   WITHDRAWN: { label: 'Withdrawn',    icon: <XCircle className="w-3 h-3" />,      chip: 'bg-gray-50 text-gray-600'   },
 };
@@ -123,10 +123,14 @@ export const MyApplications: React.FC = () => {
               </span>
               {app.status === 'ACCEPTED' && (
                 <button 
-                  onClick={() => window.location.href = `/conversations/inbox`}
+                  onClick={() => {
+                    window.location.href = app.bookingId
+                      ? `/conversations/inbox/${app.bookingId}`
+                      : "/conversations";
+                  }}
                   className="text-[11px] font-bold text-[#145B10] bg-[#F1FCEF] px-3 py-1.5 rounded-lg"
                 >
-                  View Messages
+                  Review Offer
                 </button>
               )}
             </div>

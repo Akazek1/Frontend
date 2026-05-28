@@ -1,17 +1,49 @@
 "use client"
 
-import { Star } from "lucide-react"
+import { useState } from "react"
+import { useSelector } from "react-redux"
+import toast from "react-hot-toast"
+import { Loader2, MessageSquareReply, Star } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Review } from "@/hooks/useReviews"
+import type { RootState } from "@/store"
 
 interface ReviewCardProps {
   review: Review
   showActions?: boolean
   onEdit?: (review: Review) => void
   onDelete?: (review: Review) => void
+  onReply?: (reviewId: string, reply: string) => Promise<boolean>
 }
 
-export function ReviewCard({ review, showActions = false, onEdit, onDelete }: ReviewCardProps) {
+export function ReviewCard({ review, showActions = false, onEdit, onDelete, onReply }: ReviewCardProps) {
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id)
+  const [replyOpen, setReplyOpen] = useState(false)
+  const [reply, setReply] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const canReply = !!onReply && !!currentUserId && review.target?.id === currentUserId && !review.reply
+
+  const handleReply = async () => {
+    const text = reply.trim()
+    if (!text) {
+      toast.error("Write a short reply first")
+      return
+    }
+
+    setSubmitting(true)
+    const ok = await onReply?.(review.id, text)
+    setSubmitting(false)
+
+    if (ok) {
+      toast.success("Reply posted")
+      setReply("")
+      setReplyOpen(false)
+    } else {
+      toast.error("Could not post reply")
+    }
+  }
+
   return (
     <div className="flex flex-col gap-3 border-b pb-4 last:border-b-0">
       <div className="flex items-start justify-between">
@@ -76,6 +108,60 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete }: Re
       <p className="text-xs text-gray-400">
         Posted on {new Date(review.booking.updatedAt).toLocaleDateString()}
       </p>
+      {review.reply && (
+        <div className="ml-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+          <p className="text-[11px] font-bold text-[#1B2431]">Response from {review.target?.firstName || "provider"}</p>
+          <p className="mt-1 text-[13px] leading-[140%] text-[#616161]">{review.reply}</p>
+          {review.repliedAt && (
+            <p className="mt-1 text-[11px] text-gray-400">
+              Replied on {new Date(review.repliedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      )}
+      {canReply && !replyOpen && (
+        <button
+          type="button"
+          onClick={() => setReplyOpen(true)}
+          className="inline-flex w-fit items-center gap-1.5 text-[12px] font-bold text-[#145B10]"
+        >
+          <MessageSquareReply className="h-3.5 w-3.5" />
+          Reply to review
+        </button>
+      )}
+      {canReply && replyOpen && (
+        <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+          <textarea
+            value={reply}
+            onChange={(event) => setReply(event.target.value)}
+            maxLength={1000}
+            rows={3}
+            placeholder="Write one public reply..."
+            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-[#145B10]"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setReply("")
+                setReplyOpen(false)
+              }}
+              className="px-3 py-1.5 text-[12px] font-semibold text-gray-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleReply}
+              disabled={submitting || !reply.trim()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#145B10] px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-50"
+            >
+              {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
+              Post reply
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import BackButtonHeader from '@/components/header/back-button-header';
 import {
   Loader2, MessageCircleMore, Star, MapPin, CalendarDays,
@@ -19,31 +20,37 @@ import Link from 'next/link';
 interface Booking {
   id: string;
   status: 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  scheduledFor: string;
+  scheduledFor?: string | null;
   price?: number;
-  service: {
+  agreedPrice?: number;
+  service?: {
     id: string;
     title: string;
     serviceImage?: string;
-  };
+  } | null;
+  job?: {
+    id: string;
+    title: string;
+  } | null;
   worker: { id: string; username?: string; firstName: string; lastName: string } | null;
   address?: { city?: string; street?: string };
   review: null | { rating: number; comment: string };
 }
 
-type Tab = 'All' | 'Upcoming' | 'Completed' | 'Cancelled';
+type Tab = 'All' | 'Requests' | 'Confirmed' | 'Completed' | 'Cancelled';
 
-const TABS: Tab[] = ['All', 'Upcoming', 'Completed', 'Cancelled'];
+const TABS: Tab[] = ['All', 'Requests', 'Confirmed', 'Completed', 'Cancelled'];
 
 const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
-  PENDING:     { label: 'Pending',     icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
+  PENDING:     { label: 'Offer Sent',  icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
   CONFIRMED:   { label: 'Confirmed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
   IN_PROGRESS: { label: 'In Progress', icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-blue-50 text-blue-700'   },
   COMPLETED:   { label: 'Completed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
   CANCELLED:   { label: 'Cancelled',   icon: <XCircle className="w-3 h-3" />,      chip: 'bg-red-50 text-red-600'     },
 };
 
-const formatDate = (iso: string) => {
+const formatDate = (iso?: string | null) => {
+  if (!iso) return 'To agree';
   try {
     return new Date(iso).toLocaleDateString('en-RW', {
       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
@@ -52,6 +59,7 @@ const formatDate = (iso: string) => {
 };
 
 const EmployerBookings: React.FC = () => {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
@@ -65,7 +73,7 @@ const EmployerBookings: React.FC = () => {
   const [submitting, setSubmitting]         = useState(false);
 
   useEffect(() => {
-    api.get<{ data: Booking[] }>('/bookings')
+    api.get<{ data: Booking[] }>('/bookings', { params: { role: 'employer' } })
       .then((r) => {
         setBookings(Array.isArray(r.data.data) ? r.data.data : []);
         setError(null);
@@ -80,7 +88,8 @@ const EmployerBookings: React.FC = () => {
 
   const filtered = bookings.filter((b) => {
     if (tab === 'All')       return true;
-    if (tab === 'Upcoming')  return ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status);
+    if (tab === 'Requests')  return b.status === 'PENDING';
+    if (tab === 'Confirmed') return ['CONFIRMED','IN_PROGRESS'].includes(b.status);
     if (tab === 'Completed') return b.status === 'COMPLETED';
     if (tab === 'Cancelled') return b.status === 'CANCELLED';
     return true;
@@ -88,7 +97,8 @@ const EmployerBookings: React.FC = () => {
 
   const counts: Record<Tab, number> = {
     All:       bookings.length,
-    Upcoming:  bookings.filter((b) => ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status)).length,
+    Requests:  bookings.filter((b) => b.status === 'PENDING').length,
+    Confirmed: bookings.filter((b) => ['CONFIRMED','IN_PROGRESS'].includes(b.status)).length,
     Completed: bookings.filter((b) => b.status === 'COMPLETED').length,
     Cancelled: bookings.filter((b) => b.status === 'CANCELLED').length,
   };
@@ -200,8 +210,11 @@ const EmployerBookings: React.FC = () => {
             const location = b.address?.city || b.address?.street || null;
             const isUpcoming   = ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status);
             const isCompleted  = b.status === 'COMPLETED';
-            const canMessage   = ['CONFIRMED','IN_PROGRESS'].includes(b.status);
+            const canMessage   = ['PENDING','CONFIRMED','IN_PROGRESS'].includes(b.status);
             const hasReview    = !!b.review;
+            const title = b.service?.title || b.job?.title || 'Work request';
+            const image = b.service?.serviceImage || '/default-service.svg';
+            const price = b.price ?? b.agreedPrice;
 
             return (
               <div key={b.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -209,8 +222,8 @@ const EmployerBookings: React.FC = () => {
                   {/* Service image */}
                   <div className="relative w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                     <Image
-                      src={b.service?.serviceImage || '/default-service.svg'}
-                      alt={b.service?.title}
+                      src={image}
+                      alt={title}
                       fill
                       className="object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/default-service.svg'; }}
@@ -221,7 +234,7 @@ const EmployerBookings: React.FC = () => {
                   <div className="flex-1 min-w-0 space-y-0.5">
                     <div className="flex items-start justify-between gap-1">
                       <p className="text-[13px] font-bold text-[#1B2431] capitalize leading-snug truncate">
-                        {b.service?.title}
+                        {title}
                       </p>
                       <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${meta.chip}`}>
                         {meta.icon}{meta.label}
@@ -229,7 +242,7 @@ const EmployerBookings: React.FC = () => {
                     </div>
 
                     <p className="text-[11px] text-[#616161]">
-                      {isUpcoming ? "Provider: " : "Served by: "}
+                      {b.status === 'PENDING' ? "Offer to: " : isUpcoming ? "Provider: " : "Served by: "}
                       {b.worker?.username ? (
                         <Link
                           href={`/${b.worker.username}`}
@@ -253,10 +266,10 @@ const EmployerBookings: React.FC = () => {
                           {location}
                         </span>
                       )}
-                      {b.price ? (
+                      {price ? (
                         <span className="flex items-center gap-1 text-[#145B10] font-semibold">
                           <Banknote className="w-3 h-3 flex-shrink-0" />
-                          RWF {b.price.toLocaleString()}
+                          RWF {price.toLocaleString()}
                         </span>
                       ) : null}
                     </div>
@@ -268,10 +281,10 @@ const EmployerBookings: React.FC = () => {
                   <div className="border-t border-gray-100 flex">
                     {canMessage && (
                       <button
-                        onClick={() => window.location.href = `/conversations/inbox/${b.id}`}
+                        onClick={() => router.push(`/conversations/inbox/${b.id}`)}
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
                       >
-                        <MessageCircleMore className="w-4 h-4" /> Message Provider
+                        <MessageCircleMore className="w-4 h-4" /> {b.status === 'PENDING' ? 'View Offer' : 'Message Provider'}
                       </button>
                     )}
                     {isCompleted && !hasReview && (
@@ -309,7 +322,8 @@ const EmployerBookings: React.FC = () => {
 const EmptyState = ({ tab }: { tab: Tab }) => {
   const messages: Record<Tab, { icon: React.ReactNode; title: string; sub: string }> = {
     All:       { icon: <ClipboardList className="w-8 h-8 text-gray-300" />, title: 'No bookings yet',     sub: "Once you book a service, it'll appear here."           },
-    Upcoming:  { icon: <Clock className="w-8 h-8 text-gray-300" />,        title: 'No upcoming bookings', sub: 'Browse services and book one to get started.'          },
+    Requests:  { icon: <Clock className="w-8 h-8 text-gray-300" />,        title: 'No pending offers',    sub: 'Official offers waiting for provider agreement will appear here.' },
+    Confirmed: { icon: <CheckCircle2 className="w-8 h-8 text-gray-300" />, title: 'No confirmed bookings', sub: 'Accepted work will appear here.'          },
     Completed: { icon: <CheckCircle2 className="w-8 h-8 text-gray-300" />, title: 'No completed jobs',    sub: 'Completed bookings and your reviews will show here.'   },
     Cancelled: { icon: <XCircle className="w-8 h-8 text-gray-300" />,      title: 'No cancellations',    sub: "You haven't cancelled any bookings — great!"           },
   };

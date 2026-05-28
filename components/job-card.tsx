@@ -17,6 +17,8 @@ import {
 import { Button } from "./ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthGate } from "@/context/auth-gate-context";
+import { redactName, redactSensitiveText } from "@/lib/privacy-utils";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import jobsService from "@/services/jobs-service";
@@ -29,13 +31,23 @@ interface JobCardProps {
 export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
   const router = useRouter();
   const { user } = useAuth();
+  const { openAuthGate } = useAuthGate();
   const [applying, setApplying] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+
+  const isGuest = !user;
+  const employerDisplayName = isGuest 
+    ? redactName(job.employer.firstName, job.employer.lastName)
+    : `${job.employer.firstName} ${job.employer.lastName}`;
+  
+  const displayDescription = isGuest
+    ? redactSensitiveText(job.description)
+    : job.description;
 
   const handleApply = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast.error("Please log in to apply.");
+      openAuthGate("apply", `/jobs/${job.id}`);
       return;
     }
 
@@ -112,13 +124,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
       </div>
 
       <p className="mt-4 text-[13px] text-[#616161] line-clamp-2 leading-relaxed font-medium">
-        {job.description}
+        {displayDescription}
       </p>
 
       <div className="mt-5 flex items-center justify-between gap-3 pt-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <div className="text-[11px] font-bold text-[#1B2431]">
-            {job.employer.firstName} {job.employer.lastName}
+            {employerDisplayName}
           </div>
           <span className="h-1 w-1 rounded-full bg-gray-300" />
           <div className="text-[11px] text-gray-400 font-medium">Employer</div>

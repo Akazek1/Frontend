@@ -10,7 +10,7 @@ interface ReviewSectionProps {
 }
 
 const ReviewSection: React.FC<ReviewSectionProps> = ({ serviceId }) => {
-  const { reviews, averageRating, totalReviews, loading } = useReviews({ serviceId })
+  const { reviews, averageRating, totalReviews, loading, replyToReview } = useReviews({ serviceId })
 
   if (loading) {
     return (
@@ -31,7 +31,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ serviceId }) => {
 
       <div className="space-y-3">
         {reviews?.map((review) => (
-          <ReviewCard key={review.id} review={review} />
+          <ReviewCard key={review.id} review={review} onReply={replyToReview} />
         ))}
         {reviews?.length === 0 && <p className="text-sm text-gray-500">No reviews yet.</p>}
       </div>

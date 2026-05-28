@@ -37,7 +37,7 @@ const SearchBar = ({
   const handleFocus = () => {
     setIsActive(true);
     onFocus?.();
-    onSearch(query);
+    if (query) onSearch(query);
   };
 
   const handleBlur = () => {

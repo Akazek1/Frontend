@@ -79,8 +79,9 @@ export const DocumentUploadStep = ({
         withCredentials: true,
       })
 
+      const payload = response.data?.data || response.data
       toast.success("ID received. Our team will verify within 24 hours.")
-      onUploadSuccess(response.data.document)
+      onUploadSuccess(payload.document)
     } catch (error: any) {
       console.error("Upload error:", error)
       toast.error(error.response?.data?.message || "Failed to upload document")
@@ -101,7 +102,7 @@ export const DocumentUploadStep = ({
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-2">
-          Upload Your ID
+          Upload National ID, Passport, or Driver&apos;s License
         </h1>
         <p className="text-base sm:text-lg text-gray-600">
           We need to verify your identity to connect you with employers

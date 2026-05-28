@@ -58,19 +58,23 @@ function OrgTypeStep({
         </button>
 
         <button
-          disabled
-          className="relative p-5 rounded-xl border-2 border-gray-200 bg-gray-50 text-left opacity-60 cursor-not-allowed"
+          onClick={() => onSelect("PLACEMENT_AGENCY")}
+          className={`relative p-5 rounded-xl border-2 text-left transition-all ${
+            selected === "PLACEMENT_AGENCY"
+              ? "bg-[#145B10] text-white border-[#145B10]"
+              : "bg-white text-gray-700 border-gray-300 hover:border-[#145B10]"
+          }`}
         >
-          <span className="absolute top-3 right-3 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-            Coming soon
-          </span>
+          {selected === "PLACEMENT_AGENCY" && (
+            <CheckCircle className="absolute top-3 right-3 w-5 h-5 text-white" />
+          )}
           <div className="flex items-start gap-4">
-            <div className="p-2 rounded-lg flex-shrink-0 bg-gray-100">
-              <Briefcase className="w-6 h-6 text-gray-400" />
+            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "PLACEMENT_AGENCY" ? "bg-white/20" : "bg-[#F1FCEF]"}`}>
+              <Briefcase className={`w-6 h-6 ${selected === "PLACEMENT_AGENCY" ? "text-white" : "text-[#145B10]"}`} />
             </div>
             <div>
-              <h3 className="font-bold text-base text-gray-500 mb-1">Placement Agency</h3>
-              <p className="text-sm text-gray-400">
+              <h3 className="font-bold text-base mb-1">Placement Agency</h3>
+              <p className="text-sm opacity-80">
                 You recruit, train, and place workers with families. Commission paid once at placement.
               </p>
             </div>

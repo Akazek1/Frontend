@@ -7,13 +7,11 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { ReportModal } from "@/components/provider/report-modal";
 import {
   CalendarDays,
   MapPin,
   DollarSign,
-  Clock,
   CheckCircle2,
   Loader2,
   User,
@@ -21,7 +19,6 @@ import {
   Check,
   X,
   Briefcase,
-  Sparkles,
   Timer,
   Flag,
 } from "lucide-react";
@@ -91,18 +88,14 @@ const JobDetailPage = () => {
     setActionLoading(appId);
     try {
       const result = await jobsService.updateApplicationStatus(appId, "ACCEPTED");
-      // Mark accepted app, reject all sibling pending apps in local state
       setApplications(prev => prev.map(a =>
         a.id === appId
           ? { ...a, status: "ACCEPTED" as any }
-          : a.status === "PENDING"
-            ? { ...a, status: "REJECTED" as any }
-            : a
+          : a
       ));
-      setJob(prev => prev ? { ...prev, status: "AWARDED" as any } : prev);
-      toast.success("Worker hired! Redirecting to your booking…");
+      toast.success("Offer sent. The provider needs to accept before the job is confirmed.");
       if (result?.bookingId) {
-        router.push(`/bookings/${result.bookingId}`);
+        router.push(`/conversations/inbox/${result.bookingId}`);
       }
     } catch {
       toast.error("Failed to hire worker. Please try again.");
@@ -122,7 +115,7 @@ const JobDetailPage = () => {
   if (!job) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-24">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#F8F9FA] pb-24">
       {/* Premium Header */}
       <div className="bg-white px-6 pt-10 pb-6 rounded-b-[40px] shadow-sm border-b border-gray-100 sticky top-0 z-20">
         <BackButtonHeader text="Job Detail" fallbackHref="/jobs" />
@@ -289,7 +282,7 @@ const JobDetailPage = () => {
                             disabled={!!actionLoading}
                             className="flex-3 h-11 rounded-[18px] bg-[#145B10] hover:bg-[#0F4D0C] text-white font-black text-[12px] uppercase tracking-widest transition-all shadow-lg shadow-[#145B10]/10 flex items-center justify-center gap-2 grow-[2]"
                           >
-                            <Check className="w-4 h-4" /> Hire Worker
+                            <Check className="w-4 h-4" /> Send Offer
                           </button>
                         </>
                       ) : (
@@ -299,7 +292,7 @@ const JobDetailPage = () => {
                             : "bg-gray-50 text-gray-300 border-gray-100"
                         }`}>
                           <ShieldCheck className="w-4 h-4 opacity-70" />
-                          {app.status === "ACCEPTED" ? "Hired" : "Declined"}
+                          {app.status === "ACCEPTED" ? "Offer Sent" : "Declined"}
                         </div>
                       )}
                     </div>
@@ -312,7 +305,7 @@ const JobDetailPage = () => {
                   <User className="w-8 h-8 text-gray-200" />
                 </div>
                 <h3 className="text-[15px] font-black text-[#1B2431]">Waiting for applicants</h3>
-                <p className="text-[12px] text-gray-400 mt-2 max-w-[200px] mx-auto font-medium">We'll notify you as soon as workers start applying for your job.</p>
+                <p className="text-[12px] text-gray-400 mt-2 max-w-[200px] mx-auto font-medium">We&apos;ll notify you as soon as workers start applying for your job.</p>
               </div>
             )}
           </div>
@@ -350,9 +343,9 @@ const JobDetailPage = () => {
               <div className="w-14 h-14 rounded-full bg-[#E8F5E9] flex items-center justify-center">
                 <Check className="w-7 h-7 text-[#145B10]" />
               </div>
-              <h3 className="text-[17px] font-black text-[#1B2431]">Hire {confirmHire.workerName}?</h3>
+              <h3 className="text-[17px] font-black text-[#1B2431]">Send offer to {confirmHire.workerName}?</h3>
               <p className="text-[13px] text-gray-400 leading-relaxed">
-                This will create a booking and notify {confirmHire.workerName.split(" ")[0]}. Other pending applicants will be automatically declined.
+                This opens a conversation and sends an official offer. The job is only confirmed after {confirmHire.workerName.split(" ")[0]} accepts.
               </p>
             </div>
             <div className="flex gap-3">
@@ -366,7 +359,7 @@ const JobDetailPage = () => {
                 onClick={handleHireConfirmed}
                 className="flex-1 h-12 rounded-[18px] bg-[#145B10] text-white font-black text-[13px] hover:bg-[#0F4D0C] shadow-lg shadow-[#145B10]/20 transition-all flex items-center justify-center gap-2"
               >
-                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Hire"}
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Offer"}
               </button>
             </div>
           </div>

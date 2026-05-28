@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -29,6 +29,12 @@ interface Message {
   };
 }
 
+interface SendMessageAck {
+  success?: boolean;
+  message?: Message;
+  error?: string;
+}
+
 interface BookingDetails {
   id: string;
   status: string;
@@ -37,7 +43,10 @@ interface BookingDetails {
   employerId: string;
   service: {
     title: string;
-  };
+  } | null;
+  job?: {
+    title: string;
+  } | null;
   worker: {
     id: string;
     firstName: string;
@@ -81,96 +90,126 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Fetch booking data independently — only re-runs if bookingId changes
   useEffect(() => {
     fetchBookingDetails();
-    if (token && user?.id) {
-      const socket = initializeSocket(token, user.id);
-      
-      const partnerId = user?.id === booking?.workerId ? booking?.employerId : booking?.workerId;
+  }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-      const onConnect = () => {
-        socket.emit("joinBooking", bookingId);
-        socket.emit("readMessages", bookingId);
-        
-        if (partnerId) {
-          socket.emit("checkPresence", partnerId, (res: { isOnline: boolean }) => {
-             setPartnerOnline(res.isOnline);
-          });
-        }
-      };
-      
-      socket.on("connect", onConnect);
-      if (socket.connected) onConnect();
+  useEffect(() => {
+    if (!token || !user?.id) return;
+    const socket = initializeSocket(token, user.id);
 
-      const handleUserOnline = (userId: string) => {
-        if (userId === partnerId) setPartnerOnline(true);
-      };
+    const partnerId = user?.id === booking?.workerId ? booking?.employerId : booking?.workerId;
 
-      const handleUserOffline = (userId: string) => {
-        if (userId === partnerId) setPartnerOnline(false);
-      };
+    const onConnect = () => {
+      console.log(`[chat] 🔗 socket connected, joining booking=${bookingId}`);
+      socket.emit("joinBooking", bookingId);
+      socket.emit("readMessages", bookingId);
 
-      const handleNewMessage = (message: Message) => {
-        if (message.bookingId !== bookingId) return;
-
-        setMessages((prev) => {
-          const exists = prev.some((m) => m.id === message.id);
-          if (exists) return prev;
-
-          // If this is my own message coming back from the broadcast,
-          // it might have already been handled by the acknowledgement logic.
-          if (message.senderId === user?.id) {
-             const tempMatchIdx = prev.findIndex(m => 
-               m.status === 'sending' && 
-               m.content === message.content
-             );
-             if (tempMatchIdx !== -1) {
-               const updated = [...prev];
-               updated[tempMatchIdx] = { ...message, status: 'sent' };
-               return updated;
-             }
-          }
-          
-          // Partner messages
-          const finalMsg = message.senderId !== user?.id ? { ...message, isDelivered: true, status: 'sent' as const } : { ...message, status: 'sent' as const };
-          return [...prev, finalMsg];
+      if (partnerId) {
+        socket.emit("checkPresence", partnerId, (res: { isOnline: boolean }) => {
+          console.log(`[chat] 👁 checkPresence(${partnerId}):`, res);
+          setPartnerOnline(res.isOnline);
         });
-        
-        if (message.senderId !== user?.id) {
-          socket.emit("readMessages", bookingId);
+      }
+    };
+
+    socket.on("connect", onConnect);
+    if (socket.connected) onConnect();
+
+    const handleUserOnline = (userId: string) => {
+      console.log("[chat] 🟢 userOnline:", userId, "partner:", partnerId);
+      if (userId === partnerId) setPartnerOnline(true);
+    };
+
+    const handleUserOffline = (userId: string) => {
+      console.log("[chat] 🔴 userOffline:", userId);
+      if (userId === partnerId) setPartnerOnline(false);
+    };
+
+    const handleNewMessage = (message: Message) => {
+      console.log("[chat] 📨 newMessage received:", message.bookingId, message.content.slice(0, 30));
+      if (message.bookingId !== bookingId) return;
+
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === message.id);
+        if (exists) return prev;
+
+        if (message.senderId === user?.id) {
+          const tempMatchIdx = prev.findIndex(
+            (m) => m.status === "sending" && m.content === message.content,
+          );
+          if (tempMatchIdx !== -1) {
+            const existing = prev[tempMatchIdx];
+            const updated = [...prev];
+            // Merge flags forward: a delivered/read event may have already
+            // arrived for this message — never regress those ticks.
+            updated[tempMatchIdx] = {
+              ...message,
+              isDelivered: message.isDelivered || existing.isDelivered,
+              isRead: message.isRead || existing.isRead,
+              status: "sent",
+            };
+            return updated;
+          }
         }
-      };
 
-      const handleMessagesRead = (data: { bookingId: string; readerId: string }) => {
-        if (data.bookingId === bookingId && data.readerId !== user.id) {
-          setMessages((prev) => prev.map(m => ({ ...m, isRead: true, isDelivered: true })));
-        }
-      };
+        const finalMsg =
+          message.senderId !== user?.id
+            ? { ...message, isDelivered: true, status: "sent" as const }
+            : { ...message, status: "sent" as const };
+        return [...prev, finalMsg];
+      });
 
-      const handleMessagesDelivered = (data: { bookingId: string; recipientId: string }) => {
-        if (data.bookingId === bookingId && data.recipientId !== user?.id) {
-           setMessages((prev) => prev.map(m => 
-             (m.senderId === user?.id && !m.isDelivered) ? { ...m, isDelivered: true } : m
-           ));
-        }
-      };
+      if (message.senderId !== user?.id) {
+        socket.emit("readMessages", bookingId);
+      }
+    };
 
-      socket.on("newMessage", handleNewMessage);
-      socket.on("messagesRead", handleMessagesRead);
-      socket.on("messagesDelivered", handleMessagesDelivered);
-      socket.on("userOnline", handleUserOnline);
-      socket.on("userOffline", handleUserOffline);
+    const handleMessagesRead = (data: { bookingId: string; readerId: string }) => {
+      console.log("[chat] 📖 messagesRead received:", data);
+      if (data.bookingId === bookingId && data.readerId !== user.id) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderId === user.id ? { ...m, isRead: true, isDelivered: true } : m,
+          ),
+        );
+      }
+    };
 
-      return () => {
-        socket.emit("leaveBooking", bookingId);
-        socket.off("newMessage", handleNewMessage);
-        socket.off("messagesRead", handleMessagesRead);
-        socket.off("messagesDelivered", handleMessagesDelivered);
-        socket.off("userOnline", handleUserOnline);
-        socket.off("userOffline", handleUserOffline);
-        socket.off("connect", onConnect);
-      };
-    }
+    const handleMessagesDelivered = (data: { bookingId: string; recipientId: string }) => {
+      console.log("[chat] ✅ messagesDelivered received:", data);
+      if (data.bookingId === bookingId && data.recipientId !== user?.id) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderId === user?.id && !m.isDelivered ? { ...m, isDelivered: true } : m,
+          ),
+        );
+      }
+    };
+
+    const handleBookingStatusUpdated = (data: { bookingId: string; status: string }) => {
+      if (data.bookingId !== bookingId) return;
+      setBooking((prev) => prev ? { ...prev, status: data.status, updatedAt: new Date().toISOString() } : prev);
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    socket.on("messagesRead", handleMessagesRead);
+    socket.on("messagesDelivered", handleMessagesDelivered);
+    socket.on("bookingStatusUpdated", handleBookingStatusUpdated);
+    socket.on("userOnline", handleUserOnline);
+    socket.on("userOffline", handleUserOffline);
+
+    return () => {
+      socket.emit("leaveBooking", bookingId);
+      socket.off("newMessage", handleNewMessage);
+      socket.off("messagesRead", handleMessagesRead);
+      socket.off("messagesDelivered", handleMessagesDelivered);
+      socket.off("bookingStatusUpdated", handleBookingStatusUpdated);
+      socket.off("userOnline", handleUserOnline);
+      socket.off("userOffline", handleUserOffline);
+      socket.off("connect", onConnect);
+    };
   }, [bookingId, token, user?.id, booking?.workerId, booking?.employerId]);
 
   useEffect(() => {
@@ -183,8 +222,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       const response = await api.get(`/bookings/${bookingId}`);
       const data = response.data.data;
       setBooking(data);
-      setMessages((data.messages || []).map((m: any) => ({ ...m, status: 'sent' })));
-    } catch (error) {
+      setMessages(((data.messages || []) as Message[]).map((m) => ({ ...m, status: 'sent' })));
+    } catch {
       toast.error("Failed to load conversation");
       router.push("/conversations");
     } finally {
@@ -224,9 +263,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
       if (socket && socket.connected) {
         try {
-          const response: any = await new Promise((resolve, reject) => {
+          const response = await new Promise<SendMessageAck>((resolve, reject) => {
              const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-             socket.emit("sendMessage", { bookingId, message: { content: messageContent } }, (ack: any) => {
+             socket.emit("sendMessage", { bookingId, message: { content: messageContent } }, (ack: SendMessageAck) => {
                clearTimeout(timeout);
                resolve(ack);
              });
@@ -235,7 +274,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           if (response?.success && response.message) {
             serverMessage = response.message;
           }
-        } catch (err) {
+        } catch {
           console.warn("Socket send failed, falling back to REST");
         }
       }
@@ -250,10 +289,21 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       }
 
       if (serverMessage) {
-        const confirmedMsg = { ...serverMessage, status: 'sent' as const };
-        setMessages((prev) => {
-           return prev.map(m => (m.id === tempId) ? confirmedMsg : m);
-        });
+        const confirmed = serverMessage;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+              ? {
+                  ...confirmed,
+                  // Preserve any delivered/read state that already advanced
+                  // while the send was in flight.
+                  isDelivered: confirmed.isDelivered || m.isDelivered,
+                  isRead: confirmed.isRead || m.isRead,
+                  status: "sent" as const,
+                }
+              : m,
+          ),
+        );
       }
     } catch (error) {
       console.error("Message send error:", error);
@@ -270,9 +320,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     setIsUpdatingStatus(true);
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: BOOKING_STATUS.CONFIRMED });
-      toast.success("Booking request approved!");
+      toast.success("Offer accepted. Booking confirmed.");
       fetchBookingDetails();
-    } catch (error) {
+    } catch {
       toast.error("Failed to approve request");
     } finally {
       setIsUpdatingStatus(false);
@@ -299,6 +349,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const partner = user.id === booking.workerId ? booking.employer : booking.worker;
   const partnerName = partner ? `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim() : "Unknown Partner";
   const isWorker = user.id === booking.workerId;
+  const contextTitle = booking.service?.title || booking.job?.title || "Work request";
+  const isPending = booking.status === BOOKING_STATUS.PENDING;
 
   return (
     <div className="flex h-screen flex-col bg-[#F8F9FA]">
@@ -323,7 +375,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             <h1 className="truncate text-sm font-bold text-[#1B2431]">{partnerName}</h1>
             {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Online</span>}
           </div>
-          <p className="truncate text-[11px] text-[#757575] font-medium">{booking.service?.title || "Booking Detail"}</p>
+          <p className="truncate text-[11px] text-[#757575] font-medium">{contextTitle}</p>
         </div>
 
         <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -350,10 +402,17 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           This booking was cancelled. Chat is closed.
         </div>
       )}
-      {booking.status === BOOKING_STATUS.PENDING && isWorker && (
+      {isPending && !isWorker && (
+        <div className="flex flex-col items-center gap-1 bg-orange-50 p-3 shadow-inner">
+          <p className="text-center text-[11px] font-medium text-orange-700">
+            Offer sent. Work is not confirmed until the provider accepts.
+          </p>
+        </div>
+      )}
+      {isPending && isWorker && (
         <div className="flex flex-col items-center gap-2 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
-            You have a new hire request! Approve it to start the job.
+            You have an official offer. Accept only if you agree to the work details.
           </p>
           <Button 
             onClick={handleApproveRequest}
@@ -362,7 +421,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             className="h-8 rounded-full bg-[#145B10] px-4 text-[11px] font-bold text-white hover:bg-[#0F4D0C]"
           >
             {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />}
-            Approve Request
+            Accept Offer
           </Button>
         </div>
       )}
@@ -372,7 +431,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
           <p className="text-[11px] font-semibold text-[#1B2431]">Booking Details</p>
           <p className="mt-1 text-[10px] text-[#757575]">
-            Keep all communications within Akazek to ensure your safety and protection.
+            {isPending
+              ? "This work is not confirmed yet. Confirm through Akazek before starting."
+              : "Keep all communications within Akazek to ensure your safety and protection."}
           </p>
         </div>
 
@@ -395,12 +456,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                   
                   {isMe && (
                     status === 'sending' ? (
-                      <div className="h-2.5 w-2.5 rounded-full border-2 border-gray-300 border-t-transparent animate-spin ml-1" />
+                      <Clock className="h-3 w-3 text-gray-400 ml-1" />
                     ) : status === 'error' ? (
-                      <div className="text-red-500 font-bold ml-1 text-[11px]">!</div>
+                      <AlertCircle className="h-3.5 w-3.5 text-red-500 ml-1" />
                     ) : (
                       msg.isRead ? (
-                         <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" /> 
+                         <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" />
                       ) : msg.isDelivered ? (
                          <CheckCheck className="h-3.5 w-3.5 text-gray-400 ml-1" />
                       ) : (

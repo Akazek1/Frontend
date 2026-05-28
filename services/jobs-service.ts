@@ -31,6 +31,7 @@ export interface JobApplication {
   id: string;
   jobId: string;
   workerId: string;
+  bookingId?: string | null;
   message?: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
   createdAt: string;

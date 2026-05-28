@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Users, Mail, Home, Heart, Clock, type LucideIcon } from "lucide-react";
+import { User, Users, Mail, Home, Heart, Clock, GraduationCap, type LucideIcon } from "lucide-react";
 
 export interface PersonalInfoProps {
   dateOfBirth?: string;
@@ -9,6 +9,7 @@ export interface PersonalInfoProps {
   homeLocation?: string;
   healthStatus?: string;
   preferredWorkTime?: string;
+  educationLevel?: string;
 }
 
 const formatDob = (iso?: string) => {
@@ -43,6 +44,7 @@ export function PersonalInfo({
   homeLocation,
   healthStatus,
   preferredWorkTime,
+  educationLevel,
 }: PersonalInfoProps) {
   const dob = formatDob(dateOfBirth);
   const formattedGender = gender ? gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase() : undefined;
@@ -51,6 +53,7 @@ export function PersonalInfo({
     { icon: Users, label: "Gender", value: formattedGender },
     { icon: Mail, label: "Email", value: email },
     { icon: Home, label: "Home Location", value: homeLocation },
+    { icon: GraduationCap, label: "Education", value: educationLevel },
     { icon: Heart, label: "Health Status", value: healthStatus },
     { icon: Clock, label: "Preferred Work Time", value: preferredWorkTime },
   ].filter((r) => !!r.value);

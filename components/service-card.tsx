@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { redactName } from "@/lib/privacy-utils";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { SERVICE_DETAIL_LABELS } from "@/constant/service-detail";
@@ -59,7 +60,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const router = useRouter();
   const { isBookmarked: isBookmarkedContext, toggleBookmark, isLoading } = useBookmark("services");
   const isServiceBookmarked = isBookmarkedProp !== undefined ? isBookmarkedProp : isBookmarkedContext(id);
-  const { requireAuth } = useRequireAuth();
+  const { requireAuth, isAuthenticated } = useRequireAuth();
+
+  const isGuest = !isAuthenticated;
+  const displayProviderName = isGuest ? redactName(name) : name;
 
   const handleProfileClick = (e: React.MouseEvent) => {
     if (!handle) return;
@@ -82,7 +86,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const handleHireClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (hasRequested || isOwnService) return;
-    (onHireClick || onClick)();
+    
+    requireAuth(() => {
+      (onHireClick || onClick)();
+    }, "hire");
   };
 
   const formatReviews = (n: number) => {
@@ -135,7 +142,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             aria-label={handle ? `View ${name || "provider"}'s profile` : undefined}
           >
             <span className="text-[13px] font-bold text-[#1B2431] truncate">
-              {name || "Unknown Provider"}
+              {displayProviderName || "Unknown Provider"}
             </span>
             {verified && <VerifiedBadge size={16} />}
           </button>

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { RootState } from "@/store";
-import { Bell, Briefcase, Calendar, Check, CheckCircle, Globe, MapPin, User, XCircle } from "lucide-react";
+import { Bell, Briefcase, Calendar, Check, CheckCircle, Globe, MapPin, MessageCircle, Star, User, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,8 +9,7 @@ import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getProviderHandle } from "@/lib/service-display";
-import { useAuth } from "@/hooks/useAuth";
-import { NotificationItem, formatRelativeTime, useNotifications } from "@/hooks/useNotifications";
+import { NotificationItem, formatRelativeTime, getNotificationHref, getNotificationType, useNotifications } from "@/hooks/useNotifications";
 
 const languages = [
   { code: "EN", name: "English", hint: "Default app language" },
@@ -22,23 +21,23 @@ const languages = [
 function iconForType(type?: string) {
   switch (type) {
     case "NEW_APPLICATION":
+    case "HIRE_REQUEST":
       return Briefcase;
     case "JOB_AWARDED":
       return CheckCircle;
     case "BOOKING_CONFIRMED":
       return Calendar;
     case "BOOKING_CANCELLED":
+    case "APPLICATION_REJECTED":
+    case "JOB_FILLED":
       return XCircle;
+    case "NEW_REVIEW":
+      return Star;
+    case "NEW_MESSAGE":
+      return MessageCircle;
     default:
       return Bell;
   }
-}
-
-function routeForNotification(n: NotificationItem): string | null {
-  const meta = n.metadata || {};
-  if (meta.bookingId) return `/bookings/${meta.bookingId}`;
-  if (meta.jobId) return `/jobs/${meta.jobId}`;
-  return null;
 }
 
 const Header = () => {
@@ -49,7 +48,7 @@ const Header = () => {
 
   const handleNotificationClick = async (n: NotificationItem) => {
     if (!n.readAt) await markRead(n.id);
-    const href = routeForNotification(n);
+    const href = getNotificationHref(n);
     if (href) router.push(href);
   };
 
@@ -153,7 +152,7 @@ const Header = () => {
                   <p className="px-3 py-6 text-center text-[12px] text-[#757575]">No notifications yet.</p>
                 ) : (
                   items.map((notification) => {
-                    const Icon = iconForType(notification.metadata?.type);
+                    const Icon = iconForType(getNotificationType(notification));
                     const isUnread = !notification.readAt;
                     return (
                       <button
