@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -12,6 +12,7 @@ import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
 import toast from "react-hot-toast";
 import { BOOKING_STATUS, CHAT_WINDOW_HOURS } from "@/constant";
+import { TaskDrawer, Task } from "./task-drawer";
 
 interface Message {
   id: string;
@@ -74,7 +75,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [isSending, setIsSubmitting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [partnerOnline, setPartnerOnline] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const readReceiptSentForRef = useRef<Set<string>>(new Set());
 
   const isArchived = booking?.status === BOOKING_STATUS.COMPLETED && (() => {
     const now = new Date();
@@ -92,6 +96,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   // Fetch booking data independently — only re-runs if bookingId changes
   useEffect(() => {
+    readReceiptSentForRef.current.clear();
     fetchBookingDetails();
   }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -125,6 +130,19 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     const handleUserOffline = (userId: string) => {
       console.log("[chat] 🔴 userOffline:", userId);
       if (userId === partnerId) setPartnerOnline(false);
+    };
+
+    const handlePresenceReady = (data: { onlineUserIds?: string[] }) => {
+      if (!partnerId) return;
+
+      if (Array.isArray(data.onlineUserIds)) {
+        setPartnerOnline(data.onlineUserIds.includes(partnerId));
+        return;
+      }
+
+      socket.emit("checkPresence", partnerId, (res: { isOnline: boolean }) => {
+        setPartnerOnline(res.isOnline);
+      });
     };
 
     const handleNewMessage = (message: Message) => {
@@ -161,7 +179,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         return [...prev, finalMsg];
       });
 
-      if (message.senderId !== user?.id) {
+      if (
+        message.senderId !== user?.id &&
+        !readReceiptSentForRef.current.has(message.id)
+      ) {
+        readReceiptSentForRef.current.add(message.id);
         socket.emit("readMessages", bookingId);
       }
     };
@@ -193,12 +215,31 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       setBooking((prev) => prev ? { ...prev, status: data.status, updatedAt: new Date().toISOString() } : prev);
     };
 
+    const handleTaskCreated = (task: Task) => {
+      if (task.bookingId !== bookingId) return;
+      setTasks((prev) => prev.some((t) => t.id === task.id) ? prev : [...prev, task]);
+    };
+
+    const handleTaskUpdated = (task: Task) => {
+      if (task.bookingId !== bookingId) return;
+      setTasks((prev) => prev.map((t) => t.id === task.id ? task : t));
+    };
+
+    const handleTaskDeleted = (data: { id: string; bookingId: string }) => {
+      if (data.bookingId !== bookingId) return;
+      setTasks((prev) => prev.filter((t) => t.id !== data.id));
+    };
+
     socket.on("newMessage", handleNewMessage);
     socket.on("messagesRead", handleMessagesRead);
     socket.on("messagesDelivered", handleMessagesDelivered);
     socket.on("bookingStatusUpdated", handleBookingStatusUpdated);
     socket.on("userOnline", handleUserOnline);
     socket.on("userOffline", handleUserOffline);
+    socket.on("presenceReady", handlePresenceReady);
+    socket.on("taskCreated", handleTaskCreated);
+    socket.on("taskUpdated", handleTaskUpdated);
+    socket.on("taskDeleted", handleTaskDeleted);
 
     return () => {
       socket.emit("leaveBooking", bookingId);
@@ -208,6 +249,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       socket.off("bookingStatusUpdated", handleBookingStatusUpdated);
       socket.off("userOnline", handleUserOnline);
       socket.off("userOffline", handleUserOffline);
+      socket.off("presenceReady", handlePresenceReady);
+      socket.off("taskCreated", handleTaskCreated);
+      socket.off("taskUpdated", handleTaskUpdated);
+      socket.off("taskDeleted", handleTaskDeleted);
       socket.off("connect", onConnect);
     };
   }, [bookingId, token, user?.id, booking?.workerId, booking?.employerId]);
@@ -223,6 +268,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       const data = response.data.data;
       setBooking(data);
       setMessages(((data.messages || []) as Message[]).map((m) => ({ ...m, status: 'sent' })));
+      setTasks((data.tasks || []) as Task[]);
     } catch {
       toast.error("Failed to load conversation");
       router.push("/conversations");
@@ -351,9 +397,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const isWorker = user.id === booking.workerId;
   const contextTitle = booking.service?.title || booking.job?.title || "Work request";
   const isPending = booking.status === BOOKING_STATUS.PENDING;
+  const incompleteTaskCount = tasks.filter((t) => !t.isCompleted).length;
+  const hasTaskTab = tasks.length > 0 || booking.status === BOOKING_STATUS.IN_PROGRESS;
 
   return (
-    <div className="flex h-screen flex-col bg-[#F8F9FA]">
+    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-[#F8F9FA]">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
         <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
@@ -388,6 +436,34 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           {booking.status}
         </div>
       </header>
+
+      <TaskDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        bookingId={bookingId}
+        userId={user.id}
+        employerId={booking.employerId}
+        isInProgress={booking.status === BOOKING_STATUS.IN_PROGRESS}
+        tasks={tasks}
+        onTasksChange={setTasks}
+      />
+
+      {/* Right-edge sticky task tab */}
+      {hasTaskTab && (
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          aria-label="View job tasks"
+          aria-expanded={isDrawerOpen}
+          className={`absolute right-0 top-[72px] z-30 flex h-16 w-12 flex-col items-center justify-center gap-1 rounded-l-full rounded-r-none border border-r-0 shadow-[-6px_6px_18px_rgba(20,91,16,0.12)] transition-all hover:-translate-x-0.5 active:scale-95 ${
+            isDrawerOpen
+              ? "border-[#145B10] bg-[#145B10] text-white"
+              : "border-[#145B10]/15 bg-white/95 text-[#145B10] backdrop-blur"
+          }`}
+        >
+          <ClipboardList className="h-[18px] w-[18px]" strokeWidth={2.35} />
+          <span className="text-[18px] font-extrabold leading-none">{incompleteTaskCount}</span>
+        </button>
+      )}
 
       {/* Banner for Status */}
       {isArchived && (
@@ -427,7 +503,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Messages Area */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-4">
+      <main className="flex-1 overflow-y-auto space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
           <p className="text-[11px] font-semibold text-[#1B2431]">Booking Details</p>
           <p className="mt-1 text-[10px] text-[#757575]">
