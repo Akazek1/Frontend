@@ -74,6 +74,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const handleBookmarkClick = (e: React.MouseEvent) => {
     if (isLoading) return;
     e.stopPropagation();
+    // The owner viewing their own card can't bookmark themselves — no-op.
+    if (isOwnService) return;
     requireAuth(async () => {
       if (isServiceBookmarked && onRemoveBookmark) {
         await onRemoveBookmark();
@@ -148,8 +150,15 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </button>
           <button
             onClick={handleBookmarkClick}
-            disabled={isLoading}
-            className="flex-shrink-0 p-0.5 disabled:opacity-50"
+            disabled={isLoading || isOwnService}
+            aria-label={
+              isOwnService
+                ? "Bookmark is unavailable on your own service"
+                : isServiceBookmarked
+                ? "Remove bookmark"
+                : "Bookmark this service"
+            }
+            className="flex-shrink-0 p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               width="18" height="18" viewBox="0 0 24 24"

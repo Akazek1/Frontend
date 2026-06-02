@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ServiceImageUploader } from "@/components/services/ServiceImageUploader";
-import { ServiceCard } from "@/components/services/ServiceCard";
+import ServiceCard from "@/components/service-card";
+import { mapServiceToProviderCard } from "@/lib/service-display";
 import type { WizardFormState } from "@/hooks/useAddServiceForm";
 import type { Service } from "@/types";
 import type { ServiceCategory } from "@/services/services-service";
@@ -179,7 +180,30 @@ export function WizardStep2DetailsPreview({
         <p className="text-[13px] font-black text-[#1B2431]">
           Preview of Your Service Card
         </p>
-        <ServiceCard service={previewService} viewer="marketplace" />
+        {(() => {
+          const p = mapServiceToProviderCard(previewService);
+          return (
+            <ServiceCard
+              id={p.id}
+              image={p.image}
+              profileImage={p.profileImage}
+              name={p.name}
+              handle={p.handle}
+              title={p.title}
+              experience={p.experience}
+              languages={p.languages}
+              location={p.location}
+              price={p.price}
+              rating={p.rating}
+              reviews={p.reviews}
+              distance={p.distance}
+              available={p.available}
+              verified={p.verified}
+              onClick={() => {}}
+              isOwnService
+            />
+          );
+        })()}
         <p className="text-center text-[11px] italic text-[#667085]">
           Stats appear once your card is live
         </p>

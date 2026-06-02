@@ -6,11 +6,11 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { AvailabilityToggleCard } from "@/components/services/AvailabilityToggleCard";
-import { ServiceCard } from "@/components/services/ServiceCard";
+import { OwnerServiceCardRow } from "@/components/services/OwnerServiceCardRow";
 import { TipCard } from "@/components/services/TipCard";
 import { SortDropdown, ServicesSortKey } from "@/components/services/SortDropdown";
 import { EmptyServicesState } from "@/components/services/EmptyServicesState";
-import { DeleteServiceDialog } from "@/components/services/DeleteServiceDialog";
+import { DeactivateServiceDialog } from "@/components/services/DeactivateServiceDialog";
 import { useServices } from "@/hooks/useServices";
 import { useAvailability } from "@/hooks/useAvailability";
 import servicesService from "@/services/services-service";
@@ -24,12 +24,12 @@ export function ServicesListPage() {
     isLoading,
     error,
     refetch,
-    removeLocal,
+    upsertLocal,
   } = useServices();
   const { available, isUpdating, setAvailable } = useAvailability();
 
   const [sort, setSort] = useState<ServicesSortKey>("recent");
-  const [pendingDelete, setPendingDelete] = useState<Service | null>(null);
+  const [pendingToggle, setPendingToggle] = useState<Service | null>(null);
 
   // Per the business rule "any individual can register a service" the Add
   // CTA, the availability toggle (after first card), and the wizard are
@@ -56,17 +56,21 @@ export function ServicesListPage() {
     router.push("/more/services/new");
   };
 
-  const handleConfirmDelete = async () => {
-    if (!pendingDelete) return;
+  const handleConfirmToggleActive = async () => {
+    if (!pendingToggle) return;
+    const nextActive = !(pendingToggle.isActive !== false);
     try {
-      await servicesService.remove(pendingDelete.id);
-      removeLocal(pendingDelete.id);
-      toast.success("Service deleted");
-      setPendingDelete(null);
+      const updated = await servicesService.setActive(
+        pendingToggle.id,
+        nextActive,
+      );
+      upsertLocal(updated);
+      toast.success(nextActive ? "Service activated" : "Service deactivated");
+      setPendingToggle(null);
     } catch (err) {
       const message =
         (err as any)?.response?.data?.message ||
-        "Failed to delete service. Please try again.";
+        "Could not update the service. Please try again.";
       toast.error(message);
     }
   };
@@ -74,9 +78,9 @@ export function ServicesListPage() {
   const isEmpty = !isLoading && services.length === 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[428px] flex-col bg-[#F1FCEF] pb-24">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[428px] flex-col app-bg pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#F1FCEF]/95 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
+      <header className="app-bg sticky top-0 z-10 flex items-center justify-between gap-3 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -93,7 +97,7 @@ export function ServicesListPage() {
           type="button"
           variant="outline"
           onClick={handleAdd}
-          className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[#F1FCEF]"
+          className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[var(--app-background)]"
         >
           <Plus className="h-4 w-4" />
           Add Service
@@ -135,14 +139,13 @@ export function ServicesListPage() {
 
         {isEmpty && <EmptyServicesState onAdd={handleAdd} />}
 
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {sorted.map((service) => (
             <li key={service.id}>
-              <ServiceCard
+              <OwnerServiceCardRow
                 service={service}
-                viewer="owner"
                 onEdit={handleEdit}
-                onDelete={(s) => setPendingDelete(s)}
+                onToggleActive={(s) => setPendingToggle(s)}
               />
             </li>
           ))}
@@ -159,11 +162,12 @@ export function ServicesListPage() {
         )}
       </main>
 
-      <DeleteServiceDialog
-        open={!!pendingDelete}
-        serviceTitle={pendingDelete?.title}
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={handleConfirmDelete}
+      <DeactivateServiceDialog
+        open={!!pendingToggle}
+        serviceTitle={pendingToggle?.title}
+        isActive={pendingToggle?.isActive !== false}
+        onCancel={() => setPendingToggle(null)}
+        onConfirm={handleConfirmToggleActive}
       />
     </div>
   );

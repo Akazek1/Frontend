@@ -153,6 +153,18 @@ const servicesService = {
     await api.delete(`/services/${id}`);
   },
 
+  /**
+   * Deactivate (or reactivate) a service via PATCH /services/:id.
+   *
+   * This is the user-facing flow exposed in the UI as "Deactivate" /
+   * "Activate". Hard-delete is intentionally not exposed to owners — it
+   * would let workers shed bad reviews by recreating the same card.
+   */
+  async setActive(id: string, isActive: boolean): Promise<Service> {
+    const response = await api.patch(`/services/${id}`, { isActive });
+    return unwrap<Service>(response.data);
+  },
+
   async setAvailability(available: boolean): Promise<{ id: string; availableForWork: boolean }> {
     const response = await api.patch("/users/me/availability", { available });
     return unwrap<{ id: string; availableForWork: boolean }>(response.data);
