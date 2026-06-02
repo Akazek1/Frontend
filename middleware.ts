@@ -30,7 +30,6 @@ export function middleware(request: NextRequest) {
 
   const protectedRoutes = protectedRoutesBase;
   const publicRoutes = publicRoutesBase;
-  const homeProtected = !guestBrowsing;
 
   // Under guest browsing, /jobs/[id] (job detail) is public for browsing,
   // but /jobs exact (worker dashboard) stays protected.
@@ -45,7 +44,7 @@ export function middleware(request: NextRequest) {
         request.nextUrl.pathname.startsWith(route + "/")
     );
 
-  const protectedRoots = homeProtected ? ["/", ...protectedRoutes] : protectedRoutes;
+  const protectedRoots = protectedRoutes;
 
   const isProtectedRoute = protectedRoots.some(
     (route) =>
@@ -83,7 +82,6 @@ export function middleware(request: NextRequest) {
 // See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    "/",
     "/profile/:path*",
     "/more/:path*",
     "/book/:path*",
