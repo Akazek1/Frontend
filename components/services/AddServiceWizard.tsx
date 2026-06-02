@@ -9,7 +9,6 @@ import { WizardStep1Basics } from "@/components/services/WizardStep1Basics";
 import { WizardStep2DetailsPreview } from "@/components/services/WizardStep2DetailsPreview";
 import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import { useServiceCategories } from "@/hooks/useServiceCategories";
-import { useRequireRole } from "@/hooks/useRequireRole";
 import { useAuth } from "@/hooks/useAuth";
 import type { Service } from "@/types";
 
@@ -21,10 +20,9 @@ interface AddServiceWizardProps {
 export function AddServiceWizard({ service }: AddServiceWizardProps) {
   const router = useRouter();
   const { user } = useAuth();
-  useRequireRole(["WORKER", "COMPANY"], {
-    fallbackPath: "/more",
-    toastMessage: "Switch to Provider mode to add services.",
-  });
+  // No role gate: per "any individual can register a service", every
+  // authenticated user can reach this wizard. The backend silently grants
+  // the WORKER role on first POST /services.
 
   const {
     form,

@@ -13,15 +13,12 @@ import { EmptyServicesState } from "@/components/services/EmptyServicesState";
 import { DeleteServiceDialog } from "@/components/services/DeleteServiceDialog";
 import { useServices } from "@/hooks/useServices";
 import { useAvailability } from "@/hooks/useAvailability";
-import { useAuth } from "@/hooks/useAuth";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
-
-const PROVIDER_ROLES = ["WORKER", "COMPANY"];
+import { appContentClass } from "@/components/ui/app-primitives";
 
 export function ServicesListPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const {
     services,
     isLoading,
@@ -34,10 +31,11 @@ export function ServicesListPage() {
   const [sort, setSort] = useState<ServicesSortKey>("recent");
   const [pendingDelete, setPendingDelete] = useState<Service | null>(null);
 
-  const canAddService = useMemo(() => {
-    const roles = (user?.roles as string[] | undefined) ?? [];
-    return roles.some((r) => PROVIDER_ROLES.includes(r));
-  }, [user?.roles]);
+  // Per the business rule "any individual can register a service" the Add
+  // CTA, the availability toggle (after first card), and the wizard are
+  // open to every authenticated user. Backend silently grants WORKER on
+  // first POST /services.
+  const hasServices = services.length > 0;
 
   const sorted = useMemo(() => {
     if (sort !== "recent") return services;
@@ -76,37 +74,35 @@ export function ServicesListPage() {
   const isEmpty = !isLoading && services.length === 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-white pb-24">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[428px] flex-col bg-[#F1FCEF] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white px-4 pb-3 pt-4">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#F1FCEF]/95 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => router.back()}
             aria-label="Go back"
-            className="-ml-1 rounded-full p-1.5 hover:bg-[#F1FCEF]"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm hover:bg-[#E8F7E5]"
           >
             <ArrowLeft className="h-5 w-5 text-[#1B2431]" />
           </button>
-          <h1 className="text-[22px] font-black text-[#1B2431]">My Services</h1>
+          <h1 className="text-[24px] font-black leading-7 text-[#1B2431]">My Services</h1>
         </div>
 
-        {canAddService && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAdd}
-            className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[#F1FCEF]"
-          >
-            <Plus className="h-4 w-4" />
-            Add Service
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleAdd}
+          className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[#F1FCEF]"
+        >
+          <Plus className="h-4 w-4" />
+          Add Service
+        </Button>
       </header>
 
-      <main className="flex flex-col gap-4 px-4">
-        {/* Availability */}
-        {canAddService && (
+      <main className={`${appContentClass} px-4 pt-4`}>
+        {/* Availability toggle only makes sense once at least one card exists. */}
+        {hasServices && (
           <AvailabilityToggleCard
             available={available}
             isUpdating={isUpdating}
@@ -137,12 +133,7 @@ export function ServicesListPage() {
           </div>
         )}
 
-        {isEmpty && canAddService && <EmptyServicesState onAdd={handleAdd} />}
-        {isEmpty && !canAddService && (
-          <div className="rounded-2xl border border-[#DCEEDD] bg-white p-6 text-center text-[13px] text-[#475467]">
-            Switch to Provider mode to start offering services.
-          </div>
-        )}
+        {isEmpty && <EmptyServicesState onAdd={handleAdd} />}
 
         <ul className="flex flex-col gap-3">
           {sorted.map((service) => (
