@@ -106,18 +106,10 @@ const ProfileScreen = () => {
     await persistor.purge();
     authService.logout();
     window.dispatchEvent(new StorageEvent("storage", { key: "token", newValue: null }));
-    router.push("/onboarding");
+    router.replace("/");
   };
 
-  // Redirect to onboarding if not authenticated - use useEffect to avoid render-time side effects
-  useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated || !user) {
-      router.push("/onboarding");
-    }
-  }, [isAuthenticated, isLoading, user, router]);
-
-  // Return null while redirecting
+  // Return null while loading
   if (isLoading || !isAuthenticated || !user) {
     return null;
   }
