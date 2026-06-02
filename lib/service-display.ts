@@ -1,5 +1,6 @@
 import APP_CONFIG from "@/constant/app.config";
-import { Service } from "@/types";
+import { Provider, Service } from "@/types";
+import { formatPrice } from "@/lib/utils";
 import { isEmployer } from "./roles";
 
 type ServiceProvider = Service["provider"] | undefined;
@@ -35,6 +36,37 @@ export function getProviderHandle(provider?: Service["provider"] | null) {
 export function getBookingType(service?: Partial<Service> | null) {
   const provider = service?.provider;
   return isEmployer(provider?.roles) ? "AGENCY" : "INDIVIDUAL";
+}
+
+export function mapServiceToProviderCard(service: Service): Provider {
+  const areas = Array.isArray(service.serviceAreas)
+    ? service.serviceAreas
+    : service.serviceAreas
+    ? [service.serviceAreas as string]
+    : [];
+
+  return {
+    id: service.id,
+    image: getServiceCardImage(service),
+    name: `${service.provider.firstName} ${service.provider.lastName}`,
+    handle: getProviderHandle(service.provider),
+    title: service.title,
+    experience: service.description || "",
+    languages: Array.isArray(service.provider.languages)
+      ? service.provider.languages.join(", ")
+      : "",
+    location: areas[0] || "",
+    price: formatPrice(service.priceMin, service.priceMax, service.priceType),
+    rating: service.reviews?.averageRating || 0,
+    reviews: service.reviews?.totalReviews || 0,
+    distance: APP_CONFIG.serviceDetail.fallbackDistance,
+    available: service.isActive,
+    verified: true,
+    type: getBookingType(service),
+    providerId: service.providerId,
+    username: service.provider.username,
+    profileImage: service.provider.profilePicture || service.provider.profileImg,
+  };
 }
 
 /**

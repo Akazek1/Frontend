@@ -19,13 +19,14 @@ import { Icons } from "../icons";
 import { Separator } from "../ui/separator";
 import Image from "next/image";
 import { logout } from "@/store/slices/auth-slice";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import ProfileImageUploader from "./profile-img-uloader";
 import { persistor } from "@/store";
 import authService from "@/services/auth-service";
 import { colors } from "@/constant/colors";
+import { useAuth } from "@/hooks/useAuth";
 
 type MenuItem = {
   name: string;
@@ -80,11 +81,11 @@ const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => 
 const ProfileScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const mainActions = [
     { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile" },
-    { name: "Set Up Services", description: "Manage services and availability", Icon: Briefcase, href: "/more/services" },
+    { name: "My Services", description: "Create and manage service cards", Icon: Briefcase, href: "/more/services" },
     { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/more/saved" },
     { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/more/notifications" },
   ];
@@ -110,13 +111,14 @@ const ProfileScreen = () => {
 
   // Redirect to onboarding if not authenticated - use useEffect to avoid render-time side effects
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated || !user) {
       router.push("/onboarding");
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   // Return null while redirecting
-  if (!isAuthenticated || !user) {
+  if (isLoading || !isAuthenticated || !user) {
     return null;
   }
 

@@ -1,111 +1,59 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, SquarePlus } from "lucide-react";
+import { SquarePlus } from "lucide-react";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ProfileImageUploader from "@/components/profile/profile-img-uloader";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
-import { useAuth } from "@/hooks/useAuth";
-import { updateUser } from "@/store/slices/auth-slice";
-import { toast } from "react-hot-toast";
 import IndividualForm from "@/components/get-hired/individual-form";
-import { Label } from "@/components/ui/label";
 import AgencyWorkerForm from "@/components/get-hired/agency-worker-form";
-import Link from "next/link";
-import EditProfile from "@/components/edit-profile";
-import { hasRole, isEmployer } from "@/lib/roles";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { isEmployer } from "@/lib/roles";
 
+const MyServicesPage: React.FC = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const userIsEmployer = isEmployer(user?.roles);
+  const [showWorkerForm, setShowWorkerForm] = useState(false);
 
-const GetHired: React.FC = () => {
-    const dispatch = useDispatch<AppDispatch>();
-    const { user } = useSelector((state: RootState) => state.auth);
-    const { updateUserProfile } = useAuth();
-    const [showWorkerForm, setShowWorkerForm] = useState(false)
+  return (
+    <div className="pb-10">
+      <div className="p-4 sm:p-6 flex items-center justify-between">
+        <BackButtonHeader text="My Services" backHref="/more" />
+        {userIsEmployer && (
+          <button
+            type="button"
+            onClick={() => setShowWorkerForm((current) => !current)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#145B10] text-[#145B10]"
+            aria-label={showWorkerForm ? "Back to service cards" : "Add worker"}
+          >
+            <SquarePlus className="h-5 w-5" />
+          </button>
+        )}
+      </div>
 
-    // Determine if user is an employer/agency
-    const userIsEmployer = isEmployer(user?.roles);
-    const [selectedUserType, setSelectedUserType] = useState<"Individual" | "Agency">(userIsEmployer ? "Agency" : "Individual");
+      {showWorkerForm ? (
+        <div className="px-4 sm:px-6">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-[#1B2431]">Add Worker</h1>
+            <p className="mt-1 text-sm text-[#616161]">
+              Add a worker first, then create service cards for the services they offer.
+            </p>
+          </div>
+          <AgencyWorkerForm />
+        </div>
+      ) : (
+        <div className="px-4 sm:px-6 space-y-5">
+          <div className="rounded-xl border border-[#DCEEDD] bg-white p-4">
+            <h1 className="text-xl font-bold text-[#1B2431]">Add New Service Card</h1>
+            <p className="mt-1 text-sm text-[#616161]">
+              Build the card employers will see, preview it, then save when it looks right.
+            </p>
+          </div>
 
-
-    const handleUserTypeChange = async (value: "Individual" | "Agency") => {
-        setSelectedUserType(value);
-        // This would typically call /users/role-selection if we wanted to allow switching
-        // For now, we follow the plan to use the new roles array.
-    };
-
-
-    const handleAddWorker = () => {
-        setShowWorkerForm((p) => !p)
-    }
-
-    return (
-        <div className="">
-            <div className="p-4 sm:p-6 flex items-center justify-between">
-                <BackButtonHeader text="Get Hired" backHref="/more" />
-                {
-                    userIsEmployer && !showWorkerForm ? (
-                        <SquarePlus onClick={handleAddWorker} className="text-[#145B10] w-6 h-6 cursor-pointer" />
-                    ) : (
-                        <Link href={"/profile"} type="button" className="p-1.5 rounded-sm bg-transparent hover:bg-transparent text-[#145B10] border text-sm font-semibold border-[#145B10]">
-                            Edit Personal Info
-                        </Link>
-                    )
-                }
-            </div>
-            {
-                showWorkerForm ? <div className="px-4 sm:px-6 pb-6">
-                    <AgencyWorkerForm />
-                </div> : <div className="pb-10">
-                    <ProfileImageUploader />
-                    <div className="px-6 pt-6">
-                        <div className="space-y-0.5">
-                            <Label className="font-semibold text-secondary-foreground/50 text-xs">User Type</Label>
-                            <Select
-                                value={userIsEmployer ? "Agency" : "Individual"}
-                                disabled
-                                onValueChange={handleUserTypeChange}
-                            >
-                                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]">
-                                    <SelectValue placeholder="Select user type" />
-                                    <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 focus-within:rotate-90 transition ease-in 2s" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Individual">Individual</SelectItem>
-                                    <SelectItem value="Agency">Agency</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    {!userIsEmployer ? (
-                        // Individual Profile Form
-                        <div className="">
-                           <EditProfile idEditable={false} />
-                            <div className="px-6 space-y-6">
-
-
-                                <div className="text-[#1B2431] text-lg font-medium">
-                                    Services Offered
-                                </div>
-                                <IndividualForm isWorker={false} />
-                            </div>
-                        </div>
-                    ) : (
-                        // Agency Profile Form
-                        <>
-                            <EditProfile idEditable={false} />
-                            <div className="p-3 sm:p-6">
-                                <Label className="text-base pb-5 font-semibold">Add Service</Label>
-                                <IndividualForm isWorker={true} />
-                            </div>
-                        </>
-                    )}
-                </div>
-            }
-
-        </div >
-    );
+          <IndividualForm isWorker={userIsEmployer} />
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default GetHired;
+export default MyServicesPage;

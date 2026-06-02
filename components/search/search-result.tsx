@@ -5,7 +5,6 @@ import {
   Briefcase,
   Check,
   Loader2,
-  MapPin,
   Search,
   X,
 } from "lucide-react";
@@ -13,14 +12,15 @@ import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
-import { Job } from "@/services/jobs-service";
-import { formatPrice } from "@/lib/utils";
+import jobsService, { Job } from "@/services/jobs-service";
+import { JobPostCard } from "@/components/job-post-card";
 import {
-  getBookingType,
-  getProviderHandle,
-  getServiceCardImage,
   getServiceDetailPath,
+  mapServiceToProviderCard,
 } from "@/lib/service-display";
+import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import toast from "react-hot-toast";
 
 type ServiceTypeFilter = "INDIVIDUAL" | "AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
@@ -51,6 +51,19 @@ interface SearchResultsProps {
   onExitPanel?: () => void;
 }
 
+interface HireModal {
+  serviceId: string;
+  providerName: string;
+  serviceTitle: string;
+}
+
+interface ExistingBooking {
+  status?: string;
+  service?: {
+    id?: string;
+  } | null;
+}
+
 const SERVICE_TYPES: Array<{ label: string; value: ServiceTypeFilter }> = [
   { label: "Individual", value: "INDIVIDUAL" },
   { label: "Agency", value: "AGENCY" },
@@ -66,6 +79,18 @@ const DISTANCE_OPTIONS = [2, 5, 10, 25];
 const LOCATION_OPTIONS = ["Kicukiro", "Nyarugenge", "Gasabo", "Kigali", "Remera"];
 const RATING_OPTIONS = [4.5, 4, 3.5];
 
+const buildSearchCacheKey = (type: "jobs" | "services", query: string, filters: object) => {
+  const normalizedFilters = Object.entries(filters)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  return JSON.stringify({
+    type,
+    query: query.trim().toLowerCase(),
+    filters: normalizedFilters,
+  });
+};
+
 const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger = 0, onExitPanel }: SearchResultsProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -75,9 +100,20 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const [draftJobFilters, setDraftJobFilters] = useState<JobFilters>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hireModal, setHireModal] = useState<HireModal | null>(null);
+  const [notes, setNotes] = useState("");
+  const [submittingHire, setSubmittingHire] = useState(false);
+  const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [isApplyingJob, setIsApplyingJob] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const searchRequestRef = useRef(0);
+  const searchCacheRef = useRef<Map<string, { services?: Service[]; jobs?: Job[] }>>(new Map());
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+  const { user } = useAuth();
+  const { requireAuth } = useRequireAuth();
+  const currentUserId = user?.id;
 
   const popularSearches = useMemo(
     () =>
@@ -117,6 +153,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           fetchServices(query, filters, requestId);
         }
       } else {
+        clearLoadingTimer();
         setServices([]);
         setJobs([]);
         setError(null);
@@ -127,8 +164,67 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     return () => clearTimeout(timer);
   }, [query, filters, jobFilters, hasSearchInput, hasActiveFilters, mode]);
 
+  useEffect(() => {
+    return () => {
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mode !== "employer" || !currentUserId) return;
+
+    const fetchRequestedServices = async () => {
+      try {
+        const response = await api.get("/bookings", { params: { role: "employer" } });
+        const bookings = Array.isArray(response.data.data)
+          ? response.data.data
+          : Array.isArray(response.data)
+          ? response.data
+          : [];
+        const inactive = new Set(["CANCELLED", "REJECTED"]);
+        setRequestedServiceIds(
+          new Set(
+            (bookings as ExistingBooking[])
+              .filter((booking) => booking.service?.id && !inactive.has(String(booking.status).toUpperCase()))
+              .map((booking) => booking.service?.id as string),
+          ),
+        );
+      } catch {
+        // Non-blocking: search results can still show and the API will validate duplicates.
+      }
+    };
+
+    fetchRequestedServices();
+  }, [mode, currentUserId]);
+
+  useEffect(() => {
+    if (mode !== "provider" || !currentUserId) return;
+
+    const fetchApplications = async () => {
+      try {
+        const applications = await jobsService.getMyApplications();
+        if (Array.isArray(applications)) {
+          setAppliedJobIds(new Set(applications.map((application: any) => application.jobId)));
+        }
+      } catch {
+        // Non-blocking: the job cards still render and the API validates duplicate applications.
+      }
+    };
+
+    fetchApplications();
+  }, [mode, currentUserId]);
+
   const fetchJobs = async (searchQuery: string, jf: JobFilters, requestId: number) => {
-    setIsLoading(true);
+    const cacheKey = buildSearchCacheKey("jobs", searchQuery, jf);
+    const cached = searchCacheRef.current.get(cacheKey)?.jobs;
+    if (cached) {
+      setJobs(cached);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    scheduleLoadingIndicator();
     setError(null);
 
     const params = new URLSearchParams();
@@ -136,6 +232,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     if (jf.minBudget) params.set("minBudget", String(jf.minBudget));
     if (jf.maxBudget) params.set("maxBudget", String(jf.maxBudget));
     if (jf.location) params.set("location", jf.location);
+    params.set("limit", "12");
 
     try {
       const response = await api.get(`/jobs?${params.toString()}`);
@@ -145,6 +242,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         : Array.isArray(response.data)
         ? response.data
         : [];
+      searchCacheRef.current.set(cacheKey, { jobs: data });
       setJobs(data);
     } catch {
       if (requestId !== searchRequestRef.current) return;
@@ -152,6 +250,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setJobs([]);
     } finally {
       if (requestId !== searchRequestRef.current) return;
+      clearLoadingTimer();
       setIsLoading(false);
     }
   };
@@ -161,7 +260,16 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     selectedFilters: SearchFilters,
     requestId: number
   ) => {
-    setIsLoading(true);
+    const cacheKey = buildSearchCacheKey("services", searchQuery, selectedFilters);
+    const cached = searchCacheRef.current.get(cacheKey)?.services;
+    if (cached) {
+      setServices(cached);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    scheduleLoadingIndicator();
     setError(null);
 
     const params = new URLSearchParams();
@@ -175,6 +283,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     if (selectedFilters.minPrice) params.set("minPrice", String(selectedFilters.minPrice));
     if (selectedFilters.maxPrice) params.set("maxPrice", String(selectedFilters.maxPrice));
     if (selectedFilters.minRating) params.set("minRating", String(selectedFilters.minRating));
+    params.set("limit", "12");
 
     try {
       const response = await api.get(`/services?${params.toString()}`);
@@ -187,6 +296,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         ? response.data.data
         : [];
       if (requestId !== searchRequestRef.current) return;
+      searchCacheRef.current.set(cacheKey, { services: data });
       setServices(data);
     } catch {
       if (requestId !== searchRequestRef.current) return;
@@ -194,8 +304,23 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setServices([]);
     } finally {
       if (requestId !== searchRequestRef.current) return;
+      clearLoadingTimer();
       setIsLoading(false);
     }
+  };
+
+  const clearLoadingTimer = () => {
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+  };
+
+  const scheduleLoadingIndicator = () => {
+    clearLoadingTimer();
+    loadingTimerRef.current = setTimeout(() => {
+      setIsLoading(true);
+    }, 180);
   };
 
   const applyFilters = () => {
@@ -218,6 +343,68 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     setIsFilterOpen(false);
     // If there's also no search query, tell the parent it can dismiss the panel
     if (!query.trim()) onExitPanel?.();
+  };
+
+  const openHireModal = (service: Service) => {
+    const providerName = `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || "Provider";
+
+    if (currentUserId && service.provider.id === currentUserId) {
+      toast.error("You can't book your own service.");
+      return;
+    }
+
+    if (requestedServiceIds.has(service.id)) return;
+
+    requireAuth(() => {
+      setHireModal({
+        serviceId: service.id,
+        providerName,
+        serviceTitle: service.title,
+      });
+    }, "hire");
+  };
+
+  const closeHireModal = () => {
+    setHireModal(null);
+    setNotes("");
+  };
+
+  const handleHireSubmit = async () => {
+    if (!hireModal) return;
+
+    setSubmittingHire(true);
+    try {
+      await api.post("/bookings", {
+        serviceId: hireModal.serviceId,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      });
+      toast.success(`Booking request sent to ${hireModal.providerName}!`);
+      setRequestedServiceIds((prev) => {
+        const next = new Set(prev);
+        next.add(hireModal.serviceId);
+        return next;
+      });
+      closeHireModal();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send request. Please try again.");
+    } finally {
+      setSubmittingHire(false);
+    }
+  };
+
+  const handleExpressJob = async (jobId: string) => {
+    if (appliedJobIds.has(jobId) || isApplyingJob) return;
+
+    setIsApplyingJob(jobId);
+    try {
+      await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
+      setAppliedJobIds((prev) => new Set([...prev, jobId]));
+      toast.success("Interest sent! The employer will be notified.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send interest.");
+    } finally {
+      setIsApplyingJob(null);
+    }
   };
 
   const removeServiceFilter = (key: keyof SearchFilters) => {
@@ -304,33 +491,45 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           {mode === "provider" ? (
             <div className="space-y-3">
               {jobs.map((job) => (
-                <JobResultCard key={job.id} job={job} onClick={() => router.push(`/jobs/${job.id}`)} />
+                <JobPostCard
+                  key={job.id}
+                  job={{
+                    id: job.id,
+                    title: job.title,
+                    category: job.category?.name || "Other",
+                    description: job.description,
+                    location: job.address?.city || "Kigali",
+                    budgetMin: job.budgetMin,
+                    budgetMax: job.budgetMax,
+                    createdAt: job.createdAt,
+                    posterName: `${job.employer?.firstName || ""} ${job.employer?.lastName || ""}`.trim(),
+                    posterIsPrivate: !job.employer?.firstName,
+                    employerId: job.employer?.id || job.employerId,
+                  }}
+                  currentUserId={currentUserId}
+                  applied={appliedJobIds.has(job.id)}
+                  isApplying={isApplyingJob === job.id}
+                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  onExpress={() => requireAuth(() => handleExpressJob(job.id), "apply", `/jobs/${job.id}`)}
+                />
               ))}
             </div>
           ) : (
             <div className="grid gap-4">
-              {services.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  id={service.id}
-                  image={getServiceCardImage(service)}
-                  profileImage={service.provider.profilePicture}
-                  name={`${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim()}
-                  handle={getProviderHandle(service.provider)}
-                  title={service.title}
-                  experience={service.description || ""}
-                  languages={Array.isArray(service.provider.languages) ? service.provider.languages.join(", ") : ""}
-                  location={Array.isArray(service.serviceAreas) ? service.serviceAreas[0] || "" : ""}
-                  price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
-                  rating={service.reviews?.averageRating || 0}
-                  reviews={service.reviews?.totalReviews || 0}
-                  distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
-                  available={service.isActive}
-                  verified={service.provider.isVerified}
-                  onClick={() => router.push(getServiceDetailPath(service))}
-                  onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
-                />
-              ))}
+              {services.map((service) => {
+                const card = mapServiceToProviderCard(service);
+
+                return (
+                  <ServiceCard
+                    key={service.id}
+                    {...card}
+                    hasRequested={requestedServiceIds.has(service.id)}
+                    isOwnService={Boolean(currentUserId && service.provider.id === currentUserId)}
+                    onClick={() => router.push(getServiceDetailPath(service))}
+                    onHireClick={() => openHireModal(service)}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -370,6 +569,52 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 {search}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {hireModal && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 px-4 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-sm space-y-5 rounded-[32px] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#145B10]">Request to Hire</p>
+                <h3 className="mt-0.5 text-[17px] font-black text-[#1B2431]">{hireModal.providerName}</h3>
+                <p className="text-[13px] text-gray-400">{hireModal.serviceTitle}</p>
+              </div>
+              <button onClick={closeHireModal} className="p-1 text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#1B2431]">
+                Message <span className="font-normal text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Describe what you need, preferred schedule, or any specific requirements..."
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={closeHireModal}
+                className="h-12 flex-1 rounded-[18px] border-2 border-gray-100 text-[13px] font-bold text-gray-500 transition-all hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleHireSubmit}
+                disabled={submittingHire}
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#145B10] text-[13px] font-bold text-white shadow-lg shadow-[#145B10]/20 transition-all hover:bg-[#0F4D0C] disabled:opacity-60"
+              >
+                {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Request"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -607,63 +852,5 @@ const NumberInput = ({
     />
   </label>
 );
-
-const formatBudget = (min?: number | null, max?: number | null) => {
-  if (!min && !max) return "Negotiable";
-  const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
-  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (min) return `From ${fmt(min)}`;
-  return `Up to ${fmt(max!)}`;
-};
-
-const timeAgo = (iso: string) => {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-};
-
-const JobResultCard = ({ job, onClick }: { job: Job; onClick: () => void }) => {
-  const budget = formatBudget(job.budgetMin, job.budgetMax);
-
-  return (
-    <div
-      onClick={onClick}
-      className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-2 hover:border-[#145B10]/30 hover:shadow-md transition-all"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8F5E9]">
-          <Briefcase className="h-4 w-4 text-[#145B10]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full bg-[#E8F5E9] px-2 py-0.5 text-[10px] font-semibold text-[#145B10]">
-              {job.category.name}
-            </span>
-            <span className="text-[10px] text-gray-400">{timeAgo(job.createdAt)}</span>
-          </div>
-          <h3 className="mt-1 text-[14px] font-bold leading-snug text-[#1B2431]">{job.title}</h3>
-        </div>
-      </div>
-
-      {job.address?.city && (
-        <div className="flex items-center gap-1 text-[11px] text-[#616161]">
-          <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
-          {job.address.city}, Kigali
-        </div>
-      )}
-
-      <p className="line-clamp-2 text-[11px] leading-relaxed text-[#616161]">{job.description}</p>
-
-      <div className="flex items-center justify-between pt-0.5">
-        <span className="text-[12px] font-bold text-[#1B2431]">{budget}</span>
-        <span className="rounded-full bg-[#145B10] px-3 py-1 text-[11px] font-bold text-white">
-          View Job
-        </span>
-      </div>
-    </div>
-  );
-};
 
 export default SearchResults;

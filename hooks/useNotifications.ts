@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import api from "@/lib/axios";
 import { initializeSocket } from "@/lib/socket";
+import { getAuthToken } from "@/lib/auth-utils";
 
 export interface NotificationItem {
   id: string;
@@ -52,6 +53,8 @@ interface UseNotificationsOptions {
 
 export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOptions = {}) {
   const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
+  const effectiveToken = token || getAuthToken();
+  const effectiveIsAuthenticated = isAuthenticated || Boolean(effectiveToken);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -79,9 +82,9 @@ export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOption
   // We call initializeSocket (idempotent) rather than getSocket() so this works
   // even when this effect runs before the global useSocketConnection effect.
   useEffect(() => {
-    if (!isAuthenticated || !token || !user?.id) return;
+    if (!effectiveIsAuthenticated || !effectiveToken || !user?.id) return;
 
-    const socket = initializeSocket(token, user.id);
+    const socket = initializeSocket(effectiveToken, user.id);
 
     const handleNewNotification = (notification: NotificationItem) => {
       setItems((prev) => {
@@ -95,7 +98,7 @@ export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOption
     return () => {
       socket.off("newNotification", handleNewNotification);
     };
-  }, [isAuthenticated, token, user?.id, limit]);
+  }, [effectiveIsAuthenticated, effectiveToken, user?.id, limit]);
 
   const unreadCount = items.filter((n) => !n.readAt && n.status !== "READ").length;
 

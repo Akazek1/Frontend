@@ -14,7 +14,6 @@ export interface NavItem {
 }
 
 export interface Service {
-  availability: never[];
   service: Record<string, unknown>;
   id: string;
   title: string;

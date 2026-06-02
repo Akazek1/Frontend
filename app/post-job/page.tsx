@@ -64,13 +64,15 @@ const PostJobPage: React.FC = () => {
         title: form.title,
         description: form.description,
         categoryId: form.categoryId,
+        district: form.district || undefined,
+        city: "Kigali",
         budgetMin: form.budgetMin ? Number(form.budgetMin) : undefined,
         budgetMax: form.budgetMax ? Number(form.budgetMax) : undefined,
         startDate: form.startDate || undefined,
         scheduleType: form.scheduleType,
       });
       toast.success("Job posted successfully!");
-      router.push("/jobs");
+      router.push("/work/job-posts");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to post job.");
     } finally {

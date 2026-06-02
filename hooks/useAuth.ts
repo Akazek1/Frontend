@@ -20,12 +20,14 @@ import type {
   UserRole,
 } from "@/services/auth-service";
 import { toast } from "react-hot-toast";
+import { getAuthToken } from "@/lib/auth-utils";
 
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { user, isAuthenticated, isLoading, error, otpSent, phoneNumber } =
     useSelector((state: RootState) => state.auth);
+  const effectiveIsAuthenticated = isAuthenticated || Boolean(getAuthToken());
 
   const roles = user?.roles || [];
 
@@ -35,10 +37,10 @@ export const useAuth = () => {
 
   // Check authentication status on mount
   useEffect(() => {
-    if (isAuthenticated && !user) {
+    if (effectiveIsAuthenticated && !user) {
       dispatch(getCurrentUser());
     }
-  }, [dispatch, isAuthenticated, user]);
+  }, [dispatch, effectiveIsAuthenticated, user]);
 
   // Send OTP function
   const handleSendOtp = async (data: SendOtpRequest) => {
@@ -163,7 +165,7 @@ export const useAuth = () => {
   return {
     user,
     roles,
-    isAuthenticated,
+    isAuthenticated: effectiveIsAuthenticated,
     isLoading,
     error,
     otpSent,

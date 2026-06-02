@@ -1,7 +1,22 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3003";
+const getSocketUrl = () => {
+  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+    return process.env.NEXT_PUBLIC_SOCKET_URL;
+  }
+
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    return `${window.location.protocol}//${window.location.hostname}:3003`;
+  }
+
+  return "http://localhost:3003";
+};
+
+const SOCKET_URL = getSocketUrl();
 
 let socket: Socket | null = null;
 let socketAuthKey: string | null = null;

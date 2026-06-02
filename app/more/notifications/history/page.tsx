@@ -1,36 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Bell, Briefcase, Calendar, CheckCircle, Loader2, MessageCircle, Star, XCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { NotificationItem, formatRelativeTime, getNotificationHref, getNotificationType } from "@/hooks/useNotifications";
+import { NotificationItem, getNotificationHref } from "@/hooks/useNotifications";
+import {
+  NotificationFilter,
+  NotificationRow,
+  filterNotifications,
+  getNotificationFilterCounts,
+  groupNotificationsByDate,
+  notificationFilters,
+} from "@/components/notifications/notification-row";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
-
-function iconForType(type?: string) {
-  switch (type) {
-    case "NEW_APPLICATION":
-    case "HIRE_REQUEST":
-      return Briefcase;
-    case "JOB_AWARDED":
-      return CheckCircle;
-    case "BOOKING_CONFIRMED":
-      return Calendar;
-    case "BOOKING_CANCELLED":
-    case "APPLICATION_REJECTED":
-    case "JOB_FILLED":
-      return XCircle;
-    case "NEW_REVIEW":
-      return Star;
-    case "NEW_MESSAGE":
-      return MessageCircle;
-    default:
-      return Bell;
-  }
-}
 
 const NotificationHistoryPage = () => {
   const router = useRouter();
@@ -39,6 +26,7 @@ const NotificationHistoryPage = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
 
   const load = useCallback(async (nextPage: number, append: boolean) => {
     try {
@@ -46,7 +34,11 @@ const NotificationHistoryPage = () => {
       const res = await api.get(`/users/notifications`, { params: { page: nextPage, limit: PAGE_SIZE } });
       const payload = res.data?.data ?? res.data;
       const newItems: NotificationItem[] = payload?.items ?? [];
-      setItems((prev) => (append ? [...prev, ...newItems] : newItems));
+      setItems((prev) => {
+        if (!append) return newItems;
+        const existingIds = new Set(prev.map((item) => item.id));
+        return [...prev, ...newItems.filter((item) => !existingIds.has(item.id))];
+      });
       setTotal(payload?.total ?? 0);
       setPage(nextPage);
     } catch (err) {
@@ -90,58 +82,97 @@ const NotificationHistoryPage = () => {
   };
 
   const hasMore = items.length < total;
+  const counts = useMemo(() => getNotificationFilterCounts(items), [items]);
+  const filteredItems = useMemo(
+    () => filterNotifications(items, activeFilter),
+    [activeFilter, items],
+  );
+  const groupedItems = useMemo(() => groupNotificationsByDate(filteredItems), [filteredItems]);
+  const allLoadedNotificationsRead = items.length === 0 || items.every((n) => !!n.readAt || n.status === "READ");
 
   return (
-    <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen pb-16">
-      <BackButtonHeader text="Notification history" backHref="/more/notifications" />
+    <div className="min-h-screen space-y-5 bg-[#F1FCEF] px-5 py-10 pb-20">
+      <div className="flex items-center justify-between gap-3">
+        <BackButtonHeader text="Notifications" fallbackHref="/more/notifications" />
 
-      <div className="flex justify-end">
         <button
           type="button"
           onClick={handleMarkAll}
-          disabled={items.every((n) => !!n.readAt)}
-          className="text-[12px] font-bold text-[#145B10] disabled:text-gray-400"
+          disabled={allLoadedNotificationsRead}
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE8DA] bg-white text-[#145B10] shadow-sm disabled:text-gray-300"
+          aria-label="Mark all notifications as read"
+          title="Mark all as read"
         >
-          Mark all as read
+          <CheckCheck className="h-5 w-5" />
         </button>
+      </div>
+
+      <div className="-mx-5 overflow-x-auto px-5 scrollbar-hide">
+        <div className="flex min-w-max gap-2">
+          {notificationFilters.map((filter) => {
+            const active = activeFilter === filter.id;
+            const count = filter.id === "all" && total > counts.all ? total : counts[filter.id];
+
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "flex h-10 items-center gap-2 rounded-full border px-4 text-[13px] font-bold transition-colors",
+                  active
+                    ? "border-[#10851B] bg-[#10851B] text-white shadow-sm"
+                    : "border-[#DCE8DA] bg-white text-[#1B2431]",
+                )}
+              >
+                {filter.label}
+                {filter.showCount && count > 0 && (
+                  <span
+                    className={cn(
+                      "flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[12px]",
+                      active ? "bg-white/20 text-white" : "bg-[#EAF8E9] text-[#10851B]",
+                    )}
+                  >
+                    {count > 99 ? "99+" : count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-10">
           <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
         </div>
-      ) : items.length === 0 ? (
-        <p className="text-center text-sm text-[#757575] py-10">No notifications yet.</p>
+      ) : filteredItems.length === 0 ? (
+        <div className="rounded-xl border border-[#DCE8DA] bg-white px-5 py-10 text-center shadow-sm">
+          <p className="text-[14px] font-bold text-[#1B2431]">
+            {items.length === 0 ? "No notifications yet" : "Nothing here yet"}
+          </p>
+          <p className="mt-1 text-[13px] leading-5 text-[#757575]">
+            {items.length === 0
+              ? "When something important happens, it will show up here."
+              : "Try another filter to see more notifications."}
+          </p>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((n) => {
-            const Icon = iconForType(getNotificationType(n));
-            const isUnread = !n.readAt;
-            return (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => handleClick(n)}
-                className="w-full text-left bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex gap-3"
-              >
-                <span className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
-                  <Icon className="h-5 w-5 text-[#145B10]" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className={`text-[14px] text-[#1B2431] ${isUnread ? "font-bold" : "font-semibold"}`}>
-                      {n.title}
-                    </span>
-                    {isUnread && <span className="w-2 h-2 rounded-full bg-red-500" />}
-                  </span>
-                  <span className="mt-1 block text-[12px] leading-5 text-[#616161]">{n.body}</span>
-                  <span className="mt-1 block text-[11px] font-semibold text-[#9E9E9E]">
-                    {formatRelativeTime(n.createdAt)}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
+        <div className="space-y-5">
+          {groupedItems.map((group) => (
+            <section key={group.title} className="space-y-2">
+              <h2 className="px-1 text-[15px] font-bold text-[#616161]">{group.title}</h2>
+              <div className="overflow-hidden rounded-xl border border-[#E2EAE0] bg-white shadow-sm">
+                {group.items.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onClick={handleClick}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
 
           {hasMore && (
             <div className="flex justify-center pt-4">
@@ -149,7 +180,7 @@ const NotificationHistoryPage = () => {
                 type="button"
                 onClick={() => load(page + 1, true)}
                 disabled={loadingMore}
-                className="text-[13px] font-bold text-[#145B10] disabled:text-gray-400"
+                className="rounded-full border border-[#DCE8DA] bg-white px-5 py-2.5 text-[13px] font-bold text-[#145B10] shadow-sm disabled:text-gray-400"
               >
                 {loadingMore ? "Loading..." : "Load more"}
               </button>

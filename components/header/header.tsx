@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { RootState } from "@/store";
-import { Bell, Briefcase, Calendar, Check, CheckCircle, Globe, MapPin, MessageCircle, Star, User, XCircle } from "lucide-react";
+import { Bell, Check, Globe, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,8 @@ import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getProviderHandle } from "@/lib/service-display";
-import { NotificationItem, formatRelativeTime, getNotificationHref, getNotificationType, useNotifications } from "@/hooks/useNotifications";
+import { NotificationItem, getNotificationHref, useNotifications } from "@/hooks/useNotifications";
+import { NotificationRow } from "@/components/notifications/notification-row";
 
 const languages = [
   { code: "EN", name: "English", hint: "Default app language" },
@@ -17,28 +18,6 @@ const languages = [
   { code: "FR", name: "French", hint: "Available soon" },
   { code: "SW", name: "Swahili", hint: "Available soon" },
 ];
-
-function iconForType(type?: string) {
-  switch (type) {
-    case "NEW_APPLICATION":
-    case "HIRE_REQUEST":
-      return Briefcase;
-    case "JOB_AWARDED":
-      return CheckCircle;
-    case "BOOKING_CONFIRMED":
-      return Calendar;
-    case "BOOKING_CANCELLED":
-    case "APPLICATION_REJECTED":
-    case "JOB_FILLED":
-      return XCircle;
-    case "NEW_REVIEW":
-      return Star;
-    case "NEW_MESSAGE":
-      return MessageCircle;
-    default:
-      return Bell;
-  }
-}
 
 const Header = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -151,27 +130,14 @@ const Header = () => {
                 {items.length === 0 ? (
                   <p className="px-3 py-6 text-center text-[12px] text-[#757575]">No notifications yet.</p>
                 ) : (
-                  items.map((notification) => {
-                    const Icon = iconForType(getNotificationType(notification));
-                    const isUnread = !notification.readAt;
-                    return (
-                      <button
-                        key={notification.id}
-                        type="button"
-                        onClick={() => handleNotificationClick(notification)}
-                        className={`flex w-full gap-3 rounded-xl px-2 py-3 text-left hover:bg-gray-50 ${isUnread ? "bg-[#F1FCEF]/50" : ""}`}
-                      >
-                        <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
-                          <Icon className="h-4 w-4 text-[#145B10]" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className={`block text-[13px] text-[#1B2431] ${isUnread ? "font-bold" : "font-semibold"}`}>{notification.title}</span>
-                          <span className="mt-0.5 block text-[11px] leading-4 text-[#616161]">{notification.body}</span>
-                          <span className="mt-1 block text-[10px] font-semibold text-[#9E9E9E]">{formatRelativeTime(notification.createdAt)}</span>
-                        </span>
-                      </button>
-                    );
-                  })
+                  items.map((notification) => (
+                    <NotificationRow
+                      key={notification.id}
+                      notification={notification}
+                      onClick={handleNotificationClick}
+                      variant="compact"
+                    />
+                  ))
                 )}
               </div>
               <Link

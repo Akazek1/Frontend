@@ -166,15 +166,24 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
       };
 
       const handleMessagesRead = (data: { bookingId: string; readerId: string }) => {
-        if (data.readerId !== user?.id) {
-          setBookings((prev) =>
-            prev.map((b) =>
-              b.bookingId === data.bookingId
-                ? { ...b, latestMessage: { ...b.latestMessage!, isRead: true, isDelivered: true } }
-                : b,
-            ),
-          );
-        }
+        setBookings((prev) =>
+          prev.map((b) => {
+            if (b.bookingId !== data.bookingId) return b;
+
+            if (data.readerId === user?.id) {
+              return { ...b, unreadCount: 0 };
+            }
+
+            if (b.latestMessage?.senderId === user?.id) {
+              return {
+                ...b,
+                latestMessage: { ...b.latestMessage, isRead: true, isDelivered: true },
+              };
+            }
+
+            return b;
+          }),
+        );
       };
 
       const handleUserOnline = (userId: string) => {
@@ -183,6 +192,24 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
       const handleUserOffline = (userId: string) => {
         setPresenceMap((prev) => ({ ...prev, [userId]: false }));
+      };
+
+      const handlePresenceReady = (data: { onlineUserIds?: string[] }) => {
+        if (!Array.isArray(data.onlineUserIds)) {
+          checkAllPresence();
+          return;
+        }
+
+        setBookings((current) => {
+          setPresenceMap((prev) => {
+            const next = { ...prev };
+            current.forEach((b) => {
+              next[b.partner.id] = data.onlineUserIds!.includes(b.partner.id);
+            });
+            return next;
+          });
+          return current;
+        });
       };
 
       // Check presence for all current bookings — works whether socket is
@@ -206,6 +233,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
       socket.on("messagesRead", handleMessagesRead);
       socket.on("userOnline", handleUserOnline);
       socket.on("userOffline", handleUserOffline);
+      socket.on("presenceReady", handlePresenceReady);
 
       return () => {
         socket.off("connect", checkAllPresence);
@@ -214,6 +242,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
         socket.off("messagesRead", handleMessagesRead);
         socket.off("userOnline", handleUserOnline);
         socket.off("userOffline", handleUserOffline);
+        socket.off("presenceReady", handlePresenceReady);
       };
     }
   }, [token, user?.id]);

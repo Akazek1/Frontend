@@ -4,12 +4,10 @@ import ServiceCard from "../service-card";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import { formatPrice } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Loader2, X } from "lucide-react";
 import { Provider, Service } from "@/types";
-import { getBookingType, getProviderHandle, getServiceCardImage } from "@/lib/service-display";
-import APP_CONFIG from "@/constant/app.config";
+import { mapServiceToProviderCard } from "@/lib/service-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
@@ -82,39 +80,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
     fetchBookings();
   }, []);
 
-  const filteredProviders: Provider[] = services
-    .map((service) => {
-      const areas = Array.isArray(service.serviceAreas)
-        ? service.serviceAreas
-        : service.serviceAreas
-        ? [service.serviceAreas as string]
-        : [];
-
-      const image = getServiceCardImage(service);
-
-      return {
-        id: service.id,
-        image,
-        name: `${service.provider.firstName} ${service.provider.lastName}`,
-        handle: getProviderHandle(service.provider),
-        title: service.title,
-        experience: service.description || "",
-        languages: Array.isArray(service?.provider?.languages)
-          ? service.provider.languages.join(", ")
-          : "",
-        location: areas[0] || "",
-        price: formatPrice(service.priceMin, service.priceMax, service.priceType),
-        rating: service?.reviews?.averageRating || 0,
-        reviews: service?.reviews?.totalReviews || 0,
-        distance: APP_CONFIG.serviceDetail.fallbackDistance,
-        available: service.isActive,
-        verified: true,
-        type: getBookingType(service),
-        providerId: service.providerId,
-        username: service.provider.username,
-        profileImage: service.provider.profilePicture || service.provider.profileImg,
-      };
-    });
+  const filteredProviders: Provider[] = services.map(mapServiceToProviderCard);
 
   const handleHireSubmit = async () => {
     if (!hireModal) return;

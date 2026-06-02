@@ -3,7 +3,7 @@ import {
   createAsyncThunk,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import { getAuthToken } from "@/lib/auth-utils";
+import { getAuthToken, getStoredAuthUser } from "@/lib/auth-utils";
 import authService, {
   type SendOtpRequest,
   type VerifyOtpRequest,
@@ -28,11 +28,12 @@ const getStoredUser = () => {
   if (typeof window === "undefined") return null;
   
   try {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser || storedUser === "undefined" || storedUser === "null") {
+    const user = getStoredAuthUser<
+      AuthResponse["data"]["user"] & { userType?: string }
+    >();
+    if (!user) {
       return null;
     }
-    const user = JSON.parse(storedUser);
 
     // Migration: Convert old userType to roles array
     if (user && !user.roles && user.userType) {
@@ -141,6 +142,11 @@ const authSlice = createSlice({
       }
       if (typeof window !== "undefined") {
         localStorage.setItem("user", JSON.stringify(state.user));
+        if (state.user?.firstName) {
+          document.cookie = "profileComplete=true; path=/; max-age=31536000";
+        } else {
+          document.cookie = "profileComplete=; path=/; max-age=0";
+        }
       }
     },
     // Called after complete-signup succeeds — sets real session from a signup-token state

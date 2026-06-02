@@ -32,7 +32,7 @@ const HelpAndSupport = () => {
       id: 3,
       question: "How do I list my services as a worker?",
       answer:
-        "Go to 'Profile' → 'Set Up Services'. Select 'Individual' or 'Agency' account type. Then add your services by providing: service title, description, category, price per day, service type, and your availability (days and hours). Upload a service photo and submit. Your service will be live and visible to employers.",
+        "Go to 'Profile' → 'My Services'. Use 'Add New Service Card' to add the service title, description, category, price, service area, and photo. Preview the card, then save it when it looks right.",
     },
     {
       id: 4,
@@ -86,7 +86,7 @@ const HelpAndSupport = () => {
       id: 12,
       question: "How do I edit or delete a service listing?",
       answer:
-        "Go to 'Profile' → 'Set Up Services'. Find your service in the 'Services Offered' section, tap the pencil icon to edit or trash icon to delete. Changes take effect immediately. Deleted services cannot be recovered.",
+        "Go to 'Profile' → 'My Services'. Find your card in 'Your Services', tap the pencil icon to edit or the trash icon to delete. Changes take effect immediately.",
     },
     {
       id: 13,

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
+import JobOwnerDetail from "@/components/jobs/job-owner-detail";
 
 const JobDetailPage = () => {
   const { id } = useParams();
@@ -59,7 +60,7 @@ const JobDetailPage = () => {
         } else {
           console.error("Failed to fetch job details:", err);
           toast.error("Job not found");
-          router.push("/jobs");
+          router.push("/work");
         }
       } finally {
         setLoading(false);
@@ -114,11 +115,30 @@ const JobDetailPage = () => {
 
   if (!job) return null;
 
+  // Owners get the dedicated "View Applicants" page (matches design mockup).
+  // Non-owners (workers, guests) keep the existing job-detail layout below.
+  if (isOwner) {
+    return (
+      <JobOwnerDetail
+        job={job}
+        applications={applications}
+        onApplicationStatusChange={(appId, status) =>
+          setApplications((prev) =>
+            prev.map((a) => (a.id === appId ? { ...a, status } : a)),
+          )
+        }
+        onJobStatusChange={(status) =>
+          setJob((prev) => (prev ? { ...prev, status } : prev))
+        }
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#F8F9FA] pb-24">
       {/* Premium Header */}
       <div className="bg-white px-6 pt-10 pb-6 rounded-b-[40px] shadow-sm border-b border-gray-100 sticky top-0 z-20">
-        <BackButtonHeader text="Job Detail" fallbackHref="/jobs" />
+        <BackButtonHeader text="Job Detail" fallbackHref="/work" />
         <p className="text-[12px] text-gray-400 font-medium mt-1 ml-10">Review job requirements and applicants</p>
       </div>
 

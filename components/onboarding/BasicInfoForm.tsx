@@ -6,11 +6,22 @@ import { useOnboarding } from "@/context/onboarding-context"
 
 const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
 
+function isAtLeast18(dob: string): boolean {
+  const d = new Date(dob)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  const age = today.getFullYear() - d.getFullYear()
+  const m = today.getMonth() - d.getMonth()
+  return age - (m < 0 || (m === 0 && today.getDate() < d.getDate()) ? 1 : 0) >= 18
+}
+
 export function BasicInfoForm() {
   const {
     firstName,
     lastName,
     email,
+    dateOfBirth,
+    setDateOfBirth,
     handleFirstNameChange,
     handleLastNameChange,
     handleEmailChange,
@@ -20,6 +31,7 @@ export function BasicInfoForm() {
   } = useOnboarding()
 
   const [emailError, setEmailError] = useState("")
+  const [dobError, setDobError] = useState("")
 
   const handleEmailBlur = () => {
     if (email.trim() && !isValidEmail(email.trim())) {
@@ -86,6 +98,32 @@ export function BasicInfoForm() {
               }}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth <span className="text-red-500">*</span>
+            </label>
+            <Input
+              type="date"
+              value={dateOfBirth}
+              max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split("T")[0]}
+              onChange={(e) => {
+                setDateOfBirth(e.target.value)
+                if (dobError && isAtLeast18(e.target.value)) setDobError("")
+              }}
+              onBlur={() => {
+                if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
+                  setDobError("You must be at least 18 years old to register")
+                } else {
+                  setDobError("")
+                }
+              }}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10] ${
+                dobError ? "border-red-400" : "border-gray-300"
+              }`}
+            />
+            {dobError && <p className="text-xs text-red-500 mt-1">{dobError}</p>}
           </div>
 
           <div>

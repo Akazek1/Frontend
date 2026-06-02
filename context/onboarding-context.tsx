@@ -47,6 +47,8 @@ interface OnboardingContextType {
   setLastName: (name: string) => void
   email: string
   setEmail: (email: string) => void
+  dateOfBirth: string
+  setDateOfBirth: (dob: string) => void
   selectedRoles: ("EMPLOYER" | "WORKER")[]
   setSelectedRoles: (roles: ("EMPLOYER" | "WORKER")[]) => void
   selectedCategories: string[]
@@ -103,6 +105,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [verifiedUser, setVerifiedUser] = useState<UserData>(null)
   const [uploadedDocument, setUploadedDocument] = useState<DocumentData | null>(null)
@@ -291,7 +294,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const completeSignupForNewUser = async (_user: NonNullable<UserData>) => {
       const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
-      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles }
+      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth }
       if (lastName.trim()) payload.lastName = lastName.trim()
       if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
 
@@ -499,6 +502,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setLastName,
     email,
     setEmail,
+    dateOfBirth,
+    setDateOfBirth,
     selectedRoles,
     setSelectedRoles,
     selectedCategories,

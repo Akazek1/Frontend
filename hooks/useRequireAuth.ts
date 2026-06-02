@@ -3,6 +3,7 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useAuthGate } from "@/context/auth-gate-context";
+import { getAuthToken } from "@/lib/auth-utils";
 
 /**
  * Gate commitment actions behind authentication.
@@ -21,9 +22,10 @@ import { useAuthGate } from "@/context/auth-gate-context";
 export function useRequireAuth() {
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const { openAuthGate } = useAuthGate();
+  const effectiveIsAuthenticated = isAuthenticated || Boolean(getAuthToken());
 
   const requireAuth = (action?: () => void, intent?: string, redirectUrl?: string): boolean => {
-    if (isAuthenticated) {
+    if (effectiveIsAuthenticated) {
       action?.();
       return true;
     }
@@ -31,5 +33,5 @@ export function useRequireAuth() {
     return false;
   };
 
-  return { isAuthenticated, requireAuth };
+  return { isAuthenticated: effectiveIsAuthenticated, requireAuth };
 }

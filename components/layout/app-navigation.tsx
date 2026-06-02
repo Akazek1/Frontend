@@ -5,32 +5,15 @@ import { Icons } from "@/components/icons";
 import { navItems as defaultNavItems } from "@/constant"; // Keep this immutable
 import Link from "next/link";
 import { NavItem } from "@/types";
-import { useViewMode } from "@/context/view-mode-context";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthGate } from "@/context/auth-gate-context";
 
 const Navigation = () => {
   const pathname = usePathname();
-  const { viewMode } = useViewMode();
   const { isAuthenticated } = useAuth();
   const { openAuthGate } = useAuthGate();
-
-  // Dynamically adjust nav items based on view mode
-  // - Provider mode: Bookings nav -> "Jobs" (/jobs route)
-  // - Employer mode: Bookings nav -> "Bookings" (/bookings route)
-  const navItems: NavItem[] = defaultNavItems.map((item) => {
-    if (item.title === "Bookings") {
-      const isProvider = viewMode === "provider";
-      return {
-        ...item,
-        title: isProvider ? "Jobs" : "Bookings",
-        url: isProvider ? "/jobs" : "/bookings",
-        matchPattern: isProvider ? "/jobs/*" : "/bookings/*",
-      };
-    }
-    return item;
-  });
+  const navItems = defaultNavItems;
 
   const isActive = (item: NavItem): boolean => {
     if (item.matchPattern) {
@@ -41,7 +24,7 @@ const Navigation = () => {
   };
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/bookings", "/jobs", "/conversations", "/more"];
+  const protectedRoutes = ["/work", "/conversations", "/more"];
 
   return (
     <nav className="w-full bg-white shadow-md border-t p-2">

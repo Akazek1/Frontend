@@ -30,7 +30,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }, [isAuthenticated, pathname, router]);
 
-  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization"];
+  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
     /^\/[^/]+\/services\/[^/]+$/.test(pathname);
