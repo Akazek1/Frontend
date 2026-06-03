@@ -60,7 +60,9 @@ export function mapServiceToProviderCard(service: Service): Provider {
     rating: service.reviews?.averageRating || 0,
     reviews: service.reviews?.totalReviews || 0,
     distance: APP_CONFIG.serviceDetail.fallbackDistance,
-    available: service.isActive,
+    // Card shows "Available Today" only when the service is active AND the
+    // worker hasn't turned off their global availability toggle.
+    available: service.isActive && (service.provider?.availableForWork ?? true),
     verified: true,
     type: getBookingType(service),
     providerId: service.providerId,

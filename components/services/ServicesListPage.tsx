@@ -23,12 +23,15 @@ export function ServicesListPage() {
     services,
     isLoading,
     error,
-    refetch,
     upsertLocal,
   } = useServices();
   const { available, isUpdating, setAvailable } = useAvailability();
 
   const [sort, setSort] = useState<ServicesSortKey>("recent");
+  // Per-service Activate/Deactivate is a separate concern from the
+  // global availability toggle: deactivating a card hides it from the
+  // marketplace, the global toggle just flips the badge on cards that
+  // remain visible.
   const [pendingToggle, setPendingToggle] = useState<Service | null>(null);
 
   // Per the business rule "any individual can register a service" the Add
@@ -146,6 +149,7 @@ export function ServicesListPage() {
                 service={service}
                 onEdit={handleEdit}
                 onToggleActive={(s) => setPendingToggle(s)}
+                workerAvailable={available}
               />
             </li>
           ))}

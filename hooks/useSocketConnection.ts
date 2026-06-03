@@ -7,7 +7,7 @@ import type { AppDispatch, RootState } from "@/store";
 import { persistor } from "@/store";
 import { initializeSocket, disconnectSocket } from "@/lib/socket";
 import { getAuthToken } from "@/lib/auth-utils";
-import { logout } from "@/store/slices/auth-slice";
+import { logout, updateUser } from "@/store/slices/auth-slice";
 
 /**
  * Manages the Socket.IO lifecycle at the app level:
@@ -46,15 +46,25 @@ export function useSocketConnection() {
       await dispatch(logout());
       await persistor.purge();
       disconnectSocket();
-      window.location.href = "/onboarding";
+      window.location.href = "/";
+    };
+
+    // Cross-device availability sync — when the worker flips "Available
+    // for work" on another tab/device, the backend emits this so every
+    // session updates Redux and re-derives the card badges in real time.
+    const handleAvailabilityChanged = (payload: { userId: string; available: boolean }) => {
+      if (!payload || payload.userId !== user.id) return;
+      dispatch(updateUser({ availableForWork: payload.available } as any));
     };
 
     socket.on("newNotification", handleNewNotification);
     socket.on("forceLogout", handleForceLogout);
+    socket.on("availabilityChanged", handleAvailabilityChanged);
 
     return () => {
       socket.off("newNotification", handleNewNotification);
       socket.off("forceLogout", handleForceLogout);
+      socket.off("availabilityChanged", handleAvailabilityChanged);
       // Do NOT disconnect here — only on auth state change (handled above).
     };
   }, [dispatch, effectiveIsAuthenticated, effectiveToken, user?.id]);

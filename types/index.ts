@@ -45,6 +45,7 @@ export interface Service {
     phoneNumber?: string;
     trustScore?: number;
     createdAt?: string;
+    availableForWork?: boolean;
   };
   worker?: {
     id: string;

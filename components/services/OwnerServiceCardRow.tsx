@@ -15,25 +15,41 @@ interface OwnerServiceCardRowProps {
    * the API.
    */
   onToggleActive: (service: Service) => void;
+  /**
+   * The worker's global `availableForWork` flag. This is the SOLE driver
+   * of the card's "Available Today" vs "Unavailable" badge — independent
+   * of the per-service `isActive` flag, which controls marketplace
+   * visibility (not the badge). Defaults to true so a missing prop never
+   * silently shows "Unavailable".
+   */
+  workerAvailable?: boolean;
 }
 
 /**
  * The owner-mode wrapper for the marketplace ServiceCard.
  *
- * Renders the existing public service-card component verbatim (so we
- * stay visually identical to what employers see), and adds Edit /
- * Deactivate buttons below.
+ * Two distinct concepts live here:
+ *
+ * - Global `availableForWork` (worker-level) → drives the "Available
+ *   Today" / "Unavailable" badge on every card the worker owns. When
+ *   the worker turns it off, cards stay visible in the marketplace
+ *   (and in the owner's My Services list) but the badge flips to
+ *   "Unavailable".
+ *
+ * - Per-service `isActive` (card-level) → controls marketplace
+ *   visibility. A deactivated card is HIDDEN from employers (backend
+ *   filter) but still shown to the owner here, dimmed, with an
+ *   Activate button to re-publish it.
  *
  * - "Request to Hire" inside the card auto-becomes a disabled "Your
  *   service" pill via the existing isOwnService prop.
  * - Bookmark inside the card is suppressed by the same prop.
- * - Deactivated cards (isActive=false) show with reduced opacity and
- *   swap the Deactivate button for an Activate button.
  */
 export function OwnerServiceCardRow({
   service,
   onEdit,
   onToggleActive,
+  workerAvailable = true,
 }: OwnerServiceCardRowProps) {
   const provider = mapServiceToProviderCard(service);
   const isActive = service.isActive !== false;
@@ -44,9 +60,7 @@ export function OwnerServiceCardRow({
 
   return (
     <div
-      className={`flex flex-col gap-2 ${
-        isActive ? "" : "opacity-70"
-      }`}
+      className={`flex flex-col gap-2 ${isActive ? "" : "opacity-70"}`}
       aria-label={
         isActive ? "Your active service card" : "Your deactivated service card"
       }
@@ -65,7 +79,7 @@ export function OwnerServiceCardRow({
         rating={provider.rating}
         reviews={provider.reviews}
         distance={provider.distance}
-        available={isActive && provider.available}
+        available={workerAvailable}
         verified={provider.verified}
         onClick={handleCardClick}
         isOwnService
