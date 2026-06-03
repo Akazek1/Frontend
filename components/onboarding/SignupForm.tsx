@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
@@ -10,11 +11,25 @@ import { useOnboarding } from "@/context/onboarding-context"
 const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
 const OTP_LENGTH = 6
 
+const isAtLeast18 = (dob: string): boolean => {
+  const d = new Date(dob)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  const age = today.getFullYear() - d.getFullYear()
+  const m = today.getMonth() - d.getMonth()
+  return age - (m < 0 || (m === 0 && today.getDate() < d.getDate()) ? 1 : 0) >= 18
+}
+// Latest date that is still at least 18 years ago — caps the date picker
+const MAX_DOB = new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+  .toISOString()
+  .split("T")[0]
+
 export function SignupForm() {
   const {
     firstName, handleFirstNameChange,
     lastName, handleLastNameChange,
     email, handleEmailChange,
+    dateOfBirth, setDateOfBirth,
     phoneNumber, handlePhoneChange,
     termsAccepted, setTermsAccepted,
     verifiedUser,
@@ -26,6 +41,7 @@ export function SignupForm() {
   } = useOnboarding()
 
   const [emailError, setEmailError] = useState("")
+  const [dobError, setDobError] = useState("")
   const [phoneError, setPhoneError] = useState("")
   const [checking, setChecking] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
@@ -50,6 +66,14 @@ export function SignupForm() {
     if (!firstName.trim()) { return }
     if (email.trim() && !isValidEmail(email.trim())) {
       setEmailError("Please enter a valid email address")
+      return
+    }
+    if (!dateOfBirth) {
+      setDobError("Date of birth is required")
+      return
+    }
+    if (!isAtLeast18(dateOfBirth)) {
+      setDobError("You must be at least 18 years old to register")
       return
     }
     if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 9) { return }
@@ -94,7 +118,7 @@ export function SignupForm() {
   }, [otpSent, inputsRef])
 
   const signUpDisabled = isLoading || !firstName.trim() || !termsAccepted ||
-    phoneNumber.replace(/\D/g, "").length < 9
+    !dateOfBirth || phoneNumber.replace(/\D/g, "").length < 9
 
   // ── Complete-profile variant (already authenticated, just needs name/email) ──
   if (isCompleteProfile) {
@@ -223,6 +247,35 @@ export function SignupForm() {
           }
         </div>
 
+        {/* Date of birth */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Date of Birth <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="date"
+            value={dateOfBirth}
+            max={MAX_DOB}
+            onChange={(e) => {
+              setDateOfBirth(e.target.value)
+              if (dobError && isAtLeast18(e.target.value)) setDobError("")
+            }}
+            onBlur={() => {
+              if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
+                setDobError("You must be at least 18 years old to register")
+              } else {
+                setDobError("")
+              }
+            }}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10] ${dobError ? "border-red-400" : "border-gray-300"}`}
+            disabled={otpSent}
+          />
+          {dobError
+            ? <p className="text-xs text-red-500 mt-1">{dobError}</p>
+            : <p className="text-xs text-gray-400 mt-1">You must be at least 18 years old.</p>
+          }
+        </div>
+
         {/* Phone */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -251,9 +304,9 @@ export function SignupForm() {
           {phoneError === "exists" ? (
             <p className="text-xs text-red-500 mt-1.5">
               An account with this number already exists.{" "}
-              <a href="/onboarding?step=login" className="text-[#145B10] font-semibold underline underline-offset-2">
+              <Link href="/onboarding?step=login" className="text-[#145B10] font-semibold underline underline-offset-2">
                 Log in instead
-              </a>
+              </Link>
             </p>
           ) : phoneError ? (
             <p className="text-xs text-red-500 mt-1.5">{phoneError}</p>
@@ -280,9 +333,9 @@ export function SignupForm() {
           </div>
           <span className="text-sm text-gray-500 leading-relaxed">
             I have read and agree to the{" "}
-            <a href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms of Service</a>{" "}
+            <Link href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms of Service</Link>{" "}
             and{" "}
-            <a href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
+            <Link href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
           </span>
         </label>
 

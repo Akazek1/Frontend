@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
 import { updateUser, setSession } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
+import { getSignupToken } from "@/lib/auth-utils"
 import { toast } from "react-hot-toast"
 import type { AuthResponse, UserRole } from "@/services/auth-service"
 
@@ -22,9 +23,8 @@ interface DocumentData {
 
 // Step layout:
 // 0 = RoleSelection
-// 1 = BasicInfoForm (name + email — collected BEFORE phone)
-// 2 = PhoneNumberEntry + T&C checkbox
-// 3 = OTPVerification
+// 1 = SignupForm (name + DOB + email + phone + T&C, with inline OTP)
+// 2 = LoginForm (returning users)
 // 4 = DocumentUploadStep (workers only)
 // 5 = ServiceCategorySelector (workers only)
 
@@ -298,7 +298,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (lastName.trim()) payload.lastName = lastName.trim()
       if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
 
-      const res = await api.post("/auth/complete-signup", payload, { withCredentials: true })
+      // The signup token lives under its own key (not the session `token`), so
+      // the global axios interceptor won't attach it — pass it explicitly.
+      const signupToken = getSignupToken()
+      const res = await api.post("/auth/complete-signup", payload, {
+        withCredentials: true,
+        headers: signupToken ? { Authorization: `Bearer ${signupToken}` } : undefined,
+      })
       const data = res.data?.data || res.data
       const newUser = {
         ...data.user,

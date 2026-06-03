@@ -37,6 +37,15 @@ export function getAuthToken(): string | null {
   return typeof persistedToken === "string" && persistedToken ? persistedToken : null;
 }
 
+// The short-lived token issued after OTP verification for a brand-new user,
+// before their account exists. Stored separately from the session `token` so it
+// can never be mistaken for an authenticated session (by middleware, the axios
+// interceptor, or getAuthToken). Only valid for /auth/complete-signup.
+export function getSignupToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("signupToken");
+}
+
 export function getStoredAuthUser<T = unknown>(): T | null {
   if (typeof window === "undefined") return null;
 

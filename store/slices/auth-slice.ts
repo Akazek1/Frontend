@@ -103,6 +103,7 @@ export const verifyOtp = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("signupToken");
   localStorage.removeItem("user");
   document.cookie = "token=; path=/; max-age=0";
   document.cookie = "profileComplete=; path=/; max-age=0";
@@ -157,6 +158,8 @@ const authSlice = createSlice({
       if (typeof window !== "undefined") {
         localStorage.setItem("user", JSON.stringify(action.payload.user));
         localStorage.setItem("token", action.payload.token);
+        // The signup token has served its purpose — discard it
+        localStorage.removeItem("signupToken");
         document.cookie = `token=${action.payload.token}; path=/; max-age=31536000; SameSite=Lax`;
         document.cookie = "profileComplete=true; path=/; max-age=31536000";
       }
@@ -190,15 +193,18 @@ const authSlice = createSlice({
         state.phoneNumber = null;
 
         if (action.payload.isNewUser) {
-          // Phone verified but no account yet — hold the signup token only.
-          // isAuthenticated stays false until complete-signup succeeds.
-          state.token = action.payload.token;
+          // Phone verified but no account yet — hold the signup token under a
+          // SEPARATE key. It must never look like a real session: no `token`
+          // cookie (so middleware won't gate routes as authenticated) and no
+          // `token` localStorage entry (so getAuthToken() stays null).
+          state.token = null;
           state.user = null;
           state.isAuthenticated = false;
           if (typeof window !== "undefined") {
-            localStorage.setItem("token", action.payload.token);
-            // 30-min cookie matches the signup token's own expiry
-            document.cookie = `token=${action.payload.token}; path=/; max-age=1800; SameSite=Lax`;
+            localStorage.setItem("signupToken", action.payload.token);
+            // Make sure no stale session artifacts linger
+            localStorage.removeItem("token");
+            document.cookie = "token=; path=/; max-age=0";
           }
         } else {
           // Returning user — fully authenticated
