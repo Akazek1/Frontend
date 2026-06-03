@@ -4,11 +4,14 @@ import { ArrowLeft, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const appShellClass =
-  "app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col px-4 pb-24 pt-6";
+  "app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6";
 
 export const appBgClass = "app-bg";
 
 export const appContentClass = "flex flex-col gap-4";
+
+export const appStickyHeaderClass =
+  "app-bg sticky top-0 z-20 mx-auto w-full max-w-[428px] px-4 pb-3 pt-6 shadow-sm backdrop-blur";
 
 export const appCardClass =
   "rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-[0_8px_24px_rgba(27,36,49,0.05)]";
@@ -38,19 +41,39 @@ export const appFieldHintClass = "text-[11px] leading-4 text-[#6B7668]";
 
 export const appFieldErrorClass = "text-[11px] font-semibold text-red-500";
 
-type AppShellProps = React.HTMLAttributes<HTMLElement> & {
+type PageShellProps = React.HTMLAttributes<HTMLElement> & {
   children: React.ReactNode;
+  padded?: boolean;
+  bottomNav?: boolean;
 };
 
-export function AppShell({ children, className, ...props }: AppShellProps) {
+export function PageShell({
+  children,
+  className,
+  padded = true,
+  bottomNav = true,
+  ...props
+}: PageShellProps) {
   return (
-    <main className={cn(appShellClass, className)} {...props}>
+    <main
+      className={cn(
+        "app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col",
+        padded && "px-4 pt-6",
+        bottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-6",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </main>
   );
 }
 
-type AppHeaderProps = {
+export function AppShell(props: PageShellProps) {
+  return <PageShell {...props} />;
+}
+
+type PageHeaderProps = {
   title: string;
   subtitle?: string;
   backHref?: string;
@@ -58,9 +81,10 @@ type AppHeaderProps = {
   action?: React.ReactNode;
   className?: string;
   titleClassName?: string;
+  compact?: boolean;
 };
 
-export function AppHeader({
+export function PageHeader({
   title,
   subtitle,
   backHref,
@@ -68,7 +92,8 @@ export function AppHeader({
   action,
   className,
   titleClassName,
-}: AppHeaderProps) {
+  compact = false,
+}: PageHeaderProps) {
   const backButton = (
     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#1B2431] shadow-sm transition-colors hover:bg-[#E8F7E5]">
       <ArrowLeft className="h-5 w-5" />
@@ -88,7 +113,13 @@ export function AppHeader({
           </button>
         ) : null}
         <div className="min-w-0 pt-0.5">
-          <h1 className={cn("text-[24px] font-black leading-7 text-[#1B2431]", titleClassName)}>
+          <h1
+            className={cn(
+              compact ? "text-[20px] leading-6" : "text-[24px] leading-7",
+              "font-black text-[#1B2431]",
+              titleClassName,
+            )}
+          >
             {title}
           </h1>
           {subtitle ? (
@@ -101,6 +132,10 @@ export function AppHeader({
       {action ? <div className="shrink-0">{action}</div> : null}
     </header>
   );
+}
+
+export function AppHeader(props: PageHeaderProps) {
+  return <PageHeader {...props} />;
 }
 
 export function AppCard({

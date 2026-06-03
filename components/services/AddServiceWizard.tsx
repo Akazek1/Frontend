@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { WizardStepIndicator } from "@/components/services/WizardStepIndicator";
 import { WizardStep1Basics } from "@/components/services/WizardStep1Basics";
@@ -13,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Service } from "@/types";
 import type { AuthResponse } from "@/services/auth-service";
 import { getApiErrorMessage } from "@/lib/error-handler";
+import { PageHeader, PageShell, appStickyHeaderClass } from "@/components/ui/app-primitives";
 
 interface AddServiceWizardProps {
   /** Provided when editing an existing service. */
@@ -72,18 +72,13 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   };
 
   return (
-    <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col pb-12">
-      <header className="app-bg sticky top-0 z-10 flex items-center gap-2 px-4 pb-3 pt-6 shadow-sm">
-        <button
-          type="button"
-          onClick={() => (step === 2 ? setStep(1) : router.back())}
-          aria-label="Go back"
-          className="-ml-1 rounded-full p-1.5 hover:bg-[#F1FCEF]"
-        >
-          <ArrowLeft className="h-5 w-5 text-[#1B2431]" />
-        </button>
-        <h1 className="text-[18px] font-black text-[#1B2431]">{headerTitle}</h1>
-      </header>
+    <PageShell padded={false} bottomNav={false}>
+      <PageHeader
+        title={headerTitle}
+        compact
+        onBack={() => (step === 2 ? setStep(1) : router.back())}
+        className={appStickyHeaderClass}
+      />
 
       <div className="px-4 pt-2">
         <WizardStepIndicator step={step} />
@@ -116,6 +111,6 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
           />
         )}
       </main>
-    </div>
+    </PageShell>
   );
 }

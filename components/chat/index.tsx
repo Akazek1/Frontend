@@ -4,7 +4,7 @@ import ChatHeader from "./chat-header";
 import CustomSearch from "../search/custom-search";
 import ChatTabs from "./chat-tabs";
 import ChatInbox from "./chat-inbox";
-import { appContentClass } from "@/components/ui/app-primitives";
+import { PageShell, appContentClass, appStickyHeaderClass } from "@/components/ui/app-primitives";
 
 export interface InboxCounts {
   all: number;
@@ -22,9 +22,9 @@ const Chat = () => {
   };
 
   return (
-    <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col">
+    <PageShell padded={false}>
       {/* Sticky header area */}
-      <div className="app-bg sticky top-0 z-10 space-y-4 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
+      <div className={`${appStickyHeaderClass} space-y-4`}>
         <ChatHeader />
         <CustomSearch
           onSearch={handleSearch}
@@ -37,7 +37,7 @@ const Chat = () => {
       <div className={`${appContentClass} flex-1 overflow-y-auto px-4 pb-24 pt-4`}>
         <ChatInbox searchQuery={searchQuery} onCounts={setCounts} />
       </div>
-    </div>
+    </PageShell>
   );
 };
 

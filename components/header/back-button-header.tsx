@@ -1,11 +1,12 @@
 "use client";
 
-import { AppHeader } from "@/components/ui/app-primitives";
+import { PageHeader } from "@/components/ui/app-primitives";
 import { useRouter } from "next/navigation";
 import React from "react";
 
 interface PageProp {
   text: string;
+  subtitle?: string;
   className?: string | undefined;
   backHref?: string; // Optional: explicit back URL. If not provided, uses browser history (router.back())
   fallbackHref?: string; // Where to go if no browser history (defaults to /more)
@@ -13,6 +14,7 @@ interface PageProp {
 
 const BackButtonHeader: React.FC<PageProp> = ({
   text,
+  subtitle,
   className,
   backHref,
   fallbackHref = "/more",
@@ -30,8 +32,9 @@ const BackButtonHeader: React.FC<PageProp> = ({
   };
 
   return (
-    <AppHeader
+    <PageHeader
       title={text}
+      subtitle={subtitle}
       backHref={backHref}
       onBack={backHref ? undefined : handleBackClick}
       className={className}

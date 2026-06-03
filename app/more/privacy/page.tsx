@@ -2,11 +2,11 @@ import React from "react";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Separator } from "@/components/ui/separator";
 import { PrivacyPolicyData } from "@/constant";
-import { AppShell, appContentClass } from "@/components/ui/app-primitives";
+import { PageShell, appContentClass } from "@/components/ui/app-primitives";
 
 const PrivacyPolicy = () => {
   return (
-    <AppShell className="gap-5 font-urbanist">
+    <PageShell className="gap-5 font-urbanist">
       {/* Header */}
       <BackButtonHeader text="Privacy Policy" />
       <Separator />
@@ -22,7 +22,7 @@ const PrivacyPolicy = () => {
           </section>
         ))}
       </div>
-    </AppShell>
+    </PageShell>
   );
 };
 

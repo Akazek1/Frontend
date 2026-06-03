@@ -1,9 +1,9 @@
 import React from "react";
-import { AppHeader } from "@/components/ui/app-primitives";
+import { PageHeader } from "@/components/ui/app-primitives";
 
 const ChatHeader = () => {
   return (
-    <AppHeader title="Messages" subtitle="Hiring conversations & job updates" />
+    <PageHeader title="Messages" subtitle="Hiring conversations & job updates" />
   );
 };
 

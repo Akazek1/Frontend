@@ -13,7 +13,7 @@ import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetai
 import { isEmployer } from "@/lib/roles";
 import { Bookmark, Search } from "lucide-react";
 import {
-    AppShell,
+    PageShell,
     EmptyState,
     appContentClass,
     appPrimaryButtonClass,
@@ -64,7 +64,7 @@ const BookmarksPage = () => {
     };
 
     return (
-        <AppShell className="gap-5">
+        <PageShell className="gap-5">
             <BackButtonHeader text="Bookmarks" backHref="/more" />
             <div className={appContentClass}>
                 {isLoading ? (
@@ -114,7 +114,7 @@ const BookmarksPage = () => {
                     />
                 )}
             </div>
-        </AppShell>
+        </PageShell>
     );
 };
 

@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   AppCard,
   AppSectionHeader,
-  AppShell,
+  PageShell,
   appContentClass,
   appListCardClass,
 } from "@/components/ui/app-primitives";
@@ -197,14 +197,12 @@ const NotificationsPreferences = () => {
   }
 
   return (
-    <AppShell className="gap-5">
-      <div className="space-y-2">
-        <BackButtonHeader text="Notification Settings" backHref="/more" />
-
-        <p className="text-[15px] font-medium text-[#5F6773]">
-          Choose the Akazek updates you want to receive.
-        </p>
-      </div>
+    <PageShell className="gap-5">
+      <BackButtonHeader
+        text="Notification Settings"
+        subtitle="Choose the Akazek updates you want to receive."
+        backHref="/more"
+      />
 
         <Link
           href="/more/notifications/history"
@@ -328,7 +326,7 @@ const NotificationsPreferences = () => {
             needed to keep your account and active bookings secure.
           </p>
         </AppCard>
-    </AppShell>
+    </PageShell>
   );
 };
 

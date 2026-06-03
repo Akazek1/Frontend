@@ -15,7 +15,7 @@ import BackButtonHeader from "@/components/header/back-button-header";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import {
-  AppShell,
+  PageShell,
   appContentClass,
   appFieldErrorClass,
   appFieldLabelClass,
@@ -25,6 +25,7 @@ import {
   appTextareaClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface FormData {
   category: string;
@@ -98,9 +99,7 @@ const ReportIssue = () => {
         window.history.back();
       }, 2000);
     } catch (err: unknown) {
-      const errorMessage =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to report issue";
+      const errorMessage = getApiErrorMessage(err, "Failed to report issue");
       console.error("Error reporting issue:", err);
       setErrors({ form: errorMessage });
       toast.error(errorMessage);
@@ -138,7 +137,7 @@ const ReportIssue = () => {
   }
 
   return (
-    <AppShell className="gap-5">
+    <PageShell className="gap-5">
       <BackButtonHeader text="Report an Issue" backHref="/more" />
 
       <form onSubmit={handleSubmit} className={cn(appContentClass, "gap-5")}>
@@ -205,7 +204,7 @@ const ReportIssue = () => {
           </Button>
         </div>
       </form>
-    </AppShell>
+    </PageShell>
   );
 };
 

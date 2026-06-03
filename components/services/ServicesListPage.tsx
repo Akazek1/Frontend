@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { AvailabilityToggleCard } from "@/components/services/AvailabilityToggleCard";
@@ -15,7 +15,12 @@ import { useServices } from "@/hooks/useServices";
 import { useAvailability } from "@/hooks/useAvailability";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
-import { appContentClass } from "@/components/ui/app-primitives";
+import {
+  PageHeader,
+  PageShell,
+  appContentClass,
+  appStickyHeaderClass,
+} from "@/components/ui/app-primitives";
 import { getApiErrorMessage } from "@/lib/error-handler";
 
 type SortableService = Service & {
@@ -83,31 +88,24 @@ export function ServicesListPage() {
   const isEmpty = !isLoading && services.length === 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[428px] flex-col app-bg pb-24">
+    <PageShell padded={false}>
       {/* Header */}
-      <header className="app-bg sticky top-0 z-10 flex items-center justify-between gap-3 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-2">
-          <button
+      <PageHeader
+        title="My Services"
+        onBack={() => router.back()}
+        className={appStickyHeaderClass}
+        action={
+          <Button
             type="button"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm hover:bg-[#E8F7E5]"
+            variant="outline"
+            onClick={handleAdd}
+            className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[var(--app-background)]"
           >
-            <ArrowLeft className="h-5 w-5 text-[#1B2431]" />
-          </button>
-          <h1 className="text-[24px] font-black leading-7 text-[#1B2431]">My Services</h1>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleAdd}
-          className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[var(--app-background)]"
-        >
-          <Plus className="h-4 w-4" />
-          Add Service
-        </Button>
-      </header>
+            <Plus className="h-4 w-4" />
+            Add Service
+          </Button>
+        }
+      />
 
       <main className={`${appContentClass} px-4 pt-4`}>
         {/* Availability toggle only makes sense once at least one card exists. */}
@@ -175,6 +173,6 @@ export function ServicesListPage() {
         onCancel={() => setPendingToggle(null)}
         onConfirm={handleConfirmToggleActive}
       />
-    </div>
+    </PageShell>
   );
 }

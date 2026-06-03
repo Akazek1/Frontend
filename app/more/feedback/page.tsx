@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import {
-  AppShell,
+  PageShell,
   appContentClass,
   appPrimaryButtonClass,
   appTextareaClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -56,17 +57,14 @@ const Feedback = () => {
       setMessage(""); 
     } catch (err) {
       console.error("Error submitting feedback:", err);
-      const errorMessage =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).response?.data?.message || "Failed to submit feedback";
-      toast.error(errorMessage);
+      toast.error(getApiErrorMessage(err, "Failed to submit feedback"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <AppShell className={cn("gap-5", inter.className)}>
+    <PageShell className={cn("gap-5", inter.className)}>
       {/* Header */}
       <BackButtonHeader text="Share Feedback" />
       <div className={cn(appContentClass, "cursor-pointer gap-5")}>
@@ -107,7 +105,7 @@ const Feedback = () => {
           )}
         </Button>
       </div>
-    </AppShell>
+    </PageShell>
   );
 };
 
