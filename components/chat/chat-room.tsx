@@ -384,7 +384,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="app-bg flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#145B10]" />
       </div>
     );
@@ -397,17 +397,18 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const isWorker = user.id === booking.workerId;
   const contextTitle = booking.service?.title || booking.job?.title || "Work request";
   const isPending = booking.status === BOOKING_STATUS.PENDING;
+  const isApproved = booking.status !== BOOKING_STATUS.PENDING && booking.status !== BOOKING_STATUS.CANCELLED;
   const incompleteTaskCount = tasks.filter((t) => !t.isCompleted).length;
-  const hasTaskTab = tasks.length > 0 || booking.status === BOOKING_STATUS.IN_PROGRESS;
+  const hasTaskTab = tasks.length > 0 || isApproved;
 
   return (
-    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-[#F8F9FA]">
+    <div className="app-bg relative isolate flex h-screen flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
         <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
           <ArrowLeft className="h-6 w-6 text-gray-700" />
         </button>
-        
+
         <div className="relative">
           <Avatar className="h-10 w-10 border border-gray-100">
             <AvatarImage src={partner?.profilePicture} className="object-cover" />
@@ -443,7 +444,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         bookingId={bookingId}
         userId={user.id}
         employerId={booking.employerId}
+        workerId={booking.workerId}
         isInProgress={booking.status === BOOKING_STATUS.IN_PROGRESS}
+        isApproved={isApproved}
         tasks={tasks}
         onTasksChange={setTasks}
       />

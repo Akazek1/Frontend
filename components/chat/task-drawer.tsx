@@ -14,9 +14,22 @@ import {
   ShieldAlert,
   Trash2,
   X,
+  AlertCircle,
 } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { BOOKING_STATUS } from "@/constant";
+import { ReportModal } from "../provider/report-modal";
+import {
+  appCardClass,
+  appDangerButtonClass,
+  appFieldLabelClass,
+  appInputClass,
+  appPrimaryButtonClass,
+  appSecondaryButtonClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 export interface Task {
   id: string;
@@ -33,7 +46,7 @@ interface TaskDetailViewProps {
   task: Task;
   userId: string;
   employerId: string;
-  isInProgress: boolean;
+  isApproved: boolean;
   onBack: () => void;
   onUpdate: (updated: Task) => void;
   onDelete: (taskId: string) => void;
@@ -52,18 +65,18 @@ function getApiErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpdate, onDelete }: TaskDetailViewProps) {
+function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate, onDelete }: TaskDetailViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
 
   const canDelete = task.createdById === userId || employerId === userId;
-  const canEdit = isInProgress;
+  const canEdit = isApproved;
 
   const handleSave = async () => {
     if (!canEdit) {
-      toast.error("Tasks can only be edited while the job is in progress.");
+      toast.error("Tasks can only be edited if work is approved.");
       return;
     }
 
@@ -85,8 +98,8 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
   };
 
   const handleDelete = async () => {
-    if (!isInProgress) {
-      toast.error("Tasks can only be deleted while the job is in progress.");
+    if (!isApproved) {
+      toast.error("Tasks can only be deleted if work is approved.");
       return;
     }
 
@@ -109,7 +122,7 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+      <div className="flex items-center gap-3 border-b border-[#EDF1EC] px-5 py-4">
         <button onClick={onBack} className="text-[#145B10] text-[13px] font-semibold">
           ← Back
         </button>
@@ -148,9 +161,9 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
           Added {new Date(task.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
         </p>
 
-        <div className="space-y-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className={cn(appCardClass, "space-y-3")}>
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
+            <label className={appFieldLabelClass}>
               Task title
             </label>
             <input
@@ -158,12 +171,12 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={!canEdit}
-              className="mt-2 h-11 w-full rounded-xl border border-gray-200 px-3 text-[13px] text-[#1B2431] outline-none transition focus:border-[#145B10]/40 focus:ring-2 focus:ring-[#145B10]/10 disabled:bg-gray-50 disabled:text-gray-500"
+              className={cn(appInputClass, "mt-2 disabled:bg-gray-50 disabled:text-gray-500")}
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
+            <label className={appFieldLabelClass}>
               Notes
             </label>
             <textarea
@@ -171,13 +184,13 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
               onChange={(e) => setDescription(e.target.value)}
               disabled={!canEdit}
               placeholder="No additional notes."
-              className="mt-2 min-h-[88px] w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-[13px] leading-relaxed text-[#1B2431] outline-none transition focus:border-[#145B10]/40 focus:ring-2 focus:ring-[#145B10]/10 disabled:bg-gray-50 disabled:text-gray-500"
+              className={cn(appTextareaClass, "mt-2 min-h-[88px] disabled:bg-gray-50 disabled:text-gray-500")}
             />
           </div>
 
           {!canEdit && (
             <p className="rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
-              Tasks can only be edited while the job is in progress.
+              Tasks can only be edited if work is approved.
             </p>
           )}
 
@@ -185,7 +198,7 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
             <button
               onClick={handleSave}
               disabled={!title.trim() || isSaving}
-              className="flex h-10 w-full items-center justify-center rounded-xl bg-[#145B10] text-[13px] font-bold text-white transition-colors hover:bg-[#0F4D0C] disabled:cursor-not-allowed disabled:opacity-50"
+              className={cn(appPrimaryButtonClass, "w-full")}
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update Task"}
             </button>
@@ -194,11 +207,11 @@ function TaskDetailView({ task, userId, employerId, isInProgress, onBack, onUpda
       </div>
 
       {canDelete && (
-        <div className="px-5 py-4 border-t border-gray-100">
+        <div className="border-t border-[#EDF1EC] px-5 py-4">
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 py-3 text-[13px] font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+            className={cn(appDangerButtonClass, "flex w-full items-center justify-center gap-2")}
           >
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             Delete Task
@@ -246,7 +259,7 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-5 py-4">
+      <div className="flex items-center gap-3 border-b border-[#EDF1EC] px-5 py-4">
         <button
           onClick={onBack}
           className="rounded-full p-1.5 text-[#1B2431] transition-colors hover:bg-gray-100"
@@ -264,8 +277,8 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        <label className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
+      <div className="flex-1 overflow-y-auto px-5 py-5">
+        <label className={appFieldLabelClass}>
           Task Title
         </label>
         <input
@@ -278,11 +291,11 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
           onKeyDown={(e) => {
             if (e.key === "Enter") handleAddTask();
           }}
-          className="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-[13px] text-[#1B2431] outline-none transition focus:border-[#145B10]/40 focus:ring-2 focus:ring-[#145B10]/10"
+          className={cn(appInputClass, "mt-3")}
         />
         <p className="mt-2 text-right text-[11px] text-gray-400">{titleLength}/80</p>
 
-        <label className="mt-5 block text-[11px] font-bold uppercase tracking-wide text-gray-500">
+        <label className={cn(appFieldLabelClass, "mt-5 block")}>
           Details (Optional)
         </label>
         <textarea
@@ -290,16 +303,16 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
           placeholder="Add notes or instructions..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-3 min-h-[96px] w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-[13px] leading-relaxed text-[#1B2431] outline-none transition focus:border-[#145B10]/40 focus:ring-2 focus:ring-[#145B10]/10"
+          className={cn(appTextareaClass, "mt-3 min-h-[120px]")}
         />
         <p className="mt-2 text-right text-[11px] text-gray-400">{descriptionLength}/200</p>
       </div>
 
-      <div className="px-6 pb-6 pt-4">
+      <div className="border-t border-[#EDF1EC] px-5 pb-6 pt-4">
         <button
           onClick={handleAddTask}
           disabled={!title.trim() || isAdding}
-          className="flex h-11 w-full items-center justify-center rounded-xl bg-[#145B10] text-[14px] font-bold text-white transition-colors hover:bg-[#0F4D0C] disabled:cursor-not-allowed disabled:opacity-50"
+          className={cn(appPrimaryButtonClass, "flex w-full items-center justify-center")}
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Task"}
         </button>
@@ -318,7 +331,9 @@ interface TaskDrawerProps {
   bookingId: string;
   userId: string;
   employerId: string;
+  workerId: string;
   isInProgress: boolean;
+  isApproved?: boolean;
   tasks: Task[];
   onTasksChange: (tasks: Task[]) => void;
 }
@@ -329,7 +344,9 @@ export function TaskDrawer({
   bookingId,
   userId,
   employerId,
+  workerId,
   isInProgress,
+  isApproved = false,
   tasks,
   onTasksChange,
 }: TaskDrawerProps) {
@@ -337,11 +354,13 @@ export function TaskDrawer({
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const incompleteTasks = tasks.filter((t) => !t.isCompleted);
   const completedTasks = tasks.filter((t) => t.isCompleted);
   const incompleteCount = incompleteTasks.length;
-  const canEditTasks = isInProgress;
+  const canEditTasks = isApproved || isInProgress;
 
   const handleClose = () => {
     setSelectedTask(null);
@@ -349,9 +368,39 @@ export function TaskDrawer({
     onClose();
   };
 
+  const handleStatusChange = async (newStatus: string, actionName: string) => {
+    if (isActionLoading) return;
+    setIsActionLoading(actionName);
+    try {
+      await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
+      toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+      onClose();
+      // The parent ChatRoom will handle the status update via socket or we can force a refresh
+      window.location.reload(); 
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, `Failed to ${actionName.toLowerCase()}`));
+    } finally {
+      setIsActionLoading(null);
+    }
+  };
+
+  const handleCompleteJob = () => {
+    if (incompleteCount > 0) {
+      toast.error(`Please complete all ${incompleteCount} tasks before finishing.`);
+      return;
+    }
+    handleStatusChange(BOOKING_STATUS.COMPLETED, "Complete Job");
+  };
+
+  const handleCancelJob = () => {
+    if (confirm("Are you sure you want to cancel this job? This action cannot be undone.")) {
+      handleStatusChange(BOOKING_STATUS.CANCELLED, "Cancel Job");
+    }
+  };
+
   const handleToggle = async (task: Task) => {
-    if (!isInProgress) {
-      toast.error("Tasks can only be edited while the job is in progress.");
+    if (!isApproved && !isInProgress) {
+      toast.error("Tasks can only be edited if work is approved.");
       return;
     }
 
@@ -396,8 +445,7 @@ export function TaskDrawer({
 
       {/* Drawer — slides in from the right */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-40 flex w-[88%] max-w-[380px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200"
-        style={{ borderRadius: "16px 0 0 16px" }}
+        className="fixed bottom-0 right-0 top-0 z-40 flex w-[88%] max-w-[380px] flex-col rounded-l-2xl bg-white shadow-2xl animate-in slide-in-from-right duration-200"
       >
         {isAddingTask ? (
           <AddTaskView
@@ -411,7 +459,7 @@ export function TaskDrawer({
             task={selectedTask}
             userId={userId}
             employerId={employerId}
-            isInProgress={isInProgress}
+            isApproved={canEditTasks}
             onBack={() => setSelectedTask(null)}
             onUpdate={handleTaskUpdate}
             onDelete={handleTaskDelete}
@@ -419,7 +467,7 @@ export function TaskDrawer({
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-center justify-between border-b border-[#EDF1EC] px-5 py-4">
               <h2 className="text-[17px] font-bold text-[#1B2431]">Tasks</h2>
               <button
                 onClick={handleClose}
@@ -457,7 +505,7 @@ export function TaskDrawer({
                 </p>
 
                 {incompleteTasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-gray-100 bg-white px-4 py-7 text-center shadow-sm">
+                  <div className={cn(appCardClass, "flex flex-col items-center justify-center px-4 py-7 text-center")}>
                     <CheckCircle2 className="h-10 w-10 text-[#145B10]" strokeWidth={1.8} />
                     <p className="mt-3 text-[13px] font-bold text-[#1B2431]">No pending tasks</p>
                     <p className="mt-1 text-[11px] text-gray-500">Enjoy the rest of your day!</p>
@@ -468,7 +516,7 @@ export function TaskDrawer({
                       <div
                         key={task.id}
                         onClick={() => handleToggle(task)}
-                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-50"
+                        className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#DCE8D9] bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-50"
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
@@ -521,7 +569,7 @@ export function TaskDrawer({
                   </button>
                 ) : (
                   <p className="mt-4 rounded-xl bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
-                    Tasks can only be edited while the job is in progress.
+                    Tasks can only be edited if work is approved.
                   </p>
                 )}
               </section>
@@ -550,7 +598,7 @@ export function TaskDrawer({
                         <div
                           key={task.id}
                           onClick={() => handleToggle(task)}
-                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-50"
+                          className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#DCE8D9] bg-white px-3 py-3 shadow-sm transition-colors hover:bg-gray-50"
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
@@ -597,14 +645,18 @@ export function TaskDrawer({
             </div>
 
             {/* Action buttons at bottom */}
-            <div className="border-t border-gray-100 px-5 pb-6 pt-4">
+            <div className="border-t border-[#EDF1EC] px-5 pb-6 pt-4">
               <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 Job Actions
               </p>
               <div className="space-y-2">
-                <button className="flex w-full items-center gap-3 rounded-xl border border-[#145B10]/20 bg-[#145B10] px-4 py-3 text-left text-white shadow-sm">
+                <button 
+                  onClick={handleCompleteJob}
+                  disabled={!!isActionLoading}
+                  className="flex w-full items-center gap-3 rounded-xl border border-[#145B10]/20 bg-[#145B10] px-4 py-3 text-left text-white shadow-sm disabled:opacity-50"
+                >
                   <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/80">
-                    <CheckCircle2 className="h-4 w-4" />
+                    {isActionLoading === "Complete Job" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   </div>
                   <div>
                     <p className="text-[13px] font-bold">Complete Job</p>
@@ -612,7 +664,10 @@ export function TaskDrawer({
                   </div>
                 </button>
 
-                <button className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left">
+                <button 
+                  onClick={() => setIsReportModalOpen(true)}
+                  className={cn(appSecondaryButtonClass, "h-auto justify-start gap-3 py-3 text-left")}
+                >
                   <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gray-100">
                     <ShieldAlert className="h-4 w-4 text-gray-500" />
                   </div>
@@ -622,9 +677,13 @@ export function TaskDrawer({
                   </div>
                 </button>
 
-                <button className="flex w-full items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left">
+                <button 
+                  onClick={handleCancelJob}
+                  disabled={!!isActionLoading}
+                  className={cn(appDangerButtonClass, "h-auto justify-start gap-3 py-3 text-left disabled:opacity-50")}
+                >
                   <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
-                    <X className="h-4 w-4 text-red-500" />
+                    {isActionLoading === "Cancel Job" ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4 text-red-500" />}
                   </div>
                   <div>
                     <p className="text-[13px] font-bold text-red-600">Cancel Job</p>
@@ -641,6 +700,12 @@ export function TaskDrawer({
           </>
         )}
       </div>
+      {isReportModalOpen && (
+        <ReportModal 
+          targetId={userId === employerId ? workerId : employerId}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
     </>
   );
 }
