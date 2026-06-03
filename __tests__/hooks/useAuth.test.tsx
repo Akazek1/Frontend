@@ -4,7 +4,7 @@ import { Provider } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import authReducer from "@/store/slices/auth-slice"
 import { useAuth } from "@/hooks/useAuth"
-import * as authService from "@/services/auth-service"
+import authService from "@/services/auth-service"
 
 // Mock the auth service
 vi.mock("@/services/auth-service")
