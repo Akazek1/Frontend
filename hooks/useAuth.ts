@@ -118,7 +118,7 @@ export const useAuth = () => {
   // Logout function
   const handleLogout = async () => {
     await dispatch(logout());
-    router.push("/onboarding"); // Redirect to onboarding page after logout
+    router.push("/"); // Redirect to guest home page after logout
   };
 
   // Update user profile locally

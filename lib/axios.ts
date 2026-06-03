@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAuthToken } from "@/lib/auth-utils";
 
 // Determine the API base URL
-let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
 
 const api = axios.create({
   baseURL,
@@ -57,7 +57,7 @@ api.interceptors.response.use(
           // Don't redirect if already on the onboarding page — let the
           // onboarding context handle auth errors in its own catch blocks.
           if (!window.location.pathname.startsWith("/onboarding")) {
-            window.location.href = "/onboarding";
+            window.location.href = "/";
           }
         }
       } catch (refreshError) {

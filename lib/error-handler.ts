@@ -36,7 +36,7 @@ export function handleApiError(
         if (typeof window !== "undefined") {
           localStorage.removeItem("token")
           localStorage.removeItem("user")
-          window.location.href = "/onboarding"
+          window.location.href = "/"
         }
         return {
           status,
