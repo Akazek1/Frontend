@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
-import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReportModal } from "@/components/provider/report-modal";
 import {
@@ -25,6 +24,14 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
 import JobOwnerDetail from "@/components/jobs/job-owner-detail";
+import {
+  AppCard,
+  AppHeader,
+  appListCardClass,
+  appPrimaryButtonClass,
+  appSecondaryButtonClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 const JobDetailPage = () => {
   const { id } = useParams();
@@ -107,7 +114,7 @@ const JobDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="app-bg flex h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#145B10]" />
       </div>
     );
@@ -135,16 +142,19 @@ const JobDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#F8F9FA] pb-24">
+    <div className="app-bg min-h-dvh w-full overflow-x-hidden pb-24">
       {/* Premium Header */}
-      <div className="bg-white px-6 pt-10 pb-6 rounded-b-[40px] shadow-sm border-b border-gray-100 sticky top-0 z-20">
-        <BackButtonHeader text="Job Detail" fallbackHref="/work" />
-        <p className="text-[12px] text-gray-400 font-medium mt-1 ml-10">Review job requirements and applicants</p>
+      <div className="app-bg sticky top-0 z-20 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
+        <AppHeader
+          title="Job Detail"
+          subtitle="Review job requirements and applicants"
+          onBack={() => router.back()}
+        />
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-5 px-4 pt-4">
         {/* Main Job Info */}
-        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 overflow-hidden relative">
+        <AppCard className="relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-[#145B10]" />
           
           <div className="flex items-center gap-2 mb-4">
@@ -160,12 +170,12 @@ const JobDetailPage = () => {
           
           <h1 className="text-2xl font-black text-[#1B2431] leading-tight mb-4">{job.title}</h1>
           
-          <div className="bg-gray-50/50 rounded-2xl p-4 mb-6">
+          <div className="mb-6 rounded-2xl bg-gray-50/70 p-4">
             <p className="text-[14px] text-[#616161] leading-relaxed font-medium whitespace-pre-wrap">{job.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 bg-gray-50/30 p-3 rounded-2xl border border-gray-50">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#EDF1EC] bg-gray-50/50 p-3">
               <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#145B10]">
                 <DollarSign className="w-4 h-4" />
               </div>
@@ -176,7 +186,7 @@ const JobDetailPage = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-gray-50/30 p-3 rounded-2xl border border-gray-50">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#EDF1EC] bg-gray-50/50 p-3">
               <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#145B10]">
                 <Timer className="w-4 h-4" />
               </div>
@@ -185,7 +195,7 @@ const JobDetailPage = () => {
                 <p className="text-[13px] font-black text-[#1B2431] capitalize">{job.scheduleType || "Flexible"}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-gray-50/30 p-3 rounded-2xl border border-gray-50">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#EDF1EC] bg-gray-50/50 p-3">
               <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#145B10]">
                 <MapPin className="w-4 h-4" />
               </div>
@@ -194,7 +204,7 @@ const JobDetailPage = () => {
                 <p className="text-[13px] font-black text-[#1B2431] truncate">{job.address?.city || "Kigali"}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-gray-50/30 p-3 rounded-2xl border border-gray-50">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#EDF1EC] bg-gray-50/50 p-3">
               <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#145B10]">
                 <CalendarDays className="w-4 h-4" />
               </div>
@@ -204,11 +214,11 @@ const JobDetailPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </AppCard>
 
         {/* Employer Card (Worker View) */}
         {!isOwner && (
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
+          <AppCard>
             <h2 className="text-sm font-black text-[#1B2431] mb-5 uppercase tracking-wider flex items-center gap-2">
               <User className="w-4 h-4 text-[#145B10]" /> Employer Profile
             </h2>
@@ -232,7 +242,7 @@ const JobDetailPage = () => {
                 &ldquo;{job.employer.bio}&rdquo;
               </p>
             )}
-          </div>
+          </AppCard>
         )}
 
         {/* Applicants List (Employer View) */}
@@ -251,7 +261,7 @@ const JobDetailPage = () => {
             {applications.length > 0 ? (
               <div className="grid gap-4">
                 {applications.map((app) => (
-                  <div key={app.id} className="bg-white rounded-[32px] p-5 shadow-sm border border-gray-100 hover:border-[#145B10]/20 transition-all group">
+                  <div key={app.id} className={cn(appListCardClass, "group p-5 transition-all hover:border-[#145B10]/20")}>
                     <div className="flex items-center justify-between gap-3 mb-5">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-12 w-12 border-2 border-white shadow-sm ring-1 ring-gray-100">
@@ -358,7 +368,7 @@ const JobDetailPage = () => {
       {/* Hire confirmation modal */}
       {confirmHire && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
-          <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
+          <div className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-5 shadow-2xl">
             <div className="flex flex-col items-center text-center gap-2">
               <div className="w-14 h-14 rounded-full bg-[#E8F5E9] flex items-center justify-center">
                 <Check className="w-7 h-7 text-[#145B10]" />
@@ -371,13 +381,13 @@ const JobDetailPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmHire(null)}
-                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-black text-[13px] hover:bg-gray-50 transition-all"
+                className={cn(appSecondaryButtonClass, "flex-1")}
               >
                 Cancel
               </button>
               <button
                 onClick={handleHireConfirmed}
-                className="flex-1 h-12 rounded-[18px] bg-[#145B10] text-white font-black text-[13px] hover:bg-[#0F4D0C] shadow-lg shadow-[#145B10]/20 transition-all flex items-center justify-center gap-2"
+                className={cn(appPrimaryButtonClass, "flex flex-1 items-center justify-center gap-2")}
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Offer"}
               </button>

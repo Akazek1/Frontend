@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Building2, Briefcase, ChevronLeft, CheckCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
@@ -308,9 +309,9 @@ export default function OrgOnboardingPage() {
         {step === "type" && (
           <p className="text-center text-xs text-gray-400 mt-3">
             Looking to hire or offer services personally?{" "}
-            <a href="/onboarding" className="text-[#145B10] underline">
+            <Link href="/onboarding" className="text-[#145B10] underline">
               Sign up as an individual
-            </a>
+            </Link>
           </p>
         )}
       </div>

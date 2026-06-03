@@ -118,7 +118,7 @@ export default function HandleProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#FAFCF9]">
+      <div className="app-bg flex min-h-screen items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
       </div>
     );
@@ -128,7 +128,7 @@ export default function HandleProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-[#FAFCF9] p-6">
+      <div className="app-bg min-h-screen p-6">
         <p className="text-center text-red-500 py-12">{error || "Profile not found"}</p>
       </div>
     );
@@ -144,7 +144,7 @@ export default function HandleProfilePage() {
   const displayName = profile.firstName || name;
 
   return (
-    <div className="min-h-screen bg-[#FAFCF9] pb-8">
+    <div className="app-bg min-h-screen pb-8">
       <UserProfileHeader
         name={name}
         handle={profile.username || handle}

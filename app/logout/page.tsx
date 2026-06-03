@@ -18,14 +18,14 @@ export default function LogoutPage() {
       await persistor.purge();
       authService.logout();
       window.dispatchEvent(new StorageEvent("storage", { key: "token", newValue: null }));
-      router.replace("/onboarding");
+      router.replace("/");
     };
 
     signOut();
   }, [dispatch, router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F1FCEF] px-6">
+    <main className="flex min-h-screen items-center justify-center app-bg px-6">
       <p className="text-sm font-medium text-[#1F2937]">Signing out...</p>
     </main>
   );

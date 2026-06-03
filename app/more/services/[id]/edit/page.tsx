@@ -43,7 +43,7 @@ export default function EditServicePage() {
 
   if (isLoading || !service) {
     return (
-      <div className="mx-auto flex min-h-dvh w-full max-w-[480px] items-center justify-center bg-white text-[13px] text-[#475467]">
+      <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] items-center justify-center text-[13px] text-[#475467]">
         Loading service…
       </div>
     );

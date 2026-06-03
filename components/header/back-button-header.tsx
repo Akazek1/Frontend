@@ -1,8 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { AppHeader } from "@/components/ui/app-primitives";
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -21,9 +19,8 @@ const BackButtonHeader: React.FC<PageProp> = ({
 }) => {
   const router = useRouter();
 
-  const handleBackClick = (e: React.MouseEvent) => {
+  const handleBackClick = () => {
     if (!backHref) {
-      e.preventDefault();
       if (window.history.length > 1) {
         router.back();
       } else {
@@ -33,18 +30,12 @@ const BackButtonHeader: React.FC<PageProp> = ({
   };
 
   return (
-    <div className={cn(`${className} flex items-center gap-4 rounded-lg`)}>
-      {backHref ? (
-        <Link href={backHref} className="">
-          <ArrowLeft className="w-6 h-6 text-[#1B2431]" />
-        </Link>
-      ) : (
-        <button onClick={handleBackClick} className="cursor-pointer" aria-label="Go back">
-          <ArrowLeft className="w-6 h-6 text-[#1B2431]" />
-        </button>
-      )}
-      <h1 className="text-2xl leading-7 font-bold text-[#1B2431] capitalize">{text}</h1>
-    </div>
+    <AppHeader
+      title={text}
+      backHref={backHref}
+      onBack={backHref ? undefined : handleBackClick}
+      className={className}
+    />
   );
 };
 

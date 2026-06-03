@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Icons } from "@/components/icons";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 
 interface CustomSearchProps {
@@ -47,11 +48,13 @@ const CustomSearch = ({
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="relative"
                 >
-                    <Icons.SearchIcon className="absolute left-3 top-3 w-4 h-4 fill-[#878787]" />
+                    <Icons.SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 fill-[#878787]" />
                     <Input
                         type="text"
                         placeholder={placeholder}
-                        className="pl-10 pr-12 border-[#D6D6D6] rounded-[40px] placeholder:text-xs placeholder:text-[#878787] placeholder:font-semibold"
+                        className={cn(
+                            "h-12 rounded-full border-[#DCE8D9] bg-white pl-11 pr-4 text-[14px] font-semibold shadow-sm placeholder:text-[13px] placeholder:font-semibold placeholder:text-[#878787] focus-visible:ring-[#145B10]/20",
+                        )}
                         value={query}
                         onChange={handleChange}
                         onFocus={handleFocus}

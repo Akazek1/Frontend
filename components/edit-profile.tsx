@@ -44,6 +44,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  appCardClass,
+  appInputClass,
+  appPrimaryButtonClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 import ProfileImageUploader from "@/components/profile/profile-img-uloader";
 import APP_CONFIG from "@/constant/app.config";
 import { QUALITY_DEFS, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
@@ -134,10 +141,10 @@ const fullName = (form: ProfileForm) =>
   [form.firstName, form.lastName].filter(Boolean).join(" ").trim() || "Your profile";
 
 const inputClass =
-  "h-12 rounded-lg border-[#E1EBDD] bg-white text-[14px] font-semibold text-[#1B2431] shadow-sm focus-visible:ring-[#145B10]/20";
+  appInputClass;
 
 const selectClass =
-  "h-12 rounded-lg border-[#E1EBDD] bg-white text-[14px] font-semibold text-[#1B2431] shadow-sm focus:ring-[#145B10]/20";
+  appInputClass;
 
 const SectionShell = ({
   icon: Icon,
@@ -150,7 +157,7 @@ const SectionShell = ({
   description?: string;
   children: React.ReactNode;
 }) => (
-  <section className="rounded-lg border border-[#E1EBDD] bg-white p-4 shadow-[0_10px_30px_rgba(27,36,49,0.05)]">
+  <section className={appCardClass}>
     <div className="mb-4 flex items-start gap-3">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
         <Icon className="h-5 w-5" />
@@ -469,25 +476,25 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4FAF1]">
+      <div className="app-bg flex min-h-dvh items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
       </div>
     );
   }
 
   const Header = (
-    <div className="sticky top-0 z-20 border-b border-[#E1EBDD] bg-[#F4FAF1]/95 px-4 py-3 backdrop-blur">
-      <div className="mx-auto flex max-w-lg items-center gap-3">
+    <div className="app-bg sticky top-0 z-20 border-b border-[#E1EBDD] px-4 pb-3 pt-6 backdrop-blur">
+      <div className="mx-auto flex max-w-[428px] items-center gap-3">
         <button
           type="button"
           onClick={() => (activeSection === "overview" ? router.back() : openSection("overview"))}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1B2431] shadow-sm"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1B2431] shadow-sm hover:bg-[#E8F7E5]"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[18px] font-black text-[#1B2431]">{sectionTitle}</h1>
+          <h1 className="text-[24px] font-black leading-7 text-[#1B2431]">{sectionTitle}</h1>
           {sectionDescription && (
             <p className="line-clamp-2 text-[12px] font-medium leading-5 text-[#53604F]">
               {sectionDescription}
@@ -503,7 +510,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
       <Button
         type="submit"
         disabled={saving}
-        className="h-12 w-full rounded-lg bg-[#145B10] text-[15px] font-black text-white shadow-[0_12px_24px_rgba(20,91,16,0.2)] hover:bg-[#0F4D0C]"
+        className={cn(appPrimaryButtonClass, "w-full")}
       >
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
         Save changes
@@ -512,18 +519,18 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   ) : null;
 
   return (
-    <div className="min-h-screen bg-[#F4FAF1] pb-44">
+    <div className="app-bg min-h-dvh pb-44">
       {Header}
-      <form onSubmit={handleSubmit} className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-[428px] space-y-4 px-4 pt-4">
         {errors.form ? (
-          <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600">
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600">
             {errors.form}
           </div>
         ) : null}
 
         {activeSection === "overview" ? (
           <>
-            <section className="rounded-lg border border-[#E1EBDD] bg-white p-5 text-center shadow-[0_12px_35px_rgba(27,36,49,0.06)]">
+            <section className={cn(appCardClass, "p-5 text-center")}>
               {idEditable ? (
                 <ProfileImageUploader />
               ) : (
@@ -540,7 +547,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               </p>
             </section>
 
-            <section className="rounded-lg border border-[#E1EBDD] bg-white p-4 shadow-sm">
+            <section className={appCardClass}>
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
                   <Sparkles className="h-5 w-5" />
@@ -603,7 +610,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     key={item.key}
                     type="button"
                     onClick={() => openSection(item.key)}
-                    className="flex min-h-[72px] w-full items-center gap-3 rounded-lg border border-[#E1EBDD] bg-white p-3 text-left shadow-sm transition hover:border-[#BFD9BA]"
+                    className="flex min-h-[72px] w-full items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3 text-left shadow-sm transition hover:border-[#BFD9BA]"
                   >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
                       <Icon className="h-5 w-5" />
@@ -618,7 +625,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               })}
             </section>
 
-            <section className="rounded-lg border border-[#E1EBDD] bg-white p-4 shadow-sm">
+            <section className={appCardClass}>
               <h2 className="mb-3 flex items-center gap-2 text-[14px] font-black text-[#1B2431]">
                 <ShieldCheck className="h-4 w-4 text-[#145B10]" />
                 Why this matters
@@ -635,7 +642,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               <Button
                 type="button"
                 onClick={() => router.push(`/${form.username}`)}
-                className="h-12 w-full rounded-lg bg-[#145B10] text-[15px] font-black text-white hover:bg-[#0F4D0C]"
+                className={cn(appPrimaryButtonClass, "w-full")}
               >
                 <Eye className="h-4 w-4" />
                 Preview profile
@@ -686,7 +693,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                       type="button"
                       disabled={!canEdit}
                       onClick={() => setField("gender", gender.value)}
-                      className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-lg border px-2 text-center text-[12px] font-black transition ${
+                      className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-[12px] font-black transition ${
                         active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
                       } disabled:opacity-60`}
                     >
@@ -699,7 +706,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             </Field>
 
             <Field label="Phone number">
-              <div className="flex h-12 overflow-hidden rounded-lg border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
+              <div className="flex h-12 overflow-hidden rounded-xl border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
                 <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-[#1B2431]">+250</span>
                 <div className="relative min-w-0 flex-1">
                   <Input value={form.phoneNumber} readOnly disabled className="h-full rounded-none border-0 bg-[#F4F7F2] pr-10 text-[14px] font-black text-[#616161]" />
@@ -747,7 +754,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     type="button"
                     disabled={!canEdit}
                     onClick={() => toggleLanguage(language)}
-                    className={`flex h-12 items-center justify-between rounded-lg border px-3 text-left text-[13px] font-black transition ${
+                    className={`flex h-12 items-center justify-between rounded-xl border px-3 text-left text-[13px] font-black transition ${
                       active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
                     } disabled:opacity-60`}
                   >
@@ -769,7 +776,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   value={form.bio}
                   disabled={!canEdit}
                   onChange={(event) => setField("bio", event.target.value.slice(0, BIO_LIMIT))}
-                  className="min-h-[120px] resize-none rounded-lg border-[#E1EBDD] bg-white text-[14px] font-medium leading-6 text-[#1B2431] shadow-sm focus-visible:ring-[#145B10]/20"
+                  className={appTextareaClass}
                   placeholder="Briefly describe your experience, what you do best, and what employers should know about you."
                 />
               </Field>
@@ -786,7 +793,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                         type="button"
                         disabled={!canEdit}
                         onClick={() => toggleQuality(quality)}
-                        className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-lg border p-2 text-center text-[11px] font-black leading-4 transition ${
+                        className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border p-2 text-center text-[11px] font-black leading-4 transition ${
                           active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
                         } disabled:opacity-60`}
                       >
@@ -848,7 +855,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.label} className="flex items-center gap-3 rounded-lg border border-[#E1EBDD] bg-white p-3">
+                <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
                     <Icon className="h-4 w-4" />
                   </span>

@@ -89,7 +89,7 @@ const ServicePage = () => {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="app-bg min-h-dvh space-y-6 p-6">
             {/* Header with Back Arrow */}
             <BackButtonHeader text={category || "Services"} backHref="/" />
 

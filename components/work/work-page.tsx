@@ -42,6 +42,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AppHeader,
+  AppShell,
+  EmptyState,
+  appContentClass,
+  appListCardClass,
+} from "@/components/ui/app-primitives";
+import {
   FILTER_LABELS,
   SECTION_COPY,
   SECTION_GROUPS,
@@ -227,7 +234,7 @@ export default function WorkPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F1FCEF]">
+      <div className="app-bg flex min-h-dvh items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
       </div>
     );
@@ -235,50 +242,55 @@ export default function WorkPage() {
 
   if (!hasAnyActivity) {
     return (
-      <main className="min-h-screen bg-[#F1FCEF] px-4 pb-24 pt-8">
+      <AppShell>
         <WorkHeader />
-        <div className="flex min-h-[62vh] flex-col items-center justify-center text-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
-            <Briefcase className="h-8 w-8 text-[#145B10]" />
-          </div>
-          <h1 className="text-[20px] font-black text-[#1B2431]">No work yet</h1>
-          <p className="mt-2 max-w-[280px] text-[13px] leading-relaxed text-[#616161]">
-            {isProvider
-              ? "Find a job post or complete your service profile so employers can reach you."
-              : "Post your first job or book a provider to start managing work here."}
-          </p>
-          <button
-            onClick={() => router.push(isProvider ? "/" : "/post-job")}
-            className="mt-6 min-h-11 rounded-xl bg-[#145B10] px-5 text-[13px] font-bold text-white"
-          >
-            {isProvider ? "Find jobs" : "Post your first job"}
-          </button>
+        <div className="flex min-h-[62vh] items-center">
+          <EmptyState
+            icon={Briefcase}
+            title="No work yet"
+            description={
+              isProvider
+                ? "Find a job post or complete your service profile so employers can reach you."
+                : "Post your first job or book a provider to start managing work here."
+            }
+            action={
+              <button
+                onClick={() => router.push(isProvider ? "/" : "/post-job")}
+                className="h-12 w-full rounded-xl bg-[#145B10] px-5 text-[13px] font-bold text-white"
+              >
+                {isProvider ? "Find jobs" : "Post your first job"}
+              </button>
+            }
+          />
         </div>
-      </main>
+      </AppShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F1FCEF] pb-24">
+    <main className="app-bg min-h-dvh pb-24">
       <div className="sr-only" aria-live="polite">{liveMessage}</div>
-      <div className="sticky top-0 z-20 space-y-4 bg-[#F1FCEF]/95 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
+      <div className="app-bg sticky top-0 z-20 mx-auto max-w-[428px] space-y-4 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
         <WorkHeader />
         <WorkFilterChips counts={counts} filter={filter} onChange={setFilter} />
       </div>
 
-      <div className="space-y-5 px-4 pt-4">
+      <div className={cn(appContentClass, "px-4 pt-4")}>
         {error && (
           <div className="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[12px] font-medium text-orange-700">
             {error}
           </div>
         )}
 
-        {isEmployer && (
-          <MyJobPostsEntry
-            activePostCount={activePostCount}
-            totalApplicants={totalApplicants}
-          />
-        )}
+        {/*
+          Always visible — any authenticated user can post a job. Counts
+          default to 0 for users with no posts yet; the entry doubles as
+          the launchpad for "create your first job post".
+        */}
+        <MyJobPostsEntry
+          activePostCount={activePostCount}
+          totalApplicants={totalApplicants}
+        />
 
         {activeFilterCount === 0 && filter !== "all" ? (
           <InlineEmpty filter={filter} />
@@ -330,13 +342,7 @@ export default function WorkPage() {
 }
 
 function WorkHeader() {
-  // Matches the target mockup: title only, no filter or chat icons.
-  // Messages remain reachable via the bottom nav.
-  return (
-    <header className="flex items-center">
-      <h1 className="text-[24px] font-black text-[#101828]">My Work</h1>
-    </header>
-  );
+  return <AppHeader title="My Work" />;
 }
 
 function WorkFilterChips({
@@ -392,7 +398,7 @@ function MyJobPostsEntry({
   return (
     <Link
       href="/work/job-posts"
-      className="flex min-h-[78px] items-center gap-3 rounded-2xl border border-purple-100 bg-white px-3.5 py-3 shadow-sm"
+      className={cn(appListCardClass, "flex min-h-[78px] items-center gap-3 border-purple-100 px-3.5 py-3")}
     >
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50">
         <ClipboardList className="h-7 w-7 text-[#6D28D9]" />
@@ -481,7 +487,8 @@ function DealCard({
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm",
+        appListCardClass,
+        "overflow-hidden border-gray-100",
         "border-l-4",
         accentClasses[item.accent].bar,
       )}
@@ -831,8 +838,8 @@ export function JobPostsPage() {
   const activePosts = counts.open;
 
   return (
-    <main className="min-h-screen bg-[#F8F9FC] pb-24">
-      <div className="sticky top-0 z-20 space-y-3 bg-[#F8F9FC]/95 px-4 pb-2 pt-6 backdrop-blur">
+    <main className="app-bg min-h-screen pb-24">
+      <div className="app-bg sticky top-0 z-20 space-y-3 px-4 pb-2 pt-6 backdrop-blur">
         <header className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <button

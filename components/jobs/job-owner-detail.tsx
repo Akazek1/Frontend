@@ -162,9 +162,9 @@ export default function JobOwnerDetail({
   const description = job.description || "";
 
   return (
-    <main className="min-h-screen bg-[#F8F9FC] pb-24">
+    <main className="app-bg min-h-screen pb-24">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-[#F8F9FC]/95 px-4 pb-3 pt-6 backdrop-blur">
+      <div className="app-bg sticky top-0 z-20 px-4 pb-3 pt-6 backdrop-blur">
         <header className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <button

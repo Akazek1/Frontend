@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Phone } from "lucide-react"
 import { useOnboarding } from "@/context/onboarding-context"
 
@@ -82,13 +83,13 @@ export function PhoneNumberEntry() {
         </div>
         <span className="text-sm text-gray-500 leading-relaxed">
           I have read and agree to the{" "}
-          <a href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+          <Link href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+          <Link href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
             Privacy Policy
-          </a>
+          </Link>
         </span>
       </label>
     </div>

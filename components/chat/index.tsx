@@ -4,6 +4,7 @@ import ChatHeader from "./chat-header";
 import CustomSearch from "../search/custom-search";
 import ChatTabs from "./chat-tabs";
 import ChatInbox from "./chat-inbox";
+import { appContentClass } from "@/components/ui/app-primitives";
 
 export interface InboxCounts {
   all: number;
@@ -21,9 +22,9 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F1FCEF]">
+    <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col">
       {/* Sticky header area */}
-      <div className="sticky top-0 z-10 space-y-4 bg-[#F1FCEF] p-4 pb-3 shadow-sm sm:p-6">
+      <div className="app-bg sticky top-0 z-10 space-y-4 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
         <ChatHeader />
         <CustomSearch
           onSearch={handleSearch}
@@ -33,7 +34,7 @@ const Chat = () => {
       </div>
 
       {/* Scrollable chat inbox */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-3 sm:px-6">
+      <div className={`${appContentClass} flex-1 overflow-y-auto px-4 pb-24 pt-4`}>
         <ChatInbox searchQuery={searchQuery} onCounts={setCounts} />
       </div>
     </div>

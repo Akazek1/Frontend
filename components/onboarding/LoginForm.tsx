@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { LogIn } from "lucide-react"
 import Image from "next/image"
@@ -210,9 +211,9 @@ export function LoginForm() {
       {!otpSent && (
         <p className="text-center text-sm text-gray-500 pt-2">
           Don&apos;t have an account?{" "}
-          <a href="/onboarding" className="text-[#145B10] font-semibold underline underline-offset-2">
+          <Link href="/onboarding" className="text-[#145B10] font-semibold underline underline-offset-2">
             Sign up
-          </a>
+          </Link>
         </p>
       )}
     </div>

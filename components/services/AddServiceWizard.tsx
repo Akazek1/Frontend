@@ -65,8 +65,8 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-white pb-12">
-      <header className="sticky top-0 z-10 flex items-center gap-2 bg-white px-4 pb-3 pt-4">
+    <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col pb-12">
+      <header className="app-bg sticky top-0 z-10 flex items-center gap-2 px-4 pb-3 pt-6 shadow-sm">
         <button
           type="button"
           onClick={() => (step === 2 ? setStep(1) : router.back())}

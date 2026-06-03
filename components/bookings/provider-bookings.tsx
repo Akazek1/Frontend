@@ -105,16 +105,16 @@ const ProviderBookings: React.FC = () => {
   // ── render ──────────────────────────────────────────────────────────────────
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
+    <div className="min-h-screen app-bg flex items-center justify-center">
       <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF] pb-24">
+    <div className="min-h-screen app-bg pb-24">
 
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-[#F1FCEF] px-4 pt-4 pb-3 shadow-sm space-y-3">
+      <div className="sticky top-0 z-10 app-bg px-4 pt-4 pb-3 shadow-sm space-y-3">
         <BackButtonHeader text="My Jobs" backHref="/" />
 
         {/* Tab chips */}

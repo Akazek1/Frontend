@@ -207,7 +207,7 @@ const BookingDetails: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
+            <div className="app-bg flex min-h-screen items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
             </div>
         );
@@ -215,7 +215,7 @@ const BookingDetails: React.FC = () => {
 
     if (error || !booking) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+            <div className="app-bg flex min-h-screen flex-col items-center justify-center p-4">
                 <Circle className="text-red-500 text-4xl mb-4" />
                 <p className="text-red-500 text-center mb-4">{error || 'Booking not found'}</p>
                 <Button
@@ -229,7 +229,7 @@ const BookingDetails: React.FC = () => {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20">
+        <div className="app-bg min-h-screen pb-20">
             <BackButtonHeader text="Booking Details" className="p-4" backHref="/" />
 
             <div className="p-4 max-w-2xl mx-auto">

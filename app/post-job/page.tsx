@@ -81,8 +81,8 @@ const PostJobPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF]">
-      <div className="sticky top-0 z-20 bg-[#F1FCEF] px-4 pt-4 pb-3 shadow-sm">
+    <div className="min-h-screen app-bg">
+      <div className="sticky top-0 z-20 app-bg px-4 pt-4 pb-3 shadow-sm">
         <BackButtonHeader text="Post a Custom Job" backHref="/" />
       </div>
 

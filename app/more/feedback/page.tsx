@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
+import {
+  AppShell,
+  appContentClass,
+  appPrimaryButtonClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,10 +66,10 @@ const Feedback = () => {
   };
 
   return (
-    <div className={`bg-[#F1FCEF] p-6 pb-16 space-y-6 ${inter.className}`}>
+    <AppShell className={cn("gap-5", inter.className)}>
       {/* Header */}
       <BackButtonHeader text="Share Feedback" />
-      <div className="flex flex-col cursor-pointer gap-5">
+      <div className={cn(appContentClass, "cursor-pointer gap-5")}>
         <h1 className="text-[#212121] text-xl font-medium leading-6 pr-6">
           How would you rate the app experience?
         </h1>
@@ -79,7 +86,7 @@ const Feedback = () => {
           ))}
         </div>
         <Textarea
-          className="text-[#9E9E9E] placeholder:text-[#9E9E9E] leading-7 text-sm placeholder:text-sm placeholder:font-semibold font-semibold"
+          className={cn(appTextareaClass, "min-h-[140px]")}
           placeholder="Type in your feedback"
           rows={6}
           value={message}
@@ -87,7 +94,7 @@ const Feedback = () => {
         />
         <Button
           onClick={handleSubmit}
-          className="bg-[#167021] py-[18px] px-4 h-full rounded-[40px] hover:bg-[#167021]/90 font-bold text-base leading-6 font-urbanist"
+          className={cn(appPrimaryButtonClass, "w-full font-urbanist text-base")}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -100,7 +107,7 @@ const Feedback = () => {
           )}
         </Button>
       </div>
-    </div>
+    </AppShell>
   );
 };
 

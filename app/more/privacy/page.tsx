@@ -2,26 +2,27 @@ import React from "react";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Separator } from "@/components/ui/separator";
 import { PrivacyPolicyData } from "@/constant";
+import { AppShell, appContentClass } from "@/components/ui/app-primitives";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="bg-[#F1FCEF] p-4 sm:p-5 pb-16 space-y-6 font-urbanist">
+    <AppShell className="gap-5 font-urbanist">
       {/* Header */}
       <BackButtonHeader text="Privacy Policy" />
       <Separator />
-      <div className="space-y-8">
+      <div className={`${appContentClass} gap-8`}>
         {PrivacyPolicyData.map((section) => (
           <section key={section.id} className="space-y-6">
-            <h2 className="text-xl leading-6 font-bold text-[#212121] font-urbanist">
+            <h2 className="font-urbanist text-[20px] font-bold leading-6 text-[#212121]">
               {section.id}. {section.title}
             </h2>
-            <p className="text-[#424242] font-normal text-sm tracking-[0.2px] font-urbanist">
+            <p className="font-urbanist text-[14px] font-normal leading-6 tracking-[0.2px] text-[#424242]">
               {section.content}
             </p>
           </section>
         ))}
       </div>
-    </div>
+    </AppShell>
   );
 };
 

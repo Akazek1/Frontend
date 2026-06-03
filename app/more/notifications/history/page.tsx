@@ -91,7 +91,7 @@ const NotificationHistoryPage = () => {
   const allLoadedNotificationsRead = items.length === 0 || items.every((n) => !!n.readAt || n.status === "READ");
 
   return (
-    <div className="min-h-screen space-y-5 bg-[#F1FCEF] px-5 py-10 pb-20">
+    <div className="min-h-screen space-y-5 app-bg px-5 py-10 pb-20">
       <div className="flex items-center justify-between gap-3">
         <BackButtonHeader text="Notifications" fallbackHref="/more/notifications" />
 

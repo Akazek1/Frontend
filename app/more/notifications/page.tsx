@@ -20,6 +20,13 @@ import Link from "next/link";
 import { toast } from "react-hot-toast";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Switch } from "@/components/ui/switch";
+import {
+  AppCard,
+  AppSectionHeader,
+  AppShell,
+  appContentClass,
+  appListCardClass,
+} from "@/components/ui/app-primitives";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
 
@@ -183,24 +190,25 @@ const NotificationsPreferences = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F1FCEF] px-6 py-11">
+      <div className="flex min-h-dvh items-center justify-center app-bg px-4 py-6">
         <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF] px-5 pb-16 pt-11">
-      <div className="mx-auto max-w-xl space-y-6">
+    <AppShell className="gap-5">
+      <div className="space-y-2">
         <BackButtonHeader text="Notification Settings" backHref="/more" />
 
         <p className="text-[15px] font-medium text-[#5F6773]">
           Choose the Akazek updates you want to receive.
         </p>
+      </div>
 
         <Link
           href="/more/notifications/history"
-          className="flex items-center justify-between rounded-lg border border-[#DCE8D9] bg-white px-4 py-3 shadow-sm"
+          className={cn(appListCardClass, "flex items-center justify-between px-4 py-3")}
         >
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E8F7E5] text-[#145B10]">
@@ -216,20 +224,15 @@ const NotificationsPreferences = () => {
           <ChevronRight className="h-5 w-5 text-[#145B10]" />
         </Link>
 
-        <div className="space-y-5">
+        <div className={cn(appContentClass, "gap-5")}>
           {preferenceGroups.map((group) => {
             const GroupIcon = group.icon;
 
             return (
               <section key={group.title} className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <GroupIcon className="h-4 w-4 text-[#145B10]" />
-                  <h2 className="text-[13px] font-bold uppercase tracking-wide text-[#1B2431]">
-                    {group.title}
-                  </h2>
-                </div>
+                <AppSectionHeader title={group.title} icon={GroupIcon} />
 
-                <div className="overflow-hidden rounded-lg border border-[#DCE8D9] bg-white shadow-sm">
+                <div className={cn(appListCardClass, "overflow-hidden rounded-2xl")}>
                   {group.items.map((item, index) => {
                     const ItemIcon = item.icon;
                     const isSaving = savingKey === item.key;
@@ -277,12 +280,7 @@ const NotificationsPreferences = () => {
         </div>
 
         <section className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <ShieldCheck className="h-4 w-4 text-[#145B10]" />
-            <h2 className="text-[13px] font-bold uppercase tracking-wide text-[#1B2431]">
-              Notification channels
-            </h2>
-          </div>
+          <AppSectionHeader title="Notification channels" icon={ShieldCheck} />
 
           <div className="grid grid-cols-3 gap-3">
             {channels.map((channel) => {
@@ -291,7 +289,7 @@ const NotificationsPreferences = () => {
               return (
                 <div
                   key={channel.title}
-                  className="rounded-lg border border-[#DCE8D9] bg-white p-3 shadow-sm"
+                  className={cn(appListCardClass, "rounded-2xl p-3")}
                 >
                   <div className="flex flex-col gap-3">
                     <span
@@ -323,15 +321,14 @@ const NotificationsPreferences = () => {
           </div>
         </section>
 
-        <div className="flex gap-3 rounded-lg border border-[#BFD8FF] bg-[#EEF6FF] px-4 py-3 text-[#2F5E9E]">
+        <AppCard className="flex gap-3 border-[#BFD8FF] bg-[#EEF6FF] text-[#2F5E9E]">
           <Info className="mt-0.5 h-5 w-5 shrink-0" />
           <p className="text-[13px] leading-5">
             Important account, safety, and booking-critical notifications may still be sent when
             needed to keep your account and active bookings secure.
           </p>
-        </div>
-      </div>
-    </div>
+        </AppCard>
+    </AppShell>
   );
 };
 

@@ -232,7 +232,7 @@ const BookingSummary = () => {
 
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (
-            <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
+            <div className="min-h-screen app-bg flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
             </div>
         );
@@ -249,7 +249,7 @@ const BookingSummary = () => {
     const grandTotal = itemTotal - discount + deliveryFee;
 
     return (
-        <div className="flex flex-col bg-[#F1FCEF] min-h-screen overflow-y-auto touch-pan-y pb-12">
+        <div className="flex flex-col app-bg min-h-screen overflow-y-auto touch-pan-y pb-12">
             <main className="flex-1 p-3 sm:p-4 md:p-6 space-y-4 max-w-lg mx-auto">
                 <BackButtonHeader text="Booking Summary" backHref={`/book/${provider.type}/${provider.id}`} />
 
@@ -340,7 +340,7 @@ const BookingSummary = () => {
                             <span className="text-[#145B10] font-medium text-sm">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
-                            <div className="bg-[#F1FCEF] flex items-center justify-center">
+                            <div className="app-bg flex items-center justify-center">
                                 <Loader2 className="w-5 h-5 animate-spin text-[#145B10]" />
                             </div>
                         ) : addresses.length === 0 ? (

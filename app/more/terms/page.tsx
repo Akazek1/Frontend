@@ -4,7 +4,7 @@ import { TermsAndConditionsData } from "@/constant";
 
 const TermsAndConditions = () => {
   return (
-    <div className="bg-[#F1FCEF] p-4 sm:p-5 pb-16 space-y-6 font-urbanist">
+    <div className="app-bg p-4 sm:p-5 pb-16 space-y-6 font-urbanist">
       {/* Header */}
       <BackButtonHeader text="Terms & Conditions" />
       <Separator />

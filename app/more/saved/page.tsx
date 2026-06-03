@@ -11,6 +11,13 @@ import { useBookmark } from "@/context/bookmark-context";
 import { formatPrice } from "@/lib/utils";
 import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
 import { isEmployer } from "@/lib/roles";
+import { Bookmark, Search } from "lucide-react";
+import {
+    AppShell,
+    EmptyState,
+    appContentClass,
+    appPrimaryButtonClass,
+} from "@/components/ui/app-primitives";
 
 interface BookmarksResponse {
     service: Service;
@@ -57,11 +64,13 @@ const BookmarksPage = () => {
     };
 
     return (
-        <div className="p-6">
+        <AppShell className="gap-5">
             <BackButtonHeader text="Bookmarks" backHref="/more" />
-            <div className="mt-4 space-y-4">
+            <div className={appContentClass}>
                 {isLoading ? (
-                    <p className="text-center text-gray-500">Loading bookmarks...</p>
+                    <div className="rounded-2xl border border-[#DCE8D9] bg-white p-6 text-center text-[13px] text-[#5F6773] shadow-sm">
+                        Loading bookmarks...
+                    </div>
                 ) : bookmarkedServices.length > 0 ? (
                     bookmarkedServices.map((service) => (
                         <ServiceCard
@@ -88,10 +97,24 @@ const BookmarksPage = () => {
                         />
                     ))
                 ) : (
-                    <p className="text-center text-gray-500">No bookmarked services found.</p>
+                    <EmptyState
+                        icon={Bookmark}
+                        title="No saved services yet"
+                        description="Bookmark providers you like so you can compare them later and book faster when you are ready."
+                        action={
+                            <button
+                                type="button"
+                                onClick={() => router.push("/")}
+                                className={`${appPrimaryButtonClass} flex w-full items-center justify-center gap-2`}
+                            >
+                                <Search className="h-4 w-4" />
+                                Browse providers
+                            </button>
+                        }
+                    />
                 )}
             </div>
-        </div>
+        </AppShell>
     );
 };
 

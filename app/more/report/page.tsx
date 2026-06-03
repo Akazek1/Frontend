@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,6 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
+import {
+  AppShell,
+  appContentClass,
+  appFieldErrorClass,
+  appFieldLabelClass,
+  appInputClass,
+  appPrimaryButtonClass,
+  appSecondaryButtonClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 interface FormData {
   category: string;
@@ -101,7 +111,7 @@ const ReportIssue = () => {
 
   if (isSubmitted) {
     return (
-      <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen flex flex-col items-center justify-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center space-y-6 app-bg px-4 py-6">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-[#145B10] flex items-center justify-center mx-auto">
             <svg
@@ -128,18 +138,16 @@ const ReportIssue = () => {
   }
 
   return (
-    <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen pb-16">
+    <AppShell className="gap-5">
       <BackButtonHeader text="Report an Issue" backHref="/more" />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className={cn(appContentClass, "gap-5")}>
         {/* Category */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-[#161616]">Issue Category *</label>
+          <label className={appFieldLabelClass}>Issue Category *</label>
           <Select value={formData.category} onValueChange={handleSelectChange}>
             <SelectTrigger
-              className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${
-                errors.category ? "border-red-500" : "border-none"
-              } focus:ring-[#145B10]`}
+              className={cn(appInputClass, errors.category && "border-red-500")}
             >
               <SelectValue placeholder="Select issue category" />
             </SelectTrigger>
@@ -151,32 +159,30 @@ const ReportIssue = () => {
               ))}
             </SelectContent>
           </Select>
-          {errors.category && <p className="text-red-500 text-sm">{errors.category}</p>}
+          {errors.category && <p className={appFieldErrorClass}>{errors.category}</p>}
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-[#161616]">Description *</label>
+          <label className={appFieldLabelClass}>Description *</label>
           <Textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${
-              errors.description ? "border-red-500" : "border-none"
-            } focus:ring-[#145B10] resize-none h-32`}
+            className={cn(appTextareaClass, "h-32", errors.description && "border-red-500")}
             placeholder="Please describe the issue in detail, including what happened and when"
           />
-          {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+          {errors.description && <p className={appFieldErrorClass}>{errors.description}</p>}
         </div>
 
-        {errors.form && <p className="text-red-500 text-sm bg-red-50 p-3 rounded">{errors.form}</p>}
+        {errors.form && <p className="rounded-xl bg-red-50 p-3 text-[12px] font-semibold text-red-500">{errors.form}</p>}
 
         {/* Submit Button */}
         <div className="flex flex-col gap-2 pt-4">
           <Button
             size="lg"
             type="submit"
-            className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 py-[18px] px-4 h-full hover:bg-[#0F4D0C] transition-colors"
+            className={cn(appPrimaryButtonClass, "w-full")}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -191,7 +197,7 @@ const ReportIssue = () => {
           <Button
             size="lg"
             type="button"
-            className="w-full bg-transparent hover:bg-[#167021]/10 border-[#167021] border text-[#167021] rounded-full font-bold leading-6 py-[18px] px-4 h-full"
+            className={cn(appSecondaryButtonClass, "w-full")}
             onClick={() => window.history.back()}
             disabled={isLoading}
           >
@@ -199,7 +205,7 @@ const ReportIssue = () => {
           </Button>
         </div>
       </form>
-    </div>
+    </AppShell>
   );
 };
 

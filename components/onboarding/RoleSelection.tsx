@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Shield, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useOnboarding } from "@/context/onboarding-context"
@@ -192,9 +193,9 @@ export function RoleSelection() {
         {/* ── Login link ── */}
         <p className="text-center text-sm text-gray-500 pt-1">
           Already have an account?{" "}
-          <a href="/onboarding?step=login" className="text-[#1B5E20] font-bold underline underline-offset-2">
+          <Link href="/onboarding?step=login" className="text-[#1B5E20] font-bold underline underline-offset-2">
             Log in
-          </a>
+          </Link>
         </p>
 
         {/* ── Security note ── */}
