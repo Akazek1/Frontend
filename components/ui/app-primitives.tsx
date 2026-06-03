@@ -1,6 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const appShellClass =
@@ -18,6 +19,12 @@ export const appCardClass =
 
 export const appListCardClass =
   "rounded-2xl border border-[#DCE8D9] bg-white shadow-[0_8px_24px_rgba(27,36,49,0.05)]";
+
+export const appActionCardClass =
+  "rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-[0_8px_24px_rgba(27,36,49,0.05)] transition-colors hover:bg-[#FBFEFA]";
+
+export const appStatusCardClass =
+  "rounded-2xl border border-[#CFE8CD] bg-[#F1FCEF] p-4 text-[#145B10]";
 
 export const appInputClass =
   "h-12 rounded-xl border-[#DCE8D9] bg-white px-4 text-[14px] font-semibold text-[#1B2431] shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-[#145B10]/20";
@@ -40,6 +47,63 @@ export const appFieldLabelClass =
 export const appFieldHintClass = "text-[11px] leading-4 text-[#6B7668]";
 
 export const appFieldErrorClass = "text-[11px] font-semibold text-red-500";
+
+type AppButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+
+type AppButtonProps = Omit<ButtonProps, "variant"> & {
+  appVariant?: AppButtonVariant;
+};
+
+const appButtonVariantClass: Record<AppButtonVariant, string> = {
+  primary: appPrimaryButtonClass,
+  secondary: appSecondaryButtonClass,
+  danger: appDangerButtonClass,
+  ghost:
+    "h-12 rounded-xl bg-transparent px-4 text-[14px] font-bold text-[#145B10] transition-colors hover:bg-[#F1FCEF] disabled:cursor-not-allowed disabled:opacity-50",
+};
+
+export function AppButton({
+  appVariant = "primary",
+  className,
+  ...props
+}: AppButtonProps) {
+  return (
+    <Button
+      className={cn(appButtonVariantClass[appVariant], className)}
+      {...props}
+    />
+  );
+}
+
+type FormFieldProps = {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  error?: string;
+  children: React.ReactNode;
+  className?: string;
+};
+
+export function FormField({
+  label,
+  required,
+  hint,
+  error,
+  children,
+  className,
+}: FormFieldProps) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      <label className={appFieldLabelClass}>
+        {label}
+        {required ? <span className="text-[#FF3D00]"> *</span> : null}
+      </label>
+      {children}
+      {error ? <p className={appFieldErrorClass}>{error}</p> : null}
+      {!error && hint ? <p className={appFieldHintClass}>{hint}</p> : null}
+    </div>
+  );
+}
 
 type PageShellProps = React.HTMLAttributes<HTMLElement> & {
   children: React.ReactNode;
@@ -145,6 +209,32 @@ export function AppCard({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn(appCardClass, className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+type AppCardVariant = "base" | "list" | "action" | "status";
+
+type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+  variant?: AppCardVariant;
+};
+
+const appCardVariantClass: Record<AppCardVariant, string> = {
+  base: appCardClass,
+  list: appListCardClass,
+  action: appActionCardClass,
+  status: appStatusCardClass,
+};
+
+export function Card({
+  variant = "base",
+  className,
+  children,
+  ...props
+}: CardProps) {
+  return (
+    <div className={cn(appCardVariantClass[variant], className)} {...props}>
       {children}
     </div>
   );

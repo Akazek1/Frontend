@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,12 +15,10 @@ import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import {
   PageShell,
+  AppButton,
+  FormField,
   appContentClass,
-  appFieldErrorClass,
-  appFieldLabelClass,
   appInputClass,
-  appPrimaryButtonClass,
-  appSecondaryButtonClass,
   appTextareaClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
@@ -142,8 +139,7 @@ const ReportIssue = () => {
 
       <form onSubmit={handleSubmit} className={cn(appContentClass, "gap-5")}>
         {/* Category */}
-        <div className="space-y-2">
-          <label className={appFieldLabelClass}>Issue Category *</label>
+        <FormField label="Issue Category" required error={errors.category}>
           <Select value={formData.category} onValueChange={handleSelectChange}>
             <SelectTrigger
               className={cn(appInputClass, errors.category && "border-red-500")}
@@ -158,12 +154,10 @@ const ReportIssue = () => {
               ))}
             </SelectContent>
           </Select>
-          {errors.category && <p className={appFieldErrorClass}>{errors.category}</p>}
-        </div>
+        </FormField>
 
         {/* Description */}
-        <div className="space-y-2">
-          <label className={appFieldLabelClass}>Description *</label>
+        <FormField label="Description" required error={errors.description}>
           <Textarea
             name="description"
             value={formData.description}
@@ -171,17 +165,16 @@ const ReportIssue = () => {
             className={cn(appTextareaClass, "h-32", errors.description && "border-red-500")}
             placeholder="Please describe the issue in detail, including what happened and when"
           />
-          {errors.description && <p className={appFieldErrorClass}>{errors.description}</p>}
-        </div>
+        </FormField>
 
         {errors.form && <p className="rounded-xl bg-red-50 p-3 text-[12px] font-semibold text-red-500">{errors.form}</p>}
 
         {/* Submit Button */}
         <div className="flex flex-col gap-2 pt-4">
-          <Button
+          <AppButton
             size="lg"
             type="submit"
-            className={cn(appPrimaryButtonClass, "w-full")}
+            className="w-full"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -192,16 +185,17 @@ const ReportIssue = () => {
             ) : (
               "Submit Report"
             )}
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             size="lg"
             type="button"
-            className={cn(appSecondaryButtonClass, "w-full")}
+            appVariant="secondary"
+            className="w-full"
             onClick={() => window.history.back()}
             disabled={isLoading}
           >
             Cancel
-          </Button>
+          </AppButton>
         </div>
       </form>
     </PageShell>

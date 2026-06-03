@@ -21,11 +21,11 @@ import { toast } from "react-hot-toast";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Switch } from "@/components/ui/switch";
 import {
-  AppCard,
   AppSectionHeader,
+  Card,
   PageShell,
+  appActionCardClass,
   appContentClass,
-  appListCardClass,
 } from "@/components/ui/app-primitives";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
@@ -206,7 +206,7 @@ const NotificationsPreferences = () => {
 
         <Link
           href="/more/notifications/history"
-          className={cn(appListCardClass, "flex items-center justify-between px-4 py-3")}
+          className={cn(appActionCardClass, "flex items-center justify-between px-4 py-3")}
         >
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E8F7E5] text-[#145B10]">
@@ -230,7 +230,7 @@ const NotificationsPreferences = () => {
               <section key={group.title} className="space-y-2">
                 <AppSectionHeader title={group.title} icon={GroupIcon} />
 
-                <div className={cn(appListCardClass, "overflow-hidden rounded-2xl")}>
+                <Card variant="list" className="overflow-hidden rounded-2xl">
                   {group.items.map((item, index) => {
                     const ItemIcon = item.icon;
                     const isSaving = savingKey === item.key;
@@ -271,7 +271,7 @@ const NotificationsPreferences = () => {
                       </div>
                     );
                   })}
-                </div>
+                </Card>
               </section>
             );
           })}
@@ -285,9 +285,10 @@ const NotificationsPreferences = () => {
               const ChannelIcon = channel.icon;
 
               return (
-                <div
+                <Card
+                  variant="list"
                   key={channel.title}
-                  className={cn(appListCardClass, "rounded-2xl p-3")}
+                  className="p-3"
                 >
                   <div className="flex flex-col gap-3">
                     <span
@@ -313,19 +314,19 @@ const NotificationsPreferences = () => {
                       {channel.status}
                     </span>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         </section>
 
-        <AppCard className="flex gap-3 border-[#BFD8FF] bg-[#EEF6FF] text-[#2F5E9E]">
+        <Card className="flex gap-3 border-[#BFD8FF] bg-[#EEF6FF] text-[#2F5E9E]">
           <Info className="mt-0.5 h-5 w-5 shrink-0" />
           <p className="text-[13px] leading-5">
             Important account, safety, and booking-critical notifications may still be sent when
             needed to keep your account and active bookings secure.
           </p>
-        </AppCard>
+        </Card>
     </PageShell>
   );
 };

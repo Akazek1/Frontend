@@ -16,6 +16,7 @@ import { useAvailability } from "@/hooks/useAvailability";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
 import {
+  Card,
   PageHeader,
   PageShell,
   appContentClass,
@@ -129,15 +130,15 @@ export function ServicesListPage() {
 
         {/* Body */}
         {isLoading && services.length === 0 && (
-          <div className="rounded-2xl border border-[#DCEEDD] bg-white p-6 text-center text-[13px] text-[#475467]">
+          <Card variant="list" className="p-6 text-center text-[13px] text-[#475467]">
             Loading your services…
-          </div>
+          </Card>
         )}
 
         {error && (
-          <div className="rounded-2xl border border-[#FF3D00]/30 bg-[#FFF2EE] p-4 text-[13px] text-[#FF3D00]">
+          <Card className="border-[#FF3D00]/30 bg-[#FFF2EE] p-4 text-[13px] text-[#FF3D00]">
             {error}
-          </div>
+          </Card>
         )}
 
         {isEmpty && <EmptyServicesState onAdd={handleAdd} />}

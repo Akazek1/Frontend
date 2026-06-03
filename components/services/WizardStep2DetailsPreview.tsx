@@ -4,13 +4,19 @@ import { useMemo } from "react";
 import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { ServiceImageUploader } from "@/components/services/ServiceImageUploader";
 import ServiceCard from "@/components/service-card";
 import { mapServiceToProviderCard } from "@/lib/service-display";
 import type { WizardFormState } from "@/hooks/useAddServiceForm";
 import type { Service } from "@/types";
 import type { ServiceCategory } from "@/services/services-service";
+import {
+  AppButton,
+  Card,
+  FormField,
+  appInputClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
 
 interface WizardStep2Props {
   form: WizardFormState;
@@ -118,10 +124,7 @@ export function WizardStep2DetailsPreview({
       </header>
 
       {/* Images */}
-      <section className="flex flex-col gap-2">
-        <p className="text-[13px] font-black text-[#1B2431]">
-          Service Images (Max {maxImages})
-        </p>
+      <FormField label={`Service Images (Max ${maxImages})`}>
         <ServiceImageUploader
           existingUrls={form.existingImageUrls}
           pendingFiles={form.newImageFiles}
@@ -129,37 +132,22 @@ export function WizardStep2DetailsPreview({
           onAdd={onAddImages}
           onRemoveAt={onRemoveImageAt}
         />
-      </section>
+      </FormField>
 
       {/* Title */}
-      <section className="flex flex-col gap-2">
-        <label
-          htmlFor="service-title"
-          className="text-[13px] font-black text-[#1B2431]"
-        >
-          Service Title
-        </label>
+      <FormField label="Service Title" hint="This is the headline shown on your card.">
         <Input
           id="service-title"
           placeholder="e.g. Deep home cleaning"
           value={form.title}
           maxLength={120}
           onChange={(e) => onSetField("title", e.target.value)}
-          className="h-12 border-[#DCEEDD] bg-white"
+          className={appInputClass}
         />
-        <p className="text-[11px] text-[#667085]">
-          This is the headline shown on your card.
-        </p>
-      </section>
+      </FormField>
 
       {/* Description */}
-      <section className="flex flex-col gap-2">
-        <label
-          htmlFor="service-description"
-          className="text-[13px] font-black text-[#1B2431]"
-        >
-          Service Description
-        </label>
+      <FormField label="Service Description">
         <Textarea
           id="service-description"
           placeholder="Describe what is included, what you bring, and what kind of clients this service is best for."
@@ -167,15 +155,16 @@ export function WizardStep2DetailsPreview({
           value={form.description}
           maxLength={2000}
           onChange={(e) => onSetField("description", e.target.value)}
-          className="border-[#DCEEDD] bg-white"
+          className={appTextareaClass}
         />
-      </section>
+      </FormField>
 
       {/* Live preview */}
-      <section
+      <Card
+        variant="status"
         aria-live="polite"
         aria-label="Live preview of your service card"
-        className="flex flex-col gap-2 rounded-2xl border border-[#DCEEDD] bg-[#F1FCEF] p-3"
+        className="flex flex-col gap-2 p-3"
       >
         <p className="text-[13px] font-black text-[#1B2431]">
           Preview of Your Service Card
@@ -207,23 +196,23 @@ export function WizardStep2DetailsPreview({
         <p className="text-center text-[11px] italic text-[#667085]">
           Stats appear once your card is live
         </p>
-      </section>
+      </Card>
 
       {/* CTA row */}
       <div className="sticky bottom-0 -mx-4 mt-2 flex gap-2 border-t border-[#DCEEDD] bg-white px-4 pb-[env(safe-area-inset-bottom)] pt-3">
-        <Button
+        <AppButton
           type="button"
-          variant="outline"
+          appVariant="secondary"
           onClick={onBack}
           disabled={isSubmitting}
-          className="h-12 flex-1 border-[#145B10]/30 text-[15px] font-black text-[#145B10]"
+          className="flex-1 text-[15px] font-black"
         >
           Back
-        </Button>
-        <Button
+        </AppButton>
+        <AppButton
           type="submit"
           disabled={!isValid || isSubmitting}
-          className="h-12 flex-1 bg-[#145B10] text-[15px] font-black text-white hover:bg-[#0F4D0C] disabled:bg-[#DCEEDD] disabled:text-[#667085]"
+          className="flex-1 text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-[#667085]"
         >
           <Check className="h-4 w-4" />
           {isSubmitting
@@ -231,7 +220,7 @@ export function WizardStep2DetailsPreview({
             : isEdit
             ? "Save Changes"
             : "Save Service"}
-        </Button>
+        </AppButton>
       </div>
     </form>
   );

@@ -5,13 +5,13 @@ import BackButtonHeader from "@/components/header/back-button-header";
 import { Star, Loader2 } from "lucide-react";
 import { Inter } from "next/font/google";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import {
+  AppButton,
+  FormField,
   PageShell,
   appContentClass,
-  appPrimaryButtonClass,
   appTextareaClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
@@ -83,16 +83,18 @@ const Feedback = () => {
             />
           ))}
         </div>
-        <Textarea
-          className={cn(appTextareaClass, "min-h-[140px]")}
-          placeholder="Type in your feedback"
-          rows={6}
-          value={message}
-          onChange={handleMessageChange}
-        />
-        <Button
+        <FormField label="Feedback" className="space-y-2">
+          <Textarea
+            className={cn(appTextareaClass, "min-h-[140px]")}
+            placeholder="Type in your feedback"
+            rows={6}
+            value={message}
+            onChange={handleMessageChange}
+          />
+        </FormField>
+        <AppButton
           onClick={handleSubmit}
-          className={cn(appPrimaryButtonClass, "w-full font-urbanist text-base")}
+          className="w-full font-urbanist text-base"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -103,7 +105,7 @@ const Feedback = () => {
           ) : (
             "Submit"
           )}
-        </Button>
+        </AppButton>
       </div>
     </PageShell>
   );

@@ -9,11 +9,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { ChargedPerRadio } from "@/components/services/ChargedPerRadio";
 import { TipCard } from "@/components/services/TipCard";
 import type { WizardFormState } from "@/hooks/useAddServiceForm";
 import type { ServiceCategory, ChargedPer } from "@/services/services-service";
+import {
+  AppButton,
+  FormField,
+  appInputClass,
+} from "@/components/ui/app-primitives";
 
 interface WizardStep1BasicsProps {
   form: WizardFormState;
@@ -53,16 +57,13 @@ export function WizardStep1Basics({
       </header>
 
       {/* Category */}
-      <section className="flex flex-col gap-2">
-        <label className="text-[13px] font-black text-[#1B2431]">
-          Service Category <span className="text-[#FF3D00]">*</span>
-        </label>
+      <FormField label="Service Category" required>
         <Select
           value={form.categoryId}
           onValueChange={(v) => onSetField("categoryId", v)}
           disabled={categoriesLoading}
         >
-          <SelectTrigger className="h-12 border-[#DCEEDD] bg-white text-[14px]">
+          <SelectTrigger className={appInputClass}>
             <span className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F1FCEF]">
                 <LayoutGrid className="h-4 w-4 text-[#145B10]" />
@@ -84,16 +85,10 @@ export function WizardStep1Basics({
           title=""
           body="Choose the category that best fits the service you provide."
         />
-      </section>
+      </FormField>
 
       {/* Price */}
-      <section className="flex flex-col gap-2">
-        <label
-          htmlFor="service-price"
-          className="text-[13px] font-black text-[#1B2431]"
-        >
-          How much do you charge? <span className="text-[#FF3D00]">*</span>
-        </label>
+      <FormField label="How much do you charge?" required>
         <div className="flex h-12 items-center overflow-hidden rounded-md border border-[#DCEEDD] bg-white focus-within:ring-2 focus-within:ring-[#145B10]/30">
           <span className="border-r border-[#DCEEDD] bg-[#F1FCEF] px-3 text-[13px] font-black text-[#145B10]">
             RWF
@@ -109,18 +104,15 @@ export function WizardStep1Basics({
             className="h-full border-0 focus-visible:ring-0"
           />
         </div>
-      </section>
+      </FormField>
 
       {/* Charged per */}
-      <section className="flex flex-col gap-2">
-        <p className="text-[13px] font-black text-[#1B2431]">
-          Charged per <span className="text-[#FF3D00]">*</span>
-        </p>
+      <FormField label="Charged per" required>
         <ChargedPerRadio
           value={form.chargedPer}
           onChange={(next: ChargedPer) => onSetField("chargedPer", next)}
         />
-      </section>
+      </FormField>
 
       <TipCard
         dismissible={false}
@@ -129,13 +121,13 @@ export function WizardStep1Basics({
 
       {/* Sticky CTA */}
       <div className="sticky bottom-0 -mx-4 mt-2 border-t border-[#DCEEDD] bg-white px-4 pb-[env(safe-area-inset-bottom)] pt-3">
-        <Button
+        <AppButton
           type="submit"
           disabled={!isValid}
-          className="h-12 w-full bg-[#145B10] text-[15px] font-black text-white hover:bg-[#0F4D0C] disabled:bg-[#DCEEDD] disabled:text-[#667085]"
+          className="w-full text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-[#667085]"
         >
           Continue →
-        </Button>
+        </AppButton>
       </div>
     </form>
   );
