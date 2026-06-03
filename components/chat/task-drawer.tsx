@@ -14,7 +14,6 @@ import {
   ShieldAlert,
   Trash2,
   X,
-  AlertCircle,
 } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";

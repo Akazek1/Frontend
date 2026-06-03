@@ -11,11 +11,20 @@ import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import { useServiceCategories } from "@/hooks/useServiceCategories";
 import { useAuth } from "@/hooks/useAuth";
 import type { Service } from "@/types";
+import type { AuthResponse } from "@/services/auth-service";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface AddServiceWizardProps {
   /** Provided when editing an existing service. */
   service?: Service;
 }
+
+type PreviewUser = AuthResponse["data"]["user"] & {
+  isVerified?: boolean;
+  addresses?: Array<{
+    district?: string;
+  }>;
+};
 
 export function AddServiceWizard({ service }: AddServiceWizardProps) {
   const router = useRouter();
@@ -42,13 +51,14 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   const isEdit = !!service;
   const headerTitle = isEdit ? "Edit Service Card" : "Add Service Card";
 
+  const previewUser = user as PreviewUser | null;
   const providerPreview = {
-    id: (user as any)?.id ?? "preview",
-    firstName: (user as any)?.firstName,
-    lastName: (user as any)?.lastName,
-    isVerified: (user as any)?.isVerified,
-    profilePicture: (user as any)?.profilePicture,
-    district: (user as any)?.addresses?.[0]?.district,
+    id: previewUser?.id ?? "preview",
+    firstName: previewUser?.firstName,
+    lastName: previewUser?.lastName,
+    isVerified: previewUser?.isVerified,
+    profilePicture: previewUser?.profilePicture,
+    district: previewUser?.addresses?.[0]?.district,
   };
 
   const handleSubmit = async () => {
@@ -57,10 +67,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
       toast.success(isEdit ? "Service updated" : "Service created");
       router.push("/more/services");
     } catch (err) {
-      const message =
-        (err as any)?.response?.data?.message ||
-        "Could not save the service. Please try again.";
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, "Could not save the service. Please try again."));
     }
   };
 

@@ -4,14 +4,11 @@ import React, { useState } from "react";
 import { Job } from "@/services/jobs-service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { 
-  CalendarDays, 
   MapPin, 
   DollarSign, 
-  Clock, 
   CheckCircle2, 
   ChevronRight, 
   Loader2,
-  Briefcase,
   Timer
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -22,6 +19,7 @@ import { redactName, redactSensitiveText } from "@/lib/privacy-utils";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import jobsService from "@/services/jobs-service";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface JobCardProps {
   job: Job;
@@ -56,8 +54,8 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
       await jobsService.applyToJob(job.id, { message: "I am interested in this job." });
       toast.success("Application sent successfully!");
       setHasApplied(true);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to apply.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to apply."));
     } finally {
       setApplying(false);
     }

@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { updateUser } from "@/store/slices/auth-slice";
 import { toast } from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/error-handler";
 import ImageSourceSelector from "./image-source-selector";
 import { 
   optimizeImage, 
@@ -14,14 +15,7 @@ import {
   revokePreviewUrl, 
   validateImageFile 
 } from "@/utils/image-optimizer";
-
-// Try to import cropper, fallback if not available
-let ImageCropperModal: any = null;
-try {
-  ImageCropperModal = require("./image-cropper-modal").default;
-} catch (e) {
-  console.warn("Image cropper not available. Install react-easy-crop to enable cropping.");
-}
+import ImageCropperModal from "./image-cropper-modal";
 
 type ProfileImageUploaderProps = {
     className?: string;
@@ -75,17 +69,9 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                 reduction: `${Math.round((1 - optimizedFile.size / file.size) * 100)}%`,
             });
 
-            // If cropper is available, show preview modal
-            // Otherwise, upload directly
-            if (ImageCropperModal) {
-                // Use object URL for better memory management
-                const previewUrl = createPreviewUrl(optimizedFile);
-                setPreviewImage(previewUrl);
-                setShowCropper(true);
-            } else {
-                // Fallback: upload directly without cropping
-                await handleDirectUpload(optimizedFile);
-            }
+            const previewUrl = createPreviewUrl(optimizedFile);
+            setPreviewImage(previewUrl);
+            setShowCropper(true);
         } catch (err) {
             console.error("Error processing image:", err);
             toast.dismiss("optimizing");
@@ -176,18 +162,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             toast.dismiss("uploading");
             toast.dismiss("finalizing");
             
-            // Extract error message from different possible error structures
-            let errorMessage = "Failed to update profile image";
-            
-            if (err instanceof Error) {
-                errorMessage = err.message;
-            } else if ((err as any)?.response?.data?.message) {
-                errorMessage = (err as any).response.data.message;
-            } else if ((err as any)?.response?.data?.data?.message) {
-                errorMessage = (err as any).response.data.data.message;
-            } else if ((err as any)?.message) {
-                errorMessage = (err as any).message;
-            }
+            const errorMessage = getApiErrorMessage(err, "Failed to update profile image");
             
             setError(errorMessage);
             toast.error(errorMessage);
@@ -213,61 +188,6 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             }
         };
     }, [previewImage]);
-
-    const handleDirectUpload = async (file: File) => {
-        if (!user?.id) {
-            toast.error("User not authenticated");
-            return;
-        }
-
-        setIsUploading(true);
-        setError(null);
-
-        try {
-            // File is already optimized from handleFileSelect
-            const formData = new FormData();
-            formData.append("avatar", file);
-
-            console.log("Uploading optimized image...", {
-                filename: file.name,
-                type: file.type,
-                size: file.size,
-            });
-
-            toast.loading("Uploading image...", { id: "uploading-direct" });
-
-            const response = await api.patch("/users/profile/image", formData);
-
-            toast.dismiss("uploading-direct");
-
-            const profilePicture = response.data?.data?.data?.profilePicture || response.data?.data?.profilePicture;
-
-            if (profilePicture) {
-                dispatch(updateUser({ profilePicture }));
-                toast.success("Profile image updated successfully");
-            } else {
-                throw new Error("No image URL returned from server");
-            }
-        } catch (err: unknown) {
-            console.error("Error updating profile image:", err);
-            toast.dismiss("uploading-direct");
-            
-            let errorMessage = "Failed to update profile image";
-            
-            if (err instanceof Error) {
-                errorMessage = err.message;
-            } else if ((err as any)?.response?.data?.message) {
-                errorMessage = (err as any).response.data.message;
-            } else if ((err as any)?.response?.data?.data?.message) {
-                errorMessage = (err as any).response.data.data.message;
-            }
-            
-            setError(errorMessage);
-            toast.error(errorMessage);
-        } finally {
-            setIsUploading(false);
-        }
-    };
 
     const handleAvatarClick = () => {
         if (isUploading) return;
@@ -351,16 +271,13 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                 onSelectGallery={handleSelectGallery}
             />
 
-            {/* Image Cropper Modal - only show if available */}
-            {ImageCropperModal && (
-                <ImageCropperModal
-                    image={previewImage}
-                    isOpen={showCropper}
-                    onClose={handleCloseCropper}
-                    onSave={handleCroppedImage}
-                    aspect={1} // Square for profile pictures
-                />
-            )}
+            <ImageCropperModal
+                image={previewImage}
+                isOpen={showCropper}
+                onClose={handleCloseCropper}
+                onSave={handleCroppedImage}
+                aspect={1}
+            />
         </div>
     );
 };

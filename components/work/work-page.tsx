@@ -63,7 +63,7 @@ import { getInitials, getTimeAgo } from "./utils";
 export default function WorkPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items, jobPosts, loading, error, isProvider, isEmployer, isDualRole, refetch } = useWorkData();
+  const { items, jobPosts, loading, error, isProvider, isDualRole, refetch } = useWorkData();
   const [filter, setFilter] = useState<WorkFilter>("all");
   const [expandedSection, setExpandedSection] = useState<SectionKey | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
@@ -123,21 +123,6 @@ export default function WorkPage() {
       if (status === "CONFIRMED") router.push(`/conversations/inbox/${item.bookingId}`);
     } catch {
       toast.error(status === "CONFIRMED" ? "Could not accept this offer." : "Could not reject this request.");
-    } finally {
-      setActingId(null);
-    }
-  };
-
-  const handleMarkComplete = async (item: WorkItem) => {
-    if (!item.bookingId) return;
-    setActingId(item.id);
-    try {
-      await api.patch(`/bookings/${item.bookingId}/status`, { status: "COMPLETED" });
-      toast.success("Marked complete.");
-      setLiveMessage("Marked complete.");
-      await refetch();
-    } catch {
-      toast.error("Could not mark this work complete.");
     } finally {
       setActingId(null);
     }
@@ -316,7 +301,6 @@ export default function WorkPage() {
                     onPrimary={openPrimary}
                     onReject={(target) => void handleBookingStatus(target, "CANCELLED")}
                     onReminder={(target) => void handleReminder(target)}
-                    onMarkComplete={(target) => void handleMarkComplete(target)}
                     onWithdraw={(target) => void handleWithdraw(target)}
                   />
                 ))}
@@ -367,7 +351,7 @@ function WorkFilterChips({
             className={cn(
               "flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold transition-colors",
               active
-                ? "border-[#FF3D00] bg-white text-[#FF3D00]"
+                ? "border-[#C17A5D] bg-white text-[#C17A5D]"
                 : "border-gray-200 bg-white text-[#1B2431]",
               muted && !active && "text-gray-400",
             )}
@@ -376,7 +360,7 @@ function WorkFilterChips({
             <span
               className={cn(
                 "flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
-                active ? "bg-[#FF3D00] text-white" : muted ? "bg-gray-50 text-gray-400" : "bg-gray-100 text-[#1B2431]",
+                active ? "bg-[#C17A5D] text-white" : muted ? "bg-gray-50 text-gray-400" : "bg-gray-100 text-[#1B2431]",
               )}
             >
               {counts[key]}
@@ -463,7 +447,6 @@ function DealCard({
   onReject,
   onReminder,
   onWithdraw,
-  onMarkComplete,
 }: {
   item: WorkItem;
   isDualRole: boolean;
@@ -472,7 +455,6 @@ function DealCard({
   onReject: (item: WorkItem) => void;
   onReminder: (item: WorkItem) => void;
   onWithdraw: (item: WorkItem) => void;
-  onMarkComplete?: (item: WorkItem) => void;
 }) {
   // Per design: incoming hire requests in AWAITING YOUR REVIEW do NOT show
   // a status badge ("From Employer") — the section header already conveys the
@@ -488,9 +470,11 @@ function DealCard({
     <article
       className={cn(
         appListCardClass,
-        "overflow-hidden border-gray-100",
+        "overflow-hidden",
         "border-l-4",
         accentClasses[item.accent].bar,
+        accentClasses[item.accent].border,
+        accentClasses[item.accent].card,
       )}
     >
       <div className="p-3.5">
@@ -613,7 +597,7 @@ function DealCardActions({
             type="button"
             disabled={isActing}
             onClick={() => onPrimary(item)}
-            className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FF3D00] text-[12px] font-black text-white disabled:opacity-60"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#C17A5D] text-[12px] font-black text-white disabled:opacity-60"
           >
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
             Accept

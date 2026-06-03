@@ -33,6 +33,12 @@ import {
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
 
+function getResponseStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("response" in error)) return undefined;
+  const response = (error as { response?: { status?: unknown } }).response;
+  return typeof response?.status === "number" ? response.status : undefined;
+}
+
 const JobDetailPage = () => {
   const { id } = useParams();
   const router = useRouter();
@@ -60,8 +66,8 @@ const JobDetailPage = () => {
           const apps = await jobsService.getApplicationsForJob(id as string);
           setApplications(apps);
         }
-      } catch (err: any) {
-        if (err?.response?.status === 401) {
+      } catch (err) {
+        if (getResponseStatus(err) === 401) {
           // Not authenticated — send to login, then come back
           router.push(`/onboarding?step=login&redirect=/jobs/${id}`);
         } else {
@@ -80,7 +86,7 @@ const JobDetailPage = () => {
     setActionLoading(appId);
     try {
       await jobsService.updateApplicationStatus(appId, "REJECTED");
-      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: "REJECTED" as any } : a));
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: "REJECTED" } : a));
       toast.success("Application declined.");
     } catch {
       toast.error("Failed to decline application.");
@@ -98,7 +104,7 @@ const JobDetailPage = () => {
       const result = await jobsService.updateApplicationStatus(appId, "ACCEPTED");
       setApplications(prev => prev.map(a =>
         a.id === appId
-          ? { ...a, status: "ACCEPTED" as any }
+          ? { ...a, status: "ACCEPTED" }
           : a
       ));
       toast.success("Offer sent. The provider needs to accept before the job is confirmed.");

@@ -4,7 +4,6 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Briefcase, ArrowRight } from "lucide-react";
 import ViewModeToggle from "./view-mode-toggle";
-import { useViewMode } from "@/context/view-mode-context";
 import { APP_CONFIG } from "@/constant/app.config";
 
 interface TutorialModalProps {
@@ -13,8 +12,6 @@ interface TutorialModalProps {
 }
 
 const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
-  const { viewMode } = useViewMode();
-
   if (!isOpen) return null;
 
   return (
@@ -100,4 +97,3 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default TutorialModal;
-

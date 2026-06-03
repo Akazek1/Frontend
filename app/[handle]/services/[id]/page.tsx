@@ -29,10 +29,10 @@ import {
 } from "lucide-react";
 
 import api from "@/lib/axios";
+import { getApiErrorMessage } from "@/lib/error-handler";
 import { formatPrice } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import {
-    getBookingType,
     getProviderHandle,
     getProviderName,
     getServiceImages,
@@ -66,6 +66,13 @@ const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: R
     Shirt,
     PanelTop,
 };
+
+interface ExistingBookingSummary {
+    status?: string;
+    service?: {
+        id?: string;
+    };
+}
 
 function formatStatValue(value: number, suffix?: string, plusOnGte?: number) {
     const display = `${value}${suffix ?? ""}`;
@@ -109,10 +116,8 @@ function ServiceDetailPage() {
                         : servicesRes.data?.data?.data || [];
                     setProviderServices(data);
                 }
-            } catch (err: unknown) {
-                const message = (err as { response?: { data?: { message?: string } } })?.response
-                    ?.data?.message;
-                setError(message || SERVICE_DETAIL_LABELS.serviceNotFound);
+            } catch (err) {
+                setError(getApiErrorMessage(err, SERVICE_DETAIL_LABELS.serviceNotFound));
             } finally {
                 setLoading(false);
             }
@@ -131,10 +136,10 @@ function ServiceDetailPage() {
                     ? res.data
                     : [];
                 const inactive = new Set(["CANCELLED", "REJECTED"]);
-                const found = bookings.some(
-                    (b: any) =>
-                        b?.service?.id === serviceId &&
-                        !inactive.has(String(b.status).toUpperCase())
+                const found = (bookings as ExistingBookingSummary[]).some(
+                    (booking) =>
+                        booking.service?.id === serviceId &&
+                        !inactive.has(String(booking.status).toUpperCase())
                 );
                 setHasRequested(found);
             } catch {
@@ -222,8 +227,8 @@ function ServiceDetailPage() {
             setHasRequested(true);
             setIsHireModalOpen(false);
             setHireNotes("");
-        } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Failed to send request.");
+        } catch (err) {
+            toast.error(getApiErrorMessage(err, "Failed to send request."));
         } finally {
             setSubmitting(false);
         }

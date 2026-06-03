@@ -9,6 +9,28 @@ import jobsService from "@/services/jobs-service";
 import type { RootState } from "@/store";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { JobPostCard } from "@/components/job-post-card";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/error-handler";
+
+interface ApiJobPost {
+  id: string;
+  title: string;
+  description: string;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  createdAt: string;
+  employerId?: string;
+  category?: { name?: string };
+  address?: { city?: string };
+  employer?: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
+interface ApplicationSummary {
+  jobId: string;
+}
 
 interface JobPost {
   id: string;
@@ -36,22 +58,23 @@ const JobPostingsFeed: React.FC = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res  = await api.get("/jobs");
-        const data = res.data.data || res.data;
+        const res  = await api.get<{ data?: ApiJobPost[] } | ApiJobPost[]>("/jobs");
+        const responseData = res.data;
+        const data = Array.isArray(responseData) ? responseData : responseData.data;
 
         if (user) {
           try {
             const myApps = await jobsService.getMyApplications();
             if (Array.isArray(myApps))
-              setAppliedJobIds(new Set(myApps.map((a: any) => a.jobId)));
-          } catch (e: any) {
-            const status = e.response?.status
+              setAppliedJobIds(new Set((myApps as ApplicationSummary[]).map((a) => a.jobId)));
+          } catch (e) {
+            const status = getApiErrorStatus(e)
             if (status !== 401 && status !== 403) console.error(e);
           }
         }
 
         setJobs(
-          (Array.isArray(data) ? data : []).map((j: any) => ({
+          (Array.isArray(data) ? data : []).map((j) => ({
             id:          j.id,
             title:       j.title,
             category:    j.category?.name || "Other",
@@ -85,8 +108,8 @@ const JobPostingsFeed: React.FC = () => {
       await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
       setAppliedJobIds(prev => new Set([...prev, jobId]));
       toast.success("Interest sent! The employer will be notified.");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send interest.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send interest."));
     } finally {
       setIsApplying(null);
     }

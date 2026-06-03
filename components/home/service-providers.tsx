@@ -10,6 +10,7 @@ import { Provider, Service } from "@/types";
 import { mapServiceToProviderCard } from "@/lib/service-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface HireModal {
   serviceId: string;
@@ -19,6 +20,13 @@ interface HireModal {
 
 interface ServiceProviderProps {
   showHeader: boolean;
+}
+
+interface BookingSummary {
+  status?: string;
+  service?: {
+    id?: string;
+  };
 }
 
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
@@ -60,17 +68,19 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await api.get("/bookings", { params: { role: "employer" } });
-        const bookings = Array.isArray(response.data.data)
-          ? response.data.data
-          : Array.isArray(response.data)
-          ? response.data
-          : [];
+        const response = await api.get<{ data?: BookingSummary[] } | BookingSummary[]>("/bookings", { params: { role: "employer" } });
+        const responseData = response.data;
+        const bookings = Array.isArray(responseData)
+          ? responseData
+          : Array.isArray(responseData.data)
+            ? responseData.data
+            : [];
         const inactive = new Set(["CANCELLED", "REJECTED"]);
         const ids = new Set<string>(
           bookings
-            .filter((b: any) => b?.service?.id && !inactive.has(String(b.status).toUpperCase()))
-            .map((b: any) => b.service.id as string)
+            .filter((b) => b.service?.id && !inactive.has(String(b.status).toUpperCase()))
+            .map((b) => b.service?.id)
+            .filter((id): id is string => Boolean(id))
         );
         setRequestedServiceIds(ids);
       } catch {
@@ -98,8 +108,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
       });
       setHireModal(null);
       setNotes("");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send request. Please try again.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
     } finally {
       setSubmitting(false);
     }

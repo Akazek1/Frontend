@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Camera, Image as ImageIcon, X } from "lucide-react";
+import { Camera, Image as ImageIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -64,4 +64,3 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
 };
 
 export default ImageSourceSelector;
-

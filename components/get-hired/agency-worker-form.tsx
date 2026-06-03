@@ -8,7 +8,6 @@ import { ChevronDown, Loader2, Trash2, Pencil, XCircle, User, Mail, Phone, Langu
 import { MultiSelectLanguage } from "../multi-language-select"
 import toast from "react-hot-toast"
 import { Label } from "../ui/label"
-import { getAuthToken } from "@/lib/auth-utils"
 
 // Define interfaces
 interface AgencyWorker {
@@ -20,13 +19,6 @@ interface AgencyWorker {
     dateOfBirth: string;
     languages: string[];
     gender: string;
-}
-
-interface WorkerResponse {
-    data: AgencyWorker[];
-    statusCode: number;
-    message: string;
-    timestamp: string;
 }
 
 const AgencyWorkerManagement: React.FC = () => {
@@ -42,7 +34,7 @@ const AgencyWorkerManagement: React.FC = () => {
     const [nationalIdFile, setNationalIdFile] = useState<File | null>(null)
     const [workerList, setWorkerList] = useState<AgencyWorker[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [error, setError] = useState<string | null>(null)
+    const [error] = useState<string | null>(null)
     const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null)
 
     useEffect(() => {
@@ -108,15 +100,6 @@ const AgencyWorkerManagement: React.FC = () => {
             if (file) {
                 formData.append("file", file)
             }
-
-            const token = getAuthToken();
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token || ""}`,
-                    "Content-Type": "multipart/form-data",
-                },
-                withCredentials: true,
-            };
 
             toast.success("Worker management coming soon!");
 

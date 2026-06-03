@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { formatPrice } from '@/lib/utils';
 import type { RootState } from '@/store';
+import { getApiErrorStatus } from '@/lib/error-handler';
 
 const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
   PENDING:   { label: 'Under Review', icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
@@ -41,9 +42,9 @@ export const MyApplications: React.FC = () => {
         }
         const data = await jobsService.getMyApplications();
         setApplications(Array.isArray(data) ? data : []);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to fetch applications:', err);
-        if (err.response?.status === 403) {
+        if (getApiErrorStatus(err) === 403) {
           toast.error('You must have the worker role to view applications');
         } else {
           toast.error('Failed to load applications');

@@ -6,7 +6,6 @@ import jobsService from "@/services/jobs-service";
 import { JobCard } from "./job-card";
 import { Loader2, Briefcase, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState as useStateHook } from "react";
 
 interface JobsBrowseProps {
   showMyJobs?: boolean;
@@ -14,6 +13,7 @@ interface JobsBrowseProps {
 
 const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
   const { user } = useAuth();
+  const userId = user?.id;
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,7 +24,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
       setLoading(true);
       try {
         let data;
-        if (showMyJobs && user) {
+        if (showMyJobs && userId) {
           data = await jobsService.getMyJobs();
         } else {
           data = await jobsService.getAllJobs();
@@ -38,7 +38,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
       }
     };
     fetchJobs();
-  }, [showMyJobs, user?.id]);
+  }, [showMyJobs, userId]);
 
   // Filter jobs based on search and category
   const filteredJobs = jobs.filter(job => {

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import jobsService from "@/services/jobs-service";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface Category {
   id: string;
@@ -73,8 +74,8 @@ const PostJobPage: React.FC = () => {
       });
       toast.success("Job posted successfully!");
       router.push("/work/job-posts");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to post job.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to post job."));
     } finally {
       setLoading(false);
     }

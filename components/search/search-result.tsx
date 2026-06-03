@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 type ServiceTypeFilter = "INDIVIDUAL" | "AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
@@ -62,6 +63,10 @@ interface ExistingBooking {
   service?: {
     id?: string;
   } | null;
+}
+
+interface ApplicationSummary {
+  jobId: string;
 }
 
 const SERVICE_TYPES: Array<{ label: string; value: ServiceTypeFilter }> = [
@@ -162,6 +167,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     }, 350);
 
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, filters, jobFilters, hasSearchInput, hasActiveFilters, mode]);
 
   useEffect(() => {
@@ -204,7 +210,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       try {
         const applications = await jobsService.getMyApplications();
         if (Array.isArray(applications)) {
-          setAppliedJobIds(new Set(applications.map((application: any) => application.jobId)));
+          setAppliedJobIds(new Set((applications as ApplicationSummary[]).map((application) => application.jobId)));
         }
       } catch {
         // Non-blocking: the job cards still render and the API validates duplicate applications.
@@ -385,8 +391,8 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         return next;
       });
       closeHireModal();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send request. Please try again.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
     } finally {
       setSubmittingHire(false);
     }
@@ -400,8 +406,8 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
       setAppliedJobIds((prev) => new Set([...prev, jobId]));
       toast.success("Interest sent! The employer will be notified.");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send interest.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send interest."));
     } finally {
       setIsApplyingJob(null);
     }

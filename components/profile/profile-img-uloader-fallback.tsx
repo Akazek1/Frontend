@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { updateUser } from "@/store/slices/auth-slice";
 import { toast } from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 type ProfileImageUploaderProps = {
     className?: string;
@@ -73,18 +74,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
         } catch (err: unknown) {
             console.error("Error updating profile image:", err);
             
-            // Extract error message from different possible error structures
-            let errorMessage = "Failed to update profile image";
-            
-            if (err instanceof Error) {
-                errorMessage = err.message;
-            } else if ((err as any)?.response?.data?.message) {
-                errorMessage = (err as any).response.data.message;
-            } else if ((err as any)?.response?.data?.data?.message) {
-                errorMessage = (err as any).response.data.data.message;
-            } else if ((err as any)?.message) {
-                errorMessage = (err as any).message;
-            }
+            const errorMessage = getApiErrorMessage(err, "Failed to update profile image");
             
             setError(errorMessage);
             toast.error(errorMessage);
@@ -130,4 +120,3 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 };
 
 export default ProfileImageUploader;
-

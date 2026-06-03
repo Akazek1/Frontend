@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   Briefcase,
@@ -15,7 +15,6 @@ import {
   Bookmark,
   Lock,
 } from "lucide-react";
-import { Icons } from "../icons";
 import { Separator } from "../ui/separator";
 import Image from "next/image";
 import { logout } from "@/store/slices/auth-slice";

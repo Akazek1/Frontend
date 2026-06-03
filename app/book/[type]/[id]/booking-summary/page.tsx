@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +6,6 @@ import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, Calendar, MapPin, Ticket } from "lucide-react";
-import { Icons } from "@/components/icons";
 import {
     Select,
     SelectContent,
@@ -45,10 +43,9 @@ const BookingSummary = () => {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [additionalServices, setAdditionalServices] = useState<Service[]>([]);
-    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]);
+    const [selectedAdditionalServiceIds] = useState<string[]>([]);
     const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
     const [isLoadingService, setIsLoadingService] = useState(true);
-    const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch service details and set provider
@@ -132,7 +129,6 @@ const BookingSummary = () => {
     useEffect(() => {
         const fetchAdditionalServices = async () => {
             try {
-                setIsLoadingAdditionalServices(true);
                 const category = "all"; // Adjust category as needed
                 const response = await api.get(`/services?category=${encodeURIComponent(category.toLowerCase())}`);
                 const services = response.data.data || [];
@@ -140,8 +136,6 @@ const BookingSummary = () => {
             } catch (err) {
                 console.error("Error fetching additional services:", err);
                 toast.error("Failed to fetch additional services");
-            } finally {
-                setIsLoadingAdditionalServices(false);
             }
         };
         fetchAdditionalServices();

@@ -4,9 +4,25 @@ import React, { useRef, useState } from "react"
 import { Upload, X } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
+import { getApiErrorMessage } from "@/lib/error-handler"
+import Image from "next/image"
+
+interface UploadedDocument {
+  id: string
+  type: string
+  url: string
+  [key: string]: unknown
+}
+
+interface UploadDocumentResponse {
+  data?: {
+    document?: UploadedDocument
+  }
+  document?: UploadedDocument
+}
 
 interface DocumentUploadStepProps {
-  onUploadSuccess: (document: any) => void
+  onUploadSuccess: (document: UploadedDocument) => void
   onCancel: () => void
   isLoading?: boolean
 }
@@ -72,7 +88,7 @@ export const DocumentUploadStep = ({
       const formData = new FormData()
       formData.append("file", selectedFile)
 
-      const response = await api.post("/documents/upload/government-id", formData, {
+      const response = await api.post<UploadDocumentResponse>("/documents/upload/government-id", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -80,11 +96,14 @@ export const DocumentUploadStep = ({
       })
 
       const payload = response.data?.data || response.data
+      if (!payload.document) {
+        throw new Error("No document returned from server")
+      }
       toast.success("ID received. Our team will verify within 24 hours.")
       onUploadSuccess(payload.document)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload error:", error)
-      toast.error(error.response?.data?.message || "Failed to upload document")
+      toast.error(getApiErrorMessage(error, "Failed to upload document"))
     } finally {
       setIsUploading(false)
     }
@@ -138,10 +157,12 @@ export const DocumentUploadStep = ({
       ) : (
         <div className="space-y-4">
           <div className="relative rounded-xl overflow-hidden bg-gray-100 h-80">
-            <img
+            <Image
               src={preview}
               alt="Preview"
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              className="object-cover"
             />
             <button
               onClick={handleRemoveFile}

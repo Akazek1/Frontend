@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { RotateCw, ZoomIn } from "lucide-react";
 
 interface ImageCropperModalProps {
   image: string | null;
@@ -36,7 +36,6 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [mediaSize, setMediaSize] = useState<{ width: number; height: number; naturalWidth: number; naturalHeight: number } | null>(null);
-  const cropperRef = React.useRef<any>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const onCropComplete = useCallback(
@@ -316,7 +315,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base sm:text-lg">Edit Profile Picture</DialogTitle>
           <DialogDescription className="text-xs">
-            Adjust, crop, and center your image. Click save when you're happy with it.
+            Adjust, crop, and center your image. Click save when you&apos;re happy with it.
           </DialogDescription>
         </DialogHeader>
 
@@ -423,4 +422,3 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
 };
 
 export default ImageCropperModal;
-

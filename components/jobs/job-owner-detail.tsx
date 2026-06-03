@@ -17,7 +17,6 @@ import {
   Banknote,
   Briefcase,
   CalendarDays,
-  Check,
   CheckCircle2,
   ChevronDown,
   ClipboardList,

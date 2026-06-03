@@ -122,7 +122,7 @@ const HelpAndSupport = () => {
       <div className="space-y-4 bg-white rounded-lg p-4 sm:p-6">
         <h2 className="text-lg font-bold text-gray-900">Need Help?</h2>
         <p className="text-sm text-gray-600">
-          Can't find the answer you're looking for? Our support team is here to help!
+          Can&apos;t find the answer you&apos;re looking for? Our support team is here to help!
         </p>
         <div className="space-y-3 flex flex-col">
           <a

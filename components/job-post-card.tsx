@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import Image from "next/image";
 import { Loader2, MapPin, Zap, Star, Clock } from "lucide-react";
 import { getCategoryIcon } from "@/constant/category-icons";
 
@@ -94,7 +95,7 @@ export function JobPostCard({
     >
       <div className="flex items-start gap-3">
         <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center rounded-full bg-[#E8F5E9]">
-          <img src={getCategoryIcon(job.category)} alt={job.category} width={22} height={22} />
+          <Image src={getCategoryIcon(job.category)} alt={job.category} width={22} height={22} />
         </div>
 
         <div className="min-w-0 flex-1">

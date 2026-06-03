@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
 

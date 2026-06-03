@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { AddServiceWizard } from "@/components/services/AddServiceWizard";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 export default function EditServicePage() {
   const params = useParams();
@@ -25,11 +26,9 @@ export default function EditServicePage() {
         if (cancelled) return;
         setService(result);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (cancelled) return;
-        const message =
-          (err as any)?.response?.data?.message ||
-          "We couldn't find that service.";
+        const message = getApiErrorMessage(err, "We couldn't find that service.");
         toast.error(message);
         router.replace("/more/services");
       })

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Building2, Phone, Mail, MapPin, CheckCircle, ChevronLeft, Users, Edit2 } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
+import { getApiErrorMessage } from "@/lib/error-handler"
 
 interface Organization {
   id: string
@@ -17,6 +18,20 @@ interface Organization {
   verified: boolean
   ownerId: string
   createdAt: string
+}
+
+interface OrganizationResponse {
+  data?: Organization
+  id?: string
+  name?: string
+  type?: Organization["type"]
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  verified?: boolean
+  ownerId?: string
+  createdAt?: string
 }
 
 const ORG_TYPE_LABEL: Record<string, string> = {
@@ -47,10 +62,10 @@ export default function OrgProfilePage() {
   useEffect(() => {
     const fetchOrg = async () => {
       try {
-        const response = await api.get<{ data: Organization }>(`/organizations/${id}`, {
+        const response = await api.get<OrganizationResponse>(`/organizations/${id}`, {
           withCredentials: true,
         })
-        const data = (response.data as any)?.data ?? response.data
+        const data = (response.data.data ?? response.data) as Organization
         setOrg(data)
 
         const storedUser = localStorage.getItem("user")
@@ -58,10 +73,8 @@ export default function OrgProfilePage() {
           const user = JSON.parse(storedUser)
           setIsOwner(user.id === data.ownerId)
         }
-      } catch (error: any) {
-        const raw = error?.response?.data?.message
-        const msg = Array.isArray(raw) ? raw[0] : raw
-        toast.error(msg || "Failed to load organization")
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Failed to load organization"))
       } finally {
         setIsLoading(false)
       }
@@ -120,6 +133,7 @@ export default function OrgProfilePage() {
       {/* Hero / logo area */}
       <div className="bg-gradient-to-br from-[#145B10] to-[#2E7D32] h-32 flex items-center justify-center relative">
         {org.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={org.logoUrl}
             alt={org.name}
@@ -145,7 +159,7 @@ export default function OrgProfilePage() {
         </span>
         {!org.verified && (
           <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block">
-            Pending verification — we'll review your account shortly.
+            Pending verification — we&apos;ll review your account shortly.
           </p>
         )}
       </div>
@@ -171,7 +185,7 @@ export default function OrgProfilePage() {
             <h2 className="text-sm font-semibold text-gray-700 mb-3">How it works</h2>
             <p className="text-sm text-gray-500 leading-relaxed">
               Clients book services directly with {org.name}. Your team handles the work —
-              Akazek doesn't track individual staff members for service companies.
+              Akazek doesn&apos;t track individual staff members for service companies.
             </p>
           </div>
         </>

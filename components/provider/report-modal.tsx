@@ -3,6 +3,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface ReportModalProps {
   targetId: string;
@@ -56,8 +57,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       onSuccess?.();
       onClose();
     } catch (error) {
-      const message = (error as any).response?.data?.message || "Failed to submit report";
-      toast.error(message);
+      toast.error(getApiErrorMessage(error, "Failed to submit report"));
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           {/* Reason Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              What's the reason for this report?
+              What&apos;s the reason for this report?
             </label>
             <select
               value={reason}

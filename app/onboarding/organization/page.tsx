@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Building2, Briefcase, ChevronLeft, CheckCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
+import { getApiErrorMessage } from "@/lib/error-handler"
 import { getAuthToken } from "@/lib/auth-utils"
 
 type OrgType = "SERVICE_COMPANY" | "PLACEMENT_AGENCY"
@@ -16,6 +17,13 @@ interface OrgFormData {
   phone: string
   email: string
   address: string
+}
+
+interface CreateOrganizationResponse {
+  id?: string
+  data?: {
+    id?: string
+  }
 }
 
 function OrgTypeStep({
@@ -158,7 +166,7 @@ function SuccessStep({ orgName }: { orgName: string }) {
         <CheckCircle className="w-10 h-10 text-[#145B10]" />
       </div>
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">You're all set!</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re all set!</h1>
         <p className="text-gray-500 text-sm">
           <span className="font-semibold text-gray-700">{orgName}</span> has been registered.
           Clients can now discover and book your services.
@@ -203,17 +211,15 @@ export default function OrgOnboardingPage() {
       if (formData.email.trim()) payload.email = formData.email.trim()
       if (formData.address.trim()) payload.address = formData.address.trim()
 
-      const response = await api.post<{ data: { id: string } }>("/organizations", payload, {
+      const response = await api.post<CreateOrganizationResponse>("/organizations", payload, {
         withCredentials: true,
       })
 
-      const orgId = response.data?.data?.id || (response.data as any)?.id
+      const orgId = response.data?.data?.id || response.data?.id || null
       setCreatedOrgId(orgId)
       setStep("success")
-    } catch (error: any) {
-      const raw = error?.response?.data?.message
-      const msg = Array.isArray(raw) ? raw[0] : raw
-      toast.error(msg || "Failed to register business. Please try again.")
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to register business. Please try again."))
     } finally {
       setIsLoading(false)
     }

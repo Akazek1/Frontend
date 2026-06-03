@@ -16,6 +16,11 @@ import { useAvailability } from "@/hooks/useAvailability";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
 import { appContentClass } from "@/components/ui/app-primitives";
+import { getApiErrorMessage } from "@/lib/error-handler";
+
+type SortableService = Service & {
+  createdAt?: string;
+};
 
 export function ServicesListPage() {
   const router = useRouter();
@@ -45,8 +50,8 @@ export function ServicesListPage() {
     return services
       .slice()
       .sort((a, b) => {
-        const ai = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
-        const bi = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+        const ai = (a as SortableService).createdAt ? new Date((a as SortableService).createdAt as string).getTime() : 0;
+        const bi = (b as SortableService).createdAt ? new Date((b as SortableService).createdAt as string).getTime() : 0;
         return bi - ai;
       });
   }, [services, sort]);
@@ -71,10 +76,7 @@ export function ServicesListPage() {
       toast.success(nextActive ? "Service activated" : "Service deactivated");
       setPendingToggle(null);
     } catch (err) {
-      const message =
-        (err as any)?.response?.data?.message ||
-        "Could not update the service. Please try again.";
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, "Could not update the service. Please try again."));
     }
   };
 
