@@ -37,7 +37,7 @@ const baseApplication: JobApplication = {
   job: {
     id: "j1",
     title: "Garden Maintenance",
-    employer: { firstName: "Jean Claude" } as JobApplication["job"]["employer"],
+    employer: { firstName: "Jean Claude" } as NonNullable<JobApplication["job"]>["employer"],
     category: { name: "Gardening" },
     budgetMin: 15000,
     budgetMax: 25000,

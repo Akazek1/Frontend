@@ -54,15 +54,19 @@ export function useWorkData(): UseWorkDataResult {
     setLoading(true);
     setError(null);
     try {
+      // We fetch BOTH worker-side and employer-side data regardless of declared
+      // roles. Reason: a user without the EMPLOYER role can still act as an
+      // employer in the UI (e.g. via "Request to Hire" on a service card),
+      // which creates a booking with them as the employerId. The backend
+      // already filters by req.user.id on both sides, so this is safe — it
+      // just means a single-role user gets an empty array on the other side
+      // instead of a missed-fetch bug. Same logic applies to job posts and
+      // worker applications.
       const [workerResult, employerResult, appsResult, postsResult] = await Promise.allSettled([
-        isProvider
-          ? api.get<{ data: BookingRecord[] }>("/bookings/received")
-          : Promise.resolve({ data: { data: [] } }),
-        isEmployer
-          ? api.get<{ data: BookingRecord[] }>("/bookings", { params: { role: "employer" } })
-          : Promise.resolve({ data: { data: [] } }),
-        isProvider ? jobsService.getMyApplications() : Promise.resolve([]),
-        isEmployer ? jobsService.getMyJobs() : Promise.resolve([]),
+        api.get<{ data: BookingRecord[] }>("/bookings/received"),
+        api.get<{ data: BookingRecord[] }>("/bookings", { params: { role: "employer" } }),
+        jobsService.getMyApplications(),
+        jobsService.getMyJobs(),
       ]);
 
       const nextWorkerBookings =
@@ -87,11 +91,18 @@ export function useWorkData(): UseWorkDataResult {
       setApplications(nextApplications);
       setJobPosts(nextJobPosts);
 
-      if (
-        [workerResult, employerResult, appsResult, postsResult].some(
-          (result) => result.status === "rejected",
-        )
-      ) {
+      // 401/403 on endpoints the user lacks permission for is expected (we
+      // always fetch both sides — see comment above). Only surface a banner
+      // when something actually went wrong (network error or 5xx).
+      const isExpectedPermissionError = (r: PromiseSettledResult<unknown>) => {
+        if (r.status !== "rejected") return false;
+        const status = (r.reason as { response?: { status?: number } })?.response?.status;
+        return status === 401 || status === 403;
+      };
+      const realFailures = [workerResult, employerResult, appsResult, postsResult].filter(
+        (r) => r.status === "rejected" && !isExpectedPermissionError(r),
+      );
+      if (realFailures.length > 0) {
         setError("Some work data could not be loaded.");
       }
     } catch {
