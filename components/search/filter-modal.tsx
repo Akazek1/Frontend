@@ -55,7 +55,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
   return (
     <>
       <SheetOverlay className="bg-black/50" onClick={onClose} aria-hidden="true" />
-      <SheetPanel className="overflow-hidden sm:rounded-3xl" side="bottom">
+      <SheetPanel className="overflow-hidden sm:rounded-3xl" side="bottom" onClose={onClose}>
         <SheetHeader
           title="Filters"
           subtitle="Narrow down job results."

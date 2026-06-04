@@ -379,7 +379,7 @@ const JobDetailPage = () => {
       {confirmHire && (
         <>
           <SheetOverlay onClick={() => setConfirmHire(null)} aria-hidden="true" />
-          <SheetPanel className="max-w-sm">
+          <SheetPanel className="max-w-sm" onClose={() => setConfirmHire(null)}>
             <SheetHeader title={`Send offer to ${confirmHire.workerName}?`} onClose={() => setConfirmHire(null)} className="border-b-0 pb-2" />
             <SheetBody className="pt-2">
               <div className="flex flex-col items-center text-center gap-2">

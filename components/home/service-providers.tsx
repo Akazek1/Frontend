@@ -193,7 +193,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             onClick={() => { setHireModal(null); setNotes(""); }}
             aria-hidden="true"
           />
-          <SheetPanel className="max-w-sm rounded-t-[28px]">
+          <SheetPanel className="max-w-sm rounded-t-[28px]" onClose={() => { setHireModal(null); setNotes(""); }}>
             <SheetHeader
               title={hireModal.providerName}
               subtitle={hireModal.serviceTitle}

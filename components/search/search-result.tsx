@@ -593,7 +593,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {hireModal && (
         <>
           <SheetOverlay zIndexClassName="z-[90]" onClick={closeHireModal} aria-hidden="true" />
-          <SheetPanel zIndexClassName="z-[91]" className="max-w-sm rounded-t-[28px]">
+          <SheetPanel zIndexClassName="z-[91]" className="max-w-sm rounded-t-[28px]" onClose={closeHireModal}>
             <SheetHeader
               title={hireModal.providerName}
               subtitle={hireModal.serviceTitle}
@@ -641,7 +641,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {isFilterOpen && (
         <>
           <SheetOverlay zIndexClassName="z-[80]" onClick={() => setIsFilterOpen(false)} aria-hidden="true" />
-          <SheetPanel zIndexClassName="z-[81]" className="max-w-md sm:rounded-3xl">
+          <SheetPanel zIndexClassName="z-[81]" className="max-w-md sm:rounded-3xl" onClose={() => setIsFilterOpen(false)}>
             <SheetHeader
               title="Filters"
               subtitle={mode === "provider" ? "Narrow down job results." : "Choose what should appear in the cards."}

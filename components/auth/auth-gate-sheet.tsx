@@ -47,7 +47,7 @@ export function AuthGateSheet() {
     <>
       <SheetOverlay onClick={closeAuthGate} aria-hidden="true" />
 
-      <SheetPanel>
+      <SheetPanel onClose={closeAuthGate}>
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-gray-200" />
         <SheetHeader title={message} onClose={closeAuthGate} className="border-b-0 pt-0" />
 

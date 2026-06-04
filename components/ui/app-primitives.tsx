@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, X, type LucideIcon } from "lucide-react";
@@ -310,9 +312,76 @@ export function SheetOverlay({
 
 type SheetPanelSide = "bottom" | "right" | "center";
 
+const SHEET_FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Gives a SheetPanel real dialog semantics when an onClose is supplied:
+// Escape-to-close, a focus trap, scroll lock, and focus restore on unmount.
+// No-op when onClose is omitted, so existing call sites are unaffected.
+function useSheetDialog(
+  ref: React.RefObject<HTMLDivElement | null>,
+  onClose?: () => void,
+) {
+  React.useEffect(() => {
+    if (!onClose) return;
+    const node = ref.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusable = () =>
+      node
+        ? Array.from(node.querySelectorAll<HTMLElement>(SHEET_FOCUSABLE)).filter(
+            (el) => el.offsetParent !== null,
+          )
+        : [];
+
+    (focusable()[0] ?? node)?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !node) return;
+      const items = focusable();
+      if (items.length === 0) {
+        e.preventDefault();
+        node.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.body.style.overflow = prevOverflow;
+      previouslyFocused?.focus?.();
+    };
+  }, [ref, onClose]);
+}
+
 type SheetPanelProps = React.HTMLAttributes<HTMLDivElement> & {
   side?: SheetPanelSide;
   zIndexClassName?: string;
+  /**
+   * When provided, the panel behaves as a modal dialog: Escape closes it,
+   * focus is trapped inside and restored on close, and body scroll is locked.
+   * Wire it to the same handler your overlay's onClick uses.
+   */
+  onClose?: () => void;
 };
 
 const sheetPanelSideClass: Record<SheetPanelSide, string> = {
@@ -329,12 +398,19 @@ export function SheetPanel({
   zIndexClassName = "z-50",
   className,
   children,
+  onClose,
   ...props
 }: SheetPanelProps) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  useSheetDialog(ref, onClose);
   return (
     <div
+      ref={ref}
+      role={onClose ? "dialog" : undefined}
+      aria-modal={onClose ? true : undefined}
+      tabIndex={onClose ? -1 : undefined}
       className={cn(
-        "fixed flex flex-col bg-white shadow-2xl",
+        "fixed flex flex-col bg-white shadow-2xl outline-none",
         sheetPanelSideClass[side],
         zIndexClassName,
         className,

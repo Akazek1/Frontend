@@ -445,7 +445,7 @@ export function TaskDrawer({
         aria-hidden="true"
       />
 
-      <SheetPanel side="right" zIndexClassName="z-40">
+      <SheetPanel side="right" zIndexClassName="z-40" onClose={handleClose}>
         {isAddingTask ? (
           <AddTaskView
             bookingId={bookingId}
