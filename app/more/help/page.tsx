@@ -2,9 +2,17 @@
 
 import React, { useState } from "react";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { Separator } from "@/components/ui/separator";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Mail, Phone, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
+import {
+  AppButton,
+  AppSectionHeader,
+  Card,
+  PageShell,
+  appActionCardClass,
+  appContentClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 interface FAQItem {
   id: number;
@@ -113,34 +121,33 @@ const HelpAndSupport = () => {
   };
 
   return (
-    <div className="app-bg p-4 sm:p-5 pb-16 space-y-6 font-urbanist">
-      {/* Header */}
+    <PageShell className="gap-5 font-urbanist">
       <BackButtonHeader text="Help & Support" />
-      <Separator />
 
       {/* Contact Support Section */}
-      <div className="space-y-4 bg-white rounded-lg p-4 sm:p-6">
-        <h2 className="text-lg font-bold text-gray-900">Need Help?</h2>
+      <Card className="space-y-4">
+        <AppSectionHeader title="Need Help?" />
         <p className="text-sm text-gray-600">
           Can&apos;t find the answer you&apos;re looking for? Our support team is here to help!
         </p>
         <div className="space-y-3 flex flex-col">
-          <a
-            href="mailto:support@akazek.rw"
-            className="w-full bg-[#145B10] text-white py-3 rounded-lg font-semibold text-center hover:bg-[#1B5E20] transition-colors"
-          >
-            📧 Email Support
-          </a>
+          <AppButton asChild className="w-full">
+            <a href="mailto:support@akazek.rw">
+              <Mail className="h-4 w-4" />
+              Email Support
+            </a>
+          </AppButton>
           <div className="text-center text-sm text-gray-600">
             <p>support@akazek.rw</p>
             <p className="text-xs text-gray-500 mt-1">Typically respond within 24-48 hours</p>
           </div>
         </div>
 
-        <Separator />
-
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-700">📞 Phone Support</p>
+        <div className="space-y-2 border-t border-[#EDF1EC] pt-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Phone className="h-4 w-4 text-[#145B10]" />
+            Phone Support
+          </p>
           <a
             href="tel:+250788000000"
             className="text-[#145B10] font-semibold hover:underline"
@@ -150,10 +157,11 @@ const HelpAndSupport = () => {
           <p className="text-xs text-gray-500">Available Mon-Fri, 8am-6pm EAT</p>
         </div>
 
-        <Separator />
-
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-700">📱 WhatsApp Support</p>
+        <div className="space-y-2 border-t border-[#EDF1EC] pt-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Send className="h-4 w-4 text-[#145B10]" />
+            WhatsApp Support
+          </p>
           <a
             href="https://wa.me/250788000000"
             target="_blank"
@@ -164,16 +172,17 @@ const HelpAndSupport = () => {
           </a>
           <p className="text-xs text-gray-500">Quick responses to your questions</p>
         </div>
-      </div>
+      </Card>
 
       {/* FAQ Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-gray-900">Frequently Asked Questions</h2>
+      <section className={appContentClass}>
+        <AppSectionHeader title="Frequently Asked Questions" />
         <div className="space-y-3">
           {faqData.map((item) => (
-            <div
+            <Card
+              variant="list"
               key={item.id}
-              className="bg-white rounded-lg border border-gray-200 overflow-hidden"
+              className="overflow-hidden"
             >
               <button
                 onClick={() => toggleFAQ(item.id)}
@@ -189,69 +198,69 @@ const HelpAndSupport = () => {
                 />
               </button>
               {expandedFAQ === item.id && (
-                <>
-                  <Separator />
-                  <div className="px-4 py-4 bg-gray-50">
-                    <p className="text-sm text-gray-700 leading-relaxed">{item.answer}</p>
-                  </div>
-                </>
+                <div className="border-t border-[#EDF1EC] bg-gray-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-gray-700">{item.answer}</p>
+                </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Additional Resources */}
-      <div className="space-y-4 bg-white rounded-lg p-4 sm:p-6">
-        <h3 className="text-lg font-bold text-gray-900">Additional Resources</h3>
+      <Card className="space-y-4">
+        <AppSectionHeader title="Additional Resources" />
         <div className="space-y-3">
           <Link
             href="/more/privacy"
-            className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            className={cn(appActionCardClass, "block px-4 py-3 shadow-none")}
           >
             <p className="font-semibold text-gray-900 text-sm">Privacy Policy</p>
             <p className="text-xs text-gray-600 mt-1">How we protect your personal information</p>
           </Link>
           <Link
             href="/more/terms"
-            className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            className={cn(appActionCardClass, "block px-4 py-3 shadow-none")}
           >
             <p className="font-semibold text-gray-900 text-sm">Terms & Conditions</p>
             <p className="text-xs text-gray-600 mt-1">Our terms of service and user agreement</p>
           </Link>
           <Link
             href="/more/feedback"
-            className="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            className={cn(appActionCardClass, "block px-4 py-3 shadow-none")}
           >
             <p className="font-semibold text-gray-900 text-sm">Send Feedback</p>
             <p className="text-xs text-gray-600 mt-1">Tell us how we can improve Akazek</p>
           </Link>
         </div>
-      </div>
+      </Card>
 
       {/* Tips Section */}
-      <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-base font-bold text-blue-900">💡 Pro Tips</h3>
+      <Card className="space-y-4 border-[#BFD8FF] bg-[#EEF6FF]">
+        <h3 className="flex items-center gap-2 text-base font-bold text-blue-900">
+          <Sparkles className="h-4 w-4" />
+          Pro Tips
+        </h3>
         <ul className="space-y-2 text-sm text-blue-900">
           <li className="flex gap-2">
-            <span>✓</span>
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <span>Always verify worker credentials before booking</span>
           </li>
           <li className="flex gap-2">
-            <span>✓</span>
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <span>Communicate details clearly in messages before the appointment</span>
           </li>
           <li className="flex gap-2">
-            <span>✓</span>
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <span>Complete bookings and leave reviews to build community trust</span>
           </li>
           <li className="flex gap-2">
-            <span>✓</span>
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
             <span>Use safe public locations for first-time meetings</span>
           </li>
         </ul>
-      </div>
-    </div>
+      </Card>
+    </PageShell>
   );
 };
 

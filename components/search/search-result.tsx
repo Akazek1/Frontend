@@ -22,6 +22,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/error-handler";
+import {
+  AppButton,
+  FormField,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 type ServiceTypeFilter = "INDIVIDUAL" | "AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
@@ -580,72 +591,64 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       )}
 
       {hireModal && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 px-4 pb-8 backdrop-blur-sm">
-          <div className="w-full max-w-sm space-y-5 rounded-[32px] bg-white p-6 shadow-2xl">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#145B10]">Request to Hire</p>
-                <h3 className="mt-0.5 text-[17px] font-black text-[#1B2431]">{hireModal.providerName}</h3>
-                <p className="text-[13px] text-gray-400">{hireModal.serviceTitle}</p>
-              </div>
-              <button onClick={closeHireModal} className="p-1 text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+        <>
+          <SheetOverlay zIndexClassName="z-[90]" onClick={closeHireModal} aria-hidden="true" />
+          <SheetPanel zIndexClassName="z-[91]" className="max-w-sm rounded-t-[28px]">
+            <SheetHeader
+              title={hireModal.providerName}
+              subtitle={hireModal.serviceTitle}
+              onClose={closeHireModal}
+              className="border-b-0 pb-2"
+              leading={
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-[#145B10]">
+                  Request
+                </span>
+              }
+            />
 
-            <div>
-              <label className="mb-1.5 block text-[12px] font-semibold text-[#1B2431]">
-                Message <span className="font-normal text-gray-400">(optional)</span>
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Describe what you need, preferred schedule, or any specific requirements..."
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
-              />
-            </div>
+            <SheetBody className="space-y-5 pt-2">
+              <FormField label="Message" hint="Optional">
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Describe what you need, preferred schedule, or any specific requirements..."
+                  rows={3}
+                  className={cn(appTextareaClass, "min-h-[96px]")}
+                />
+              </FormField>
+            </SheetBody>
 
-            <div className="flex gap-3">
-              <button
+            <SheetFooter className="flex gap-3">
+              <AppButton
+                appVariant="secondary"
                 onClick={closeHireModal}
-                className="h-12 flex-1 rounded-[18px] border-2 border-gray-100 text-[13px] font-bold text-gray-500 transition-all hover:bg-gray-50"
+                className="flex-1"
               >
                 Cancel
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 onClick={handleHireSubmit}
                 disabled={submittingHire}
-                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[18px] bg-[#145B10] text-[13px] font-bold text-white shadow-lg shadow-[#145B10]/20 transition-all hover:bg-[#0F4D0C] disabled:opacity-60"
+                className="flex-1"
               >
                 {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Request"}
-              </button>
-            </div>
-          </div>
-        </div>
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
       )}
 
       {isFilterOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0">
-          <div className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <div>
-                <h2 className="text-[17px] font-bold text-[#1B2431]">Filters</h2>
-                <p className="text-[12px] text-[#687268]">
-                  {mode === "provider" ? "Narrow down job results." : "Choose what should appear in the cards."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(false)}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
-                aria-label="Close filters"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+        <>
+          <SheetOverlay zIndexClassName="z-[80]" onClick={() => setIsFilterOpen(false)} aria-hidden="true" />
+          <SheetPanel zIndexClassName="z-[81]" className="max-w-md sm:rounded-3xl">
+            <SheetHeader
+              title="Filters"
+              subtitle={mode === "provider" ? "Narrow down job results." : "Choose what should appear in the cards."}
+              onClose={() => setIsFilterOpen(false)}
+            />
 
-            <div className="max-h-[70vh] space-y-5 overflow-y-auto px-5 py-5">
+            <SheetBody className="max-h-[70vh] space-y-5">
               {mode === "provider" ? (
                 <>
                   <FilterGroup title="Budget range (RWF)">
@@ -761,26 +764,27 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                   </FilterGroup>
                 </>
               )}
-            </div>
+            </SheetBody>
 
-            <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4">
-              <button
+            <SheetFooter className="flex gap-3 bg-gray-50">
+              <AppButton
                 type="button"
                 onClick={clearFilters}
-                className="h-12 flex-1 rounded-2xl border border-gray-200 bg-white text-[13px] font-bold text-[#1B2431]"
+                appVariant="secondary"
+                className="flex-1"
               >
                 Reset
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
                 onClick={applyFilters}
-                className="h-12 flex-1 rounded-2xl bg-[#145B10] text-[13px] font-bold text-white shadow-lg shadow-[#145B10]/20"
+                className="flex-1"
               >
                 Apply
-              </button>
-            </div>
-          </div>
-        </div>
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
       )}
     </div>
   );

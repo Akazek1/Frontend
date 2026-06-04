@@ -1,11 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCheck, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import BackButtonHeader from "@/components/header/back-button-header";
+import {
+  AppButton,
+  Card,
+  EmptyState,
+  PageShell,
+} from "@/components/ui/app-primitives";
 import { NotificationItem, getNotificationHref } from "@/hooks/useNotifications";
 import {
   NotificationFilter,
@@ -91,7 +97,7 @@ const NotificationHistoryPage = () => {
   const allLoadedNotificationsRead = items.length === 0 || items.every((n) => !!n.readAt || n.status === "READ");
 
   return (
-    <div className="min-h-screen space-y-5 app-bg px-5 py-10 pb-20">
+    <PageShell className="gap-5">
       <div className="flex items-center justify-between gap-3">
         <BackButtonHeader text="Notifications" fallbackHref="/more/notifications" />
 
@@ -147,22 +153,21 @@ const NotificationHistoryPage = () => {
           <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="rounded-xl border border-[#DCE8DA] bg-white px-5 py-10 text-center shadow-sm">
-          <p className="text-[14px] font-bold text-[#1B2431]">
-            {items.length === 0 ? "No notifications yet" : "Nothing here yet"}
-          </p>
-          <p className="mt-1 text-[13px] leading-5 text-[#757575]">
-            {items.length === 0
+        <EmptyState
+          icon={Bell}
+          title={items.length === 0 ? "No notifications yet" : "Nothing here yet"}
+          description={
+            items.length === 0
               ? "When something important happens, it will show up here."
-              : "Try another filter to see more notifications."}
-          </p>
-        </div>
+              : "Try another filter to see more notifications."
+          }
+        />
       ) : (
         <div className="space-y-5">
           {groupedItems.map((group) => (
             <section key={group.title} className="space-y-2">
               <h2 className="px-1 text-[15px] font-bold text-[#616161]">{group.title}</h2>
-              <div className="overflow-hidden rounded-xl border border-[#E2EAE0] bg-white shadow-sm">
+              <Card variant="list" className="overflow-hidden rounded-xl">
                 {group.items.map((notification) => (
                   <NotificationRow
                     key={notification.id}
@@ -170,25 +175,26 @@ const NotificationHistoryPage = () => {
                     onClick={handleClick}
                   />
                 ))}
-              </div>
+              </Card>
             </section>
           ))}
 
           {hasMore && (
             <div className="flex justify-center pt-4">
-              <button
+              <AppButton
                 type="button"
                 onClick={() => load(page + 1, true)}
                 disabled={loadingMore}
-                className="rounded-full border border-[#DCE8DA] bg-white px-5 py-2.5 text-[13px] font-bold text-[#145B10] shadow-sm disabled:text-gray-400"
+                appVariant="secondary"
+                className="h-10 rounded-full px-5"
               >
                 {loadingMore ? "Loading..." : "Load more"}
-              </button>
+              </AppButton>
             </div>
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 };
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { ArrowLeft, X, type LucideIcon } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -302,5 +302,132 @@ export function EmptyState({
       <p className="mt-2 max-w-[280px] text-[13px] leading-6 text-[#5F6773]">{description}</p>
       {action ? <div className="mt-6 w-full">{action}</div> : null}
     </AppCard>
+  );
+}
+
+type SheetOverlayProps = React.HTMLAttributes<HTMLDivElement> & {
+  zIndexClassName?: string;
+};
+
+export function SheetOverlay({
+  className,
+  zIndexClassName = "z-40",
+  ...props
+}: SheetOverlayProps) {
+  return (
+    <div
+      className={cn(
+        "fixed inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-150",
+        zIndexClassName,
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+type SheetPanelSide = "bottom" | "right" | "center";
+
+type SheetPanelProps = React.HTMLAttributes<HTMLDivElement> & {
+  side?: SheetPanelSide;
+  zIndexClassName?: string;
+};
+
+const sheetPanelSideClass: Record<SheetPanelSide, string> = {
+  bottom:
+    "bottom-0 left-0 right-0 mx-auto max-w-[428px] rounded-t-3xl animate-in slide-in-from-bottom duration-200",
+  right:
+    "bottom-0 right-0 top-0 w-[88%] max-w-[380px] rounded-l-2xl animate-in slide-in-from-right duration-200",
+  center:
+    "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-[428px] -translate-x-1/2 -translate-y-1/2 rounded-3xl",
+};
+
+export function SheetPanel({
+  side = "bottom",
+  zIndexClassName = "z-50",
+  className,
+  children,
+  ...props
+}: SheetPanelProps) {
+  return (
+    <div
+      className={cn(
+        "fixed flex flex-col bg-white shadow-2xl",
+        sheetPanelSideClass[side],
+        zIndexClassName,
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+type SheetHeaderProps = {
+  title: string;
+  subtitle?: string;
+  onClose?: () => void;
+  leading?: React.ReactNode;
+  className?: string;
+};
+
+export function SheetHeader({
+  title,
+  subtitle,
+  onClose,
+  leading,
+  className,
+}: SheetHeaderProps) {
+  return (
+    <div className={cn("flex items-start justify-between gap-3 border-b border-[#EDF1EC] px-5 py-4", className)}>
+      <div className="flex min-w-0 items-start gap-3">
+        {leading ? <div className="shrink-0">{leading}</div> : null}
+        <div className="min-w-0">
+          <h2 className="truncate text-[17px] font-black text-[#1B2431]">{title}</h2>
+          {subtitle ? <p className="mt-1 text-[12px] leading-4 text-[#5F6773]">{subtitle}</p> : null}
+        </div>
+      </div>
+      {onClose ? (
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function SheetBody({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("flex-1 overflow-y-auto px-5 py-5", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function SheetFooter({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "border-t border-[#EDF1EC] bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
   );
 }

@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  AppButton,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
   appFieldLabelClass,
   appInputClass,
-  appPrimaryButtonClass,
-  appSecondaryButtonClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
 
@@ -51,19 +53,16 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-[428px] overflow-hidden rounded-t-2xl bg-white shadow-xl animate-in slide-in-from-bottom duration-300 sm:rounded-2xl">
-        <div className="flex items-start justify-between border-b border-[#EDF1EC] px-5 py-4">
-          <div>
-            <h2 className="text-[17px] font-black text-[#1B2431]">Filters</h2>
-            <p className="mt-1 text-[12px] text-[#5F6773]">Narrow down job results.</p>
-          </div>
-          <button onClick={onClose} className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <>
+      <SheetOverlay className="bg-black/50" onClick={onClose} aria-hidden="true" />
+      <SheetPanel className="overflow-hidden sm:rounded-3xl" side="bottom">
+        <SheetHeader
+          title="Filters"
+          subtitle="Narrow down job results."
+          onClose={onClose}
+        />
 
-        <div className="max-h-[70vh] space-y-5 overflow-y-auto px-5 py-5">
+        <SheetBody className="max-h-[70vh] space-y-5">
           {/* Price Range */}
           <div className="space-y-3">
             <Label className={appFieldLabelClass}>Budget range (RWF)</Label>
@@ -185,18 +184,18 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </SheetBody>
 
-        <div className="flex items-center gap-3 border-t border-[#EDF1EC] bg-white px-5 py-4">
-          <Button variant="outline" onClick={handleReset} className={cn(appSecondaryButtonClass, "flex-1")}>
+        <SheetFooter className="flex items-center gap-3">
+          <AppButton appVariant="secondary" onClick={handleReset} className="flex-1">
             Reset
-          </Button>
-          <Button onClick={handleApply} className={cn(appPrimaryButtonClass, "flex-1")}>
+          </AppButton>
+          <AppButton onClick={handleApply} className="flex-1">
             Apply
-          </Button>
-        </div>
-      </div>
-    </div>
+          </AppButton>
+        </SheetFooter>
+      </SheetPanel>
+    </>
   );
 };
 

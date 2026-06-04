@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/ui/app-primitives";
 
 interface DeactivateServiceDialogProps {
   open: boolean;
@@ -83,27 +83,22 @@ export function DeactivateServiceDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-row gap-2 sm:justify-end">
-          <Button
+          <AppButton
             type="button"
-            variant="outline"
+            appVariant="secondary"
             onClick={onCancel}
             disabled={isWorking}
-            className="border-[#145B10]/30 text-[#145B10] hover:bg-[#F1FCEF]"
           >
             Cancel
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             type="button"
             onClick={handleConfirm}
             disabled={isWorking}
-            className={
-              isDeactivating
-                ? "bg-[#FF3D00] text-white hover:bg-[#E63600]"
-                : "bg-[#145B10] text-white hover:bg-[#0F4D0C]"
-            }
+            appVariant={isDeactivating ? "danger" : "primary"}
           >
             {isWorking ? workingLabel : ctaLabel}
-          </Button>
+          </AppButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

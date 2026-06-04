@@ -20,6 +20,13 @@ import toast from "react-hot-toast";
 import { BOOKING_STATUS } from "@/constant";
 import { ReportModal } from "../provider/report-modal";
 import {
+  AppButton,
+  FormField,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
   appCardClass,
   appDangerButtonClass,
   appFieldLabelClass,
@@ -121,12 +128,14 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 border-b border-[#EDF1EC] px-5 py-4">
-        <button onClick={onBack} className="text-[#145B10] text-[13px] font-semibold">
-          ← Back
-        </button>
-        <h3 className="flex-1 text-[15px] font-bold text-[#1B2431] truncate">Task Detail</h3>
-      </div>
+      <SheetHeader
+        title="Task Detail"
+        leading={
+          <button onClick={onBack} className="text-[#145B10] text-[13px] font-semibold">
+            ← Back
+          </button>
+        }
+      />
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         <div className="flex items-start gap-3">
@@ -206,7 +215,7 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
       </div>
 
       {canDelete && (
-        <div className="border-t border-[#EDF1EC] px-5 py-4">
+        <SheetFooter>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
@@ -215,7 +224,7 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             Delete Task
           </button>
-        </div>
+        </SheetFooter>
       )}
     </div>
   );
@@ -258,28 +267,22 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-[#EDF1EC] px-5 py-4">
-        <button
-          onClick={onBack}
-          className="rounded-full p-1.5 text-[#1B2431] transition-colors hover:bg-gray-100"
-          aria-label="Back to tasks"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h2 className="flex-1 text-[16px] font-bold text-[#1B2431]">Add Task</h2>
-        <button
-          onClick={onClose}
-          className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+      <SheetHeader
+        title="Add Task"
+        onClose={onClose}
+        leading={
+          <button
+            onClick={onBack}
+            className="rounded-full p-1.5 text-[#1B2431] transition-colors hover:bg-gray-100"
+            aria-label="Back to tasks"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        }
+      />
 
-      <div className="flex-1 overflow-y-auto px-5 py-5">
-        <label className={appFieldLabelClass}>
-          Task Title
-        </label>
+      <SheetBody>
+        <FormField label="Task Title">
         <input
           autoFocus
           type="text"
@@ -293,10 +296,9 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
           className={cn(appInputClass, "mt-3")}
         />
         <p className="mt-2 text-right text-[11px] text-gray-400">{titleLength}/80</p>
+        </FormField>
 
-        <label className={cn(appFieldLabelClass, "mt-5 block")}>
-          Details (Optional)
-        </label>
+        <FormField label="Details" hint="Optional" className="mt-5">
         <textarea
           maxLength={200}
           placeholder="Add notes or instructions..."
@@ -305,21 +307,22 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
           className={cn(appTextareaClass, "mt-3 min-h-[120px]")}
         />
         <p className="mt-2 text-right text-[11px] text-gray-400">{descriptionLength}/200</p>
-      </div>
+        </FormField>
+      </SheetBody>
 
-      <div className="border-t border-[#EDF1EC] px-5 pb-6 pt-4">
-        <button
+      <SheetFooter>
+        <AppButton
           onClick={handleAddTask}
           disabled={!title.trim() || isAdding}
-          className={cn(appPrimaryButtonClass, "flex w-full items-center justify-center")}
+          className="flex w-full items-center justify-center"
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Task"}
-        </button>
+        </AppButton>
         <p className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-500">
           <LockKeyhole className="h-3.5 w-3.5" />
           Task will be visible to the worker
         </p>
-      </div>
+      </SheetFooter>
     </div>
   );
 }
@@ -435,17 +438,14 @@ export function TaskDrawer({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-30 bg-black/30 animate-in fade-in duration-150"
+      <SheetOverlay
+        zIndexClassName="z-30"
+        className="bg-black/30 backdrop-blur-0"
         onClick={handleClose}
         aria-hidden="true"
       />
 
-      {/* Drawer — slides in from the right */}
-      <div
-        className="fixed bottom-0 right-0 top-0 z-40 flex w-[88%] max-w-[380px] flex-col rounded-l-2xl bg-white shadow-2xl animate-in slide-in-from-right duration-200"
-      >
+      <SheetPanel side="right" zIndexClassName="z-40">
         {isAddingTask ? (
           <AddTaskView
             bookingId={bookingId}
@@ -465,17 +465,7 @@ export function TaskDrawer({
           />
         ) : (
           <>
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#EDF1EC] px-5 py-4">
-              <h2 className="text-[17px] font-bold text-[#1B2431]">Tasks</h2>
-              <button
-                onClick={handleClose}
-                className="rounded-full p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            <SheetHeader title="Tasks" onClose={handleClose} />
 
             {/* Status card */}
             <div
@@ -698,7 +688,7 @@ export function TaskDrawer({
             </div>
           </>
         )}
-      </div>
+      </SheetPanel>
       {isReportModalOpen && (
         <ReportModal 
           targetId={userId === employerId ? workerId : employerId}
