@@ -26,7 +26,7 @@ import toast from "react-hot-toast";
 import JobOwnerDetail from "@/components/jobs/job-owner-detail";
 import {
   AppButton,
-  AppCard,
+  Card,
   EmptyState,
   PageHeader,
   PageShell,
@@ -127,7 +127,7 @@ const JobDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="app-bg flex h-dvh items-center justify-center">
+      <div className="bg-surface flex h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
@@ -166,7 +166,7 @@ const JobDetailPage = () => {
 
       <div className="space-y-5 px-4 pt-4">
         {/* Main Job Info */}
-        <AppCard className="relative overflow-hidden">
+        <Card className="relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-brand" />
           
           <div className="flex items-center gap-2 mb-4">
@@ -226,11 +226,11 @@ const JobDetailPage = () => {
               </div>
             </div>
           </div>
-        </AppCard>
+        </Card>
 
         {/* Employer Card (Worker View) */}
         {!isOwner && (
-          <AppCard>
+          <Card>
             <h2 className="text-sm font-black text-ink mb-5 uppercase tracking-wider flex items-center gap-2">
               <User className="w-4 h-4 text-brand" /> Employer Profile
             </h2>
@@ -254,7 +254,7 @@ const JobDetailPage = () => {
                 &ldquo;{job.employer.bio}&rdquo;
               </p>
             )}
-          </AppCard>
+          </Card>
         )}
 
         {/* Applicants List (Employer View) */}

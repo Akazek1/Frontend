@@ -5,14 +5,12 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const appShellClass =
-  "app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6";
-
-export const appBgClass = "app-bg";
+  "bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6";
 
 export const appContentClass = "flex flex-col gap-4";
 
 export const appStickyHeaderClass =
-  "app-bg sticky top-0 z-20 mx-auto w-full max-w-[428px] px-4 pb-3 pt-6 shadow-sm backdrop-blur";
+  "bg-surface sticky top-0 z-20 mx-auto w-full max-w-[428px] px-4 pb-3 pt-6 shadow-sm backdrop-blur";
 
 export const appCardClass =
   "rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-[0_8px_24px_rgba(27,36,49,0.05)]";
@@ -121,7 +119,7 @@ export function PageShell({
   return (
     <main
       className={cn(
-        "app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col",
+        "bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col",
         padded && "px-4 pt-6",
         bottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-6",
         className,
@@ -131,10 +129,6 @@ export function PageShell({
       {children}
     </main>
   );
-}
-
-export function AppShell(props: PageShellProps) {
-  return <PageShell {...props} />;
 }
 
 type PageHeaderProps = {
@@ -195,22 +189,6 @@ export function PageHeader({
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </header>
-  );
-}
-
-export function AppHeader(props: PageHeaderProps) {
-  return <PageHeader {...props} />;
-}
-
-export function AppCard({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn(appCardClass, className)} {...props}>
-      {children}
-    </div>
   );
 }
 
@@ -294,14 +272,14 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <AppCard className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", className)}>
+    <Card className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", className)}>
       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E8F7E5] text-brand">
         <Icon className="h-8 w-8" />
       </span>
       <h3 className="mt-5 text-[16px] font-black text-ink">{title}</h3>
       <p className="mt-2 max-w-[280px] text-[13px] leading-6 text-[#5F6773]">{description}</p>
       {action ? <div className="mt-6 w-full">{action}</div> : null}
-    </AppCard>
+    </Card>
   );
 }
 

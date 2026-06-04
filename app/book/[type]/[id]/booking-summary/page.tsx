@@ -233,7 +233,7 @@ const BookingSummary = () => {
 
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (
-            <div className="min-h-screen app-bg flex items-center justify-center">
+            <div className="min-h-screen bg-surface flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );
@@ -340,7 +340,7 @@ const BookingSummary = () => {
                             <span className="text-brand font-medium text-sm">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
-                            <div className="app-bg flex items-center justify-center">
+                            <div className="bg-surface flex items-center justify-center">
                                 <Loader2 className="w-5 h-5 animate-spin text-brand" />
                             </div>
                         ) : addresses.length === 0 ? (

@@ -42,7 +42,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     (isJobDetail && !isAuthenticated);
 
   return (
-    <div className="app-bg max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
+    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
       {/* Main content area with scrolling */}
       <main
         className={`flex-1 overflow-x-hidden ${

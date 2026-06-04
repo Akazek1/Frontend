@@ -96,7 +96,7 @@ export default function OrgProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="app-bg flex min-h-dvh items-center justify-center">
+      <div className="bg-surface flex min-h-dvh items-center justify-center">
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     )

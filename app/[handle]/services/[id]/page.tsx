@@ -264,7 +264,7 @@ function ServiceDetailPage() {
     }
 
     return (
-        <div className="app-bg min-h-screen w-full overflow-x-hidden pb-28">
+        <div className="bg-surface min-h-screen w-full overflow-x-hidden pb-28">
             {/* Top bar */}
             <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-2 pt-4">
                 <button

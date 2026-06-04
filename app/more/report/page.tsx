@@ -107,7 +107,7 @@ const ReportIssue = () => {
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center space-y-6 app-bg px-4 py-6">
+      <div className="flex min-h-dvh flex-col items-center justify-center space-y-6 bg-surface px-4 py-6">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center mx-auto">
             <svg

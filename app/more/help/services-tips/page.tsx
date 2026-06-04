@@ -11,8 +11,8 @@ import { ArrowLeft, Lightbulb } from "lucide-react";
 export default function ServicesTipsHelpPage() {
   const router = useRouter();
   return (
-    <div className="app-bg mx-auto flex min-h-dvh w-full max-w-[428px] flex-col">
-      <header className="app-bg sticky top-0 z-10 flex items-center gap-2 px-4 pb-3 pt-6 shadow-sm">
+    <div className="bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col">
+      <header className="bg-surface sticky top-0 z-10 flex items-center gap-2 px-4 pb-3 pt-6 shadow-sm">
         <button
           type="button"
           onClick={() => router.back()}

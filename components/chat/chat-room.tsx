@@ -384,7 +384,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="app-bg flex h-screen items-center justify-center">
+      <div className="bg-surface flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
@@ -402,7 +402,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const hasTaskTab = tasks.length > 0 || isApproved;
 
   return (
-    <div className="app-bg relative isolate flex h-screen flex-col overflow-hidden">
+    <div className="bg-surface relative isolate flex h-screen flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
         <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">

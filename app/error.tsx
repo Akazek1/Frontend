@@ -31,7 +31,7 @@ export default function Error({ error, reset }: ErrorProps) {
   // First attempt: auto-reload is in flight — show a brief spinner
   if (isChunkError && reloading) {
     return (
-      <div className="app-bg flex h-screen items-center justify-center">
+      <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-center px-6">
           <div className="w-8 h-8 border-2 border-brand-strong border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-gray-500">Loading…</p>
@@ -43,7 +43,7 @@ export default function Error({ error, reset }: ErrorProps) {
   // Auto-reload already tried and still failing — ask the user to act
   if (isChunkError && alreadyReloaded) {
     return (
-      <div className="app-bg flex h-screen items-center justify-center">
+      <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
           <p className="text-4xl">🔄</p>
           <h1 className="text-lg font-bold text-gray-900">App updated</h1>
@@ -66,7 +66,7 @@ export default function Error({ error, reset }: ErrorProps) {
 
   // All other errors — show a friendly message with a retry button
   return (
-    <div className="app-bg flex h-screen items-center justify-center">
+    <div className="bg-surface flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
         <p className="text-4xl">😕</p>
         <h1 className="text-lg font-bold text-gray-900">Something went wrong</h1>

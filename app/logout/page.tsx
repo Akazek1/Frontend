@@ -25,7 +25,7 @@ export default function LogoutPage() {
   }, [dispatch, router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center app-bg px-6">
+    <main className="flex min-h-screen items-center justify-center bg-surface px-6">
       <p className="text-sm font-medium text-[#1F2937]">Signing out...</p>
     </main>
   );

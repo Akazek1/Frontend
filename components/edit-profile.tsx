@@ -476,14 +476,14 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
   if (loading) {
     return (
-      <div className="app-bg flex min-h-dvh items-center justify-center">
+      <div className="bg-surface flex min-h-dvh items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );
   }
 
   const Header = (
-    <div className="app-bg sticky top-0 z-20 border-b border-[#E1EBDD] px-4 pb-3 pt-6 backdrop-blur">
+    <div className="bg-surface sticky top-0 z-20 border-b border-[#E1EBDD] px-4 pb-3 pt-6 backdrop-blur">
       <div className="mx-auto flex max-w-[428px] items-center gap-3">
         <button
           type="button"
@@ -519,7 +519,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   ) : null;
 
   return (
-    <div className="app-bg min-h-dvh pb-44">
+    <div className="bg-surface min-h-dvh pb-44">
       {Header}
       <form onSubmit={handleSubmit} className="mx-auto max-w-[428px] space-y-4 px-4 pt-4">
         {errors.form ? (

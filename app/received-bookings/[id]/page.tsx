@@ -214,7 +214,7 @@ const BookingDetails: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="app-bg flex min-h-screen items-center justify-center">
+            <div className="bg-surface flex min-h-screen items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );

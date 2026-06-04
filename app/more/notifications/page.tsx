@@ -190,7 +190,7 @@ const NotificationsPreferences = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center app-bg px-4 py-6">
+      <div className="flex min-h-dvh items-center justify-center bg-surface px-4 py-6">
         <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );

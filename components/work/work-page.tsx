@@ -42,8 +42,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  AppHeader,
-  AppShell,
+  PageHeader,
+  PageShell,
   EmptyState,
   appContentClass,
   appListCardClass,
@@ -219,7 +219,7 @@ export default function WorkPage() {
 
   if (loading) {
     return (
-      <div className="app-bg flex min-h-dvh items-center justify-center">
+      <div className="bg-surface flex min-h-dvh items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );
@@ -227,7 +227,7 @@ export default function WorkPage() {
 
   if (!hasAnyActivity) {
     return (
-      <AppShell>
+      <PageShell>
         <WorkHeader />
         <div className="flex min-h-[62vh] items-center">
           <EmptyState
@@ -248,14 +248,14 @@ export default function WorkPage() {
             }
           />
         </div>
-      </AppShell>
+      </PageShell>
     );
   }
 
   return (
-    <main className="app-bg min-h-dvh pb-24">
+    <main className="bg-surface min-h-dvh pb-24">
       <div className="sr-only" aria-live="polite">{liveMessage}</div>
-      <div className="app-bg sticky top-0 z-20 mx-auto max-w-[428px] space-y-4 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
+      <div className="bg-surface sticky top-0 z-20 mx-auto max-w-[428px] space-y-4 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
         <WorkHeader />
         <WorkFilterChips counts={counts} filter={filter} onChange={setFilter} />
       </div>
@@ -326,7 +326,7 @@ export default function WorkPage() {
 }
 
 function WorkHeader() {
-  return <AppHeader title="My Work" />;
+  return <PageHeader title="My Work" />;
 }
 
 function WorkFilterChips({
@@ -822,8 +822,8 @@ export function JobPostsPage() {
   const activePosts = counts.open;
 
   return (
-    <main className="app-bg min-h-screen pb-24">
-      <div className="app-bg sticky top-0 z-20 space-y-3 px-4 pb-2 pt-6 backdrop-blur">
+    <main className="bg-surface min-h-screen pb-24">
+      <div className="bg-surface sticky top-0 z-20 space-y-3 px-4 pb-2 pt-6 backdrop-blur">
         <header className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <button

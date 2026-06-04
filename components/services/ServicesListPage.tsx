@@ -100,7 +100,7 @@ export function ServicesListPage() {
             type="button"
             variant="outline"
             onClick={handleAdd}
-            className="h-10 gap-1 rounded-xl border-brand/30 px-3 text-[13px] font-semibold text-brand hover:bg-[var(--app-background)]"
+            className="h-10 gap-1 rounded-xl border-brand/30 px-3 text-[13px] font-semibold text-brand hover:bg-surface"
           >
             <Plus className="h-4 w-4" />
             Add Service

@@ -10,14 +10,6 @@ body {
   box-sizing: border-box;
 }
 
-:root {
-  --app-background: #F1FCEF;
-}
-
-.app-bg {
-  background-color: var(--app-background);
-}
-
 /* HTML: <div class="loader"></div> */
 .loader {
   --d: 22px;
