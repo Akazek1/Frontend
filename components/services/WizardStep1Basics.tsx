@@ -45,10 +45,10 @@ export function WizardStep1Basics({
       }}
     >
       <header>
-        <p className="text-[12px] font-black uppercase tracking-wide text-[#145B10]">
+        <p className="text-[12px] font-black uppercase tracking-wide text-brand">
           Step 1 of 2
         </p>
-        <h2 className="mt-1 text-[22px] font-black text-[#1B2431]">
+        <h2 className="mt-1 text-[22px] font-black text-ink">
           Basic Information
         </h2>
         <p className="mt-1 text-[13px] text-[#475467]">
@@ -65,8 +65,8 @@ export function WizardStep1Basics({
         >
           <SelectTrigger className={appInputClass}>
             <span className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F1FCEF]">
-                <LayoutGrid className="h-4 w-4 text-[#145B10]" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface">
+                <LayoutGrid className="h-4 w-4 text-brand" />
               </span>
               <SelectValue placeholder="Select a category" />
             </span>
@@ -89,8 +89,8 @@ export function WizardStep1Basics({
 
       {/* Price */}
       <FormField label="How much do you charge?" required>
-        <div className="flex h-12 items-center overflow-hidden rounded-md border border-[#DCEEDD] bg-white focus-within:ring-2 focus-within:ring-[#145B10]/30">
-          <span className="border-r border-[#DCEEDD] bg-[#F1FCEF] px-3 text-[13px] font-black text-[#145B10]">
+        <div className="flex h-12 items-center overflow-hidden rounded-md border border-[#DCEEDD] bg-white focus-within:ring-2 focus-within:ring-brand/30">
+          <span className="border-r border-[#DCEEDD] bg-surface px-3 text-[13px] font-black text-brand">
             RWF
           </span>
           <Input

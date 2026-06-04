@@ -68,7 +68,7 @@ const preferenceGroups: Array<{
         title: "New messages",
         description: "Notify me when a client or worker sends a message",
         icon: MessageCircle,
-        tone: "bg-emerald-50 text-[#145B10]",
+        tone: "bg-emerald-50 text-brand",
       },
     ],
   },
@@ -81,7 +81,7 @@ const preferenceGroups: Array<{
         title: "Booking requests",
         description: "Official offers and new interest in your job posts",
         icon: BriefcaseBusiness,
-        tone: "bg-emerald-50 text-[#145B10]",
+        tone: "bg-emerald-50 text-brand",
       },
       {
         key: "bookingConfirmations",
@@ -126,8 +126,8 @@ const channels = [
     description: "This device",
     status: "On",
     icon: Smartphone,
-    tone: "bg-emerald-50 text-[#145B10]",
-    statusClassName: "bg-emerald-50 text-[#145B10]",
+    tone: "bg-emerald-50 text-brand",
+    statusClassName: "bg-emerald-50 text-brand",
   },
   {
     title: "Email",
@@ -191,7 +191,7 @@ const NotificationsPreferences = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-dvh items-center justify-center app-bg px-4 py-6">
-        <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+        <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );
   }
@@ -209,17 +209,17 @@ const NotificationsPreferences = () => {
           className={cn(appActionCardClass, "flex items-center justify-between px-4 py-3")}
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E8F7E5] text-[#145B10]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E8F7E5] text-brand">
               <Bell className="h-5 w-5" />
             </span>
             <div>
-              <span className="block text-[15px] font-semibold text-[#1B2431]">
+              <span className="block text-[15px] font-semibold text-ink">
                 Notification history
               </span>
               <span className="text-[13px] text-[#6B7280]">Review recent alerts</span>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-[#145B10]" />
+          <ChevronRight className="h-5 w-5 text-brand" />
         </Link>
 
         <div className={cn(appContentClass, "gap-5")}>
@@ -253,7 +253,7 @@ const NotificationsPreferences = () => {
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-[15px] font-semibold leading-5 text-[#1B2431]">
+                          <p className="text-[15px] font-semibold leading-5 text-ink">
                             {item.title}
                           </p>
                           <p className="mt-0.5 text-[13px] leading-5 text-[#6B7280]">
@@ -266,7 +266,7 @@ const NotificationsPreferences = () => {
                           disabled={isSaving}
                           onCheckedChange={() => handleToggle(item.key)}
                           aria-label={`Toggle ${item.title}`}
-                          className="data-[state=checked]:bg-[#145B10] data-[state=unchecked]:bg-[#D1D5DB]"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-[#D1D5DB]"
                         />
                       </div>
                     );
@@ -300,7 +300,7 @@ const NotificationsPreferences = () => {
                       <ChannelIcon className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-[14px] font-semibold text-[#1B2431]">{channel.title}</p>
+                      <p className="text-[14px] font-semibold text-ink">{channel.title}</p>
                       <p className="mt-1 text-[12px] leading-4 text-[#6B7280]">
                         {channel.description}
                       </p>

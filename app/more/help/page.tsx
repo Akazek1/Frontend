@@ -145,12 +145,12 @@ const HelpAndSupport = () => {
 
         <div className="space-y-2 border-t border-[#EDF1EC] pt-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <Phone className="h-4 w-4 text-[#145B10]" />
+            <Phone className="h-4 w-4 text-brand" />
             Phone Support
           </p>
           <a
             href="tel:+250788000000"
-            className="text-[#145B10] font-semibold hover:underline"
+            className="text-brand font-semibold hover:underline"
           >
             +250 788 000 000
           </a>
@@ -159,14 +159,14 @@ const HelpAndSupport = () => {
 
         <div className="space-y-2 border-t border-[#EDF1EC] pt-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <Send className="h-4 w-4 text-[#145B10]" />
+            <Send className="h-4 w-4 text-brand" />
             WhatsApp Support
           </p>
           <a
             href="https://wa.me/250788000000"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#145B10] font-semibold hover:underline inline-flex items-center gap-1"
+            className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
           >
             Chat with us
           </a>

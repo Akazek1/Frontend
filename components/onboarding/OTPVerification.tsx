@@ -21,7 +21,7 @@ export function OTPVerification() {
       <button
         type="button"
         onClick={handleBack}
-        className="mb-8 inline-flex items-center gap-1 p-2 -ml-2 text-[#1B5E20] font-semibold"
+        className="mb-8 inline-flex items-center gap-1 p-2 -ml-2 text-brand-strong font-semibold"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +85,7 @@ export function OTPVerification() {
                 <div
                   key={index}
                   className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg font-medium border rounded-md ${
-                    isActive ? "border-[#145B10] border-2 ring-2 ring-[#145B10]/20" : "border-black"
+                    isActive ? "border-brand border-2 ring-2 ring-brand/20" : "border-black"
                   } ${isFilled ? "bg-white" : "bg-white"}`}
                 >
                   {code[index] || ""}
@@ -99,7 +99,7 @@ export function OTPVerification() {
           type="button"
           onClick={handleResendOtp}
           disabled={resendCooldown > 0}
-          className="text-sm font-medium text-[#145B10] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="text-sm font-medium text-brand disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
         </button>

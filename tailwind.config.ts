@@ -49,7 +49,19 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+  			// ── Akazek brand palette ────────────────────────────────────────
+  			// Plain hex (not CSS vars) so Tailwind v3 keeps the /opacity
+  			// modifier working (e.g. bg-brand/30, ring-brand/20). Single
+  			// source of truth for a rebrand. Names chosen to avoid colliding
+  			// with the shadcn tokens above (primary/secondary/muted/...).
+  			brand: {
+  				DEFAULT: '#145B10', // primary green
+  				dark: '#0F4D0C',    // hover / pressed
+  				strong: '#1B5E20'   // alt solid green used on some CTAs
+  			},
+  			ink: '#1B2431',         // primary text
+  			surface: '#F1FCEF'      // app background / light-green surface
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

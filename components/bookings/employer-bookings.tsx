@@ -43,9 +43,9 @@ const TABS: Tab[] = ['All', 'Requests', 'Confirmed', 'Completed', 'Cancelled'];
 
 const STATUS_META: Record<string, { label: string; icon: React.ReactNode; chip: string }> = {
   PENDING:     { label: 'Offer Sent',  icon: <Clock className="w-3 h-3" />,        chip: 'bg-amber-50 text-amber-700' },
-  CONFIRMED:   { label: 'Confirmed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
+  CONFIRMED:   { label: 'Confirmed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-brand' },
   IN_PROGRESS: { label: 'In Progress', icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-blue-50 text-blue-700'   },
-  COMPLETED:   { label: 'Completed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-[#145B10]' },
+  COMPLETED:   { label: 'Completed',   icon: <CheckCircle2 className="w-3 h-3" />, chip: 'bg-green-50 text-brand' },
   CANCELLED:   { label: 'Cancelled',   icon: <XCircle className="w-3 h-3" />,      chip: 'bg-red-50 text-red-600'     },
 };
 
@@ -128,7 +128,7 @@ const EmployerBookings: React.FC = () => {
 
   if (loading) return (
     <div className="min-h-screen app-bg flex items-center justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+      <Loader2 className="w-6 h-6 animate-spin text-brand" />
     </div>
   );
 
@@ -147,7 +147,7 @@ const EmployerBookings: React.FC = () => {
               onClick={() => setTab(t)}
               className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
                 tab === t
-                  ? 'bg-[#145B10] text-white'
+                  ? 'bg-brand text-white'
                   : 'bg-white text-[#616161] border border-gray-200'
               }`}
             >
@@ -168,7 +168,7 @@ const EmployerBookings: React.FC = () => {
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
         <DialogContent className="w-[90vw] max-w-[360px] bg-white rounded-3xl p-5">
           <DialogHeader>
-            <DialogTitle className="text-[15px] font-bold text-[#1B2431]">Leave a Review</DialogTitle>
+            <DialogTitle className="text-[15px] font-bold text-ink">Leave a Review</DialogTitle>
           </DialogHeader>
           <p className="text-[12px] text-[#616161] -mt-2">How was the service?</p>
           <div className="flex gap-1.5 my-1">
@@ -184,13 +184,13 @@ const EmployerBookings: React.FC = () => {
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Tell us what you liked or what could be better…"
-            className="border-gray-200 rounded-xl text-[13px] resize-none focus:ring-[#145B10]"
+            className="border-gray-200 rounded-xl text-[13px] resize-none focus:ring-brand"
             rows={4}
           />
           <Button
             onClick={submitReview}
             disabled={submitting}
-            className="w-full rounded-full bg-[#145B10] hover:bg-[#0f4a0c] text-white font-bold"
+            className="w-full rounded-full bg-brand hover:bg-[#0f4a0c] text-white font-bold"
           >
             {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Submitting…</> : 'Submit Review'}
           </Button>
@@ -233,7 +233,7 @@ const EmployerBookings: React.FC = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0 space-y-0.5">
                     <div className="flex items-start justify-between gap-1">
-                      <p className="text-[13px] font-bold text-[#1B2431] capitalize leading-snug truncate">
+                      <p className="text-[13px] font-bold text-ink capitalize leading-snug truncate">
                         {title}
                       </p>
                       <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${meta.chip}`}>
@@ -246,12 +246,12 @@ const EmployerBookings: React.FC = () => {
                       {b.worker?.username ? (
                         <Link
                           href={`/${b.worker.username}`}
-                          className="font-semibold text-[#1B2431] hover:text-[#145B10] hover:underline"
+                          className="font-semibold text-ink hover:text-brand hover:underline"
                         >
                           {worker}
                         </Link>
                       ) : (
-                        <span className="font-semibold text-[#1B2431]">{worker}</span>
+                        <span className="font-semibold text-ink">{worker}</span>
                       )}
                     </p>
 
@@ -267,7 +267,7 @@ const EmployerBookings: React.FC = () => {
                         </span>
                       )}
                       {price ? (
-                        <span className="flex items-center gap-1 text-[#145B10] font-semibold">
+                        <span className="flex items-center gap-1 text-brand font-semibold">
                           <Banknote className="w-3 h-3 flex-shrink-0" />
                           RWF {price.toLocaleString()}
                         </span>
@@ -282,7 +282,7 @@ const EmployerBookings: React.FC = () => {
                     {canMessage && (
                       <button
                         onClick={() => router.push(`/conversations/inbox/${b.id}`)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-brand hover:bg-green-50 transition-colors"
                       >
                         <MessageCircleMore className="w-4 h-4" /> {b.status === 'PENDING' ? 'View Offer' : 'Message Provider'}
                       </button>
@@ -292,7 +292,7 @@ const EmployerBookings: React.FC = () => {
                         {canMessage && <div className="w-px bg-gray-100" />}
                         <button
                           onClick={() => openReview(b.id)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-[#145B10] hover:bg-green-50 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-[12px] font-semibold text-brand hover:bg-green-50 transition-colors"
                         >
                           <Star className="w-4 h-4" /> Leave Review
                         </button>
@@ -331,7 +331,7 @@ const EmptyState = ({ tab }: { tab: Tab }) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
       {icon}
-      <p className="text-[14px] font-bold text-[#1B2431] mt-1">{title}</p>
+      <p className="text-[14px] font-bold text-ink mt-1">{title}</p>
       <p className="text-[12px] text-[#616161] px-8 leading-relaxed">{sub}</p>
     </div>
   );

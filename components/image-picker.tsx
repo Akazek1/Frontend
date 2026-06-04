@@ -28,7 +28,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect
             <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Images</Label>
             <label
                 htmlFor="image-upload"
-                className="flex flex-col items-center justify-center w-full h-44 p-4 border-2 border-dashed border-gray-300 bg-white rounded-lg cursor-pointer hover:border-[#145B10] transition"
+                className="flex flex-col items-center justify-center w-full h-44 p-4 border-2 border-dashed border-gray-300 bg-white rounded-lg cursor-pointer hover:border-brand transition"
             >
                 {previews.length > 0 ? (
                     <div className="grid h-full w-full grid-cols-3 gap-2">
@@ -59,7 +59,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect
                                 d="M7 16l-4-4m0 0l4-4m-4 4h18"
                             />
                         </svg>
-                        <p className="mt-2 text-[#145B10]">Click to upload service photos</p>
+                        <p className="mt-2 text-brand">Click to upload service photos</p>
                     </div>
                 )}
                 <input

@@ -24,19 +24,19 @@ export const appActionCardClass =
   "rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-[0_8px_24px_rgba(27,36,49,0.05)] transition-colors hover:bg-[#FBFEFA]";
 
 export const appStatusCardClass =
-  "rounded-2xl border border-[#CFE8CD] bg-[#F1FCEF] p-4 text-[#145B10]";
+  "rounded-2xl border border-[#CFE8CD] bg-surface p-4 text-brand";
 
 export const appInputClass =
-  "h-12 rounded-xl border-[#DCE8D9] bg-white px-4 text-[14px] font-semibold text-[#1B2431] shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-[#145B10]/20";
+  "h-12 rounded-xl border-[#DCE8D9] bg-white px-4 text-[14px] font-semibold text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
 
 export const appTextareaClass =
-  "min-h-[120px] resize-none rounded-xl border-[#DCE8D9] bg-white px-4 py-3 text-[14px] font-semibold leading-6 text-[#1B2431] shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-[#145B10]/20";
+  "min-h-[120px] resize-none rounded-xl border-[#DCE8D9] bg-white px-4 py-3 text-[14px] font-semibold leading-6 text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
 
 export const appPrimaryButtonClass =
-  "h-12 rounded-xl bg-[#145B10] px-4 text-[14px] font-bold text-white shadow-sm transition-colors hover:bg-[#0F4D0C] disabled:cursor-not-allowed disabled:opacity-50";
+  "h-12 rounded-xl bg-brand px-4 text-[14px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50";
 
 export const appSecondaryButtonClass =
-  "h-12 rounded-xl border border-[#145B10]/30 bg-white px-4 text-[14px] font-bold text-[#145B10] shadow-sm transition-colors hover:bg-[#F1FCEF] disabled:cursor-not-allowed disabled:opacity-50";
+  "h-12 rounded-xl border border-brand/30 bg-white px-4 text-[14px] font-bold text-brand shadow-sm transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50";
 
 export const appDangerButtonClass =
   "h-12 rounded-xl border border-red-200 bg-red-50 px-4 text-[14px] font-bold text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50";
@@ -59,7 +59,7 @@ const appButtonVariantClass: Record<AppButtonVariant, string> = {
   secondary: appSecondaryButtonClass,
   danger: appDangerButtonClass,
   ghost:
-    "h-12 rounded-xl bg-transparent px-4 text-[14px] font-bold text-[#145B10] transition-colors hover:bg-[#F1FCEF] disabled:cursor-not-allowed disabled:opacity-50",
+    "h-12 rounded-xl bg-transparent px-4 text-[14px] font-bold text-brand transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50",
 };
 
 export function AppButton({
@@ -159,7 +159,7 @@ export function PageHeader({
   compact = false,
 }: PageHeaderProps) {
   const backButton = (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#1B2431] shadow-sm transition-colors hover:bg-[#E8F7E5]">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-sm transition-colors hover:bg-[#E8F7E5]">
       <ArrowLeft className="h-5 w-5" />
     </span>
   );
@@ -180,7 +180,7 @@ export function PageHeader({
           <h1
             className={cn(
               compact ? "text-[20px] leading-6" : "text-[24px] leading-7",
-              "font-black text-[#1B2431]",
+              "font-black text-ink",
               titleClassName,
             )}
           >
@@ -261,12 +261,12 @@ export function AppSectionHeader({
     <div className={cn("flex items-start justify-between gap-3 px-1", className)}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          {Icon ? <Icon className="h-4 w-4 text-[#145B10]" /> : null}
-          <h2 className="text-[13px] font-black uppercase tracking-wide text-[#1B2431]">
+          {Icon ? <Icon className="h-4 w-4 text-brand" /> : null}
+          <h2 className="text-[13px] font-black uppercase tracking-wide text-ink">
             {title}
           </h2>
           {typeof count === "number" ? (
-            <span className="rounded-full bg-[#E8F7E5] px-2 py-0.5 text-[11px] font-black text-[#145B10]">
+            <span className="rounded-full bg-[#E8F7E5] px-2 py-0.5 text-[11px] font-black text-brand">
               {count}
             </span>
           ) : null}
@@ -295,10 +295,10 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <AppCard className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", className)}>
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E8F7E5] text-[#145B10]">
+      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E8F7E5] text-brand">
         <Icon className="h-8 w-8" />
       </span>
-      <h3 className="mt-5 text-[16px] font-black text-[#1B2431]">{title}</h3>
+      <h3 className="mt-5 text-[16px] font-black text-ink">{title}</h3>
       <p className="mt-2 max-w-[280px] text-[13px] leading-6 text-[#5F6773]">{description}</p>
       {action ? <div className="mt-6 w-full">{action}</div> : null}
     </AppCard>
@@ -384,7 +384,7 @@ export function SheetHeader({
       <div className="flex min-w-0 items-start gap-3">
         {leading ? <div className="shrink-0">{leading}</div> : null}
         <div className="min-w-0">
-          <h2 className="truncate text-[17px] font-black text-[#1B2431]">{title}</h2>
+          <h2 className="truncate text-[17px] font-black text-ink">{title}</h2>
           {subtitle ? <p className="mt-1 text-[12px] leading-4 text-[#5F6773]">{subtitle}</p> : null}
         </div>
       </div>

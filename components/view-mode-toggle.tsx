@@ -27,12 +27,12 @@ const ViewModeToggle: React.FC = () => {
         onClick={() => viewMode !== "employer" && toggleViewMode()}
         className={`flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl transition-all duration-200 ${
           viewMode === "employer"
-            ? "bg-[#145B10] text-white shadow-md"
-            : "bg-white text-[#1B2431] border border-gray-200 shadow-sm"
+            ? "bg-brand text-white shadow-md"
+            : "bg-white text-ink border border-gray-200 shadow-sm"
         }`}
       >
         <div className={`p-1.5 rounded-lg flex-shrink-0 ${viewMode === "employer" ? "bg-white/20" : "bg-gray-100"}`}>
-          <Briefcase className={`w-4 h-4 ${viewMode === "employer" ? "text-white" : "text-[#145B10]"}`} />
+          <Briefcase className={`w-4 h-4 ${viewMode === "employer" ? "text-white" : "text-brand"}`} />
         </div>
         <div className="flex flex-col items-start min-w-0">
           <span className="text-xs sm:text-sm font-semibold leading-tight">{labels.employer.title}</span>
@@ -46,12 +46,12 @@ const ViewModeToggle: React.FC = () => {
         onClick={() => viewMode !== "provider" && toggleViewMode()}
         className={`flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl transition-all duration-200 ${
           viewMode === "provider"
-            ? "bg-[#145B10] text-white shadow-md"
-            : "bg-white text-[#1B2431] border border-gray-200 shadow-sm"
+            ? "bg-brand text-white shadow-md"
+            : "bg-white text-ink border border-gray-200 shadow-sm"
         }`}
       >
         <div className={`p-1.5 rounded-lg flex-shrink-0 ${viewMode === "provider" ? "bg-white/20" : "bg-gray-100"}`}>
-          <User className={`w-4 h-4 ${viewMode === "provider" ? "text-white" : "text-[#145B10]"}`} />
+          <User className={`w-4 h-4 ${viewMode === "provider" ? "text-white" : "text-brand"}`} />
         </div>
         <div className="flex flex-col items-start min-w-0">
           <span className="text-xs sm:text-sm font-semibold leading-tight">{labels.provider.title}</span>

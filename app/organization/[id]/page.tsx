@@ -54,7 +54,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   if (!value) return null
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-[#145B10]">{icon}</div>
+      <div className="mt-0.5 text-brand">{icon}</div>
       <div>
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
         <p className="text-sm text-gray-800">{value}</p>
@@ -97,7 +97,7 @@ export default function OrgProfilePage() {
   if (isLoading) {
     return (
       <div className="app-bg flex min-h-dvh items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#145B10] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -130,7 +130,7 @@ export default function OrgProfilePage() {
           isOwner ? (
             <button
               onClick={() => router.push(`/organization/${id}/edit`)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm transition-colors hover:bg-[#E8F7E5] hover:text-[#145B10]"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm transition-colors hover:bg-[#E8F7E5] hover:text-brand"
               aria-label="Edit organization"
             >
               <Edit2 className="w-5 h-5" />
@@ -142,7 +142,7 @@ export default function OrgProfilePage() {
       <main className="flex flex-col gap-4 px-4 pt-4">
         <Card className="overflow-hidden p-0">
           {/* Hero / logo area */}
-          <div className="bg-[#145B10] h-32 flex items-center justify-center relative">
+          <div className="bg-brand h-32 flex items-center justify-center relative">
             {org.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -152,7 +152,7 @@ export default function OrgProfilePage() {
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-white border-4 border-white flex items-center justify-center absolute -bottom-10">
-                <Building2 className="w-10 h-10 text-[#145B10]" />
+                <Building2 className="w-10 h-10 text-brand" />
               </div>
             )}
           </div>
@@ -162,10 +162,10 @@ export default function OrgProfilePage() {
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-xl font-bold text-gray-900">{org.name}</h1>
               {org.verified && (
-                <CheckCircle className="w-5 h-5 text-[#145B10]" />
+                <CheckCircle className="w-5 h-5 text-brand" />
               )}
             </div>
-            <span className="inline-block mt-1 text-xs bg-[#F1FCEF] text-[#145B10] font-medium px-3 py-1 rounded-full">
+            <span className="inline-block mt-1 text-xs bg-surface text-brand font-medium px-3 py-1 rounded-full">
               {ORG_TYPE_LABEL[org.type] ?? org.type}
             </span>
             {!org.verified && (
@@ -203,14 +203,14 @@ export default function OrgProfilePage() {
             <AppSectionHeader title="Owner actions" />
             <button
               onClick={() => router.push(`/organization/${id}/edit`)}
-              className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-[#145B10]")}
+              className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-brand")}
             >
               <Edit2 className="w-4 h-4" />
               Edit organization details
             </button>
             <button
               onClick={() => router.push(`/organization/${id}/workers`)}
-              className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-[#145B10]")}
+              className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-brand")}
             >
               <Users className="w-4 h-4" />
               Manage workers

@@ -119,7 +119,7 @@ export default function HandleProfilePage() {
   if (loading) {
     return (
       <div className="app-bg flex min-h-screen items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+        <Loader2 className="w-6 h-6 animate-spin text-brand" />
       </div>
     );
   }

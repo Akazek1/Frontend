@@ -79,7 +79,7 @@ export function UserProfileHeader({
           className="p-1 -ml-1"
           aria-label="Go back"
         >
-          <ArrowLeft className="w-6 h-6 text-[#1B2431]" />
+          <ArrowLeft className="w-6 h-6 text-ink" />
         </button>
         <div className="flex items-center gap-2">
           <button
@@ -88,12 +88,12 @@ export function UserProfileHeader({
             className="p-2 rounded-full hover:bg-gray-100"
             aria-label="Share profile"
           >
-            <Upload className="w-5 h-5 text-[#1B2431]" />
+            <Upload className="w-5 h-5 text-ink" />
           </button>
           {isOwner && (
             <Link
               href="/profile"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#145B10] text-[#145B10] text-[13px] font-semibold hover:bg-[#F1FCEF] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand text-brand text-[13px] font-semibold hover:bg-surface transition-colors"
               aria-label="Edit profile"
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -119,13 +119,13 @@ export function UserProfileHeader({
 
         <div className="flex-1 min-w-0 pt-1">
           <div className="flex items-center gap-1.5">
-            <h1 className="text-xl font-bold text-[#1B2431] truncate">{name}</h1>
+            <h1 className="text-xl font-bold text-ink truncate">{name}</h1>
             {backgroundChecked || idVerified ? <VerifiedBadge size={20} /> : null}
           </div>
           <p className="text-sm text-gray-500 mb-2">{handle.startsWith("@") ? handle : `@${handle}`}</p>
 
           {availableToday ? (
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-[#E8F1E5] rounded-full text-sm font-medium text-[#145B10]">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-[#E8F1E5] rounded-full text-sm font-medium text-brand">
               <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
               Available Today
             </span>
@@ -134,7 +134,7 @@ export function UserProfileHeader({
       </div>
 
       {/* Meta rows */}
-      <div className="mt-4 space-y-2.5 text-sm text-[#1B2431]">
+      <div className="mt-4 space-y-2.5 text-sm text-ink">
         {location ? (
           <div className="flex items-center gap-3">
             <MapPin className="w-5 h-5 text-gray-500 flex-shrink-0" />
@@ -159,13 +159,13 @@ export function UserProfileHeader({
       {idVerified || backgroundChecked ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {idVerified ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-[#145B10]">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
               <ShieldCheck className="w-4 h-4" />
               ID Verified
             </span>
           ) : null}
           {backgroundChecked ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-[#145B10]">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
               <ShieldCheck className="w-4 h-4" />
               Background Checked
             </span>

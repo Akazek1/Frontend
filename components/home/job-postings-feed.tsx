@@ -117,16 +117,16 @@ const JobPostingsFeed: React.FC = () => {
 
   if (loading) return (
     <div className="flex justify-center py-10">
-      <Loader2 className="w-5 h-5 animate-spin text-[#145B10]" />
+      <Loader2 className="w-5 h-5 animate-spin text-brand" />
     </div>
   );
 
   if (jobs.length === 0) return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <div className="w-14 h-14 rounded-2xl bg-[#145B10]/10 flex items-center justify-center">
-        <Briefcase className="w-7 h-7 text-[#145B10]" />
+      <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center">
+        <Briefcase className="w-7 h-7 text-brand" />
       </div>
-      <p className="text-[14px] font-bold text-[#1B2431]">No job postings yet</p>
+      <p className="text-[14px] font-bold text-ink">No job postings yet</p>
       <p className="text-[12px] text-[#616161] text-center px-8 leading-relaxed">
         Employers haven&apos;t posted any jobs yet. Check back soon.
       </p>
@@ -137,8 +137,8 @@ const JobPostingsFeed: React.FC = () => {
     <div className="space-y-3 pb-8">
       {/* Section header */}
       <div className="flex items-center justify-between mt-1">
-        <h2 className="text-[16px] font-bold text-[#1B2431]">Jobs Near You</h2>
-        <button onClick={() => router.push("/work")} className="text-[12px] font-semibold text-[#145B10]">
+        <h2 className="text-[16px] font-bold text-ink">Jobs Near You</h2>
+        <button onClick={() => router.push("/work")} className="text-[12px] font-semibold text-brand">
           See all
         </button>
       </div>

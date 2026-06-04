@@ -20,7 +20,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
 }) => {
   return (
     <div className={`flex justify-between items-center ${className}`}>
-      <h2 className="text-lg leading-5 font-medium text-[#1B2431]">{title}</h2>
+      <h2 className="text-lg leading-5 font-medium text-ink">{title}</h2>
       {linkHref && (
         <Link href={linkHref} className={linkClassName}>
           {linkText} {icon && <>{icon}</>}

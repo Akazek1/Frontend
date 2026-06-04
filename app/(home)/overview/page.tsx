@@ -106,7 +106,7 @@ const HomeContent = () => {
                   ? "Search jobs by title, category..."
                   : "Search by provider name, service, category..."
               }
-              className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-white pl-11 pr-10 text-[14px] font-medium text-[#1B2431] shadow-sm outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:ring-2 focus:ring-[#145B10]/20"
+              className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-white pl-11 pr-10 text-[14px] font-medium text-ink shadow-sm outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
             {(searchQuery || showPanel) && (
               <button
@@ -122,11 +122,11 @@ const HomeContent = () => {
           <button
             type="button"
             onClick={handleFilterClick}
-            className="flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#DDE3DD] bg-white px-4 shadow-sm transition active:scale-95 hover:border-[#145B10] hover:bg-[#F1F8F1]"
+            className="flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#DDE3DD] bg-white px-4 shadow-sm transition active:scale-95 hover:border-brand hover:bg-[#F1F8F1]"
             aria-label="Open filters"
           >
-            <SlidersHorizontal className="h-[18px] w-[18px] text-[#145B10]" />
-            <span className="text-[13px] font-bold text-[#1B2431]">Filter</span>
+            <SlidersHorizontal className="h-[18px] w-[18px] text-brand" />
+            <span className="text-[13px] font-bold text-ink">Filter</span>
           </button>
         </div>
       </div>

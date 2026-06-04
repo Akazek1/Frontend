@@ -107,7 +107,7 @@ export default function JobOwnerDetail({
     job.status === "AWARDED" ? "Filled" : job.status[0] + job.status.slice(1).toLowerCase();
   const statusClass =
     job.status === "OPEN"
-      ? "bg-[#E7F4E2] text-[#145B10]"
+      ? "bg-[#E7F4E2] text-brand"
       : job.status === "AWARDED"
         ? "bg-[#EDE9FE] text-[#6D28D9]"
         : "bg-gray-100 text-gray-500";
@@ -170,7 +170,7 @@ export default function JobOwnerDetail({
               type="button"
               onClick={() => router.back()}
               aria-label="Back"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1B2431]"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink"
             >
               <ChevronLeftIcon />
             </button>
@@ -179,14 +179,14 @@ export default function JobOwnerDetail({
           <div className="flex shrink-0 items-center gap-1">
             <Link
               href={`/post-job?edit=${job.id}`}
-              className="text-[13px] font-black text-[#145B10]"
+              className="text-[13px] font-black text-brand"
             >
               Edit Post
             </Link>
             <button
               type="button"
               aria-label="More"
-              className="flex h-10 w-10 items-center justify-center text-[#1B2431]"
+              className="flex h-10 w-10 items-center justify-center text-ink"
             >
               <span aria-hidden className="text-[18px] leading-none">⋮</span>
             </button>
@@ -196,7 +196,7 @@ export default function JobOwnerDetail({
           <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold", statusClass)}>
             {statusLabel}
           </span>
-          <span className="font-bold text-[#1B2431]">{counts.all} Applicants</span>
+          <span className="font-bold text-ink">{counts.all} Applicants</span>
           <span className="text-[#9CA3AF]">•</span>
           <span>Posted {formatRelative(job.createdAt)}</span>
         </div>
@@ -206,14 +206,14 @@ export default function JobOwnerDetail({
         {/* ── Job Details Card ───────────────────────────────────── */}
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="inline-flex items-center gap-2 text-[14px] font-black text-[#145B10]">
+            <h2 className="inline-flex items-center gap-2 text-[14px] font-black text-brand">
               <ClipboardList className="h-4 w-4" />
               Job Details
             </h2>
             <div className="flex items-center gap-2">
               <Link
                 href={`/post-job?edit=${job.id}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#145B10]/30 bg-white px-3 text-[12px] font-black text-[#145B10]"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand/30 bg-white px-3 text-[12px] font-black text-brand"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit Post
@@ -233,7 +233,7 @@ export default function JobOwnerDetail({
           <div className="mt-3 border-t border-gray-100 pt-3">
             <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
               {/* Left column — facts */}
-              <div className="space-y-3 text-[13px] text-[#1B2431]">
+              <div className="space-y-3 text-[13px] text-ink">
                 <FactRow icon={<MapPin className="h-4 w-4 text-[#667085]" />}>
                   {formatLocation(job)}
                 </FactRow>
@@ -247,7 +247,7 @@ export default function JobOwnerDetail({
 
               {/* Right column — description */}
               <div className="md:border-l md:border-gray-100 md:pl-4">
-                <h3 className="text-[13px] font-black text-[#1B2431]">Description</h3>
+                <h3 className="text-[13px] font-black text-ink">Description</h3>
                 {description ? (
                   <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-[#475467]">
                     {description}
@@ -263,10 +263,10 @@ export default function JobOwnerDetail({
         {/* ── Stats Row ──────────────────────────────────────────── */}
         <section className="grid grid-cols-4 rounded-2xl border border-gray-100 bg-white py-3 shadow-sm">
           <StatTile
-            icon={<User className="h-5 w-5 text-[#145B10]" />}
+            icon={<User className="h-5 w-5 text-brand" />}
             value={counts.all}
             label="Applicants"
-            color="text-[#145B10]"
+            color="text-brand"
           />
           <StatTile
             icon={<Eye className="h-5 w-5 text-[#1155FF]" />}
@@ -278,13 +278,13 @@ export default function JobOwnerDetail({
             icon={<CheckCircle2 className="h-5 w-5 text-[#1155FF]" />}
             value={counts.hired}
             label="Hired"
-            color="text-[#1B2431]"
+            color="text-ink"
           />
           <StatTile
             icon={<XCircleIcon />}
             value={counts.rejected}
             label="Rejected"
-            color="text-[#1B2431]"
+            color="text-ink"
           />
         </section>
 
@@ -322,14 +322,14 @@ export default function JobOwnerDetail({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search applicants"
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-[#1B2431] outline-none placeholder:text-[#9CA3AF]"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9CA3AF]"
             />
           </label>
           <div className="relative">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
-              className="h-11 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-bold text-[#1B2431]"
+              className="h-11 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-bold text-ink"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -359,10 +359,10 @@ export default function JobOwnerDetail({
         {/* ── Safe & Secure footer ───────────────────────────────── */}
         <section className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E7F4E2]">
-            <ShieldCheck className="h-5 w-5 text-[#145B10]" />
+            <ShieldCheck className="h-5 w-5 text-brand" />
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-black text-[#1B2431]">Safe &amp; Secure</p>
+            <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
             <p className="mt-0.5 text-[12px] text-[#475467]">
               We review all applications and keep your information protected.
             </p>
@@ -380,7 +380,7 @@ export default function JobOwnerDetail({
             <div className="space-y-4">
               <p className="text-[13px] text-[#475467]">
                 This sends an official offer to{" "}
-                <span className="font-semibold text-[#1B2431]">
+                <span className="font-semibold text-ink">
                   {confirmHire.worker?.firstName} {confirmHire.worker?.lastName}
                 </span>
                 . The job is only confirmed after they accept.
@@ -389,7 +389,7 @@ export default function JobOwnerDetail({
                 <Button variant="outline" onClick={() => setConfirmHire(null)}>
                   Cancel
                 </Button>
-                <Button onClick={handleHire} className="bg-[#145B10] hover:bg-[#0e4209]">
+                <Button onClick={handleHire} className="bg-brand hover:bg-[#0e4209]">
                   Send Offer
                 </Button>
               </div>
@@ -433,7 +433,7 @@ export default function JobOwnerDetail({
 
 function FactRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 text-[13px] text-[#1B2431]">
+    <p className="flex items-center gap-2 text-[13px] text-ink">
       <span className="shrink-0">{icon}</span>
       <span className="min-w-0 truncate">{children}</span>
     </p>
@@ -455,7 +455,7 @@ function StatTile({
     <div className="flex flex-col items-center gap-1 px-1">
       {icon}
       <p className={cn("text-[18px] font-black", color)}>{value}</p>
-      <p className="text-[11px] font-bold text-[#1B2431]">{label}</p>
+      <p className="text-[11px] font-bold text-ink">{label}</p>
     </div>
   );
 }
@@ -473,14 +473,14 @@ function FilterTab({
   onClick: () => void;
   tone: "green" | "neutral";
 }) {
-  const activeClass = tone === "green" ? "bg-[#145B10] text-white" : "bg-[#1B2431] text-white";
+  const activeClass = tone === "green" ? "bg-brand text-white" : "bg-ink text-white";
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-[12px] font-bold transition-colors",
-        active ? `${activeClass} border-transparent` : "border-gray-200 bg-white text-[#1B2431]",
+        active ? `${activeClass} border-transparent` : "border-gray-200 bg-white text-ink",
       )}
     >
       {label} ({count})
@@ -513,13 +513,13 @@ function ApplicantCard({
         <Avatar person={w} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="truncate text-[14px] font-black text-[#1B2431]">{name}</h3>
-            {w?.isVerified && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#145B10]" />}
+            <h3 className="truncate text-[14px] font-black text-ink">{name}</h3>
+            {w?.isVerified && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-brand" />}
           </div>
           {(rating > 0 || jobs > 0) && (
             <p className="mt-0.5 flex items-center gap-1 text-[12px] text-[#475467]">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold text-[#1B2431]">{rating ? rating.toFixed(1) : "—"}</span>
+              <span className="font-bold text-ink">{rating ? rating.toFixed(1) : "—"}</span>
               {jobs > 0 && <span className="text-[#667085]">({jobs} jobs)</span>}
             </p>
           )}
@@ -538,7 +538,7 @@ function ApplicantCard({
         <div className="flex w-[112px] shrink-0 flex-col gap-1.5">
           <Link
             href={`/conversations`}
-            className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-[#145B10]/30 bg-white text-[12px] font-black text-[#145B10]"
+            className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
           >
             <MessageCircleMore className="h-3.5 w-3.5" />
             Message
@@ -549,7 +549,7 @@ function ApplicantCard({
                 type="button"
                 disabled={isActing}
                 onClick={onHire}
-                className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-[#145B10] text-[12px] font-black text-white disabled:opacity-60"
+                className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[12px] font-black text-white disabled:opacity-60"
               >
                 {isActing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Briefcase className="h-3.5 w-3.5" />}
                 Hire
@@ -569,7 +569,7 @@ function ApplicantCard({
               className={cn(
                 "flex min-h-9 items-center justify-center gap-1.5 rounded-lg border text-[12px] font-black",
                 status === "ACCEPTED"
-                  ? "border-[#145B10]/30 bg-[#E7F4E2] text-[#145B10]"
+                  ? "border-brand/30 bg-[#E7F4E2] text-brand"
                   : "border-gray-200 bg-gray-50 text-gray-500",
               )}
             >
@@ -596,7 +596,7 @@ function Avatar({
   }
   const initial = (person?.firstName?.[0] || "") + (person?.lastName?.[0] || "");
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[15px] font-black text-[#1B2431]">
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[15px] font-black text-ink">
       {initial.toUpperCase() || "A"}
     </span>
   );
@@ -612,7 +612,7 @@ function EmptyState({ statusFilter }: { statusFilter: StatusFilter }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center">
       <User className="mx-auto h-8 w-8 text-gray-300" />
-      <p className="mt-3 text-[14px] font-black text-[#1B2431]">{text}</p>
+      <p className="mt-3 text-[14px] font-black text-ink">{text}</p>
     </div>
   );
 }

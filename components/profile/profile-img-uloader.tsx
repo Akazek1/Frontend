@@ -252,11 +252,11 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex items-center justify-center gap-2">
-                <h2 className="text-xl font-bold text-[#1B2431] leading-[120%]">
+                <h2 className="text-xl font-bold text-ink leading-[120%]">
                     {user?.firstName} {user?.lastName}
                 </h2>
                 {user?.isProfileComplete && (
-                    <Verified className="w-5 h-5 fill-[#145B10] stroke-white" />
+                    <Verified className="w-5 h-5 fill-brand stroke-white" />
                 )}
             </div>
             <p className="text-sm text-center text-[#212121] font-bold leading-[140%]">

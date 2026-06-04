@@ -389,7 +389,7 @@ const AddressBook = () => {
                     <div className="flex">
                       <button
                         type="button"
-                        className="rounded-full p-2 hover:bg-[#F1FCEF]"
+                        className="rounded-full p-2 hover:bg-surface"
                         onClick={() => handleEdit(address)}
                         disabled={isLoading}
                         aria-label="Edit address"

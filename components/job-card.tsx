@@ -71,12 +71,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
       className="group relative bg-white rounded-3xl border border-gray-100 p-5 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_10px_25px_-5px_rgba(20,91,16,0.1)] transition-all duration-300 cursor-pointer overflow-hidden"
     >
       {/* Visual Accent */}
-      <div className="absolute top-0 left-0 w-1.5 h-full bg-[#145B10] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute top-0 left-0 w-1.5 h-full bg-brand opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="bg-[#F1FCEF] text-[#145B10] text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+            <span className="bg-surface text-brand text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
               {job.category.name}
             </span>
             <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
@@ -84,13 +84,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
               {formatDistanceToNow(new Date(job.createdAt))} ago
             </div>
           </div>
-          <h3 className="text-[17px] font-extrabold text-[#1B2431] leading-tight group-hover:text-[#145B10] transition-colors">{job.title}</h3>
+          <h3 className="text-[17px] font-extrabold text-ink leading-tight group-hover:text-brand transition-colors">{job.title}</h3>
         </div>
         
         <div className="relative flex-shrink-0">
           <Avatar className="h-12 w-12 border-2 border-white shadow-sm ring-1 ring-gray-100">
             <AvatarImage src={job.employer.profilePicture} className="object-cover" />
-            <AvatarFallback className="bg-[#145B10]/5 text-[14px] font-bold text-[#145B10]">
+            <AvatarFallback className="bg-brand/5 text-[14px] font-bold text-brand">
               {job.employer.firstName[0]}{job.employer.lastName[0]}
             </AvatarFallback>
           </Avatar>
@@ -105,19 +105,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="bg-gray-50/50 rounded-2xl p-3 flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
-            <DollarSign className="w-3 h-3 text-[#145B10]" />
+            <DollarSign className="w-3 h-3 text-brand" />
             Budget
           </div>
-          <span className="text-[13px] font-black text-[#1B2431]">
+          <span className="text-[13px] font-black text-ink">
             {job.budgetMin ? `${job.budgetMin.toLocaleString()} - ${job.budgetMax?.toLocaleString()} RWF` : "Negotiable"}
           </span>
         </div>
         <div className="bg-gray-50/50 rounded-2xl p-3 flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
-            <MapPin className="w-3 h-3 text-[#145B10]" />
+            <MapPin className="w-3 h-3 text-brand" />
             Location
           </div>
-          <span className="text-[13px] font-bold text-[#1B2431] truncate">{job.address?.city || "Kigali"}</span>
+          <span className="text-[13px] font-bold text-ink truncate">{job.address?.city || "Kigali"}</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
 
       <div className="mt-5 flex items-center justify-between gap-3 pt-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="text-[11px] font-bold text-[#1B2431]">
+          <div className="text-[11px] font-bold text-ink">
             {employerDisplayName}
           </div>
           <span className="h-1 w-1 rounded-full bg-gray-300" />
@@ -135,7 +135,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
         </div>
 
         {isOwner ? (
-          <Button variant="ghost" size="sm" className="h-9 rounded-xl text-[12px] font-bold text-[#145B10] hover:bg-[#F1FCEF] group/btn">
+          <Button variant="ghost" size="sm" className="h-9 rounded-xl text-[12px] font-bold text-brand hover:bg-surface group/btn">
             Manage ({job._count?.applications || 0}) 
             <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
           </Button>
@@ -147,7 +147,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
             className={`h-9 px-5 rounded-xl text-[12px] font-bold shadow-sm transition-all ${
                 hasApplied 
                   ? "bg-gray-100 text-gray-400" 
-                  : "bg-[#145B10] text-white hover:bg-[#0F4D0C] hover:shadow-lg active:scale-95"
+                  : "bg-brand text-white hover:bg-brand-dark hover:shadow-lg active:scale-95"
             }`}
           >
             {applying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

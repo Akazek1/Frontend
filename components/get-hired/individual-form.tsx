@@ -233,7 +233,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                   setData((prev) => ({ ...prev, workerId: value }))
                 }}
               >
-                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand w-full">
                   <SelectValue placeholder="Select Worker" />
                   <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
                 </SelectTrigger>
@@ -262,7 +262,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           value={initialData.title}
           onChange={(e) => setData((prev) => ({ ...prev, title: e.target.value }))}
           placeholder="e.g. Deep home cleaning"
-          className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10]"
+          className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand"
         />
       </div>
 
@@ -275,7 +275,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
             setData((prev) => ({ ...prev, category: value, title: category?.name || prev.title }))
           }}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand w-full">
             <SelectValue placeholder="Select Service" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
           </SelectTrigger>
@@ -308,7 +308,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           }
           onValueChange={(value) => setData((prev) => ({ ...prev, price: Number.parseInt(value) }))}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-brand">
             <SelectValue placeholder="Select Price" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
           </SelectTrigger>
@@ -332,7 +332,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           value={initialData.areaServed}
           onValueChange={(value) => setData((prev) => ({ ...prev, areaServed: value }))}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-brand">
             <SelectValue placeholder="Area of service" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
           </SelectTrigger>
@@ -363,7 +363,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           onChange={(e) => setData((prev) => ({ ...prev, scopeOfService: e.target.value }))}
           placeholder="Describe what is included, what you bring, and what kind of home or client this service is best for."
           rows={5}
-          className="bg-white text-sm font-medium rounded-lg px-5 py-4 border-none focus:ring-2 focus:ring-[#145B10]"
+          className="bg-white text-sm font-medium rounded-lg px-5 py-4 border-none focus:ring-2 focus:ring-brand"
         />
       </div>
 
@@ -371,7 +371,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         <Button
           size="lg"
           type="submit"
-          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-[#0F4D0C] transition-colors"
+          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-brand-dark transition-colors"
           disabled={submitting}
         >
           {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : (
@@ -842,7 +842,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
               Edit Details
             </Button>
             <Button
-              className="w-full bg-[#167021] hover:bg-[#0F4D0C]"
+              className="w-full bg-[#167021] hover:bg-brand-dark"
               onClick={saveServiceDraft}
               disabled={submitting}
             >
@@ -889,7 +889,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEditClick(service)}
-                    className="flex-1 text-[#145B10] hover:text-[#20471e] border-[#20471e] border hover:bg-red-50 z-10"
+                    className="flex-1 text-brand hover:text-[#20471e] border-[#20471e] border hover:bg-red-50 z-10"
                   >
                     <Pencil className="w-4 h-4" />
                     Edit

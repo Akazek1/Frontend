@@ -135,7 +135,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             animate={{ opacity: 1 }}
             className="flex justify-center py-8"
           >
-            <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+            <Loader2 className="w-6 h-6 animate-spin text-brand" />
           </motion.div>
         ) : error ? (
           <motion.div
@@ -200,7 +200,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
               onClose={() => { setHireModal(null); setNotes(""); }}
               className="border-b-0 pb-2"
               leading={
-                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-[#145B10]">
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
                   Request
                 </span>
               }

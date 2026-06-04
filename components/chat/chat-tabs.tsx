@@ -11,7 +11,7 @@ interface ChatTabsProps {
 }
 
 const triggerClass =
-  "group flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-[#145B10] data-[state=active]:text-white data-[state=inactive]:text-gray-500";
+  "group flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-brand data-[state=active]:text-white data-[state=inactive]:text-gray-500";
 
 const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
   const router = useRouter();
@@ -34,7 +34,7 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
           <TabsTrigger value="All" className={triggerClass}>
             All
             {counts && counts.all > 0 ? (
-              <span className="min-w-[18px] rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 group-data-[state=active]:bg-white group-data-[state=active]:text-[#145B10]">
+              <span className="min-w-[18px] rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 group-data-[state=active]:bg-white group-data-[state=active]:text-brand">
                 {counts.all}
               </span>
             ) : null}

@@ -112,10 +112,10 @@ export function WizardStep2DetailsPreview({
       }}
     >
       <header>
-        <p className="text-[12px] font-black uppercase tracking-wide text-[#145B10]">
+        <p className="text-[12px] font-black uppercase tracking-wide text-brand">
           Step 2 of 2
         </p>
-        <h2 className="mt-1 text-[22px] font-black text-[#1B2431]">
+        <h2 className="mt-1 text-[22px] font-black text-ink">
           Details &amp; Preview
         </h2>
         <p className="mt-1 text-[13px] text-[#475467]">
@@ -166,7 +166,7 @@ export function WizardStep2DetailsPreview({
         aria-label="Live preview of your service card"
         className="flex flex-col gap-2 p-3"
       >
-        <p className="text-[13px] font-black text-[#1B2431]">
+        <p className="text-[13px] font-black text-ink">
           Preview of Your Service Card
         </p>
         {(() => {

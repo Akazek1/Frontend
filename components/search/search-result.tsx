@@ -472,7 +472,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               key={filter.key}
               type="button"
               onClick={filter.onRemove}
-              className="flex min-h-8 items-center gap-1 rounded-full bg-[#E8F5E9] px-3 text-[12px] font-semibold text-[#145B10]"
+              className="flex min-h-8 items-center gap-1 rounded-full bg-[#E8F5E9] px-3 text-[12px] font-semibold text-brand"
             >
               {filter.label}
               <X className="h-3.5 w-3.5" />
@@ -483,7 +483,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
       {isLoading && (
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-6 text-sm text-[#687268]">
-          <Loader2 className="h-4 w-4 animate-spin text-[#145B10]" />
+          <Loader2 className="h-4 w-4 animate-spin text-brand" />
           {mode === "provider" ? "Finding matching jobs..." : "Finding matching services..."}
         </div>
       )}
@@ -497,7 +497,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {!isLoading && !error && (hasSearchInput || hasActiveFilters) && hasResults && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-[16px] font-bold text-[#1B2431]">
+            <h2 className="text-[16px] font-bold text-ink">
               {mode === "provider" ? "Matching Jobs" : "Matching Services"}
             </h2>
             <p className="text-[12px] text-[#687268]">
@@ -556,12 +556,12 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         <div className="rounded-2xl border border-dashed border-[#DDE3DD] bg-white px-5 py-7 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#F1F6F1]">
             {mode === "provider" ? (
-              <Briefcase className="h-5 w-5 text-[#145B10]" />
+              <Briefcase className="h-5 w-5 text-brand" />
             ) : (
-              <Search className="h-5 w-5 text-[#145B10]" />
+              <Search className="h-5 w-5 text-brand" />
             )}
           </div>
-          <h3 className="text-[15px] font-bold text-[#1B2431]">
+          <h3 className="text-[15px] font-bold text-ink">
             {mode === "provider" ? "No jobs found" : "No services found"}
           </h3>
           <p className="mx-auto mt-1 max-w-[260px] text-[13px] leading-5 text-[#687268]">
@@ -574,13 +574,13 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
       {showDiscovery && (
         <div className="space-y-3">
-          <h2 className="text-[16px] font-bold leading-5 text-[#1B2431]">Popular Searches</h2>
+          <h2 className="text-[16px] font-bold leading-5 text-ink">Popular Searches</h2>
           <div className="flex flex-wrap items-center gap-2">
             {popularSearches.map((search, index) => (
               <button
                 key={index}
                 type="button"
-                className="flex min-h-9 items-center rounded-full border border-[#E1E8E1] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#1B2431] transition hover:border-[#145B10] hover:bg-[#F1F8F1] hover:text-[#145B10]"
+                className="flex min-h-9 items-center rounded-full border border-[#E1E8E1] bg-white px-3 py-1.5 text-[13px] font-semibold text-ink transition hover:border-brand hover:bg-[#F1F8F1] hover:text-brand"
                 onClick={() => onQueryChange(search)}
               >
                 {search}
@@ -600,7 +600,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               onClose={closeHireModal}
               className="border-b-0 pb-2"
               leading={
-                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-[#145B10]">
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
                   Request
                 </span>
               }
@@ -792,7 +792,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
 const FilterGroup = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="space-y-2">
-    <h3 className="text-[13px] font-bold text-[#1B2431]">{title}</h3>
+    <h3 className="text-[13px] font-bold text-ink">{title}</h3>
     {children}
   </div>
 );
@@ -832,8 +832,8 @@ const OptionButton = ({
     onClick={onClick}
     className={`flex min-h-10 items-center justify-center gap-1 rounded-2xl border px-3 text-[12px] font-bold transition ${
       selected
-        ? "border-[#145B10] bg-[#E8F5E9] text-[#145B10]"
-        : "border-gray-200 bg-white text-[#4B554B] hover:border-[#145B10]/50"
+        ? "border-brand bg-[#E8F5E9] text-brand"
+        : "border-gray-200 bg-white text-[#4B554B] hover:border-brand/50"
     }`}
   >
     {selected && <Check className="h-3.5 w-3.5" />}
@@ -857,7 +857,7 @@ const NumberInput = ({
       min={0}
       value={value || ""}
       onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
-      className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-[#1B2431] outline-none focus:border-[#145B10] focus:ring-2 focus:ring-[#145B10]/20"
+      className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
       placeholder="RWF"
     />
   </label>

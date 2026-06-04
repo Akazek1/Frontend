@@ -95,13 +95,13 @@ const PopulerService = () => {
         linkHref="/service?category=all"
         linkText="View all"
         linkClassName="text-[12px] flex items-center gap-2"
-        icon={<Icons.NextIcon className="w-3 h-3 fill-[#1B2431]" />}
+        icon={<Icons.NextIcon className="w-3 h-3 fill-ink" />}
       />
 
       {/* Loading State */}
       {isLoading && (
         <div className="w-full flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+          <Loader2 className="w-6 h-6 animate-spin text-brand" />
         </div>
       )}
 

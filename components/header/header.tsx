@@ -46,8 +46,8 @@ const Header = () => {
 
         {/* Location label — static display only */}
         <div className="flex items-center gap-1.5 bg-white/70 border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
-          <MapPin className="w-3.5 h-3.5 text-[#145B10] flex-shrink-0" />
-          <span className="text-[13px] font-semibold text-[#1B2431]">Kigali, Rwanda</span>
+          <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
+          <span className="text-[13px] font-semibold text-ink">Kigali, Rwanda</span>
         </div>
 
         {/* Actions */}
@@ -61,14 +61,14 @@ const Header = () => {
                 aria-label="Change language"
                 className="flex items-center gap-1 bg-white/70 border border-gray-200 rounded-full px-2.5 py-1.5 shadow-sm"
               >
-                <Globe className="w-3.5 h-3.5 text-[#145B10]" />
-                <span className="text-[12px] font-semibold text-[#1B2431]">{selectedLanguage}</span>
+                <Globe className="w-3.5 h-3.5 text-brand" />
+                <span className="text-[12px] font-semibold text-ink">{selectedLanguage}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-3 shadow-xl">
               <div className="space-y-3">
                 <div>
-                  <p className="text-[14px] font-bold text-[#1B2431]">Choose language</p>
+                  <p className="text-[14px] font-bold text-ink">Choose language</p>
                   <p className="text-[11px] text-[#757575]">Preview only. Translation is not connected yet.</p>
                 </div>
                 <div className="space-y-1">
@@ -80,19 +80,19 @@ const Header = () => {
                         type="button"
                         onClick={() => setSelectedLanguage(language.code)}
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                          active ? "bg-[#F1FCEF] ring-1 ring-[#145B10]/20" : "hover:bg-gray-50"
+                          active ? "bg-surface ring-1 ring-brand/20" : "hover:bg-gray-50"
                         }`}
                       >
                         <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold ${
-                          active ? "bg-[#145B10] text-white" : "bg-gray-100 text-[#1B2431]"
+                          active ? "bg-brand text-white" : "bg-gray-100 text-ink"
                         }`}>
                           {language.code}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] font-semibold text-[#1B2431]">{language.name}</span>
+                          <span className="block text-[13px] font-semibold text-ink">{language.name}</span>
                           <span className="block text-[11px] text-[#757575]">{language.hint}</span>
                         </span>
-                        {active && <Check className="h-4 w-4 text-[#145B10]" />}
+                        {active && <Check className="h-4 w-4 text-brand" />}
                       </button>
                     );
                   })}
@@ -109,7 +109,7 @@ const Header = () => {
                 aria-label="Open notifications"
                 className="relative bg-white/70 border border-gray-200 rounded-full p-2 shadow-sm"
               >
-                <Bell className="w-4 h-4 text-[#1B2431]" />
+                <Bell className="w-4 h-4 text-ink" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white">
                     {unreadCount > 9 ? "9+" : unreadCount}
@@ -120,7 +120,7 @@ const Header = () => {
             <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[320px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">
               <div className="border-b border-gray-100 px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[14px] font-bold text-[#1B2431]">Notifications</p>
+                  <p className="text-[14px] font-bold text-ink">Notifications</p>
                   {unreadCount > 0 && (
                     <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">{unreadCount} new</span>
                   )}
@@ -142,7 +142,7 @@ const Header = () => {
               </div>
               <Link
                 href="/more/notifications/history"
-                className="block w-full border-t border-gray-100 py-3 text-center text-[12px] font-bold text-[#145B10] hover:bg-[#F1FCEF]"
+                className="block w-full border-t border-gray-100 py-3 text-center text-[12px] font-bold text-brand hover:bg-surface"
               >
                 View all notifications
               </Link>
@@ -157,10 +157,10 @@ const Header = () => {
                 alt="Profile"
                 width={36}
                 height={36}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#145B10]/30"
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-brand/30"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-[#145B10] text-white flex items-center justify-center ring-2 ring-[#145B10]/30">
+              <div className="w-9 h-9 rounded-full bg-brand text-white flex items-center justify-center ring-2 ring-brand/30">
                 <User className="w-4 h-4" />
               </div>
             )}
@@ -170,7 +170,7 @@ const Header = () => {
 
       {/* Greeting */}
       <div>
-        <h1 className="text-[20px] font-bold text-[#1B2431] leading-tight">
+        <h1 className="text-[20px] font-bold text-ink leading-tight">
           {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
         </h1>
         <p className="text-[13px] text-[#757575] mt-0.5">Find jobs, earn and grow with Akazek.</p>

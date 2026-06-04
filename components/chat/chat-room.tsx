@@ -385,7 +385,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   if (isLoading) {
     return (
       <div className="app-bg flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#145B10]" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
@@ -412,7 +412,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="relative">
           <Avatar className="h-10 w-10 border border-gray-100">
             <AvatarImage src={partner?.profilePicture} className="object-cover" />
-            <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
+            <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
               {partner?.firstName?.[0] || "U"}{partner?.lastName?.[0] || "P"}
             </AvatarFallback>
           </Avatar>
@@ -421,7 +421,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-sm font-bold text-[#1B2431]">{partnerName}</h1>
+            <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
             {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Online</span>}
           </div>
           <p className="truncate text-[11px] text-[#757575] font-medium">{contextTitle}</p>
@@ -459,8 +459,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           aria-expanded={isDrawerOpen}
           className={`absolute right-0 top-[72px] z-30 flex h-16 w-12 flex-col items-center justify-center gap-1 rounded-l-full rounded-r-none border border-r-0 shadow-[-6px_6px_18px_rgba(20,91,16,0.12)] transition-all hover:-translate-x-0.5 active:scale-95 ${
             isDrawerOpen
-              ? "border-[#145B10] bg-[#145B10] text-white"
-              : "border-[#145B10]/15 bg-white/95 text-[#145B10] backdrop-blur"
+              ? "border-brand bg-brand text-white"
+              : "border-brand/15 bg-white/95 text-brand backdrop-blur"
           }`}
         >
           <ClipboardList className="h-[18px] w-[18px]" strokeWidth={2.35} />
@@ -497,7 +497,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             onClick={handleApproveRequest}
             disabled={isUpdatingStatus}
             size="sm"
-            className="h-8 rounded-full bg-[#145B10] px-4 text-[11px] font-bold text-white hover:bg-[#0F4D0C]"
+            className="h-8 rounded-full bg-brand px-4 text-[11px] font-bold text-white hover:bg-brand-dark"
           >
             {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />}
             Accept Offer
@@ -508,7 +508,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {/* Messages Area */}
       <main className="flex-1 overflow-y-auto space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
-          <p className="text-[11px] font-semibold text-[#1B2431]">Booking Details</p>
+          <p className="text-[11px] font-semibold text-ink">Booking Details</p>
           <p className="mt-1 text-[10px] text-[#757575]">
             {isPending
               ? "This work is not confirmed yet. Confirm through Akazek before starting."
@@ -525,8 +525,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               <div className="max-w-[85%] space-y-1">
                 <div className={`rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm ${
                   isMe 
-                    ? "bg-[#145B10] text-white rounded-br-none" 
-                    : "bg-white text-[#1B2431] border border-gray-100 rounded-bl-none"
+                    ? "bg-brand text-white rounded-br-none" 
+                    : "bg-white text-ink border border-gray-100 rounded-bl-none"
                 }`}>
                   <span className="whitespace-pre-wrap break-words">{msg.content}</span>
                 </div>
@@ -566,13 +566,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             onKeyDown={handleKeyDown}
             disabled={isSending || isReadOnly}
             rows={1}
-            className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-[#145B10]/20 scrollbar-hide"
+            className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-brand/20 scrollbar-hide"
           />
           <Button
             onClick={handleSendMessage}
             size="icon"
             disabled={!newMessage.trim() || isSending || isReadOnly}
-            className="h-11 w-11 flex-shrink-0 rounded-full bg-[#145B10] text-white hover:bg-[#0F4D0C]"
+            className="h-11 w-11 flex-shrink-0 rounded-full bg-brand text-white hover:bg-brand-dark"
           >
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>

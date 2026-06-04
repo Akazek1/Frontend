@@ -68,11 +68,11 @@ export function DeactivateServiceDialog({
     >
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-[#1B2431]">{title}</DialogTitle>
+          <DialogTitle className="text-ink">{title}</DialogTitle>
           <DialogDescription className="text-[#475467]">
             {serviceTitle ? (
               <>
-                <span className="font-semibold text-[#1B2431]">
+                <span className="font-semibold text-ink">
                   {serviceTitle}
                 </span>
                 . {body}

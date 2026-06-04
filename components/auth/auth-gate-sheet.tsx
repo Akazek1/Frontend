@@ -52,7 +52,7 @@ export function AuthGateSheet() {
         <SheetHeader title={message} onClose={closeAuthGate} className="border-b-0 pt-0" />
 
         <SheetBody className="pt-0">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF8EA] text-[#145B10]">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF8EA] text-brand">
             <LockKeyhole className="h-7 w-7" />
           </div>
           <p className="text-[14px] leading-5 text-gray-500">

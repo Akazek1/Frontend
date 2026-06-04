@@ -90,7 +90,7 @@ export function OwnerServiceCardRow({
           type="button"
           variant="outline"
           onClick={() => onEdit(service)}
-          className="flex-1 border-[#145B10]/30 text-[#145B10] hover:bg-[#F1FCEF]"
+          className="flex-1 border-brand/30 text-brand hover:bg-surface"
         >
           <Pencil className="h-4 w-4" />
           Edit
@@ -109,7 +109,7 @@ export function OwnerServiceCardRow({
           <Button
             type="button"
             onClick={() => onToggleActive(service)}
-            className="flex-1 bg-[#145B10] text-white hover:bg-[#0F4D0C]"
+            className="flex-1 bg-brand text-white hover:bg-brand-dark"
           >
             <Power className="h-4 w-4" />
             Activate

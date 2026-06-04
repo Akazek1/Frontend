@@ -58,7 +58,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#145B10]" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
@@ -68,7 +68,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
       {/* Header */}
       <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-black text-[#1B2431]">
+          <h1 className="text-3xl font-black text-ink">
             {showMyJobs ? "My Job Postings" : "Browse Jobs"}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -86,7 +86,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
             placeholder="Search jobs by title or keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm placeholder-gray-400 focus:border-[#145B10] focus:outline-none focus:ring-1 focus:ring-[#145B10]"
+            className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm placeholder-gray-400 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
 
@@ -97,7 +97,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
               onClick={() => setSelectedCategory(null)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                 selectedCategory === null
-                  ? "bg-[#145B10] text-white"
+                  ? "bg-brand text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -109,7 +109,7 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
                 onClick={() => setSelectedCategory(category)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                   selectedCategory === category
-                    ? "bg-[#145B10] text-white"
+                    ? "bg-brand text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -133,10 +133,10 @@ const JobsBrowse: React.FC<JobsBrowseProps> = ({ showMyJobs = false }) => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white py-24">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#145B10]/10">
-            <Briefcase className="h-8 w-8 text-[#145B10]" />
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10">
+            <Briefcase className="h-8 w-8 text-brand" />
           </div>
-          <h3 className="text-lg font-black text-[#1B2431]">No jobs found</h3>
+          <h3 className="text-lg font-black text-ink">No jobs found</h3>
           <p className="mt-2 max-w-xs text-center text-sm text-gray-500">
             {searchQuery
               ? "Try adjusting your search terms"

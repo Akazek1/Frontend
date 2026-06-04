@@ -17,17 +17,17 @@ export default function ServicesTipsHelpPage() {
           type="button"
           onClick={() => router.back()}
           aria-label="Go back"
-          className="-ml-1 rounded-full p-1.5 hover:bg-[#F1FCEF]"
+          className="-ml-1 rounded-full p-1.5 hover:bg-surface"
         >
-          <ArrowLeft className="h-5 w-5 text-[#1B2431]" />
+          <ArrowLeft className="h-5 w-5 text-ink" />
         </button>
-        <h1 className="text-[18px] font-black text-[#1B2431]">Tips for great services</h1>
+        <h1 className="text-[18px] font-black text-ink">Tips for great services</h1>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F1FCEF]">
-          <Lightbulb className="h-7 w-7 text-[#145B10]" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+          <Lightbulb className="h-7 w-7 text-brand" />
         </div>
-        <h2 className="text-[16px] font-black text-[#1B2431]">Coming soon</h2>
+        <h2 className="text-[16px] font-black text-ink">Coming soon</h2>
         <p className="max-w-[280px] text-[13px] text-[#475467]">
           A guide with photo, copy, and pricing tips for getting more hire requests
           is on the way.

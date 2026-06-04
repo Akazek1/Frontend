@@ -45,16 +45,16 @@ function OrgTypeStep({
           onClick={() => onSelect("SERVICE_COMPANY")}
           className={`relative p-5 rounded-xl border-2 text-left transition-all ${
             selected === "SERVICE_COMPANY"
-              ? "bg-[#145B10] text-white border-[#145B10]"
-              : "bg-white text-gray-700 border-gray-300 hover:border-[#145B10]"
+              ? "bg-brand text-white border-brand"
+              : "bg-white text-gray-700 border-gray-300 hover:border-brand"
           }`}
         >
           {selected === "SERVICE_COMPANY" && (
             <CheckCircle className="absolute top-3 right-3 w-5 h-5 text-white" />
           )}
           <div className="flex items-start gap-4">
-            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "SERVICE_COMPANY" ? "bg-white/20" : "bg-[#F1FCEF]"}`}>
-              <Building2 className={`w-6 h-6 ${selected === "SERVICE_COMPANY" ? "text-white" : "text-[#145B10]"}`} />
+            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "SERVICE_COMPANY" ? "bg-white/20" : "bg-surface"}`}>
+              <Building2 className={`w-6 h-6 ${selected === "SERVICE_COMPANY" ? "text-white" : "text-brand"}`} />
             </div>
             <div>
               <h3 className="font-bold text-base mb-1">Service Company</h3>
@@ -70,16 +70,16 @@ function OrgTypeStep({
           onClick={() => onSelect("PLACEMENT_AGENCY")}
           className={`relative p-5 rounded-xl border-2 text-left transition-all ${
             selected === "PLACEMENT_AGENCY"
-              ? "bg-[#145B10] text-white border-[#145B10]"
-              : "bg-white text-gray-700 border-gray-300 hover:border-[#145B10]"
+              ? "bg-brand text-white border-brand"
+              : "bg-white text-gray-700 border-gray-300 hover:border-brand"
           }`}
         >
           {selected === "PLACEMENT_AGENCY" && (
             <CheckCircle className="absolute top-3 right-3 w-5 h-5 text-white" />
           )}
           <div className="flex items-start gap-4">
-            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "PLACEMENT_AGENCY" ? "bg-white/20" : "bg-[#F1FCEF]"}`}>
-              <Briefcase className={`w-6 h-6 ${selected === "PLACEMENT_AGENCY" ? "text-white" : "text-[#145B10]"}`} />
+            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "PLACEMENT_AGENCY" ? "bg-white/20" : "bg-surface"}`}>
+              <Briefcase className={`w-6 h-6 ${selected === "PLACEMENT_AGENCY" ? "text-white" : "text-brand"}`} />
             </div>
             <div>
               <h3 className="font-bold text-base mb-1">Placement Agency</h3>
@@ -118,7 +118,7 @@ function OrgDetailsStep({
             value={data.name}
             onChange={(e) => onChange("name", e.target.value)}
             placeholder="e.g. CleanPro Rwanda Ltd."
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#145B10] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
 
@@ -129,7 +129,7 @@ function OrgDetailsStep({
             value={data.phone}
             onChange={(e) => onChange("phone", e.target.value)}
             placeholder="+250 7XX XXX XXX"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#145B10] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
 
@@ -140,7 +140,7 @@ function OrgDetailsStep({
             value={data.email}
             onChange={(e) => onChange("email", e.target.value)}
             placeholder="contact@yourcompany.rw"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#145B10] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
 
@@ -151,7 +151,7 @@ function OrgDetailsStep({
             value={data.address}
             onChange={(e) => onChange("address", e.target.value)}
             placeholder="Kigali, Rwanda"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#145B10] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
       </div>
@@ -162,8 +162,8 @@ function OrgDetailsStep({
 function SuccessStep({ orgName }: { orgName: string }) {
   return (
     <div className="flex flex-col items-center gap-6 text-center py-8">
-      <div className="w-20 h-20 rounded-full bg-[#F1FCEF] flex items-center justify-center">
-        <CheckCircle className="w-10 h-10 text-[#145B10]" />
+      <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center">
+        <CheckCircle className="w-10 h-10 text-brand" />
       </div>
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re all set!</h1>
@@ -282,7 +282,7 @@ export default function OrgOnboardingPage() {
         <div className="px-4 mb-6">
           <div className="h-1.5 bg-gray-100 rounded-full">
             <div
-              className="h-1.5 bg-[#145B10] rounded-full transition-all duration-300"
+              className="h-1.5 bg-brand rounded-full transition-all duration-300"
               style={{ width: step === "type" ? "50%" : "100%" }}
             />
           </div>
@@ -307,7 +307,7 @@ export default function OrgOnboardingPage() {
         <button
           onClick={handleNext}
           disabled={!canProceed || isLoading}
-          className="w-full bg-[#1B5E20] text-white py-4 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+          className="w-full bg-brand-strong text-white py-4 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
         >
           {buttonLabel}
         </button>
@@ -315,7 +315,7 @@ export default function OrgOnboardingPage() {
         {step === "type" && (
           <p className="text-center text-xs text-gray-400 mt-3">
             Looking to hire or offer services personally?{" "}
-            <Link href="/onboarding" className="text-[#145B10] underline">
+            <Link href="/onboarding" className="text-brand underline">
               Sign up as an individual
             </Link>
           </p>

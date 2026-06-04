@@ -77,7 +77,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
             {onEdit && (
               <button
                 onClick={() => onEdit(review)}
-                className="text-[#145B10] hover:text-[#145B10]/80 p-1"
+                className="text-brand hover:text-brand/80 p-1"
                 aria-label="Edit review"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +110,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
       </p>
       {review.reply && (
         <div className="ml-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-          <p className="text-[11px] font-bold text-[#1B2431]">Response from {review.target?.firstName || "provider"}</p>
+          <p className="text-[11px] font-bold text-ink">Response from {review.target?.firstName || "provider"}</p>
           <p className="mt-1 text-[13px] leading-[140%] text-[#616161]">{review.reply}</p>
           {review.repliedAt && (
             <p className="mt-1 text-[11px] text-gray-400">
@@ -123,7 +123,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
         <button
           type="button"
           onClick={() => setReplyOpen(true)}
-          className="inline-flex w-fit items-center gap-1.5 text-[12px] font-bold text-[#145B10]"
+          className="inline-flex w-fit items-center gap-1.5 text-[12px] font-bold text-brand"
         >
           <MessageSquareReply className="h-3.5 w-3.5" />
           Reply to review
@@ -137,7 +137,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
             maxLength={1000}
             rows={3}
             placeholder="Write one public reply..."
-            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-[#145B10]"
+            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-brand"
           />
           <div className="flex items-center justify-end gap-2">
             <button
@@ -154,7 +154,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
               type="button"
               onClick={handleReply}
               disabled={submitting || !reply.trim()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#145B10] px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-50"
             >
               {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
               Post reply

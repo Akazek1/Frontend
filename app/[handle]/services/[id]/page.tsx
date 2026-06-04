@@ -733,8 +733,8 @@ function ServiceDetailPage() {
                     <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-[11px] font-semibold text-[#145B10] uppercase tracking-wider">Request to Hire</p>
-                                <h3 className="text-[17px] font-black text-[#1B2431] mt-0.5">{providerName}</h3>
+                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Request to Hire</p>
+                                <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
                                 <p className="text-[13px] text-gray-400">{service.title}</p>
                             </div>
                             <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
@@ -742,7 +742,7 @@ function ServiceDetailPage() {
                             </button>
                         </div>
                         <div>
-                            <label className="text-[12px] font-semibold text-[#1B2431] block mb-1.5">
+                            <label className="text-[12px] font-semibold text-ink block mb-1.5">
                                 Message <span className="text-gray-400 font-normal">(optional)</span>
                             </label>
                             <textarea
@@ -750,7 +750,7 @@ function ServiceDetailPage() {
                                 onChange={(e) => setHireNotes(e.target.value)}
                                 placeholder="Describe what you need, preferred schedule, or any specific requirements…"
                                 rows={3}
-                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30 resize-none"
+                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
                             />
                         </div>
                         <div className="flex gap-3">
@@ -763,7 +763,7 @@ function ServiceDetailPage() {
                             <button
                                 onClick={handleHireSubmit}
                                 disabled={submitting}
-                                className="flex-1 h-12 rounded-[18px] bg-[#145B10] text-white font-bold text-[13px] hover:bg-[#0F4D0C] shadow-lg shadow-[#145B10]/20 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
                             >
                                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Request"}
                             </button>

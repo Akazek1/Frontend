@@ -54,12 +54,12 @@ export function TipCard({
   const Icon = variant === "lightbulb" ? Lightbulb : ShieldCheck;
 
   const inner = (
-    <div className="flex items-start gap-3 rounded-2xl border border-[#DCEEDD] bg-[#F1FCEF] p-4">
+    <div className="flex items-start gap-3 rounded-2xl border border-[#DCEEDD] bg-surface p-4">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white">
-        <Icon className="h-4 w-4 text-[#145B10]" aria-hidden="true" />
+        <Icon className="h-4 w-4 text-brand" aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-black text-[#1B2431]">{title}</p>
+        <p className="text-[13px] font-black text-ink">{title}</p>
         <p className="mt-0.5 text-[12px] leading-relaxed text-[#475467]">
           {body}
         </p>
@@ -83,7 +83,7 @@ export function TipCard({
             setDismissed(true);
           }
         }}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#145B10] focus-visible:ring-offset-2"
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
       >
         {inner}
       </Link>

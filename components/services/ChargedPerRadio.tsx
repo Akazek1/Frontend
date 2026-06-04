@@ -43,24 +43,24 @@ export function ChargedPerRadio({
             aria-checked={checked}
             onClick={() => onChange(opt.value)}
             className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-              idx > 0 ? "border-t border-[#F1FCEF]" : ""
-            } ${checked ? "bg-[#F1FCEF]" : "bg-white hover:bg-[#F1FCEF]/60"}`}
+              idx > 0 ? "border-t border-surface" : ""
+            } ${checked ? "bg-surface" : "bg-white hover:bg-surface/60"}`}
           >
             <span
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                checked ? "border-[#145B10]" : "border-[#DCEEDD]"
+                checked ? "border-brand" : "border-[#DCEEDD]"
               }`}
               aria-hidden="true"
             >
               {checked && (
-                <span className="h-2.5 w-2.5 rounded-full bg-[#145B10]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-brand" />
               )}
             </span>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1FCEF]">
-              <opt.Icon className="h-4 w-4 text-[#145B10]" aria-hidden="true" />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface">
+              <opt.Icon className="h-4 w-4 text-brand" aria-hidden="true" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[14px] font-black text-[#1B2431]">
+              <span className="text-[14px] font-black text-ink">
                 {opt.label}
               </span>
               <span className="text-[12px] text-[#475467]">{opt.helper}</span>

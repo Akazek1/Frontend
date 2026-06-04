@@ -131,7 +131,7 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
       <SheetHeader
         title="Task Detail"
         leading={
-          <button onClick={onBack} className="text-[#145B10] text-[13px] font-semibold">
+          <button onClick={onBack} className="text-brand text-[13px] font-semibold">
             ← Back
           </button>
         }
@@ -139,15 +139,15 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         <div className="flex items-start gap-3">
-          <div className={`mt-0.5 flex-shrink-0 h-5 w-5 rounded-full border-2 ${task.isCompleted ? "border-[#145B10] bg-[#145B10]" : "border-gray-300"} flex items-center justify-center`}>
+          <div className={`mt-0.5 flex-shrink-0 h-5 w-5 rounded-full border-2 ${task.isCompleted ? "border-brand bg-brand" : "border-gray-300"} flex items-center justify-center`}>
             {task.isCompleted && <div className="h-2 w-2 rounded-full bg-white" />}
           </div>
           <div>
-            <p className={`text-[15px] font-semibold ${task.isCompleted ? "line-through text-gray-400" : "text-[#1B2431]"}`}>
+            <p className={`text-[15px] font-semibold ${task.isCompleted ? "line-through text-gray-400" : "text-ink"}`}>
               {task.title}
             </p>
             {task.isCompleted && task.completedAt && (
-              <p className="text-[11px] text-[#145B10] mt-0.5">
+              <p className="text-[11px] text-brand mt-0.5">
                 Completed {new Date(task.completedAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
               </p>
             )}
@@ -155,9 +155,9 @@ function TaskDetailView({ task, userId, employerId, isApproved, onBack, onUpdate
         </div>
 
         {task.description && (
-          <div className="rounded-xl bg-[#F1FCEF] px-4 py-3">
-            <p className="text-[12px] font-semibold text-[#145B10] mb-1">Notes</p>
-            <p className="text-[13px] text-[#1B2431] leading-relaxed">{task.description}</p>
+          <div className="rounded-xl bg-surface px-4 py-3">
+            <p className="text-[12px] font-semibold text-brand mb-1">Notes</p>
+            <p className="text-[13px] text-ink leading-relaxed">{task.description}</p>
           </div>
         )}
 
@@ -273,7 +273,7 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
         leading={
           <button
             onClick={onBack}
-            className="rounded-full p-1.5 text-[#1B2431] transition-colors hover:bg-gray-100"
+            className="rounded-full p-1.5 text-ink transition-colors hover:bg-gray-100"
             aria-label="Back to tasks"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -470,7 +470,7 @@ export function TaskDrawer({
             {/* Status card */}
             <div
               className={`mx-5 mb-5 flex items-center gap-3 rounded-xl px-4 py-3 ${
-                incompleteCount > 0 ? "bg-orange-50 text-orange-700" : "bg-[#F1FCEF] text-[#145B10]"
+                incompleteCount > 0 ? "bg-orange-50 text-orange-700" : "bg-surface text-brand"
               }`}
             >
               <ClipboardList className="h-5 w-5 flex-shrink-0" strokeWidth={2.2} />
@@ -495,8 +495,8 @@ export function TaskDrawer({
 
                 {incompleteTasks.length === 0 ? (
                   <div className={cn(appCardClass, "flex flex-col items-center justify-center px-4 py-7 text-center")}>
-                    <CheckCircle2 className="h-10 w-10 text-[#145B10]" strokeWidth={1.8} />
-                    <p className="mt-3 text-[13px] font-bold text-[#1B2431]">No pending tasks</p>
+                    <CheckCircle2 className="h-10 w-10 text-brand" strokeWidth={1.8} />
+                    <p className="mt-3 text-[13px] font-bold text-ink">No pending tasks</p>
                     <p className="mt-1 text-[11px] text-gray-500">Enjoy the rest of your day!</p>
                   </div>
                 ) : (
@@ -525,12 +525,12 @@ export function TaskDrawer({
                           aria-label="Mark complete"
                         >
                           {togglingId === task.id ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-[#145B10]" />
+                            <Loader2 className="h-5 w-5 animate-spin text-brand" />
                           ) : (
                             <Circle className="h-5 w-5 text-gray-300" />
                           )}
                         </button>
-                        <span className="flex-1 text-[13px] font-medium leading-snug text-[#1B2431]">
+                        <span className="flex-1 text-[13px] font-medium leading-snug text-ink">
                           {task.title}
                         </span>
                         <button
@@ -551,7 +551,7 @@ export function TaskDrawer({
                 {canEditTasks ? (
                   <button
                     onClick={() => setIsAddingTask(true)}
-                    className="mt-4 flex items-center gap-2 px-1 text-[13px] font-bold text-[#145B10] transition-colors hover:text-[#0F4D0C]"
+                    className="mt-4 flex items-center gap-2 px-1 text-[13px] font-bold text-brand transition-colors hover:text-brand-dark"
                   >
                     <Plus className="h-4 w-4" />
                     Add Task
@@ -607,9 +607,9 @@ export function TaskDrawer({
                             aria-label="Mark incomplete"
                           >
                             {togglingId === task.id ? (
-                              <Loader2 className="h-5 w-5 animate-spin text-[#145B10]" />
+                              <Loader2 className="h-5 w-5 animate-spin text-brand" />
                             ) : (
-                              <CheckCircle2 className="h-5 w-5 text-[#145B10]" />
+                              <CheckCircle2 className="h-5 w-5 text-brand" />
                             )}
                           </button>
                           <span className="flex-1 text-[13px] font-medium leading-snug text-gray-500 line-through">
@@ -642,7 +642,7 @@ export function TaskDrawer({
                 <button 
                   onClick={handleCompleteJob}
                   disabled={!!isActionLoading}
-                  className="flex w-full items-center gap-3 rounded-xl border border-[#145B10]/20 bg-[#145B10] px-4 py-3 text-left text-white shadow-sm disabled:opacity-50"
+                  className="flex w-full items-center gap-3 rounded-xl border border-brand/20 bg-brand px-4 py-3 text-left text-white shadow-sm disabled:opacity-50"
                 >
                   <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/80">
                     {isActionLoading === "Complete Job" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -661,7 +661,7 @@ export function TaskDrawer({
                     <ShieldAlert className="h-4 w-4 text-gray-500" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-[#1B2431]">Report Issue</p>
+                    <p className="text-[13px] font-bold text-ink">Report Issue</p>
                     <p className="text-[10px] text-gray-400">Something not right? Let us know.</p>
                   </div>
                 </button>

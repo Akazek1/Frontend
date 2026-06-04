@@ -125,7 +125,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         )}
         <span
           className={`absolute bottom-0 left-0 right-0 text-[10px] font-semibold py-1 text-center ${
-            available ? "bg-[#145B10]/85 text-white" : "bg-red-600/85 text-white"
+            available ? "bg-brand/85 text-white" : "bg-red-600/85 text-white"
           }`}
         >
           {available ? "Available Today" : "Unavailable"}
@@ -143,7 +143,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             className="flex items-center gap-1 min-w-0 text-left hover:underline"
             aria-label={handle ? `View ${name || "provider"}'s profile` : undefined}
           >
-            <span className="text-[13px] font-bold text-[#1B2431] truncate">
+            <span className="text-[13px] font-bold text-ink truncate">
               {displayProviderName || "Unknown Provider"}
             </span>
             {verified && <VerifiedBadge size={16} />}
@@ -178,7 +178,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <button
             type="button"
             onClick={handleProfileClick}
-            className="text-[11px] text-[#9E9E9E] font-normal -mt-1 leading-none text-left hover:text-[#145B10] hover:underline"
+            className="text-[11px] text-[#9E9E9E] font-normal -mt-1 leading-none text-left hover:text-brand hover:underline"
           >
             {handle}
           </button>
@@ -192,7 +192,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         {/* Row 4: ⭐ rating · reviews */}
         <div className="flex items-center gap-1 text-[11px] text-[#616161]">
           <Star className="w-3 h-3 fill-yellow-400 stroke-yellow-400 flex-shrink-0" />
-          <span className="font-semibold text-[#1B2431]">
+          <span className="font-semibold text-ink">
             {rating > 0 ? rating.toFixed(1) : "New"}
           </span>
           <span className="text-[#616161]">
@@ -217,7 +217,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         )}
 
         {/* Row 5: price */}
-        <p className="text-[#145B10] font-bold text-[13px]">{price || "—"}</p>
+        <p className="text-brand font-bold text-[13px]">{price || "—"}</p>
 
         {/* Row 6: tags (left) + Request to Hire (right) on same row */}
         <div className="flex items-center justify-between gap-2 mt-0.5">
@@ -239,7 +239,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : hasRequested
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-[#145B10] text-white hover:bg-[#0f4a0c]"
+                : "bg-brand text-white hover:bg-[#0f4a0c]"
             }`}
           >
             {isOwnService

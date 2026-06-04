@@ -87,20 +87,20 @@ export const ServiceCategorySelector = ({
 
       {isLoadingCategories ? (
         <div className="flex justify-center items-center py-12">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-[#145B10] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-gray-300 border-t-brand rounded-full animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 mb-8">
           {categories.map((category) => (
             <label
               key={category.id}
-              className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#145B10] transition-colors has-[input:checked]:border-[#145B10] has-[input:checked]:bg-[#F1FCEF]"
+              className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-brand transition-colors has-[input:checked]:border-brand has-[input:checked]:bg-surface"
             >
               <input
                 type="checkbox"
                 checked={selectedCategories.has(category.id)}
                 onChange={() => toggleCategory(category.id)}
-                className="w-5 h-5 rounded accent-[#145B10] cursor-pointer"
+                className="w-5 h-5 rounded accent-brand cursor-pointer"
               />
               <span className="text-sm font-medium text-gray-700">
                 {category.name}
@@ -129,7 +129,7 @@ export const ServiceCategorySelector = ({
         <button
           onClick={handleContinue}
           disabled={selectedCategories.size === 0 || isLoading}
-          className="flex-1 px-6 py-3 bg-[#145B10] text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
         </button>

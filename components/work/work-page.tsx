@@ -220,7 +220,7 @@ export default function WorkPage() {
   if (loading) {
     return (
       <div className="app-bg flex min-h-dvh items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+        <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );
   }
@@ -241,7 +241,7 @@ export default function WorkPage() {
             action={
               <button
                 onClick={() => router.push(isProvider ? "/" : "/post-job")}
-                className="h-12 w-full rounded-xl bg-[#145B10] px-5 text-[13px] font-bold text-white"
+                className="h-12 w-full rounded-xl bg-brand px-5 text-[13px] font-bold text-white"
               >
                 {isProvider ? "Find jobs" : "Post your first job"}
               </button>
@@ -352,7 +352,7 @@ function WorkFilterChips({
               "flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold transition-colors",
               active
                 ? "border-[#C17A5D] bg-white text-[#C17A5D]"
-                : "border-gray-200 bg-white text-[#1B2431]",
+                : "border-gray-200 bg-white text-ink",
               muted && !active && "text-gray-400",
             )}
           >
@@ -360,7 +360,7 @@ function WorkFilterChips({
             <span
               className={cn(
                 "flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
-                active ? "bg-[#C17A5D] text-white" : muted ? "bg-gray-50 text-gray-400" : "bg-gray-100 text-[#1B2431]",
+                active ? "bg-[#C17A5D] text-white" : muted ? "bg-gray-50 text-gray-400" : "bg-gray-100 text-ink",
               )}
             >
               {counts[key]}
@@ -388,12 +388,12 @@ function MyJobPostsEntry({
         <ClipboardList className="h-7 w-7 text-[#6D28D9]" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-black text-[#1B2431]">My Job Posts</p>
+        <p className="text-[15px] font-black text-ink">My Job Posts</p>
         <p className="mt-1 text-[12px] font-medium text-[#344054]">
           {activePostCount} active posts <span className="mx-1">•</span> {totalApplicants} total applicants
         </p>
       </div>
-      <ChevronRight className="h-5 w-5 shrink-0 text-[#1B2431]" />
+      <ChevronRight className="h-5 w-5 shrink-0 text-ink" />
     </Link>
   );
 }
@@ -463,7 +463,7 @@ function DealCard({
     item.section === "awaitingReview" && item.kind === "booking";
 
   const titleNode = (
-    <h3 className="truncate text-[15px] font-black text-[#1B2431]">{item.title}</h3>
+    <h3 className="truncate text-[15px] font-black text-ink">{item.title}</h3>
   );
 
   return (
@@ -502,7 +502,7 @@ function DealCard({
             </div>
 
             {/* Row 2 — subtitle (job title / work type) */}
-            <p className="mt-0.5 truncate text-[13px] font-bold text-[#1B2431]">
+            <p className="mt-0.5 truncate text-[13px] font-bold text-ink">
               {item.subtitle}
             </p>
 
@@ -577,7 +577,7 @@ function DealCardActions({
       <button
         type="button"
         onClick={() => onPrimary(item)}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#145B10]/30 bg-white text-[12px] font-black text-[#145B10]"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
       >
         View Applicants
         <ChevronRight className="h-4 w-4" />
@@ -652,7 +652,7 @@ function DealCardActions({
     return (
       <Link
         href={`/conversations/inbox/${item.bookingId}`}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#145B10]/30 bg-white text-[12px] font-black text-[#145B10]"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
       >
         <MessageCircleMore className="h-4 w-4" />
         Open Chat
@@ -667,7 +667,7 @@ function DealCardActions({
       <button
         type="button"
         onClick={() => onPrimary(item)}
-        className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#145B10] text-[12px] font-black text-white"
+        className="flex min-h-11 w-full items-center justify-center rounded-lg bg-brand text-[12px] font-black text-white"
       >
         {label}
       </button>
@@ -679,7 +679,7 @@ function DealCardActions({
     <button
       type="button"
       onClick={() => onPrimary(item)}
-      className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-[#1B2431]"
+      className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
     >
       View Details
     </button>
@@ -714,7 +714,7 @@ function MessageButton({ bookingId, className }: { bookingId?: string; className
     <Link
       href={href}
       className={cn(
-        "flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-[#145B10]/30 bg-white text-[12px] font-black text-[#145B10]",
+        "flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand",
         className,
       )}
     >
@@ -830,7 +830,7 @@ export function JobPostsPage() {
               type="button"
               onClick={() => router.push("/work")}
               aria-label="Back to work"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#1B2431]"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-ink"
             >
               <ChevronRight className="h-5 w-5 rotate-180" />
             </button>
@@ -838,7 +838,7 @@ export function JobPostsPage() {
           </div>
           <Link
             href="/post-job"
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-[#145B10]/30 bg-white px-3 text-[12px] font-black text-[#145B10]"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-brand/30 bg-white px-3 text-[12px] font-black text-brand"
           >
             <Plus className="h-4 w-4" />
             Post Job
@@ -855,15 +855,15 @@ export function JobPostsPage() {
                 className={cn(
                   "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[12px] font-bold capitalize transition-colors",
                   active
-                    ? "border-[#145B10] bg-[#145B10] text-white"
-                    : "border-gray-200 bg-white text-[#1B2431]",
+                    ? "border-brand bg-brand text-white"
+                    : "border-gray-200 bg-white text-ink",
                 )}
               >
                 {key}
                 <span
                   className={cn(
                     "flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
-                    active ? "bg-white/25 text-white" : "bg-gray-100 text-[#1B2431]",
+                    active ? "bg-white/25 text-white" : "bg-gray-100 text-ink",
                   )}
                 >
                   {counts[key]}
@@ -877,12 +877,12 @@ export function JobPostsPage() {
       <div className="space-y-3 px-4 pt-3">
         {loading ? (
           <div className="flex h-48 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+            <Loader2 className="h-6 w-6 animate-spin text-brand" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center">
             <ClipboardList className="mx-auto h-8 w-8 text-gray-300" />
-            <p className="mt-3 text-[14px] font-black text-[#1B2431]">No job posts here</p>
+            <p className="mt-3 text-[14px] font-black text-ink">No job posts here</p>
             <p className="mt-1 text-[12px] text-[#667085]">Post a new job to find help.</p>
           </div>
         ) : (
@@ -914,10 +914,10 @@ function JobPostsSummary({
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[#F1F4FA] px-4 py-3.5">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white">
-        <ClipboardList className="h-5 w-5 text-[#1B2431]" />
+        <ClipboardList className="h-5 w-5 text-ink" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-black text-[#1B2431]">
+        <p className="text-[13px] font-black text-ink">
           {activePosts} active post{activePosts === 1 ? "" : "s"}
           <span className="mx-1.5 text-[#667085]">•</span>
           {totalApplicants} total applicants
@@ -935,7 +935,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
   const isOpen = job.status === "OPEN";
   const isFilled = job.status === "AWARDED";
   const accent = isOpen
-    ? { bg: "bg-[#E7F4E2]", fg: "text-[#145B10]", pill: "bg-[#E7F4E2] text-[#145B10]" }
+    ? { bg: "bg-[#E7F4E2]", fg: "text-brand", pill: "bg-[#E7F4E2] text-brand" }
     : isFilled
       ? { bg: "bg-[#EDE9FE]", fg: "text-[#6D28D9]", pill: "bg-[#EDE9FE] text-[#6D28D9]" }
       : { bg: "bg-gray-100", fg: "text-gray-500", pill: "bg-gray-100 text-gray-500" };
@@ -966,7 +966,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h2 className="truncate text-[15px] font-black text-[#1B2431]">{job.title}</h2>
+              <h2 className="truncate text-[15px] font-black text-ink">{job.title}</h2>
               <div className="flex shrink-0 items-center gap-1">
                 <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold", accent.pill)}>
                   {statusLabel}
@@ -1002,7 +1002,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
         {isFilled ? (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-black text-[#1B2431]">1</span>
+              <span className="text-[13px] font-black text-ink">1</span>
               <span className="text-[13px] text-[#475467]">Hired</span>
               {hiredAvatar?.worker && <AvatarChip person={hiredAvatar.worker} />}
             </div>
@@ -1017,7 +1017,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
         ) : (
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="text-[13px] font-black text-[#145B10]">
+              <span className="text-[13px] font-black text-brand">
                 {applicants} Interested
               </span>
               {previewAvatars.length > 0 && (
@@ -1026,7 +1026,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
                     app.worker ? <AvatarChip key={app.id} person={app.worker} /> : null,
                   )}
                   {overflow > 0 && (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#E7F4E2] text-[10px] font-black text-[#145B10]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#E7F4E2] text-[10px] font-black text-brand">
                       +{overflow}
                     </span>
                   )}
@@ -1035,7 +1035,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
             </div>
             <Link
               href={`/jobs/${job.id}`}
-              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-black text-[#145B10]"
+              className="inline-flex shrink-0 items-center gap-1 text-[13px] font-black text-brand"
             >
               View Applicants
               <ChevronRight className="h-4 w-4" />
@@ -1066,7 +1066,7 @@ function AvatarChip({
   }
   return (
     <span
-      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[10px] font-black text-[#1B2431]"
+      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[10px] font-black text-ink"
       title={fullName}
     >
       {getInitials(fullName)}
@@ -1082,7 +1082,7 @@ function NeedToHireAgainCard({ onPostNew }: { onPostNew: () => void }) {
           <Plus className="h-5 w-5 text-[#6D28D9]" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-black text-[#1B2431]">Need to hire again?</p>
+          <p className="text-[14px] font-black text-ink">Need to hire again?</p>
           <p className="mt-0.5 text-[12px] text-[#475467]">
             Post a new job and find the right help.
           </p>
@@ -1103,10 +1103,10 @@ function SafeAndSecureCard() {
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E7F4E2]">
-        <ShieldCheck className="h-5 w-5 text-[#145B10]" />
+        <ShieldCheck className="h-5 w-5 text-brand" />
       </div>
       <div className="min-w-0">
-        <p className="text-[13px] font-black text-[#1B2431]">Safe &amp; Secure</p>
+        <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
         <p className="mt-0.5 text-[12px] text-[#475467]">
           We review all applications and keep your information protected.
         </p>
@@ -1227,7 +1227,7 @@ function ReviewDialog({
                 type="button"
                 onClick={onSubmit}
                 disabled={submitting || rating < 1 || !comment.trim()}
-                className="bg-[#145B10] hover:bg-[#0e4209]"
+                className="bg-brand hover:bg-[#0e4209]"
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit review

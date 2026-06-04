@@ -42,11 +42,11 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as ServicesSortKey)}>
       <SelectTrigger
-        className="h-9 w-auto gap-1 border-[#DCEEDD] bg-white text-[13px] text-[#145B10]"
+        className="h-9 w-auto gap-1 border-[#DCEEDD] bg-white text-[13px] text-brand"
         aria-label="Sort services"
       >
         <SelectValue placeholder="Sort" />
-        <ChevronDown className="h-4 w-4 text-[#145B10]" />
+        <ChevronDown className="h-4 w-4 text-brand" />
       </SelectTrigger>
       <SelectContent>
         {OPTIONS.map((opt) => (

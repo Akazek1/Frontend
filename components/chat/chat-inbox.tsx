@@ -349,7 +349,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                 <span className="relative flex-shrink-0" onClick={goToProfile}>
                   <Avatar className="h-12 w-12 cursor-pointer transition-opacity hover:opacity-80">
                     <AvatarImage src={partner.profilePicture || ""} className="object-cover" />
-                    <AvatarFallback className="bg-[#F1FCEF] text-[13px] font-bold text-[#145B10]">
+                    <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -361,7 +361,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                     <span className="flex min-w-0 items-center gap-1">
                       <span
                         onClick={goToProfile}
-                        className="block truncate text-[15px] font-bold text-[#1B2431] hover:text-[#145B10]"
+                        className="block truncate text-[15px] font-bold text-ink hover:text-brand"
                       >
                         {displayName}
                       </span>
@@ -371,7 +371,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                   </span>
 
                   <span className="mt-0.5 flex items-center justify-between gap-2">
-                    <span className="block truncate text-[12.5px] font-semibold text-[#145B10]">
+                    <span className="block truncate text-[12.5px] font-semibold text-brand">
                       {booking.service?.title || "Booking"}
                     </span>
                     <span className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${status.pill}`}>
@@ -380,7 +380,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                   </span>
 
                   <span className="mt-1 flex items-end justify-between gap-2">
-                    <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-[#1B2431]" : "text-[#616161]"}`}>
+                    <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-ink" : "text-[#616161]"}`}>
                       {msg.content}
                     </span>
                     <span className="flex flex-shrink-0 items-center gap-1.5">
@@ -408,10 +408,10 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-12 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F1FCEF]">
-            <MessageCircle className="h-7 w-7 text-[#145B10]" />
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface">
+            <MessageCircle className="h-7 w-7 text-brand" />
           </span>
-          <h3 className="mt-4 text-[15px] font-bold text-[#1B2431]">
+          <h3 className="mt-4 text-[15px] font-bold text-ink">
             {currentTab === "Archive" ? "Nothing archived yet" : "No messages found"}
           </h3>
           <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-[#616161]">

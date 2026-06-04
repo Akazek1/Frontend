@@ -65,7 +65,7 @@ const SearchBar = ({
           <Input
             type="text"
             placeholder={placeholder}
-            className="h-12 rounded-2xl border-[#DDE3DD] bg-white pl-11 pr-4 text-[14px] font-medium text-[#1B2431] shadow-sm transition-all placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus-visible:ring-2 focus-visible:ring-[#145B10]/20"
+            className="h-12 rounded-2xl border-[#DDE3DD] bg-white pl-11 pr-4 text-[14px] font-medium text-ink shadow-sm transition-all placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus-visible:ring-2 focus-visible:ring-brand/20"
             value={query}
             onChange={handleChange}
             onFocus={handleFocus}

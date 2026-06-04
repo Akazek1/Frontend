@@ -53,14 +53,14 @@ const CustomSearch = ({
                         type="text"
                         placeholder={placeholder}
                         className={cn(
-                            "h-12 rounded-full border-[#DCE8D9] bg-white pl-11 pr-4 text-[14px] font-semibold shadow-sm placeholder:text-[13px] placeholder:font-semibold placeholder:text-[#878787] focus-visible:ring-[#145B10]/20",
+                            "h-12 rounded-full border-[#DCE8D9] bg-white pl-11 pr-4 text-[14px] font-semibold shadow-sm placeholder:text-[13px] placeholder:font-semibold placeholder:text-[#878787] focus-visible:ring-brand/20",
                         )}
                         value={query}
                         onChange={handleChange}
                         onFocus={handleFocus}
                         onBlur={handleBlur}
                     />
-                    {/* <Icons.FilerIcon className="absolute right-4 top-3 w-[18px] h-[18px] fill-[#145B10]" /> */}
+                    {/* <Icons.FilerIcon className="absolute right-4 top-3 w-[18px] h-[18px] fill-brand" /> */}
                 </motion.div>
             </AnimatePresence>
         </div>

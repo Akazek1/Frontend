@@ -55,7 +55,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
   if (showSplash) {
     return (
-      <div className="relative h-full bg-gradient-to-l from-[#145B10] to-[#729D70] flex items-center justify-center">
+      <div className="relative h-full bg-gradient-to-l from-brand to-[#729D70] flex items-center justify-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 1 }}>
           <AppIcon />
         </motion.div>
@@ -83,7 +83,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
       {showProgress && (
         <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
           {/* Single active dot — shows on signup form only */}
-          <div className="h-2 w-6 sm:w-8 rounded-full bg-[#1B5E20]" />
+          <div className="h-2 w-6 sm:w-8 rounded-full bg-brand-strong" />
         </div>
       )}
     </div>

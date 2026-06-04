@@ -100,7 +100,7 @@ export function ServicesListPage() {
             type="button"
             variant="outline"
             onClick={handleAdd}
-            className="h-10 gap-1 rounded-xl border-[#145B10]/30 px-3 text-[13px] font-semibold text-[#145B10] hover:bg-[var(--app-background)]"
+            className="h-10 gap-1 rounded-xl border-brand/30 px-3 text-[13px] font-semibold text-brand hover:bg-[var(--app-background)]"
           >
             <Plus className="h-4 w-4" />
             Add Service
@@ -121,7 +121,7 @@ export function ServicesListPage() {
         {/* List header */}
         {!isEmpty && (
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-black text-[#1B2431]">
+            <h2 className="text-[15px] font-black text-ink">
               Your Service Cards ({services.length})
             </h2>
             <SortDropdown value={sort} onChange={setSort} />

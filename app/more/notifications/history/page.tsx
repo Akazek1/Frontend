@@ -105,7 +105,7 @@ const NotificationHistoryPage = () => {
           type="button"
           onClick={handleMarkAll}
           disabled={allLoadedNotificationsRead}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE8DA] bg-white text-[#145B10] shadow-sm disabled:text-gray-300"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE8DA] bg-white text-brand shadow-sm disabled:text-gray-300"
           aria-label="Mark all notifications as read"
           title="Mark all as read"
         >
@@ -128,7 +128,7 @@ const NotificationHistoryPage = () => {
                   "flex h-10 items-center gap-2 rounded-full border px-4 text-[13px] font-bold transition-colors",
                   active
                     ? "border-[#10851B] bg-[#10851B] text-white shadow-sm"
-                    : "border-[#DCE8DA] bg-white text-[#1B2431]",
+                    : "border-[#DCE8DA] bg-white text-ink",
                 )}
               >
                 {filter.label}
@@ -150,7 +150,7 @@ const NotificationHistoryPage = () => {
 
       {loading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+          <Loader2 className="h-6 w-6 animate-spin text-brand" />
         </div>
       ) : filteredItems.length === 0 ? (
         <EmptyState

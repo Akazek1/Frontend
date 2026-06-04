@@ -99,7 +99,7 @@ const ServicePage = () => {
                     <input
                         type="text"
                         placeholder="Search name, service, category, area"
-                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-[#1B2431] outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:bg-white focus:ring-2 focus:ring-[#145B10]/20"
+                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-ink outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
                         value={inputValue}
                         onChange={handleSearchChange}
                     />
@@ -112,12 +112,12 @@ const ServicePage = () => {
                     <button
                         type="button"
                         onClick={() => setIsFilterModalOpen(true)}
-                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-[#145B10] px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#0F4D0C]"
+                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-brand px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
                     >
                         <Icons.FilerIcon className="w-4 h-4 fill-white" />
                         Filter
                         {Object.values(filters).filter(Boolean).length > 0 && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-[#145B10]">
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-brand">
                                 {Object.values(filters).filter(Boolean).length}
                             </span>
                         )}
@@ -128,7 +128,7 @@ const ServicePage = () => {
             {/* Loading State */}
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-8 h-8 border-4 border-[#145B10]/20 border-t-[#145B10] rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
                     <p className="mt-4 text-sm text-[#878787]">Finding services...</p>
                 </div>
             )}
@@ -173,7 +173,7 @@ const ServicePage = () => {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Icons.SearchIcon className="w-8 h-8 fill-gray-300" />
                             </div>
-                            <h3 className="text-base font-bold text-[#1B2431]">No results found</h3>
+                            <h3 className="text-base font-bold text-ink">No results found</h3>
                             <p className="text-sm text-[#878787] mt-1 max-w-[200px]">
                                 Try adjusting your search or filters to find what you&apos;re looking for.
                             </p>

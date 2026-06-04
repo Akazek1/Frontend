@@ -161,7 +161,7 @@ export function NotificationRow({
         isCompact
           ? "gap-3 rounded-xl px-2 py-3 hover:bg-gray-50"
           : "gap-3 border-b border-gray-100 bg-white px-4 py-4 last:border-b-0 hover:bg-[#F8FFF7]",
-        isUnread && (isCompact ? "bg-[#F1FCEF]/60" : "bg-[#F8FFF7]"),
+        isUnread && (isCompact ? "bg-surface/60" : "bg-[#F8FFF7]"),
       )}
     >
       <span
@@ -178,7 +178,7 @@ export function NotificationRow({
         <span className="flex items-start justify-between gap-3">
           <span
             className={cn(
-              "min-w-0 flex-1 text-[#1B2431]",
+              "min-w-0 flex-1 text-ink",
               isCompact ? "text-[13px]" : "text-[15px]",
               isUnread ? "font-bold" : "font-semibold",
             )}

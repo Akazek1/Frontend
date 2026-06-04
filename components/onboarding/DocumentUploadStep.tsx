@@ -132,12 +132,12 @@ export const DocumentUploadStep = ({
         <div
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-[#145B10] transition-colors"
+          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-brand transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-[#F1FCEF] rounded-lg">
-              <Upload className="w-8 h-8 text-[#145B10]" />
+            <div className="p-4 bg-surface rounded-lg">
+              <Upload className="w-8 h-8 text-brand" />
             </div>
           </div>
           <p className="text-gray-900 font-semibold mb-1">
@@ -188,7 +188,7 @@ export const DocumentUploadStep = ({
         <button
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || isLoading}
-          className="flex-1 px-6 py-3 bg-[#145B10] text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isUploading ? "Uploading..." : "Continue"}
         </button>

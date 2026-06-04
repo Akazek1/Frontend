@@ -71,8 +71,8 @@ export function LoginForm() {
     <div className="w-full px-4 sm:px-6 pt-8 pb-10 space-y-6 max-w-md mx-auto">
       {/* Header */}
       <div className="flex flex-col items-center gap-4">
-        <div className="p-4 bg-[#F1FCEF] rounded-2xl">
-          <LogIn className="w-8 h-8 text-[#145B10]" strokeWidth={1.5} />
+        <div className="p-4 bg-surface rounded-2xl">
+          <LogIn className="w-8 h-8 text-brand" strokeWidth={1.5} />
         </div>
         <div className="text-center">
           <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-1">Welcome back</h2>
@@ -83,7 +83,7 @@ export function LoginForm() {
       {/* Phone input */}
       <div>
         <div className={`flex items-center border rounded-xl overflow-hidden w-full transition-all ${
-          phoneError ? "border-red-400" : otpSent ? "border-gray-200 opacity-60" : "border-gray-300 focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20"
+          phoneError ? "border-red-400" : otpSent ? "border-gray-200 opacity-60" : "border-gray-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20"
         }`}>
           <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
             <Image height={40} width={40} src="https://flagcdn.com/w40/rw.png" alt="Rwanda" className="w-6 h-4 object-cover rounded-sm" />
@@ -150,7 +150,7 @@ export function LoginForm() {
                     <div
                       key={i}
                       className={`w-11 h-12 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
-                        isActive ? "border-[#145B10] ring-2 ring-[#145B10]/20" : isFilled ? "border-[#145B10]/50" : "border-gray-200"
+                        isActive ? "border-brand ring-2 ring-brand/20" : isFilled ? "border-brand/50" : "border-gray-200"
                       }`}
                     >
                       {code[i] || ""}
@@ -163,7 +163,7 @@ export function LoginForm() {
                 {resendCooldown > 0 ? (
                   <p className="text-sm text-gray-400">Resend code in {resendCooldown}s</p>
                 ) : (
-                  <button type="button" onClick={handleResendOtp} className="text-sm text-[#145B10] font-medium underline underline-offset-2">
+                  <button type="button" onClick={handleResendOtp} className="text-sm text-brand font-medium underline underline-offset-2">
                     Resend code
                   </button>
                 )}
@@ -179,7 +179,7 @@ export function LoginForm() {
           type="button"
           onClick={handleLogin}
           disabled={isLoading || checking || !phoneNumber}
-          className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+          className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
         >
           {checking ? "Checking..." : isLoading ? "Sending code..." : "Log In"}
         </button>
@@ -191,7 +191,7 @@ export function LoginForm() {
             if (otp.length === OTP_LENGTH) handleVerifyOtp(otp)
           }}
           disabled={isLoading || code.join("").length < OTP_LENGTH}
-          className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+          className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
         >
           {isLoading ? "Verifying..." : "Log In"}
         </button>
@@ -211,7 +211,7 @@ export function LoginForm() {
       {!otpSent && (
         <p className="text-center text-sm text-gray-500 pt-2">
           Don&apos;t have an account?{" "}
-          <Link href="/onboarding" className="text-[#145B10] font-semibold underline underline-offset-2">
+          <Link href="/onboarding" className="text-brand font-semibold underline underline-offset-2">
             Sign up
           </Link>
         </p>

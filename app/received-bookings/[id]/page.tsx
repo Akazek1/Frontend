@@ -215,7 +215,7 @@ const BookingDetails: React.FC = () => {
     if (loading) {
         return (
             <div className="app-bg flex min-h-screen items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+                <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );
     }
@@ -263,15 +263,15 @@ const BookingDetails: React.FC = () => {
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                             <div className="flex items-center text-primary gap-2">
-                                <DollarSign className="w-4 h-4 text-[#145B10]" />
+                                <DollarSign className="w-4 h-4 text-brand" />
                                 <span>${booking.price}</span>
                             </div>
                             <div className="flex items-center text-primary gap-2">
-                                <Calendar className="w-4 h-4 text-[#145B10]" />
+                                <Calendar className="w-4 h-4 text-brand" />
                                 <span>{new Date(booking.scheduledFor).toLocaleDateString()}</span>
                             </div>
                             <div className="flex items-center text-primary gap-2">
-                                <Clock className="w-4 h-4 text-[#145B10]" />
+                                <Clock className="w-4 h-4 text-brand" />
                                 <span>{new Date(booking.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                         </div>

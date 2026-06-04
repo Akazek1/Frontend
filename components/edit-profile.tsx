@@ -159,11 +159,11 @@ const SectionShell = ({
 }) => (
   <section className={appCardClass}>
     <div className="mb-4 flex items-start gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <h2 className="text-[16px] font-black leading-5 text-[#1B2431]">{title}</h2>
+        <h2 className="text-[16px] font-black leading-5 text-ink">{title}</h2>
         {description ? <p className="mt-1 text-[12px] leading-5 text-[#53604F]">{description}</p> : null}
       </div>
     </div>
@@ -477,7 +477,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   if (loading) {
     return (
       <div className="app-bg flex min-h-dvh items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-[#145B10]" />
+        <Loader2 className="h-6 w-6 animate-spin text-brand" />
       </div>
     );
   }
@@ -488,13 +488,13 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         <button
           type="button"
           onClick={() => (activeSection === "overview" ? router.back() : openSection("overview"))}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1B2431] shadow-sm hover:bg-[#E8F7E5]"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-sm hover:bg-[#E8F7E5]"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[24px] font-black leading-7 text-[#1B2431]">{sectionTitle}</h1>
+          <h1 className="text-[24px] font-black leading-7 text-ink">{sectionTitle}</h1>
           {sectionDescription && (
             <p className="line-clamp-2 text-[12px] font-medium leading-5 text-[#53604F]">
               {sectionDescription}
@@ -536,12 +536,12 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               ) : (
                 <>
                   <div className="mx-auto mb-3 flex h-28 w-28 items-center justify-center rounded-full bg-[#EEF8EA]">
-                    <User className="h-12 w-12 text-[#145B10]" />
+                    <User className="h-12 w-12 text-brand" />
                   </div>
-                  <h2 className="text-[21px] font-black leading-7 text-[#1B2431]">{fullName(form)}</h2>
+                  <h2 className="text-[21px] font-black leading-7 text-ink">{fullName(form)}</h2>
                 </>
               )}
-              <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-black text-[#145B10]">
+              <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-black text-brand">
                 <ShieldCheck className="h-4 w-4" />
                 Verified phone
               </p>
@@ -549,16 +549,16 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
             <section className={appCardClass}>
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-black text-[#1B2431]">Profile completeness</p>
-                    <p className="text-[13px] font-black text-[#1B2431]">{profileCompletion}%</p>
+                    <p className="text-[13px] font-black text-ink">Profile completeness</p>
+                    <p className="text-[13px] font-black text-ink">{profileCompletion}%</p>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-[#E5E9E3]">
-                    <div className="h-full rounded-full bg-[#145B10]" style={{ width: `${profileCompletion}%` }} />
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${profileCompletion}%` }} />
                   </div>
                   <p className="mt-2 text-[11px] leading-4 text-[#53604F]">{profileCompletionMessage}</p>
                 </div>
@@ -566,7 +566,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-[17px] font-black text-[#1B2431]">Complete your profile</h2>
+              <h2 className="text-[17px] font-black text-ink">Complete your profile</h2>
               {[
                 {
                   key: "identity" as EditSection,
@@ -612,27 +612,27 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     onClick={() => openSection(item.key)}
                     className="flex min-h-[72px] w-full items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3 text-left shadow-sm transition hover:border-[#BFD9BA]"
                   >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[14px] font-black text-[#1B2431]">{item.title}</span>
+                      <span className="block text-[14px] font-black text-ink">{item.title}</span>
                       <span className="mt-0.5 block text-[11px] leading-4 text-[#53604F]">{item.subtitle}</span>
                     </span>
-                    {item.done ? <CheckCircle2 className="h-4 w-4 text-[#145B10]" /> : <ChevronRight className="h-5 w-5 text-[#53604F]" />}
+                    {item.done ? <CheckCircle2 className="h-4 w-4 text-brand" /> : <ChevronRight className="h-5 w-5 text-[#53604F]" />}
                   </button>
                 );
               })}
             </section>
 
             <section className={appCardClass}>
-              <h2 className="mb-3 flex items-center gap-2 text-[14px] font-black text-[#1B2431]">
-                <ShieldCheck className="h-4 w-4 text-[#145B10]" />
+              <h2 className="mb-3 flex items-center gap-2 text-[14px] font-black text-ink">
+                <ShieldCheck className="h-4 w-4 text-brand" />
                 Why this matters
               </h2>
               {["Build trust with employers", "Increase your chances of being hired", "Help employers find the right match", "Stand out with a complete profile"].map((item) => (
                 <p key={item} className="mt-3 flex items-center gap-2 text-[12px] font-medium text-[#374033]">
-                  <CheckCircle2 className="h-4 w-4 text-[#145B10]" />
+                  <CheckCircle2 className="h-4 w-4 text-brand" />
                   {item}
                 </p>
               ))}
@@ -694,7 +694,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                       disabled={!canEdit}
                       onClick={() => setField("gender", gender.value)}
                       className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-[12px] font-black transition ${
-                        active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
+                        active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
                       } disabled:opacity-60`}
                     >
                       <User className="h-4 w-4" />
@@ -707,7 +707,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
             <Field label="Phone number">
               <div className="flex h-12 overflow-hidden rounded-xl border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
-                <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-[#1B2431]">+250</span>
+                <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-ink">+250</span>
                 <div className="relative min-w-0 flex-1">
                   <Input value={form.phoneNumber} readOnly disabled className="h-full rounded-none border-0 bg-[#F4F7F2] pr-10 text-[14px] font-black text-[#616161]" />
                   <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
@@ -723,7 +723,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             </Field>
 
             <div className="rounded-lg bg-[#EEF8EA] p-4 text-[12px] font-medium leading-5 text-[#374033]">
-              <Lock className="mb-2 h-4 w-4 text-[#145B10]" />
+              <Lock className="mb-2 h-4 w-4 text-brand" />
               Your contact information is private and only shared after a booking is confirmed.
             </div>
           </SectionShell>
@@ -755,7 +755,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     disabled={!canEdit}
                     onClick={() => toggleLanguage(language)}
                     className={`flex h-12 items-center justify-between rounded-xl border px-3 text-left text-[13px] font-black transition ${
-                      active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
+                      active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
                     } disabled:opacity-60`}
                   >
                     {language}
@@ -794,7 +794,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                         disabled={!canEdit}
                         onClick={() => toggleQuality(quality)}
                         className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border p-2 text-center text-[11px] font-black leading-4 transition ${
-                          active ? "border-[#145B10] bg-[#EEF8EA] text-[#145B10]" : "border-[#E1EBDD] bg-white text-[#1B2431]"
+                          active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
                         } disabled:opacity-60`}
                       >
                         <Icon className="h-4 w-4" />
@@ -856,11 +856,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               const Icon = item.icon;
               return (
                 <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF8EA] text-[#145B10]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="min-w-0 flex-1 text-[13px] font-black text-[#1B2431]">{item.label}</span>
-                  <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${item.done ? "bg-[#EEF8EA] text-[#145B10]" : "border border-[#BFD9BA] text-[#145B10]"}`}>
+                  <span className="min-w-0 flex-1 text-[13px] font-black text-ink">{item.label}</span>
+                  <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${item.done ? "bg-[#EEF8EA] text-brand" : "border border-[#BFD9BA] text-brand"}`}>
                     {item.action}
                   </span>
                 </div>

@@ -411,7 +411,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           <Button
             onClick={handleSave}
             disabled={isProcessing}
-            className="bg-[#145B10] hover:bg-[#145B10]/90 w-full sm:w-auto text-sm"
+            className="bg-brand hover:bg-brand/90 w-full sm:w-auto text-sm"
           >
             {isProcessing ? "Processing..." : "Save Changes"}
           </Button>

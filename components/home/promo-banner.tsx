@@ -138,7 +138,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
               {slide.trustBadges.map((badge) => (
                 <span
                   key={badge}
-                  className="text-[11px] font-medium text-[#145B10] border border-[#145B10]/30 bg-white/60 rounded-full px-2.5 py-0.5"
+                  className="text-[11px] font-medium text-brand border border-brand/30 bg-white/60 rounded-full px-2.5 py-0.5"
                 >
                   {badge}
                 </span>
@@ -146,9 +146,9 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
             </div>
 
             {/* Headline */}
-            <h2 className="text-[16px] sm:text-[18px] font-bold text-[#1B2431] leading-snug whitespace-pre-line">
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-ink leading-snug whitespace-pre-line">
               {slide.headlineBefore}
-              <span className="text-[#145B10]">{slide.headlineHighlight}</span>
+              <span className="text-brand">{slide.headlineHighlight}</span>
               {slide.headlineAfter}
             </h2>
 
@@ -161,13 +161,13 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
             <div className="flex items-center gap-2">
               <Link
                 href={slide.primaryCta.href}
-                className="bg-[#145B10] text-white text-[11px] font-semibold px-3 py-2 rounded-lg hover:bg-[#0f4a0c] transition-colors whitespace-nowrap"
+                className="bg-brand text-white text-[11px] font-semibold px-3 py-2 rounded-lg hover:bg-[#0f4a0c] transition-colors whitespace-nowrap"
               >
                 {slide.primaryCta.label}
               </Link>
               <Link
                 href={slide.secondaryCta.href}
-                className="bg-white text-[#145B10] border border-[#145B10] text-[11px] font-semibold px-3 py-2 rounded-lg hover:bg-[#f0faf0] transition-colors whitespace-nowrap"
+                className="bg-white text-brand border border-brand text-[11px] font-semibold px-3 py-2 rounded-lg hover:bg-[#f0faf0] transition-colors whitespace-nowrap"
               >
                 {slide.secondaryCta.label}
               </Link>
@@ -191,7 +191,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
           <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/10">
             <div
               key={activeIndex}
-              className="h-full bg-[#145B10]/60"
+              className="h-full bg-brand/60"
               style={{
                 animation: `progress ${AUTOPLAY_INTERVAL}ms linear forwards`,
               }}
@@ -208,7 +208,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
               key={s.id}
               onClick={() => goTo(i)}
               className={`rounded-full transition-all duration-300 ${
-                i === activeIndex ? "w-4 h-2 bg-[#145B10]" : "w-2 h-2 bg-gray-300"
+                i === activeIndex ? "w-4 h-2 bg-brand" : "w-2 h-2 bg-gray-300"
               }`}
             />
           ))}
@@ -218,7 +218,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
       {/* Static cosmetic dots for single slide */}
       {slides.length === 1 && (
         <div className="flex items-center justify-center gap-1.5">
-          <span className="w-4 h-2 rounded-full bg-[#145B10]" />
+          <span className="w-4 h-2 rounded-full bg-brand" />
           <span className="w-2 h-2 rounded-full bg-gray-300" />
           <span className="w-2 h-2 rounded-full bg-gray-300" />
         </div>

@@ -54,7 +54,7 @@ export function ServiceImageUploader({
         {slots.map((slot, idx) => (
           <div
             key={slot.key}
-            className="relative aspect-square overflow-hidden rounded-xl border border-[#DCEEDD] bg-[#F1FCEF]"
+            className="relative aspect-square overflow-hidden rounded-xl border border-[#DCEEDD] bg-surface"
           >
             <Image
               src={slot.src}
@@ -79,7 +79,7 @@ export function ServiceImageUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#145B10]/40 bg-white text-[#145B10] hover:bg-[#F1FCEF]"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brand/40 bg-white text-brand hover:bg-surface"
           >
             <Plus className="h-5 w-5" />
             <span className="text-[11px] font-semibold">Add</span>

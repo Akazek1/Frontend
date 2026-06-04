@@ -109,7 +109,7 @@ const ReportIssue = () => {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center space-y-6 app-bg px-4 py-6">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-[#145B10] flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center mx-auto">
             <svg
               className="w-8 h-8 text-white"
               fill="none"
@@ -124,7 +124,7 @@ const ReportIssue = () => {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-[#145B10]">Thank you!</h2>
+          <h2 className="text-2xl font-bold text-brand">Thank you!</h2>
           <p className="text-[#757575] text-base">
             Your issue has been reported and our team will review it shortly.
           </p>

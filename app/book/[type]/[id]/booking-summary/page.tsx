@@ -234,7 +234,7 @@ const BookingSummary = () => {
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (
             <div className="min-h-screen app-bg flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+                <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );
     }
@@ -261,7 +261,7 @@ const BookingSummary = () => {
                             <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-base sm:text-lg font-semibold text-[#1B2431]">{provider.name}</h2>
+                            <h2 className="text-base sm:text-lg font-semibold text-ink">{provider.name}</h2>
                             <p className="text-sm font-bold text-[#212121]">{provider.title}</p>
                         </div>
                     </div>
@@ -271,20 +271,20 @@ const BookingSummary = () => {
                         {provider.experience}
                     </p>
                     <div className="flex items-center justify-between">
-                        <span className="text-[#145B10] font-bold text-sm sm:text-base">{provider.price} RWF/day</span>
+                        <span className="text-brand font-bold text-sm sm:text-base">{provider.price} RWF/day</span>
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 border-[1.5px] border-[#145B10] text-[#145B10] rounded-none p-0 touch-manipulation"
+                                className="w-8 h-8 border-[1.5px] border-brand text-brand rounded-none p-0 touch-manipulation"
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={quantity <= 1}
                             >
                                 <ArrowDown className="w-4 h-4" />
                             </Button>
-                            <span className="text-[#145B10] font-bold text-sm w-8 text-center">{quantity}</span>
+                            <span className="text-brand font-bold text-sm w-8 text-center">{quantity}</span>
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 border-[1.5px] border-[#145B10] text-[#145B10] rounded-none p-0 touch-manipulation"
+                                className="w-8 h-8 border-[1.5px] border-brand text-brand rounded-none p-0 touch-manipulation"
                                 onClick={() => handleQuantityChange(1)}
                             >
                                 <ArrowUp className="w-4 h-4" />
@@ -298,7 +298,7 @@ const BookingSummary = () => {
                 <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm">
                     {isLoadingAdditionalServices ? (
                         <div className="flex items-center justify-center">
-                            <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+                            <Loader2 className="w-6 h-6 animate-spin text-brand" />
                         </div>
                     ) : additionalServices.length === 0 ? (
                         <p className="text-[#616161] text-sm font-medium">No additional services available.</p>
@@ -307,19 +307,19 @@ const BookingSummary = () => {
                             <div key={service.id} className="space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1">
-                                        <h2 className="text-base sm:text-lg font-semibold text-[#1B2431]">
+                                        <h2 className="text-base sm:text-lg font-semibold text-ink">
                                             {`${service.provider.firstName} ${service.provider.lastName}`}
                                         </h2>
                                         <p className="text-sm font-bold text-[#212121]">{service.title}</p>
                                         <p className="text-sm text-[#616161] font-medium">
                                             {service.description || "No description provided"}
                                         </p>
-                                        <p className="text-[#145B10] font-bold text-sm">{service.price} RWF/day</p>
+                                        <p className="text-brand font-bold text-sm">{service.price} RWF/day</p>
                                     </div>
                                 </div>
                                 <div className="w-full flex justify-end">
                                     <Button
-                                        className="rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2 px-3 touch-manipulation"
+                                        className="rounded-full font-bold bg-brand text-white hover:bg-brand/90 text-sm py-2 px-3 touch-manipulation"
                                         onClick={() => handleAddService(service.id)}
                                     >
                                         {selectedAdditionalServiceIds.includes(service.id) ? "Remove" : "Add Service"}
@@ -337,16 +337,16 @@ const BookingSummary = () => {
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-[#212121]" />
-                            <span className="text-[#145B10] font-medium text-sm">Service Address</span>
+                            <span className="text-brand font-medium text-sm">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
                             <div className="app-bg flex items-center justify-center">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#145B10]" />
+                                <Loader2 className="w-5 h-5 animate-spin text-brand" />
                             </div>
                         ) : addresses.length === 0 ? (
                             <p className="text-[#616161] text-sm font-medium">
                                 No addresses found.{" "}
-                                <Link href="/more/addresses" className="text-[#145B10] underline">
+                                <Link href="/more/addresses" className="text-brand underline">
                                     Add an address
                                 </Link>
                             </p>
@@ -369,7 +369,7 @@ const BookingSummary = () => {
                     {/* Date and Time */}
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Calendar className="w-4 h-4 stroke-black" />
-                        <span className="text-[#145B10] font-medium text-sm">
+                        <span className="text-brand font-medium text-sm">
                             {selectedDate} at {selectedTime}
                         </span>
                     </div>
@@ -377,7 +377,7 @@ const BookingSummary = () => {
                     {/* Coupon */}
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Ticket className="w-4 h-4 stroke-black" />
-                        <span className="text-[#145B10] font-medium text-sm">Apply Coupons</span>
+                        <span className="text-brand font-medium text-sm">Apply Coupons</span>
                     </div>
                 </Card>
 
@@ -396,7 +396,7 @@ const BookingSummary = () => {
                         <span>Delivery Fee</span>
                         <span>{deliveryFee} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#1B2431] font-bold text-sm">
+                    <div className="flex justify-between text-ink font-bold text-sm">
                         <span>Grand Total</span>
                         <span>{grandTotal} RWF</span>
                     </div>
