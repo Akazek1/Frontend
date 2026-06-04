@@ -16,7 +16,7 @@ export function EmptyServicesState({ onAdd }: EmptyServicesStateProps) {
       <h3 className="mt-4 text-[16px] font-black text-ink">
         You don&apos;t have any service cards yet.
       </h3>
-      <p className="mt-1 max-w-[280px] text-[13px] text-[#475467]">
+      <p className="mt-1 max-w-[280px] text-[13px] text-ink-muted">
         Add your first service to start getting hire requests.
       </p>
       <Button

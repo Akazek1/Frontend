@@ -166,7 +166,7 @@ const NotificationHistoryPage = () => {
         <div className="space-y-5">
           {groupedItems.map((group) => (
             <section key={group.title} className="space-y-2">
-              <h2 className="px-1 text-[15px] font-bold text-[#616161]">{group.title}</h2>
+              <h2 className="px-1 text-[15px] font-bold text-ink-muted">{group.title}</h2>
               <Card variant="list" className="overflow-hidden rounded-xl">
                 {group.items.map((notification) => (
                   <NotificationRow

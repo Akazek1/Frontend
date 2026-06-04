@@ -115,7 +115,7 @@ export function JobPostCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 text-[11px] text-[#616161]">
+      <div className="flex items-center gap-1 text-[11px] text-ink-muted">
         <MapPin className="h-3 w-3 flex-shrink-0 text-gray-400" />
         <span>{job.location}, Kigali &nbsp;•&nbsp; {dist}</span>
       </div>
@@ -128,13 +128,13 @@ export function JobPostCard({
           </span>
         )}
         {workTags.map((tag) => (
-          <span key={tag} className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[10px] font-medium text-[#616161]">
+          <span key={tag} className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[10px] font-medium text-ink-muted">
             {tag}
           </span>
         ))}
       </div>
 
-      <p className="line-clamp-2 text-[11px] leading-relaxed text-[#616161]">
+      <p className="line-clamp-2 text-[11px] leading-relaxed text-ink-muted">
         {job.description}
       </p>
 

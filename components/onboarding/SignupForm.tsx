@@ -126,7 +126,7 @@ export function SignupForm() {
       <div className="w-full h-full overflow-y-auto">
         <div className="px-4 sm:px-6 pt-10 pb-32 max-w-md mx-auto space-y-4">
           <div className="text-center mb-6">
-            <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-2">Complete your profile</h2>
+            <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Complete your profile</h2>
             <p className="text-sm text-gray-500">Just your name to finish setting up</p>
           </div>
 
@@ -192,7 +192,7 @@ export function SignupForm() {
     <div className="w-full h-full overflow-y-auto">
       <div className="px-4 sm:px-6 pt-8 pb-32 max-w-md mx-auto space-y-4">
         <div className="text-center mb-4">
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-2">Create your account</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Create your account</h2>
           <p className="text-sm text-gray-500">Fill in your details to get started</p>
         </div>
 

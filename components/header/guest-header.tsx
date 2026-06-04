@@ -40,7 +40,7 @@ const GuestHeader: React.FC = () => {
         <h1 className="text-[20px] font-bold text-ink leading-tight">
           Find trusted help or your next job 👋
         </h1>
-        <p className="text-[13px] text-[#757575] mt-0.5">
+        <p className="text-[13px] text-ink-subtle mt-0.5">
           Browse jobs and service providers across Rwanda — no account needed.
         </p>
       </div>

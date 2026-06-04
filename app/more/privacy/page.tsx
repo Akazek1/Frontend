@@ -13,10 +13,10 @@ const PrivacyPolicy = () => {
       <div className={`${appContentClass} gap-8`}>
         {PrivacyPolicyData.map((section) => (
           <section key={section.id} className="space-y-6">
-            <h2 className="font-urbanist text-[20px] font-bold leading-6 text-[#212121]">
+            <h2 className="font-urbanist text-[20px] font-bold leading-6 text-ink">
               {section.id}. {section.title}
             </h2>
-            <p className="font-urbanist text-[14px] font-normal leading-6 tracking-[0.2px] text-[#424242]">
+            <p className="font-urbanist text-[14px] font-normal leading-6 tracking-[0.2px] text-ink-muted">
               {section.content}
             </p>
           </section>

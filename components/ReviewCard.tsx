@@ -104,14 +104,14 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
           </div>
         )}
       </div>
-      <p className="text-[13px] leading-[120%] text-[#616161] font-semibold">{review.comment}</p>
+      <p className="text-[13px] leading-[120%] text-ink-muted font-semibold">{review.comment}</p>
       <p className="text-xs text-gray-400">
         Posted on {new Date(review.booking.updatedAt).toLocaleDateString()}
       </p>
       {review.reply && (
         <div className="ml-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
           <p className="text-[11px] font-bold text-ink">Response from {review.target?.firstName || "provider"}</p>
-          <p className="mt-1 text-[13px] leading-[140%] text-[#616161]">{review.reply}</p>
+          <p className="mt-1 text-[13px] leading-[140%] text-ink-muted">{review.reply}</p>
           {review.repliedAt && (
             <p className="mt-1 text-[11px] text-gray-400">
               Replied on {new Date(review.repliedAt).toLocaleDateString()}

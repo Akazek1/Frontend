@@ -183,7 +183,7 @@ const JobDetailPage = () => {
           <h1 className="text-2xl font-black text-ink leading-tight mb-4">{job.title}</h1>
           
           <div className="mb-6 rounded-2xl bg-gray-50/70 p-4">
-            <p className="text-[14px] text-[#616161] leading-relaxed font-medium whitespace-pre-wrap">{job.description}</p>
+            <p className="text-[14px] text-ink-muted leading-relaxed font-medium whitespace-pre-wrap">{job.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -250,7 +250,7 @@ const JobDetailPage = () => {
               </div>
             </div>
             {job.employer.bio && (
-              <p className="mt-4 text-[13px] text-[#616161] leading-relaxed font-medium italic italic border-l-2 border-brand/20 pl-4 py-1">
+              <p className="mt-4 text-[13px] text-ink-muted leading-relaxed font-medium italic italic border-l-2 border-brand/20 pl-4 py-1">
                 &ldquo;{job.employer.bio}&rdquo;
               </p>
             )}
@@ -302,7 +302,7 @@ const JobDetailPage = () => {
 
                     {app.message && (
                       <div className="bg-gray-50 rounded-2xl p-4 mb-5 border border-gray-100 shadow-inner">
-                        <p className="text-[13px] text-[#616161] leading-relaxed font-medium italic">
+                        <p className="text-[13px] text-ink-muted leading-relaxed font-medium italic">
                           &ldquo;{app.message}&rdquo;
                         </p>
                       </div>

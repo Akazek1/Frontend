@@ -75,7 +75,7 @@ export function LoginForm() {
           <LogIn className="w-8 h-8 text-brand" strokeWidth={1.5} />
         </div>
         <div className="text-center">
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-1">Welcome back</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-1">Welcome back</h2>
           <p className="text-sm text-gray-500">Enter your phone number to log in</p>
         </div>
       </div>

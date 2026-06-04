@@ -121,7 +121,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, isOwner }) => {
         </div>
       </div>
 
-      <p className="mt-4 text-[13px] text-[#616161] line-clamp-2 leading-relaxed font-medium">
+      <p className="mt-4 text-[13px] text-ink-muted line-clamp-2 leading-relaxed font-medium">
         {displayDescription}
       </p>
 

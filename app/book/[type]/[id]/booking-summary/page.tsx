@@ -262,11 +262,11 @@ const BookingSummary = () => {
                         </Avatar>
                         <div className="flex-1">
                             <h2 className="text-base sm:text-lg font-semibold text-ink">{provider.name}</h2>
-                            <p className="text-sm font-bold text-[#212121]">{provider.title}</p>
+                            <p className="text-sm font-bold text-ink">{provider.title}</p>
                         </div>
                     </div>
-                    <p className="text-[#616161] text-sm font-semibold">
-                        <strong className="font-bold text-[#212121] text-base">Description</strong>
+                    <p className="text-ink-muted text-sm font-semibold">
+                        <strong className="font-bold text-ink text-base">Description</strong>
                         <br />
                         {provider.experience}
                     </p>
@@ -294,14 +294,14 @@ const BookingSummary = () => {
                 </Card>
 
                 {/* Frequently Added Together */}
-                {/* <h3 className="font-medium text-[#212121] text-base">Frequently Added Together</h3>
+                {/* <h3 className="font-medium text-ink text-base">Frequently Added Together</h3>
                 <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm">
                     {isLoadingAdditionalServices ? (
                         <div className="flex items-center justify-center">
                             <Loader2 className="w-6 h-6 animate-spin text-brand" />
                         </div>
                     ) : additionalServices.length === 0 ? (
-                        <p className="text-[#616161] text-sm font-medium">No additional services available.</p>
+                        <p className="text-ink-muted text-sm font-medium">No additional services available.</p>
                     ) : (
                         additionalServices.map((service) => (
                             <div key={service.id} className="space-y-3">
@@ -310,8 +310,8 @@ const BookingSummary = () => {
                                         <h2 className="text-base sm:text-lg font-semibold text-ink">
                                             {`${service.provider.firstName} ${service.provider.lastName}`}
                                         </h2>
-                                        <p className="text-sm font-bold text-[#212121]">{service.title}</p>
-                                        <p className="text-sm text-[#616161] font-medium">
+                                        <p className="text-sm font-bold text-ink">{service.title}</p>
+                                        <p className="text-sm text-ink-muted font-medium">
                                             {service.description || "No description provided"}
                                         </p>
                                         <p className="text-brand font-bold text-sm">{service.price} RWF/day</p>
@@ -336,7 +336,7 @@ const BookingSummary = () => {
                     {/* Address Selection */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-[#212121]" />
+                            <MapPin className="w-4 h-4 text-ink" />
                             <span className="text-brand font-medium text-sm">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
@@ -344,7 +344,7 @@ const BookingSummary = () => {
                                 <Loader2 className="w-5 h-5 animate-spin text-brand" />
                             </div>
                         ) : addresses.length === 0 ? (
-                            <p className="text-[#616161] text-sm font-medium">
+                            <p className="text-ink-muted text-sm font-medium">
                                 No addresses found.{" "}
                                 <Link href="/more/addresses" className="text-brand underline">
                                     Add an address
@@ -384,15 +384,15 @@ const BookingSummary = () => {
                 {/* Pricing Breakdown */}
                 <Card className="space-y-3">
                     <AppSectionHeader title="Pricing" />
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Item Totals</span>
                         <span>{itemTotal} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Discounts</span>
                         <span>{discount} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Delivery Fee</span>
                         <span>{deliveryFee} RWF</span>
                     </div>

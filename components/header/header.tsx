@@ -69,7 +69,7 @@ const Header = () => {
               <div className="space-y-3">
                 <div>
                   <p className="text-[14px] font-bold text-ink">Choose language</p>
-                  <p className="text-[11px] text-[#757575]">Preview only. Translation is not connected yet.</p>
+                  <p className="text-[11px] text-ink-subtle">Preview only. Translation is not connected yet.</p>
                 </div>
                 <div className="space-y-1">
                   {languages.map((language) => {
@@ -90,7 +90,7 @@ const Header = () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-[13px] font-semibold text-ink">{language.name}</span>
-                          <span className="block text-[11px] text-[#757575]">{language.hint}</span>
+                          <span className="block text-[11px] text-ink-subtle">{language.hint}</span>
                         </span>
                         {active && <Check className="h-4 w-4 text-brand" />}
                       </button>
@@ -128,7 +128,7 @@ const Header = () => {
               </div>
               <div className="max-h-[320px] overflow-y-auto p-2">
                 {items.length === 0 ? (
-                  <p className="px-3 py-6 text-center text-[12px] text-[#757575]">No notifications yet.</p>
+                  <p className="px-3 py-6 text-center text-[12px] text-ink-subtle">No notifications yet.</p>
                 ) : (
                   items.map((notification) => (
                     <NotificationRow
@@ -173,7 +173,7 @@ const Header = () => {
         <h1 className="text-[20px] font-bold text-ink leading-tight">
           {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
         </h1>
-        <p className="text-[13px] text-[#757575] mt-0.5">Find jobs, earn and grow with Akazek.</p>
+        <p className="text-[13px] text-ink-subtle mt-0.5">Find jobs, earn and grow with Akazek.</p>
       </div>
     </div>
   );

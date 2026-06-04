@@ -389,7 +389,7 @@ function MyJobPostsEntry({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-black text-ink">My Job Posts</p>
-        <p className="mt-1 text-[12px] font-medium text-[#344054]">
+        <p className="mt-1 text-[12px] font-medium text-ink-muted">
           {activePostCount} active posts <span className="mx-1">•</span> {totalApplicants} total applicants
         </p>
       </div>
@@ -422,7 +422,7 @@ function WorkSection({
             <h2 className={cn("text-[13px] font-black", accentClasses[accent].title)}>{copy.title}</h2>
             <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-black", accentClasses[accent].soft)}>{count}</span>
           </div>
-          {copy.subtitle && <p className="mt-1 text-[12px] text-[#344054]">{copy.subtitle}</p>}
+          {copy.subtitle && <p className="mt-1 text-[12px] text-ink-muted">{copy.subtitle}</p>}
         </div>
         {count > 2 && (
           <button
@@ -507,11 +507,11 @@ function DealCard({
             </p>
 
             {/* Row 3 — category · date · price meta with icons */}
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#344054]">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-muted">
               {item.meta.map((meta) => (
                 <span key={meta} className="inline-flex items-center gap-1">
                   {meta.includes("RWF") ? (
-                    <Banknote className="h-3 w-3 text-[#667085]" />
+                    <Banknote className="h-3 w-3 text-ink-subtle" />
                   ) : meta.includes("Sat") ||
                     meta.includes("Sun") ||
                     meta.includes("Mon") ||
@@ -520,7 +520,7 @@ function DealCard({
                     meta.includes("Thu") ||
                     meta.includes("Fri") ||
                     meta.includes("To agree") ? (
-                    <CalendarDays className="h-3 w-3 text-[#667085]" />
+                    <CalendarDays className="h-3 w-3 text-ink-subtle" />
                   ) : null}
                   {meta}
                 </span>
@@ -781,7 +781,7 @@ function InlineEmpty({ filter }: { filter: WorkFilter }) {
         : "No closed work right now.";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-5 text-center text-[13px] font-semibold text-[#667085]">
+    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-5 text-center text-[13px] font-semibold text-ink-subtle">
       {text}
     </div>
   );
@@ -883,7 +883,7 @@ export function JobPostsPage() {
           <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center">
             <ClipboardList className="mx-auto h-8 w-8 text-gray-300" />
             <p className="mt-3 text-[14px] font-black text-ink">No job posts here</p>
-            <p className="mt-1 text-[12px] text-[#667085]">Post a new job to find help.</p>
+            <p className="mt-1 text-[12px] text-ink-subtle">Post a new job to find help.</p>
           </div>
         ) : (
           <>
@@ -919,14 +919,14 @@ function JobPostsSummary({
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-black text-ink">
           {activePosts} active post{activePosts === 1 ? "" : "s"}
-          <span className="mx-1.5 text-[#667085]">•</span>
+          <span className="mx-1.5 text-ink-subtle">•</span>
           {totalApplicants} total applicants
         </p>
-        <p className="mt-0.5 text-[12px] text-[#667085]">
+        <p className="mt-0.5 text-[12px] text-ink-subtle">
           Manage your job posts and review applicants.
         </p>
       </div>
-      <ChevronRight className="h-5 w-5 shrink-0 text-[#667085]" />
+      <ChevronRight className="h-5 w-5 shrink-0 text-ink-subtle" />
     </div>
   );
 }
@@ -971,27 +971,27 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
                 <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold", accent.pill)}>
                   {statusLabel}
                 </span>
-                <span aria-hidden className="flex h-6 w-6 items-center justify-center text-[18px] leading-none text-[#667085]">
+                <span aria-hidden className="flex h-6 w-6 items-center justify-center text-[18px] leading-none text-ink-subtle">
                   ⋮
                 </span>
               </div>
             </div>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#475467]">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-muted">
               {location && (
                 <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-[#667085]" />
+                  <MapPin className="h-3.5 w-3.5 text-ink-subtle" />
                   {location}
                 </span>
               )}
               {schedule && (
                 <span className="inline-flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5 text-[#667085]" />
+                  <CalendarDays className="h-3.5 w-3.5 text-ink-subtle" />
                   {schedule}
                 </span>
               )}
             </div>
-            <p className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-[#475467]">
-              <Banknote className="h-3.5 w-3.5 text-[#667085]" />
+            <p className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-ink-muted">
+              <Banknote className="h-3.5 w-3.5 text-ink-subtle" />
               Budget: {formatPrice(job.budgetMin, job.budgetMax)}
             </p>
           </div>
@@ -1003,7 +1003,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-black text-ink">1</span>
-              <span className="text-[13px] text-[#475467]">Hired</span>
+              <span className="text-[13px] text-ink-muted">Hired</span>
               {hiredAvatar?.worker && <AvatarChip person={hiredAvatar.worker} />}
             </div>
             <Link
@@ -1044,7 +1044,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
         )}
       </div>
 
-      <p className="px-4 pb-3 text-[11px] text-[#667085]">
+      <p className="px-4 pb-3 text-[11px] text-ink-subtle">
         {isFilled ? "Filled" : "Posted"} {getTimeAgo(job.createdAt) || "recently"}
       </p>
     </article>
@@ -1083,7 +1083,7 @@ function NeedToHireAgainCard({ onPostNew }: { onPostNew: () => void }) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[14px] font-black text-ink">Need to hire again?</p>
-          <p className="mt-0.5 text-[12px] text-[#475467]">
+          <p className="mt-0.5 text-[12px] text-ink-muted">
             Post a new job and find the right help.
           </p>
         </div>
@@ -1107,7 +1107,7 @@ function SafeAndSecureCard() {
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
-        <p className="mt-0.5 text-[12px] text-[#475467]">
+        <p className="mt-0.5 text-[12px] text-ink-muted">
           We review all applications and keep your information protected.
         </p>
       </div>
@@ -1190,7 +1190,7 @@ function ReviewDialog({
         </DialogHeader>
         {item && (
           <div className="space-y-4">
-            <p className="text-sm text-[#344054]">
+            <p className="text-sm text-ink-muted">
               How was your experience with <span className="font-semibold">{item.title}</span>?
             </p>
             <div className="flex items-center justify-center gap-2" role="radiogroup" aria-label="Rating">

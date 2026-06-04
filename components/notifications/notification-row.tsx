@@ -187,7 +187,7 @@ export function NotificationRow({
           </span>
           <span
             className={cn(
-              "flex-shrink-0 whitespace-nowrap font-semibold text-[#757575]",
+              "flex-shrink-0 whitespace-nowrap font-semibold text-ink-subtle",
               isCompact ? "text-[10px]" : "text-[12px]",
             )}
           >
@@ -197,7 +197,7 @@ export function NotificationRow({
 
         <span
           className={cn(
-            "mt-1 block text-[#616161]",
+            "mt-1 block text-ink-muted",
             isCompact ? "line-clamp-2 text-[11px] leading-4" : "text-[13px] leading-5",
           )}
         >

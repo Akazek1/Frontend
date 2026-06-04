@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
   AtSign,
   BookOpen,
   BriefcaseBusiness,
@@ -45,9 +44,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  PageHeader,
   appCardClass,
   appInputClass,
   appPrimaryButtonClass,
+  appStickyHeaderClass,
   appTextareaClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
@@ -483,26 +484,12 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   }
 
   const Header = (
-    <div className="bg-surface sticky top-0 z-20 border-b border-[#E1EBDD] px-4 pb-3 pt-6 backdrop-blur">
-      <div className="mx-auto flex max-w-[428px] items-center gap-3">
-        <button
-          type="button"
-          onClick={() => (activeSection === "overview" ? router.back() : openSection("overview"))}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-sm hover:bg-[#E8F7E5]"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[24px] font-black leading-7 text-ink">{sectionTitle}</h1>
-          {sectionDescription && (
-            <p className="line-clamp-2 text-[12px] font-medium leading-5 text-[#53604F]">
-              {sectionDescription}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+    <PageHeader
+      title={sectionTitle}
+      subtitle={sectionDescription || undefined}
+      onBack={() => (activeSection === "overview" ? router.back() : openSection("overview"))}
+      className={cn(appStickyHeaderClass, "z-20 border-b border-[#E1EBDD]")}
+    />
   );
 
   const SaveBar = idEditable ? (
@@ -709,7 +696,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               <div className="flex h-12 overflow-hidden rounded-xl border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
                 <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-ink">+250</span>
                 <div className="relative min-w-0 flex-1">
-                  <Input value={form.phoneNumber} readOnly disabled className="h-full rounded-none border-0 bg-[#F4F7F2] pr-10 text-[14px] font-black text-[#616161]" />
+                  <Input value={form.phoneNumber} readOnly disabled className="h-full rounded-none border-0 bg-[#F4F7F2] pr-10 text-[14px] font-black text-ink-muted" />
                   <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
                 </div>
               </div>

@@ -118,7 +118,7 @@ export function WizardStep2DetailsPreview({
         <h2 className="mt-1 text-[22px] font-black text-ink">
           Details &amp; Preview
         </h2>
-        <p className="mt-1 text-[13px] text-[#475467]">
+        <p className="mt-1 text-[13px] text-ink-muted">
           Add more details to complete your service card.
         </p>
       </header>
@@ -193,7 +193,7 @@ export function WizardStep2DetailsPreview({
             />
           );
         })()}
-        <p className="text-center text-[11px] italic text-[#667085]">
+        <p className="text-center text-[11px] italic text-ink-subtle">
           Stats appear once your card is live
         </p>
       </Card>
@@ -212,7 +212,7 @@ export function WizardStep2DetailsPreview({
         <AppButton
           type="submit"
           disabled={!isValid || isSubmitting}
-          className="flex-1 text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-[#667085]"
+          className="flex-1 text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-ink-subtle"
         >
           <Check className="h-4 w-4" />
           {isSubmitting

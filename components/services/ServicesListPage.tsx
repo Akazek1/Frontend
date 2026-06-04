@@ -130,7 +130,7 @@ export function ServicesListPage() {
 
         {/* Body */}
         {isLoading && services.length === 0 && (
-          <Card variant="list" className="p-6 text-center text-[13px] text-[#475467]">
+          <Card variant="list" className="p-6 text-center text-[13px] text-ink-muted">
             Loading your services…
           </Card>
         )}

@@ -153,7 +153,7 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
             </h2>
 
             {/* Subtitle */}
-            <p className="text-[11px] sm:text-xs text-[#616161] leading-relaxed whitespace-pre-line">
+            <p className="text-[11px] sm:text-xs text-ink-muted leading-relaxed whitespace-pre-line">
               {slide.subtitle}
             </p>
 

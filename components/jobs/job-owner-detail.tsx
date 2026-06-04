@@ -192,7 +192,7 @@ export default function JobOwnerDetail({
             </button>
           </div>
         </header>
-        <div className="mt-2 flex items-center gap-2 text-[12px] text-[#475467]">
+        <div className="mt-2 flex items-center gap-2 text-[12px] text-ink-muted">
           <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold", statusClass)}>
             {statusLabel}
           </span>
@@ -234,13 +234,13 @@ export default function JobOwnerDetail({
             <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
               {/* Left column — facts */}
               <div className="space-y-3 text-[13px] text-ink">
-                <FactRow icon={<MapPin className="h-4 w-4 text-[#667085]" />}>
+                <FactRow icon={<MapPin className="h-4 w-4 text-ink-subtle" />}>
                   {formatLocation(job)}
                 </FactRow>
-                <FactRow icon={<CalendarDays className="h-4 w-4 text-[#667085]" />}>
+                <FactRow icon={<CalendarDays className="h-4 w-4 text-ink-subtle" />}>
                   {formatSchedule(job)}
                 </FactRow>
-                <FactRow icon={<Banknote className="h-4 w-4 text-[#667085]" />}>
+                <FactRow icon={<Banknote className="h-4 w-4 text-ink-subtle" />}>
                   Budget: {formatBudget(job)}
                 </FactRow>
               </div>
@@ -249,7 +249,7 @@ export default function JobOwnerDetail({
               <div className="md:border-l md:border-gray-100 md:pl-4">
                 <h3 className="text-[13px] font-black text-ink">Description</h3>
                 {description ? (
-                  <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-[#475467]">
+                  <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-ink-muted">
                     {description}
                   </p>
                 ) : (
@@ -316,7 +316,7 @@ export default function JobOwnerDetail({
         {/* ── Search + Sort ──────────────────────────────────────── */}
         <section className="flex gap-2">
           <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3">
-            <Search className="h-4 w-4 text-[#667085]" />
+            <Search className="h-4 w-4 text-ink-subtle" />
             <input
               type="text"
               value={search}
@@ -335,7 +335,7 @@ export default function JobOwnerDetail({
               <option value="oldest">Oldest first</option>
               <option value="name">Name</option>
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#667085]" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
           </div>
         </section>
 
@@ -363,7 +363,7 @@ export default function JobOwnerDetail({
           </div>
           <div className="min-w-0">
             <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
-            <p className="mt-0.5 text-[12px] text-[#475467]">
+            <p className="mt-0.5 text-[12px] text-ink-muted">
               We review all applications and keep your information protected.
             </p>
           </div>
@@ -378,7 +378,7 @@ export default function JobOwnerDetail({
           </DialogHeader>
           {confirmHire && (
             <div className="space-y-4">
-              <p className="text-[13px] text-[#475467]">
+              <p className="text-[13px] text-ink-muted">
                 This sends an official offer to{" "}
                 <span className="font-semibold text-ink">
                   {confirmHire.worker?.firstName} {confirmHire.worker?.lastName}
@@ -405,7 +405,7 @@ export default function JobOwnerDetail({
             <DialogTitle>Close this post?</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-[13px] text-[#475467]">
+            <p className="text-[13px] text-ink-muted">
               Closing the post stops accepting new applicants. Existing accepted hires remain
               unaffected.
             </p>
@@ -517,13 +517,13 @@ function ApplicantCard({
             {w?.isVerified && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-brand" />}
           </div>
           {(rating > 0 || jobs > 0) && (
-            <p className="mt-0.5 flex items-center gap-1 text-[12px] text-[#475467]">
+            <p className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-muted">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
               <span className="font-bold text-ink">{rating ? rating.toFixed(1) : "—"}</span>
-              {jobs > 0 && <span className="text-[#667085]">({jobs} jobs)</span>}
+              {jobs > 0 && <span className="text-ink-subtle">({jobs} jobs)</span>}
             </p>
           )}
-          <p className="mt-0.5 text-[12px] text-[#475467]">
+          <p className="mt-0.5 text-[12px] text-ink-muted">
             {years ? `${years} year${years === 1 ? "" : "s"} experience` : "Experience not set"}
             {langs.length > 0 && (
               <>

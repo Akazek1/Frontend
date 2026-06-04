@@ -185,23 +185,23 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         )}
 
         {/* Row 3: service title */}
-        <span className="text-[12px] text-[#616161] capitalize leading-tight">
+        <span className="text-[12px] text-ink-muted capitalize leading-tight">
           {title || "Service"}
         </span>
 
         {/* Row 4: ⭐ rating · reviews */}
-        <div className="flex items-center gap-1 text-[11px] text-[#616161]">
+        <div className="flex items-center gap-1 text-[11px] text-ink-muted">
           <Star className="w-3 h-3 fill-yellow-400 stroke-yellow-400 flex-shrink-0" />
           <span className="font-semibold text-ink">
             {rating > 0 ? rating.toFixed(1) : "New"}
           </span>
-          <span className="text-[#616161]">
+          <span className="text-ink-muted">
             ({reviews > 0 ? `${formatReviews(reviews)} reviews` : "0 reviews"})
           </span>
         </div>
 
         {/* Row 5: 📍 location · distance */}
-        <div className="flex items-center gap-1 text-[11px] text-[#616161]">
+        <div className="flex items-center gap-1 text-[11px] text-ink-muted">
           <MapPin className="w-3 h-3 flex-shrink-0" />
           <span className="truncate max-w-[90px]">{location || "Rwanda"}</span>
           <span className="text-gray-300">·</span>
@@ -210,7 +210,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Row 6: 💬 Speaks */}
         {languages && (
-          <div className="flex items-center gap-1 text-[11px] text-[#616161]">
+          <div className="flex items-center gap-1 text-[11px] text-ink-muted">
             <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="truncate">Speaks: {languages}</span>
           </div>
@@ -225,7 +225,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] font-medium text-[#616161] bg-gray-100 rounded-full px-2 py-0.5 whitespace-nowrap"
+                className="text-[10px] font-medium text-ink-muted bg-gray-100 rounded-full px-2 py-0.5 whitespace-nowrap"
               >
                 {tag}
               </span>

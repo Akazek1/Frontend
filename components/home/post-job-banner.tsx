@@ -23,7 +23,7 @@ const PostJobBanner: React.FC = () => {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-bold text-ink">Post a Custom Job</p>
-        <p className="text-[10px] text-[#616161] leading-tight mt-0.5">
+        <p className="text-[10px] text-ink-muted leading-tight mt-0.5">
           Can&apos;t find what you need? Describe your job and providers will come to you.
         </p>
       </div>

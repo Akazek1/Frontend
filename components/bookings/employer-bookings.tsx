@@ -148,7 +148,7 @@ const EmployerBookings: React.FC = () => {
               className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
                 tab === t
                   ? 'bg-brand text-white'
-                  : 'bg-white text-[#616161] border border-gray-200'
+                  : 'bg-white text-ink-muted border border-gray-200'
               }`}
             >
               {t}
@@ -170,7 +170,7 @@ const EmployerBookings: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="text-[15px] font-bold text-ink">Leave a Review</DialogTitle>
           </DialogHeader>
-          <p className="text-[12px] text-[#616161] -mt-2">How was the service?</p>
+          <p className="text-[12px] text-ink-muted -mt-2">How was the service?</p>
           <div className="flex gap-1.5 my-1">
             {[1,2,3,4,5].map((s) => (
               <button key={s} onClick={() => setRating(s)} className="focus:outline-none">
@@ -241,7 +241,7 @@ const EmployerBookings: React.FC = () => {
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-[#616161]">
+                    <p className="text-[11px] text-ink-muted">
                       {b.status === 'PENDING' ? "Offer to: " : isUpcoming ? "Provider: " : "Served by: "}
                       {b.worker?.username ? (
                         <Link
@@ -255,7 +255,7 @@ const EmployerBookings: React.FC = () => {
                       )}
                     </p>
 
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted mt-0.5">
                       <span className="flex items-center gap-1">
                         <CalendarDays className="w-3 h-3 flex-shrink-0" />
                         {formatDate(b.scheduledFor)}
@@ -305,7 +305,7 @@ const EmployerBookings: React.FC = () => {
                             s <= (b.review?.rating ?? 0) ? 'fill-yellow-400 stroke-yellow-400' : 'stroke-gray-200'
                           }`} />
                         ))}
-                        <span className="text-[11px] text-[#616161] ml-1">Your review</span>
+                        <span className="text-[11px] text-ink-muted ml-1">Your review</span>
                       </div>
                     )}
                   </div>
@@ -332,7 +332,7 @@ const EmptyState = ({ tab }: { tab: Tab }) => {
     <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
       {icon}
       <p className="text-[14px] font-bold text-ink mt-1">{title}</p>
-      <p className="text-[12px] text-[#616161] px-8 leading-relaxed">{sub}</p>
+      <p className="text-[12px] text-ink-muted px-8 leading-relaxed">{sub}</p>
     </div>
   );
 };

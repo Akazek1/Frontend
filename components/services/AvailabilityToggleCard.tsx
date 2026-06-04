@@ -31,7 +31,7 @@ export function AvailabilityToggleCard({
           >
             Available for work
           </h2>
-          <p className="mt-0.5 text-[12px] text-[#475467]">
+          <p className="mt-0.5 text-[12px] text-ink-muted">
             When turned off, your service cards won&apos;t appear to employers.
           </p>
         </div>
@@ -47,7 +47,7 @@ export function AvailabilityToggleCard({
 
       <div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2">
         <ShieldCheck className="h-4 w-4 text-brand" aria-hidden="true" />
-        <p className="text-[12px] text-[#475467]">
+        <p className="text-[12px] text-ink-muted">
           This applies to all your service cards
         </p>
       </div>

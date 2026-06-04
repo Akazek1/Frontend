@@ -60,13 +60,13 @@ export function TipCard({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-black text-ink">{title}</p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-[#475467]">
+        <p className="mt-0.5 text-[12px] leading-relaxed text-ink-muted">
           {body}
         </p>
       </div>
       {href && (
         <ChevronRight
-          className="mt-1 h-4 w-4 shrink-0 text-[#667085]"
+          className="mt-1 h-4 w-4 shrink-0 text-ink-subtle"
           aria-hidden="true"
         />
       )}

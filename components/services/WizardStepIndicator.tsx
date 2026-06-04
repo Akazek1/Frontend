@@ -26,7 +26,7 @@ export function WizardStepIndicator({ step }: WizardStepIndicatorProps) {
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-black ${
                 isDone || isCurrent
                   ? "bg-brand text-white"
-                  : "border border-[#DCEEDD] bg-white text-[#667085]"
+                  : "border border-[#DCEEDD] bg-white text-ink-subtle"
               }`}
               aria-current={isCurrent ? "step" : undefined}
             >
@@ -35,7 +35,7 @@ export function WizardStepIndicator({ step }: WizardStepIndicatorProps) {
             <div className="flex flex-1 flex-col">
               <span
                 className={`text-[12px] font-black ${
-                  isCurrent || isDone ? "text-brand" : "text-[#667085]"
+                  isCurrent || isDone ? "text-brand" : "text-ink-subtle"
                 }`}
               >
                 {s.label}

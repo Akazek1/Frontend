@@ -60,7 +60,11 @@ export default {
   				dark: '#0F4D0C',    // hover / pressed
   				strong: '#1B5E20'   // alt solid green used on some CTAs
   			},
-  			ink: '#1B2431',         // primary text
+  			ink: {
+  				DEFAULT: '#1B2431', // primary text
+  				muted: '#475467',   // secondary text
+  				subtle: '#667085'   // tertiary text / hints
+  			},
   			surface: '#F1FCEF'      // app background / light-green surface
   		},
   		borderRadius: {

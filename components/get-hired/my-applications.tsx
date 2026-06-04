@@ -72,7 +72,7 @@ export const MyApplications: React.FC = () => {
           <Briefcase className="w-7 h-7 text-gray-300" />
         </div>
         <p className="text-[14px] font-bold text-ink">No applications yet</p>
-        <p className="text-[12px] text-[#616161] px-8">
+        <p className="text-[12px] text-ink-muted px-8">
           Apply to custom jobs on the home screen to see them here.
         </p>
       </div>
@@ -101,7 +101,7 @@ export const MyApplications: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#616161] mt-3">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-ink-muted mt-3">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 {job?.address?.city || 'Kigali'}

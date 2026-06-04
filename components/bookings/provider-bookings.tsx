@@ -126,7 +126,7 @@ const ProviderBookings: React.FC = () => {
               className={`flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-colors ${
                 tab === t
                   ? 'bg-brand text-white'
-                  : 'bg-white text-[#616161] border border-gray-200'
+                  : 'bg-white text-ink-muted border border-gray-200'
               }`}
             >
               {t}
@@ -152,7 +152,7 @@ const ProviderBookings: React.FC = () => {
             { label: 'Earned (RWF)', value: earnings.toLocaleString(),      icon: <TrendingUp className="w-4 h-4 text-blue-500" /> },
           ].map(({ label, value, icon }) => (
             <div key={label} className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-1.5 mb-1">{icon}<span className="text-[10px] text-[#616161]">{label}</span></div>
+              <div className="flex items-center gap-1.5 mb-1">{icon}<span className="text-[10px] text-ink-muted">{label}</span></div>
               <p className="text-[16px] font-bold text-ink leading-tight truncate">{value}</p>
             </div>
           ))}
@@ -200,7 +200,7 @@ const ProviderBookings: React.FC = () => {
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-[#616161]">
+                      <p className="text-[11px] text-ink-muted">
                         From:{" "}
                         {(() => {
                           const person = b.employer || b.receiver;
@@ -220,7 +220,7 @@ const ProviderBookings: React.FC = () => {
                         })()}
                       </p>
 
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#616161] mt-0.5">
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted mt-0.5">
                         <span className="flex items-center gap-1">
                           <CalendarDays className="w-3 h-3 flex-shrink-0" />
                           {formatDate(b.scheduledFor)}
@@ -298,7 +298,7 @@ const EmptyState = ({ tab }: { tab: Tab }) => {
     <div className="flex flex-col items-center justify-center py-14 gap-2 text-center">
       {icon}
       <p className="text-[14px] font-bold text-ink mt-1">{title}</p>
-      <p className="text-[12px] text-[#616161] px-8 leading-relaxed">{sub}</p>
+      <p className="text-[12px] text-ink-muted px-8 leading-relaxed">{sub}</p>
     </div>
   );
 };

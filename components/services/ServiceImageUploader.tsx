@@ -87,7 +87,7 @@ export function ServiceImageUploader({
         )}
       </div>
 
-      <p className="mt-2 text-[11px] text-[#667085]">
+      <p className="mt-2 text-[11px] text-ink-subtle">
         Up to {maxImages} images. The first image is your card&apos;s main photo.
       </p>
 

@@ -51,7 +51,7 @@ export function WizardStep1Basics({
         <h2 className="mt-1 text-[22px] font-black text-ink">
           Basic Information
         </h2>
-        <p className="mt-1 text-[13px] text-[#475467]">
+        <p className="mt-1 text-[13px] text-ink-muted">
           Let&apos;s start with the essential details for your service.
         </p>
       </header>
@@ -124,7 +124,7 @@ export function WizardStep1Basics({
         <AppButton
           type="submit"
           disabled={!isValid}
-          className="w-full text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-[#667085]"
+          className="w-full text-[15px] font-black disabled:bg-[#DCEEDD] disabled:text-ink-subtle"
         >
           Continue →
         </AppButton>

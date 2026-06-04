@@ -58,7 +58,7 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
           >
             {opt.label}
             {opt.hint && (
-              <span className="ml-2 text-[10px] text-[#667085]">
+              <span className="ml-2 text-[10px] text-ink-subtle">
                 ({opt.hint})
               </span>
             )}

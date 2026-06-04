@@ -112,7 +112,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                     <Verified className="w-5 h-5 fill-brand stroke-white" />
                 )}
             </div>
-            <p className="text-sm text-center text-[#212121] font-bold leading-[140%]">
+            <p className="text-sm text-center text-ink font-bold leading-[140%]">
                 @{user?.username || "username"}
             </p>
         </div>

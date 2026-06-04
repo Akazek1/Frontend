@@ -184,7 +184,7 @@ const PostJobPage: React.FC = () => {
                   className={`px-3 py-2 rounded-xl text-[11px] font-semibold capitalize border transition-colors ${
                     form.scheduleType === opt
                       ? "bg-brand text-white border-brand"
-                      : "bg-white text-[#616161] border-gray-200"
+                      : "bg-white text-ink-muted border-gray-200"
                   }`}
                 >
                   {opt}

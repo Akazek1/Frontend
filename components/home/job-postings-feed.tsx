@@ -127,7 +127,7 @@ const JobPostingsFeed: React.FC = () => {
         <Briefcase className="w-7 h-7 text-brand" />
       </div>
       <p className="text-[14px] font-bold text-ink">No job postings yet</p>
-      <p className="text-[12px] text-[#616161] text-center px-8 leading-relaxed">
+      <p className="text-[12px] text-ink-muted text-center px-8 leading-relaxed">
         Employers haven&apos;t posted any jobs yet. Check back soon.
       </p>
     </div>

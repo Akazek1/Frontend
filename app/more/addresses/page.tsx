@@ -407,7 +407,7 @@ const AddressBook = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-[#757575] font-medium text-sm">
+                  <p className="text-ink-subtle font-medium text-sm">
                     {`${address.street}, ${address.state}, ${address.postalCode}, ${address.city}, ${address.country}`}
                   </p>
                 </Card>

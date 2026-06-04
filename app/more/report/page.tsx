@@ -125,7 +125,7 @@ const ReportIssue = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-brand">Thank you!</h2>
-          <p className="text-[#757575] text-base">
+          <p className="text-ink-subtle text-base">
             Your issue has been reported and our team will review it shortly.
           </p>
         </div>

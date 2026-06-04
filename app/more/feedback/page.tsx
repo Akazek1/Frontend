@@ -68,7 +68,7 @@ const Feedback = () => {
       {/* Header */}
       <BackButtonHeader text="Share Feedback" />
       <div className={cn(appContentClass, "cursor-pointer gap-5")}>
-        <h1 className="text-[#212121] text-xl font-medium leading-6 pr-6">
+        <h1 className="text-ink text-xl font-medium leading-6 pr-6">
           How would you rate the app experience?
         </h1>
         <div className="flex items-center gap-4">

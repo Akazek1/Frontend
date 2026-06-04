@@ -63,7 +63,7 @@ export function ChargedPerRadio({
               <span className="text-[14px] font-black text-ink">
                 {opt.label}
               </span>
-              <span className="text-[12px] text-[#475467]">{opt.helper}</span>
+              <span className="text-[12px] text-ink-muted">{opt.helper}</span>
             </span>
           </button>
         );

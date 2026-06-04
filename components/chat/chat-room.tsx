@@ -424,7 +424,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
             {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Online</span>}
           </div>
-          <p className="truncate text-[11px] text-[#757575] font-medium">{contextTitle}</p>
+          <p className="truncate text-[11px] text-ink-subtle font-medium">{contextTitle}</p>
         </div>
 
         <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -509,7 +509,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       <main className="flex-1 overflow-y-auto space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
           <p className="text-[11px] font-semibold text-ink">Booking Details</p>
-          <p className="mt-1 text-[10px] text-[#757575]">
+          <p className="mt-1 text-[10px] text-ink-subtle">
             {isPending
               ? "This work is not confirmed yet. Confirm through Akazek before starting."
               : "Keep all communications within Akazek to ensure your safety and protection."}

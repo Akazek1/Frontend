@@ -39,10 +39,10 @@ export function OTPVerification() {
       </button>
       <div className="flex flex-col items-center gap-8 sm:gap-14">
         <span className="flex flex-col items-center gap-2">
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#212121]">Enter Verification Code</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink">Enter Verification Code</h2>
           <p className="text-sm font-medium text-center text-gray-500 max-w-[300px]">
             We sent a {OTP_LENGTH}-digit code to{" "}
-            <span className="text-[#212121] font-semibold">+250 {phoneNumber}</span>
+            <span className="text-ink font-semibold">+250 {phoneNumber}</span>
           </p>
         </span>
 

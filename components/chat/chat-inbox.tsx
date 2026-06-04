@@ -380,7 +380,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                   </span>
 
                   <span className="mt-1 flex items-end justify-between gap-2">
-                    <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-ink" : "text-[#616161]"}`}>
+                    <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-ink" : "text-ink-muted"}`}>
                       {msg.content}
                     </span>
                     <span className="flex flex-shrink-0 items-center gap-1.5">
@@ -414,7 +414,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
           <h3 className="mt-4 text-[15px] font-bold text-ink">
             {currentTab === "Archive" ? "Nothing archived yet" : "No messages found"}
           </h3>
-          <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-[#616161]">
+          <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-ink-muted">
             {currentTab === "Archive"
               ? "Completed and cancelled conversations will appear here."
               : "Try a different search term or switch to another message filter."}
