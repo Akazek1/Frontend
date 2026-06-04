@@ -9,8 +9,15 @@ import { Calendar, CheckCircle, Circle, Clock, DollarSign, Loader2, MapPin, User
 import BackButtonHeader from '@/components/header/back-button-header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    AppButton,
+    AppSectionHeader,
+    Card,
+    EmptyState,
+    PageShell,
+    appInputClass,
+} from '@/components/ui/app-primitives';
 
 interface Booking {
     id: string;
@@ -215,26 +222,28 @@ const BookingDetails: React.FC = () => {
 
     if (error || !booking) {
         return (
-            <div className="app-bg flex min-h-screen flex-col items-center justify-center p-4">
-                <Circle className="text-red-500 text-4xl mb-4" />
-                <p className="text-red-500 text-center mb-4">{error || 'Booking not found'}</p>
-                <Button
-                    onClick={() => router.push('/work')}
-                    className="px-6 py-2 bg-[#145B10] text-white rounded-lg hover:bg-[#0e4710] transition-colors"
-                >
-                    Back to Work
-                </Button>
-            </div>
+            <PageShell className="justify-center">
+                <EmptyState
+                    icon={Circle}
+                    title="Booking not found"
+                    description={error || 'This booking could not be loaded.'}
+                    action={
+                        <AppButton appVariant="secondary" onClick={() => router.push('/work')} className="w-full">
+                            Back to Work
+                        </AppButton>
+                    }
+                />
+            </PageShell>
         );
     }
 
     return (
-        <div className="app-bg min-h-screen pb-20">
+        <PageShell className="gap-4">
             <BackButtonHeader text="Booking Details" className="p-4" backHref="/" />
 
-            <div className="p-4 max-w-2xl mx-auto">
+            <div className="space-y-4">
                 {/* Service Card */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+                <Card className="overflow-hidden p-0">
                     <div className="relative h-48 w-full">
                         <Image
                             src={booking.service.serviceImage}
@@ -267,16 +276,13 @@ const BookingDetails: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* People Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {/* User Card */}
-                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                            <User className="mr-2 w-6 h-6 text-[#145B10]" />
-                            Customer
-                        </h3>
+                    <Card>
+                        <AppSectionHeader title="Customer" icon={User} className="mb-3 px-0" />
                         <div className="flex items-center mb-2">
                             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3">
                                 {booking.user?.profilePicture ? (
@@ -299,14 +305,11 @@ const BookingDetails: React.FC = () => {
                             </div>
                         </div>
                         <p className="text-xs text-gray-600">{booking.user?.email}</p>
-                    </div>
+                    </Card>
 
                     {/* Worker Card */}
-                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                            <User className="mr-2 w-6 h-6 text-[#145B10]" />
-                            Worker
-                        </h3>
+                    <Card>
+                        <AppSectionHeader title="Worker" icon={User} className="mb-3 px-0" />
                         <div className="flex items-center mb-2">
                             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3">
                                 <User />
@@ -317,32 +320,29 @@ const BookingDetails: React.FC = () => {
                             </div>
                         </div>
                         <p className="text-xs text-gray-600">{booking.worker.email}</p>
-                    </div>
+                    </Card>
                 </div>
 
                 {/* Address Section */}
-                <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                        <MapPin className="mr-2 w-6 h-6 text-[#145B10]" />
-                        Service Address
-                    </h3>
+                <Card>
+                    <AppSectionHeader title="Service Address" icon={MapPin} className="mb-3 px-0" />
                     <div className="flex flex-col sm:flex-row gap-2 text-sm font-semibold">
                         <p className="text-gray-700">{booking.address.street}</p>
                         <p className="text-gray-700">{booking.address.city}, {booking.address.state}</p>
                         <p className="text-gray-700">{booking.address.country} - {booking.address.postalCode}</p>
                     </div>
-                </div>
+                </Card>
 
                 {/* Status Update Section */}
-                <div className="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 className="font-semibold text-gray-900 mb-3">Update Booking Status</h3>
+                <Card>
+                    <AppSectionHeader title="Update Booking Status" className="mb-3 px-0" />
 
                     <Select
                         value={status}
                         onValueChange={(value) => setStatus(value)}
                         disabled={otpSent || updating}
                     >
-                        <SelectTrigger className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#145B10] text-sm">
+                        <SelectTrigger className={appInputClass}>
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -353,10 +353,10 @@ const BookingDetails: React.FC = () => {
                         </SelectContent>
                     </Select>
 
-                    <Button
+                    <AppButton
                         onClick={handleSendOtp}
                         disabled={updating || otpSent || !status}
-                        className="w-full bg-[#167021] mt-4 text-white rounded-full font-bold leading-6 h-12 hover:bg-[#0F4D0C] transition-colors"
+                        className="mt-4 w-full"
                     >
                         {updating ? (
                             <>
@@ -366,14 +366,14 @@ const BookingDetails: React.FC = () => {
                         ) : (
                             'Send OTP to Customer'
                         )}
-                    </Button>
+                    </AppButton>
 
                     {updateError && !isOtpModalOpen && (
                         <div className="mt-3 p-2 bg-red-50 text-red-600 text-sm rounded-lg">
                             {updateError}
                         </div>
                     )}
-                </div>
+                </Card>
 
                 {/* OTP Modal */}
                 <Dialog open={isOtpModalOpen} onOpenChange={(open) => {
@@ -409,7 +409,7 @@ const BookingDetails: React.FC = () => {
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value)}
                                 placeholder="Enter 6-digit OTP"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#145B10] text-sm"
+                                className={appInputClass}
                                 maxLength={6}
                             />
                             {updateError && (
@@ -419,10 +419,10 @@ const BookingDetails: React.FC = () => {
                             )}
                         </div>
                         <DialogFooter>
-                            <Button
+                            <AppButton
                                 onClick={handleUpdateStatus}
                                 disabled={updating || !otp}
-                                className="w-full flex justify-center items-center py-3 bg-[#145B10] text-white rounded-lg hover:bg-[#0e4710] transition-colors disabled:opacity-70 text-sm"
+                                className="w-full"
                             >
                                 {updating ? (
                                     <>
@@ -435,12 +435,12 @@ const BookingDetails: React.FC = () => {
                                         Verify OTP & Update Status
                                     </>
                                 )}
-                            </Button>
+                            </AppButton>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
-        </div>
+        </PageShell>
     );
 };
 

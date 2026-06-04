@@ -20,6 +20,13 @@ import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { isEmployer } from "@/lib/roles";
+import {
+    AppButton,
+    AppSectionHeader,
+    Card,
+    PageShell,
+    appInputClass,
+} from "@/components/ui/app-primitives";
 
 // Define the address interface
 interface Address {
@@ -243,12 +250,11 @@ const BookingSummary = () => {
     const grandTotal = itemTotal - discount + deliveryFee;
 
     return (
-        <div className="flex flex-col app-bg min-h-screen overflow-y-auto touch-pan-y pb-12">
-            <main className="flex-1 p-3 sm:p-4 md:p-6 space-y-4 max-w-lg mx-auto">
+        <PageShell className="gap-4 touch-pan-y">
                 <BackButtonHeader text="Booking Summary" backHref={`/book/${provider.type}/${provider.id}`} />
 
                 {/* Main Provider */}
-                <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm">
+                <Card className="space-y-3">
                     <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12 sm:w-14 sm:h-14">
                             <AvatarImage src={provider.image} className="object-cover" />
@@ -285,7 +291,7 @@ const BookingSummary = () => {
                             </Button>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Frequently Added Together */}
                 {/* <h3 className="font-medium text-[#212121] text-base">Frequently Added Together</h3>
@@ -325,8 +331,8 @@ const BookingSummary = () => {
                 </div> */}
 
                 {/* Booking Details */}
-                <h3 className="text-[#212121] font-medium text-base">Booking Details</h3>
-                <div className="rounded-2xl p-4 bg-white space-y-3 shadow-sm">
+                <Card className="space-y-3">
+                    <AppSectionHeader title="Booking Details" />
                     {/* Address Selection */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
@@ -346,7 +352,7 @@ const BookingSummary = () => {
                             </p>
                         ) : (
                             <Select value={selectedAddressId || undefined} onValueChange={handleAddressChange}>
-                                <SelectTrigger className="bg-white text-sm font-semibold rounded-lg py-2.5 border-none focus:ring-2 focus:ring-[#145B10] w-full touch-manipulation">
+                                <SelectTrigger className={`${appInputClass} w-full touch-manipulation`}>
                                     <SelectValue placeholder="Select an address" />
                                 </SelectTrigger>
                                 <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
@@ -373,10 +379,11 @@ const BookingSummary = () => {
                         <Ticket className="w-4 h-4 stroke-black" />
                         <span className="text-[#145B10] font-medium text-sm">Apply Coupons</span>
                     </div>
-                </div>
+                </Card>
 
                 {/* Pricing Breakdown */}
-                <div className="rounded-2xl p-4 bg-white space-y-3 shadow-sm">
+                <Card className="space-y-3">
+                    <AppSectionHeader title="Pricing" />
                     <div className="flex justify-between text-[#616161] font-medium text-sm">
                         <span>Item Totals</span>
                         <span>{itemTotal} RWF</span>
@@ -393,10 +400,10 @@ const BookingSummary = () => {
                         <span>Grand Total</span>
                         <span>{grandTotal} RWF</span>
                     </div>
-                </div>
+                </Card>
                 <div className="w-full flex items-center justify-center">
-                    <Button
-                        className="w-[90%] sm:w-[50%] mx-auto rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2.5 touch-manipulation"
+                    <AppButton
+                        className="w-full touch-manipulation"
                         onClick={handleProceedToCheckout}
                         disabled={isSubmitting}
                     >
@@ -408,10 +415,9 @@ const BookingSummary = () => {
                         ) : (
                             "Proceed To Checkout"
                         )}
-                    </Button>
+                    </AppButton>
                 </div>
-            </main>
-        </div>
+        </PageShell>
     );
 };
 

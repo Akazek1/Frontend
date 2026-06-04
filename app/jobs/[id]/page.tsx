@@ -25,11 +25,18 @@ import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
 import JobOwnerDetail from "@/components/jobs/job-owner-detail";
 import {
+  AppButton,
   AppCard,
-  AppHeader,
+  EmptyState,
+  PageHeader,
+  PageShell,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
   appListCardClass,
-  appPrimaryButtonClass,
-  appSecondaryButtonClass,
+  appStickyHeaderClass,
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
 
@@ -148,15 +155,14 @@ const JobDetailPage = () => {
   }
 
   return (
-    <div className="app-bg min-h-dvh w-full overflow-x-hidden pb-24">
+    <PageShell padded={false} className="overflow-x-hidden">
       {/* Premium Header */}
-      <div className="app-bg sticky top-0 z-20 px-4 pb-3 pt-6 shadow-sm backdrop-blur">
-        <AppHeader
-          title="Job Detail"
-          subtitle="Review job requirements and applicants"
-          onBack={() => router.back()}
-        />
-      </div>
+      <PageHeader
+        title="Job Detail"
+        subtitle="Review job requirements and applicants"
+        onBack={() => router.back()}
+        className={appStickyHeaderClass}
+      />
 
       <div className="space-y-5 px-4 pt-4">
         {/* Main Job Info */}
@@ -336,13 +342,11 @@ const JobDetailPage = () => {
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-[40px] p-16 text-center border-2 border-dashed border-gray-100">
-                <div className="w-16 h-16 bg-gray-50 rounded-[24px] flex items-center justify-center mx-auto mb-6">
-                  <User className="w-8 h-8 text-gray-200" />
-                </div>
-                <h3 className="text-[15px] font-black text-[#1B2431]">Waiting for applicants</h3>
-                <p className="text-[12px] text-gray-400 mt-2 max-w-[200px] mx-auto font-medium">We&apos;ll notify you as soon as workers start applying for your job.</p>
-              </div>
+              <EmptyState
+                icon={User}
+                title="Waiting for applicants"
+                description="We'll notify you as soon as workers start applying for your job."
+              />
             )}
           </div>
         )}
@@ -373,35 +377,39 @@ const JobDetailPage = () => {
 
       {/* Hire confirmation modal */}
       {confirmHire && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
-          <div className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="flex flex-col items-center text-center gap-2">
+        <>
+          <SheetOverlay onClick={() => setConfirmHire(null)} aria-hidden="true" />
+          <SheetPanel className="max-w-sm">
+            <SheetHeader title={`Send offer to ${confirmHire.workerName}?`} onClose={() => setConfirmHire(null)} className="border-b-0 pb-2" />
+            <SheetBody className="pt-2">
+              <div className="flex flex-col items-center text-center gap-2">
               <div className="w-14 h-14 rounded-full bg-[#E8F5E9] flex items-center justify-center">
                 <Check className="w-7 h-7 text-[#145B10]" />
               </div>
-              <h3 className="text-[17px] font-black text-[#1B2431]">Send offer to {confirmHire.workerName}?</h3>
               <p className="text-[13px] text-gray-400 leading-relaxed">
                 This opens a conversation and sends an official offer. The job is only confirmed after {confirmHire.workerName.split(" ")[0]} accepts.
               </p>
             </div>
-            <div className="flex gap-3">
-              <button
+            </SheetBody>
+            <SheetFooter className="flex gap-3">
+              <AppButton
+                appVariant="secondary"
                 onClick={() => setConfirmHire(null)}
-                className={cn(appSecondaryButtonClass, "flex-1")}
+                className="flex-1"
               >
                 Cancel
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 onClick={handleHireConfirmed}
-                className={cn(appPrimaryButtonClass, "flex flex-1 items-center justify-center gap-2")}
+                className="flex flex-1 items-center justify-center gap-2"
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Offer"}
-              </button>
-            </div>
-          </div>
-        </div>
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
       )}
-    </div>
+    </PageShell>
   );
 };
 
