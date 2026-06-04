@@ -4,8 +4,11 @@ import { ArrowLeft, X, type LucideIcon } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const appShellClass =
-  "bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6";
+// Class-string helpers below are the single source of truth for these styles;
+// the components further down (PageShell, Card, AppButton, FormField, …) consume
+// them. The strings stay exported as composition escape hatches — apply them with
+// cn() to a semantically-correct element (a <button>, <a>, <section>) when a
+// wrapper component doesn't fit. Prefer the component for the common case.
 
 export const appContentClass = "flex flex-col gap-4";
 
@@ -42,9 +45,10 @@ export const appDangerButtonClass =
 export const appFieldLabelClass =
   "text-[12px] font-black uppercase tracking-wide text-[#53604F]";
 
-export const appFieldHintClass = "text-[11px] leading-4 text-[#6B7668]";
+// Internal-only: surfaced through <FormField/>, not part of the public API.
+const appFieldHintClass = "text-[11px] leading-4 text-[#6B7668]";
 
-export const appFieldErrorClass = "text-[11px] font-semibold text-red-500";
+const appFieldErrorClass = "text-[11px] font-semibold text-red-500";
 
 type AppButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 
