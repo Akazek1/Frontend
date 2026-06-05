@@ -30,10 +30,10 @@ export const appStatusCardClass =
   "rounded-2xl border border-[#CFE8CD] bg-surface p-4 text-brand";
 
 export const appInputClass =
-  "h-12 rounded-xl border-[#DCE8D9] bg-white px-4 text-[14px] font-semibold text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
+  "w-full h-12 rounded-xl border-[#DCE8D9] bg-white px-4 text-[14px] font-semibold text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
 
 export const appTextareaClass =
-  "min-h-[120px] resize-none rounded-xl border-[#DCE8D9] bg-white px-4 py-3 text-[14px] font-semibold leading-6 text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
+  "w-full min-h-[120px] resize-none rounded-xl border-[#DCE8D9] bg-white px-4 py-3 text-[14px] font-semibold leading-6 text-ink shadow-sm placeholder:text-[#98A2B3] focus-visible:ring-brand/20";
 
 export const appPrimaryButtonClass =
   "h-12 rounded-xl bg-brand px-4 text-[14px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50";
@@ -98,7 +98,7 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
-      <label className={appFieldLabelClass}>
+      <label className={cn("block", appFieldLabelClass)}>
         {label}
         {required ? <span className="text-[#FF3D00]"> *</span> : null}
       </label>
@@ -295,7 +295,10 @@ type SheetOverlayProps = React.HTMLAttributes<HTMLDivElement> & {
 
 export function SheetOverlay({
   className,
-  zIndexClassName = "z-40",
+  // Above the app's fixed bottom nav (z-50) so the sheet reads as a true modal
+  // (nav dimmed, not floating on top). Override per-call-site if a sheet needs
+  // to stack above another sheet.
+  zIndexClassName = "z-[60]",
   ...props
 }: SheetOverlayProps) {
   return (
@@ -395,7 +398,7 @@ const sheetPanelSideClass: Record<SheetPanelSide, string> = {
 
 export function SheetPanel({
   side = "bottom",
-  zIndexClassName = "z-50",
+  zIndexClassName = "z-[70]",
   className,
   children,
   onClose,
