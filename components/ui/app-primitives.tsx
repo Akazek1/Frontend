@@ -325,8 +325,18 @@ function useSheetDialog(
   ref: React.RefObject<HTMLDivElement | null>,
   onClose?: () => void,
 ) {
+  // Keep the latest onClose in a ref so the setup effect can stay mount-only.
+  // (Call sites pass an inline arrow, so onClose changes identity every render;
+  // depending on it would tear down + re-run this effect on every keystroke,
+  // yanking focus out of inputs.)
+  const onCloseRef = React.useRef(onClose);
   React.useEffect(() => {
-    if (!onClose) return;
+    onCloseRef.current = onClose;
+  });
+
+  const active = !!onClose;
+  React.useEffect(() => {
+    if (!active) return;
     const node = ref.current;
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
@@ -345,7 +355,7 @@ function useSheetDialog(
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current?.();
         return;
       }
       if (e.key !== "Tab" || !node) return;
@@ -357,11 +367,11 @@ function useSheetDialog(
       }
       const first = items[0];
       const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey && active === first) {
+      const activeEl = document.activeElement;
+      if (e.shiftKey && activeEl === first) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && active === last) {
+      } else if (!e.shiftKey && activeEl === last) {
         e.preventDefault();
         first.focus();
       }
@@ -373,7 +383,7 @@ function useSheetDialog(
       document.body.style.overflow = prevOverflow;
       previouslyFocused?.focus?.();
     };
-  }, [ref, onClose]);
+  }, [active, ref]);
 }
 
 type SheetPanelProps = React.HTMLAttributes<HTMLDivElement> & {
