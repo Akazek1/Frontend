@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && npm run lint:colors",
+    "lint:colors": "node scripts/check-colors.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky"
