@@ -63,7 +63,7 @@ export function LoginForm() {
       setChecking(false)
     }
 
-    const sent = await handleSendOtp()
+    const sent = await handleSendOtp("login")
     if (sent) setOtpSent(true)
   }
 

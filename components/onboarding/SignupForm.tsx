@@ -106,7 +106,7 @@ export function SignupForm() {
       setChecking(false)
     }
 
-    const sent = await handleSendOtp()
+    const sent = await handleSendOtp("signup")
     if (sent) setOtpSent(true)
   }
 

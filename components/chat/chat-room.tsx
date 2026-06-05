@@ -107,13 +107,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     const partnerId = user?.id === booking?.workerId ? booking?.employerId : booking?.workerId;
 
     const onConnect = () => {
-      console.log(`[chat] 🔗 socket connected, joining booking=${bookingId}`);
       socket.emit("joinBooking", bookingId);
       socket.emit("readMessages", bookingId);
 
       if (partnerId) {
         socket.emit("checkPresence", partnerId, (res: { isOnline: boolean }) => {
-          console.log(`[chat] 👁 checkPresence(${partnerId}):`, res);
           setPartnerOnline(res.isOnline);
         });
       }
@@ -123,12 +121,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     if (socket.connected) onConnect();
 
     const handleUserOnline = (userId: string) => {
-      console.log("[chat] 🟢 userOnline:", userId, "partner:", partnerId);
       if (userId === partnerId) setPartnerOnline(true);
     };
 
     const handleUserOffline = (userId: string) => {
-      console.log("[chat] 🔴 userOffline:", userId);
       if (userId === partnerId) setPartnerOnline(false);
     };
 
@@ -146,7 +142,6 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleNewMessage = (message: Message) => {
-      console.log("[chat] 📨 newMessage received:", message.bookingId, message.content.slice(0, 30));
       if (message.bookingId !== bookingId) return;
 
       setMessages((prev) => {
@@ -189,7 +184,6 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleMessagesRead = (data: { bookingId: string; readerId: string }) => {
-      console.log("[chat] 📖 messagesRead received:", data);
       if (data.bookingId === bookingId && data.readerId !== user.id) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -200,7 +194,6 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleMessagesDelivered = (data: { bookingId: string; recipientId: string }) => {
-      console.log("[chat] ✅ messagesDelivered received:", data);
       if (data.bookingId === bookingId && data.recipientId !== user?.id) {
         setMessages((prev) =>
           prev.map((m) =>

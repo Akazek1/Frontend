@@ -67,7 +67,7 @@ interface OnboardingContextType {
   isLoading: boolean
   resendCooldown: number
 
-  handleSendOtp: () => Promise<boolean>
+  handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
@@ -213,7 +213,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (activeInputIndex !== index) setActiveInputIndex(index)
   }, [activeInputIndex])
 
-  const handleSendOtp = useCallback(async (): Promise<boolean> => {
+  const handleSendOtp = useCallback(async (purpose?: "login" | "signup"): Promise<boolean> => {
     if (!phoneNumber) {
       toast.error("Please enter a phone number")
       return false
@@ -232,7 +232,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPhoneNumber(cleaned)
 
     try {
-      const success = await sendOtp({ phoneNumber: formatted })
+      const success = await sendOtp({ phoneNumber: formatted, purpose })
       if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
