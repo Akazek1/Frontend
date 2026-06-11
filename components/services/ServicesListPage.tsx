@@ -67,7 +67,7 @@ export function ServicesListPage() {
   };
 
   const handleAdd = () => {
-    router.push("/more/services/new");
+    router.push("/more/services/register");
   };
 
   const handleConfirmToggleActive = async () => {

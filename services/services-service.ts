@@ -169,6 +169,19 @@ const servicesService = {
     const response = await api.patch("/users/me/availability", { available });
     return unwrap<{ id: string; availableForWork: boolean }>(response.data);
   },
+
+  /**
+   * One-tap registration: pick one or more job-type (category) ids and the
+   * backend creates a minimal listing for each, skipping ones already owned.
+   */
+  async register(categoryIds: string[]): Promise<{
+    created: Service[];
+    createdCount: number;
+    skipped: { categoryId: string; reason: string }[];
+  }> {
+    const response = await api.post("/services/register", { categoryIds });
+    return unwrap(response.data);
+  },
 };
 
 export default servicesService;
