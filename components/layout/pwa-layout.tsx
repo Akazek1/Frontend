@@ -33,7 +33,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
-    /^\/[^/]+\/services\/[^/]+$/.test(pathname);
+    /^\/[^/]+\/services\/[^/]+(\/edit)?$/.test(pathname);
   const isJobDetail = /^\/jobs\/[^/]+/.test(pathname);
   const shouldHideNavigation =
     hideNavigationPaths.includes(pathname) ||

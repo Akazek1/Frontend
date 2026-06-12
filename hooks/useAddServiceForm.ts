@@ -8,12 +8,21 @@ import servicesService, {
 } from "@/services/services-service";
 import type { Service } from "@/types";
 
+export type PriceMode = "fixed" | "range";
+
 export interface WizardFormState {
-  /** Step 1 */
+  /** Step 1: Grouping (broad category) selection */
+  groupingId: string;
+  /** Step 2: Job type (category) selection */
   categoryId: string;
-  price: string; // kept as string while typing; coerced to number on submit
+  /** Step 3: Pricing */
+  priceMode: PriceMode;
+  priceMin: string; // string while typing; coerced to number on submit
+  priceMax: string;
   chargedPer: ChargedPer;
-  /** Step 2 */
+  /** "Open to Negotiate" — employers can discuss the stated price. */
+  negotiable: boolean;
+  /** Step 3: Details (both optional — title auto-derives from the category). */
   title: string;
   description: string;
   /** Image URLs already uploaded (edit mode rehydrate or after upload). */
@@ -30,13 +39,18 @@ interface UseAddServiceFormOptions {
 }
 
 const STORAGE_PREFIX = "hwa.addServiceForm.";
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 6;
+const MAX_DESCRIPTION = 150;
 
 function emptyForm(): WizardFormState {
   return {
+    groupingId: "",
     categoryId: "",
-    price: "",
+    priceMode: "fixed",
+    priceMin: "",
+    priceMax: "",
     chargedPer: "daily",
+    negotiable: false,
     title: "",
     description: "",
     existingImageUrls: [],
@@ -45,7 +59,7 @@ function emptyForm(): WizardFormState {
 }
 
 function rehydrateFromService(service: Service): WizardFormState {
-  const { price, chargedPer } = fromBackendPriceFields(service);
+  const { priceMin, priceMax, chargedPer } = fromBackendPriceFields(service);
   const categoryId =
     typeof service.category === "string"
       ? service.category
@@ -57,9 +71,13 @@ function rehydrateFromService(service: Service): WizardFormState {
       : []),
   ].filter(Boolean) as string[];
   return {
+    groupingId: "", // edit flow starts at the details step; grouping not needed
     categoryId,
-    price: price ? String(price) : "",
+    priceMode: priceMin !== priceMax ? "range" : "fixed",
+    priceMin: priceMin ? String(priceMin) : "",
+    priceMax: priceMax ? String(priceMax) : "",
     chargedPer,
+    negotiable: Boolean((service as { negotiable?: boolean }).negotiable),
     title: service.title ?? "",
     description: service.description ?? "",
     existingImageUrls: existing.slice(0, MAX_IMAGES),
@@ -83,9 +101,13 @@ function writeSession(key: string, state: WizardFormState) {
   if (typeof window === "undefined") return;
   try {
     const persistable = {
+      groupingId: state.groupingId,
       categoryId: state.categoryId,
-      price: state.price,
+      priceMode: state.priceMode,
+      priceMin: state.priceMin,
+      priceMax: state.priceMax,
       chargedPer: state.chargedPer,
+      negotiable: state.negotiable,
       title: state.title,
       description: state.description,
       existingImageUrls: state.existingImageUrls,
@@ -179,35 +201,41 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     [form.existingImageUrls.length, form.newImageFiles.length],
   );
 
-  const isStep1Valid = useMemo(() => {
-    const priceNum = Number(form.price);
-    return (
-      !!form.categoryId &&
-      !!form.chargedPer &&
-      Number.isFinite(priceNum) &&
-      priceNum > 0
-    );
-  }, [form.categoryId, form.chargedPer, form.price]);
+  // Step 1: grouping picked
+  const isStep1Valid = useMemo(() => !!form.groupingId, [form.groupingId]);
 
-  const isStep2Valid = useMemo(() => {
+  // Step 2: job type picked
+  const isStep2Valid = useMemo(() => !!form.categoryId, [form.categoryId]);
+
+  // Step 3: price is the only required input — photos and description are
+  // optional, and the title auto-derives from the category on the backend.
+  const isStep3Valid = useMemo(() => {
+    const minNum = Number(form.priceMin);
+    if (!Number.isFinite(minNum) || minNum <= 0) return false;
+    if (form.priceMode === "fixed") return !!form.chargedPer;
+    const maxNum = Number(form.priceMax);
     return (
-      totalImageCount > 0 &&
-      form.title.trim().length > 0 &&
-      form.description.trim().length > 0
+      Number.isFinite(maxNum) && maxNum >= minNum && !!form.chargedPer
     );
-  }, [form.title, form.description, totalImageCount]);
+  }, [form.priceMode, form.priceMin, form.priceMax, form.chargedPer]);
 
   const submit = useCallback(async (): Promise<Service> => {
-    if (!isStep1Valid || !isStep2Valid) {
+    if (!isStep2Valid || !isStep3Valid) {
       throw new Error("Form is not yet valid");
     }
     setIsSubmitting(true);
     try {
+      const priceMin = Number(form.priceMin);
+      const priceMax =
+        form.priceMode === "fixed" ? priceMin : Number(form.priceMax);
       const payload: CreateServicePayload = {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        price: Number(form.price),
+        // Backend derives the title from the category name when omitted.
+        title: form.title.trim() || undefined,
+        description: form.description.trim().slice(0, MAX_DESCRIPTION) || undefined,
+        priceMin,
+        priceMax,
         chargedPer: form.chargedPer,
+        negotiable: form.negotiable,
         categoryId: form.categoryId,
         serviceImages: form.existingImageUrls,
         imageFiles: form.newImageFiles,
@@ -222,8 +250,8 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     }
   }, [
     form,
-    isStep1Valid,
     isStep2Valid,
+    isStep3Valid,
     persistKey,
     service,
   ]);
@@ -241,10 +269,12 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     totalImageCount,
     isStep1Valid,
     isStep2Valid,
+    isStep3Valid,
     submit,
     isSubmitting,
     reset,
     maxImages: MAX_IMAGES,
+    maxDescription: MAX_DESCRIPTION,
   };
 }
 
