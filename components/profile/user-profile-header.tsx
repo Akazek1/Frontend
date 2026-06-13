@@ -45,7 +45,6 @@ export function UserProfileHeader({
   handle,
   profilePicture,
   isVerified,
-  governmentIdStatus,
   availableToday,
   city,
   district,
@@ -55,8 +54,8 @@ export function UserProfileHeader({
   isOwner = false,
 }: UserProfileHeaderProps) {
   const router = useRouter();
-  const idVerified = governmentIdStatus === "APPROVED";
-  const backgroundChecked = !!isVerified;
+  // Single source of truth: the admin-approved `isVerified` flag.
+  const verified = !!isVerified;
   const location = joinLocation(city, district, country);
   const memberSinceLabel = formatMonth(memberSince);
 
@@ -120,7 +119,7 @@ export function UserProfileHeader({
         <div className="flex-1 min-w-0 pt-1">
           <div className="flex items-center gap-1.5">
             <h1 className="text-xl font-bold text-ink truncate">{name}</h1>
-            {backgroundChecked || idVerified ? <VerifiedBadge size={20} /> : null}
+            {verified ? <VerifiedBadge size={20} /> : null}
           </div>
           <p className="text-sm text-gray-500 mb-2">{handle.startsWith("@") ? handle : `@${handle}`}</p>
 
@@ -155,21 +154,13 @@ export function UserProfileHeader({
         ) : null}
       </div>
 
-      {/* Verification pills */}
-      {idVerified || backgroundChecked ? (
+      {/* Verification pill — shown only for genuinely verified users */}
+      {verified ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {idVerified ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
-              <ShieldCheck className="w-4 h-4" />
-              ID Verified
-            </span>
-          ) : null}
-          {backgroundChecked ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
-              <ShieldCheck className="w-4 h-4" />
-              Background Checked
-            </span>
-          ) : null}
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
+            <ShieldCheck className="w-4 h-4" />
+            Verified
+          </span>
         </div>
       ) : null}
     </section>

@@ -6,8 +6,7 @@
 
 export const SERVICE_DETAIL_LABELS = {
   availableToday: "Available Today",
-  idVerified: "ID Verified",
-  backgroundChecked: "Background Checked",
+  verified: "Verified",
   priceLabel: "Price",
   priceCaption: "Price varies based on task and size",
   availabilityLabel: "Availability",
@@ -58,8 +57,6 @@ export const SERVICE_DETAIL_FALLBACKS = {
   jobsCompleted: 48,
   onTimeRate: 95,
   happyClients: 12,
-  idVerified: true,
-  backgroundChecked: true,
   availableToday: true,
   bio: "I am a dedicated and trustworthy cleaner with over 2 years of experience helping families keep their homes clean, fresh, and organized.\nI pay attention to detail and always respect your space and time.",
   servicesOffered: [

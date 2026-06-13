@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
     ArrowLeft,
     Bookmark,
@@ -22,7 +22,6 @@ import {
     ShieldCheck,
     Shirt,
     Sparkles,
-    Star,
     UtensilsCrossed,
     Users,
     X,
@@ -53,6 +52,8 @@ import { Service } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { ReportModal } from "@/components/provider/report-modal";
+import { ReviewCard } from "@/components/ReviewCard";
+import { useReviews } from "@/hooks/useReviews";
 import toast from "react-hot-toast";
 
 const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
@@ -169,8 +170,7 @@ function ServiceDetailPage() {
             : SERVICE_DETAIL_FALLBACKS.languages;
     const educationLevel = provider?.educationLevel;
 
-    const idVerified = provider?.isVerified ?? SERVICE_DETAIL_FALLBACKS.idVerified;
-    const backgroundChecked = SERVICE_DETAIL_FALLBACKS.backgroundChecked;
+    const isVerified = provider?.isVerified ?? false;
     const availableToday = service?.isActive ?? SERVICE_DETAIL_FALLBACKS.availableToday;
 
     const bio = provider?.bio || SERVICE_DETAIL_FALLBACKS.bio;
@@ -393,7 +393,7 @@ function ServiceDetailPage() {
                                 >
                                     {providerName}
                                 </h1>
-                                {idVerified ? <VerifiedBadge size={20} /> : null}
+                                {isVerified ? <VerifiedBadge size={20} /> : null}
                             </div>
                             <p className="text-sm" style={{ color: colors.textLight }}>
                                 {providerHandle}
@@ -429,9 +429,9 @@ function ServiceDetailPage() {
                     </div>
                 </section>
 
-                {/* Verification chips */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {idVerified ? (
+                {/* Verification chip — shown only for genuinely verified providers */}
+                {isVerified ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
                         <span
                             className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium"
                             style={{
@@ -440,22 +440,10 @@ function ServiceDetailPage() {
                             }}
                         >
                             <ShieldCheck className="h-4 w-4" style={{ color: colors.primary }} />
-                            {SERVICE_DETAIL_LABELS.idVerified}
+                            {SERVICE_DETAIL_LABELS.verified}
                         </span>
-                    ) : null}
-                    {backgroundChecked ? (
-                        <span
-                            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium"
-                            style={{
-                                backgroundColor: colors.backgroundTertiary,
-                                color: colors.primary,
-                            }}
-                        >
-                            <ShieldCheck className="h-4 w-4" style={{ color: colors.primary }} />
-                            {SERVICE_DETAIL_LABELS.backgroundChecked}
-                        </span>
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
 
                 {/* Price + Availability card */}
                 <section
@@ -703,7 +691,7 @@ function ServiceDetailPage() {
                 </section>
 
                 {/* Reviews */}
-                <ReviewsBlock serviceId={service.id} />
+                <ReviewsBlock serviceId={service.id} providerId={service.provider?.id} />
 
                 {/* Report — only for visitors, not the provider themselves */}
                 {!isOwnService && (
@@ -820,60 +808,23 @@ export default ServiceDetailPage;
  * from the design. Uses the same API the existing ReviewSection
  * uses, but renders only the first review inline to match the screenshot.
  */
-function ReviewsBlock({ serviceId }: { serviceId: string }) {
-    type ReviewItem = {
-        id: string;
-        rating: number;
-        comment: string;
-        reply?: string | null;
-        repliedAt?: string | null;
-        user?: { firstName: string; lastName: string; profilePicture?: string };
-        author?: { firstName: string; lastName: string; profilePicture?: string };
-        target?: { firstName: string; lastName: string; profilePicture?: string };
-        booking: { updatedAt: string };
-    };
-    const [reviews, setReviews] = useState<ReviewItem[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        let active = true;
-        async function load() {
-            try {
-                const res = await api.get(`/feedback/service/${serviceId}`);
-                const data = res.data?.data || res.data || {};
-                const list: ReviewItem[] = Array.isArray(data.reviews)
-                    ? data.reviews
-                    : Array.isArray(data)
-                      ? data
-                      : [];
-                if (active) {
-                    setReviews(list);
-                    setTotal(typeof data.totalReviews === "number" ? data.totalReviews : list.length);
-                }
-            } catch {
-                if (active) {
-                    setReviews([]);
-                    setTotal(0);
-                }
-            } finally {
-                if (active) setLoading(false);
-            }
-        }
-        load();
-        return () => {
-            active = false;
-        };
-    }, [serviceId]);
-
-    const first = reviews[0];
-    const firstAuthor = first?.user || first?.author;
+function ReviewsBlock({ serviceId, providerId }: { serviceId: string; providerId?: string }) {
+    const searchParams = useSearchParams();
+    const focusedReviewId = searchParams.get("reviewId");
+    const { reviews, totalReviews, loading, replyToReview } = useReviews({ serviceId });
+    const providerReviews = providerId
+        ? reviews.filter((review) => review.target?.id === providerId)
+        : reviews;
+    const focusedReview = focusedReviewId
+        ? providerReviews.find((review) => review.id === focusedReviewId)
+        : undefined;
+    const first = focusedReview || providerReviews[0];
 
     return (
-        <section className="mt-5">
+        <section id="reviews" className="mt-5 scroll-mt-24">
             <div className="flex items-center justify-between">
                 <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
-                    {SERVICE_DETAIL_LABELS.reviews} ({total})
+                    {SERVICE_DETAIL_LABELS.reviews} ({providerReviews.length})
                 </h2>
                 <button
                     type="button"
@@ -893,82 +844,11 @@ function ReviewsBlock({ serviceId }: { serviceId: string }) {
                 </div>
             ) : first ? (
                 <div
+                    id={`review-${first.id}`}
                     className="mt-3 rounded-2xl bg-white p-4"
                     style={{ border: `1px solid ${colors.border}` }}
                 >
-                    <div className="flex items-start gap-3">
-                        <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[14px] font-bold"
-                            style={{
-                                backgroundColor: colors.backgroundTertiary,
-                                color: colors.primary,
-                            }}
-                        >
-                            {(firstAuthor?.firstName || "?").charAt(0)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <p
-                                className="text-[14px] font-bold"
-                                style={{ color: colors.text }}
-                            >
-                                {firstAuthor?.firstName} {firstAuthor?.lastName?.charAt(0)}.
-                            </p>
-                            <p
-                                className="text-[12px]"
-                                style={{ color: colors.textLight }}
-                            >
-                                {first.booking?.updatedAt
-                                    ? new Date(first.booking.updatedAt).toLocaleDateString(
-                                          "en-US",
-                                          { year: "numeric", month: "short", day: "numeric" },
-                                      )
-                                    : ""}
-                            </p>
-                            <div className="mt-1.5 flex">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                    <Star
-                                        key={s}
-                                        className="h-4 w-4"
-                                        style={{
-                                            fill:
-                                                s <= first.rating
-                                                    ? "#FACC15"
-                                                    : "transparent",
-                                            stroke: "#FACC15",
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                            <p
-                                className="mt-2 text-[13px] leading-snug"
-                                style={{ color: colors.textSecondary }}
-                            >
-                                {first.comment}
-                            </p>
-                            {first.reply && (
-                                <div
-                                    className="mt-3 rounded-xl p-3"
-                                    style={{
-                                        backgroundColor: colors.backgroundTertiary,
-                                        border: `1px solid ${colors.border}`,
-                                    }}
-                                >
-                                    <p
-                                        className="text-[12px] font-bold"
-                                        style={{ color: colors.text }}
-                                    >
-                                        Response from {first.target?.firstName || "provider"}
-                                    </p>
-                                    <p
-                                        className="mt-1 text-[13px] leading-snug"
-                                        style={{ color: colors.textSecondary }}
-                                    >
-                                        {first.reply}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <ReviewCard review={first} onReply={replyToReview} />
                 </div>
             ) : (
                 <p className="mt-3 text-[13px]" style={{ color: colors.textMuted }}>
