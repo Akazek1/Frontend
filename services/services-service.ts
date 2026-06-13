@@ -14,10 +14,15 @@ export interface ServiceCategory {
 }
 
 export interface CreateServicePayload {
-  title: string;
-  description: string;
-  price: number;
+  /** Optional: backend derives the title from the category name when omitted. */
+  title?: string;
+  description?: string;
+  /** Fixed price = same min/max; range = distinct values. */
+  priceMin: number;
+  priceMax: number;
   chargedPer: ChargedPer;
+  /** "Open to Negotiate" — price stays visible, employers can discuss it. */
+  negotiable?: boolean;
   categoryId: string;
   serviceImages?: string[];
   /** Raw File objects from the picker. When present, the request is sent
@@ -43,27 +48,16 @@ function unwrap<T>(payload: ApiEnvelope<T> | T): T {
 }
 
 /**
- * Map a ChargedPer value to the priceMin/priceMax/priceType triplet the
- * backend expects. The wizard collects a single rate, so min === max.
- */
-function toBackendPriceFields(price: number, chargedPer: ChargedPer) {
-  return {
-    priceMin: price,
-    priceMax: price,
-    priceType: chargedPer,
-  };
-}
-
-/**
- * Reverse mapping for the wizard's edit flow. Tries hard to recover a
- * (price, chargedPer) pair from a legacy backend record that may carry
- * priceMin !== priceMax or a non-wizard priceType.
+ * Reverse mapping for the wizard's edit flow. Recovers (priceMin, priceMax,
+ * chargedPer) from a backend record that may carry a non-wizard priceType.
  */
 export function fromBackendPriceFields(service: Pick<Service, "priceMin" | "priceMax" | "priceType">): {
-  price: number;
+  priceMin: number;
+  priceMax: number;
   chargedPer: ChargedPer;
 } {
-  const price = service.priceMax ?? service.priceMin ?? 0;
+  const priceMin = service.priceMin ?? service.priceMax ?? 0;
+  const priceMax = service.priceMax ?? service.priceMin ?? 0;
   const raw = (service.priceType || "daily").toLowerCase();
   const chargedPer: ChargedPer =
     raw === "one_time" || raw === "fixed"
@@ -73,24 +67,28 @@ export function fromBackendPriceFields(service: Pick<Service, "priceMin" | "pric
       : raw === "monthly"
       ? "monthly"
       : "daily";
-  return { price, chargedPer };
+  return { priceMin, priceMax, chargedPer };
+}
+
+/** Map the wizard payload onto the flat body POST/PATCH /services expects. */
+function toBackendBody(payload: CreateServicePayload | UpdateServicePayload) {
+  const { imageFiles, serviceImages, priceMin, priceMax, chargedPer, ...rest } =
+    payload as CreateServicePayload;
+
+  const body: Record<string, unknown> = { ...rest };
+  if (typeof priceMin === "number") body.priceMin = priceMin;
+  if (typeof priceMax === "number") body.priceMax = priceMax;
+  if (chargedPer) body.priceType = chargedPer;
+  if (serviceImages && serviceImages.length > 0) {
+    body.serviceImages = serviceImages;
+  }
+  return body;
 }
 
 function buildMultipart(payload: CreateServicePayload | UpdateServicePayload) {
   const form = new FormData();
-
-  const { imageFiles, serviceImages, price, chargedPer, ...rest } = payload as CreateServicePayload;
-
-  const data: Record<string, unknown> = { ...rest };
-  if (typeof price === "number" && chargedPer) {
-    Object.assign(data, toBackendPriceFields(price, chargedPer));
-  }
-  if (serviceImages && serviceImages.length > 0) {
-    data.serviceImages = serviceImages;
-  }
-
-  form.append("data", JSON.stringify(data));
-  imageFiles?.forEach((file) => form.append("serviceImages", file));
+  form.append("data", JSON.stringify(toBackendBody(payload)));
+  payload.imageFiles?.forEach((file) => form.append("serviceImages", file));
   return form;
 }
 
@@ -118,34 +116,17 @@ const servicesService = {
 
   async create(payload: CreateServicePayload): Promise<Service> {
     const hasFiles = (payload.imageFiles?.length ?? 0) > 0;
-    if (hasFiles) {
-      const form = buildMultipart(payload);
-      const response = await api.post("/services", form);
-      return unwrap<Service>(response.data);
-    }
-
-    const { price, chargedPer, imageFiles, ...rest } = payload;
-    const response = await api.post("/services", {
-      ...rest,
-      ...toBackendPriceFields(price, chargedPer),
-    });
+    const response = hasFiles
+      ? await api.post("/services", buildMultipart(payload))
+      : await api.post("/services", toBackendBody(payload));
     return unwrap<Service>(response.data);
   },
 
   async update(id: string, payload: UpdateServicePayload): Promise<Service> {
     const hasFiles = (payload.imageFiles?.length ?? 0) > 0;
-    if (hasFiles) {
-      const form = buildMultipart(payload);
-      const response = await api.patch(`/services/${id}`, form);
-      return unwrap<Service>(response.data);
-    }
-
-    const { price, chargedPer, imageFiles, ...rest } = payload;
-    const body: Record<string, unknown> = { ...rest };
-    if (typeof price === "number" && chargedPer) {
-      Object.assign(body, toBackendPriceFields(price, chargedPer));
-    }
-    const response = await api.patch(`/services/${id}`, body);
+    const response = hasFiles
+      ? await api.patch(`/services/${id}`, buildMultipart(payload))
+      : await api.patch(`/services/${id}`, toBackendBody(payload));
     return unwrap<Service>(response.data);
   },
 
@@ -168,6 +149,19 @@ const servicesService = {
   async setAvailability(available: boolean): Promise<{ id: string; availableForWork: boolean }> {
     const response = await api.patch("/users/me/availability", { available });
     return unwrap<{ id: string; availableForWork: boolean }>(response.data);
+  },
+
+  /**
+   * One-tap registration: pick one or more job-type (category) ids and the
+   * backend creates a minimal listing for each, skipping ones already owned.
+   */
+  async register(categoryIds: string[]): Promise<{
+    created: Service[];
+    createdCount: number;
+    skipped: { categoryId: string; reason: string }[];
+  }> {
+    const response = await api.post("/services/register", { categoryIds });
+    return unwrap(response.data);
   },
 };
 
