@@ -8,7 +8,10 @@ import {
     ArrowLeft,
     Bookmark,
     Briefcase,
+    Pencil,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     ClipboardCheck,
     Clock,
     Coins,
@@ -21,7 +24,9 @@ import {
     Share as ShareIcon,
     ShieldCheck,
     Shirt,
+    Smile,
     Sparkles,
+    Star,
     UtensilsCrossed,
     Users,
     X,
@@ -44,9 +49,7 @@ import {
     DEFAULT_CATEGORY_ICON,
     PROVIDER_STATS,
     SERVICE_CATEGORY_ICONS,
-    SERVICE_DETAIL_FALLBACKS,
     SERVICE_DETAIL_LABELS,
-    WORK_PHOTOS_VISIBLE,
 } from "@/constant/service-detail";
 import { Service } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,6 +64,8 @@ const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: R
     ClipboardCheck,
     Clock,
     Users,
+    Star,
+    Smile,
     Home: HomeIcon,
     Sparkles,
     UtensilsCrossed,
@@ -73,12 +78,6 @@ interface ExistingBookingSummary {
     service?: {
         id?: string;
     };
-}
-
-function formatStatValue(value: number, suffix?: string, plusOnGte?: number) {
-    const display = `${value}${suffix ?? ""}`;
-    if (plusOnGte !== undefined && value >= plusOnGte) return `${display}+`;
-    return display;
 }
 
 function ServiceDetailPage() {
@@ -97,6 +96,11 @@ function ServiceDetailPage() {
     const [submitting, setSubmitting] = useState(false);
     const [hasRequested, setHasRequested] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
+    const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+    const openLightbox = (images: string[], index: number) => setLightbox({ images, index });
+    const closeLightbox = () => setLightbox(null);
+    const lightboxPrev = () => setLightbox(lb => lb && lb.index > 0 ? { ...lb, index: lb.index - 1 } : lb);
+    const lightboxNext = () => setLightbox(lb => lb && lb.index < lb.images.length - 1 ? { ...lb, index: lb.index + 1 } : lb);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
     const [hireNotes, setHireNotes] = useState("");
 
@@ -150,6 +154,19 @@ function ServiceDetailPage() {
         fetchExisting();
     }, [serviceId]);
 
+    // Keyboard navigation and swipe for lightbox
+    useEffect(() => {
+        if (!lightbox) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "ArrowLeft") lightboxPrev();
+            else if (e.key === "ArrowRight") lightboxNext();
+            else if (e.key === "Escape") closeLightbox();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lightbox]);
+
     const provider = service?.provider;
     const providerName = useMemo(() => getProviderName(provider), [provider]);
     const providerHandle = useMemo(() => getProviderHandle(provider), [provider]);
@@ -158,46 +175,52 @@ function ServiceDetailPage() {
 
     const serviceImages = useMemo(() => getServiceImages(service), [service]);
     const workPhotos = serviceImages;
-    const workPhotosTotal =
-        workPhotos.length > 0 ? workPhotos.length : SERVICE_DETAIL_FALLBACKS.workPhotosTotal;
 
     const providerPhoto =
         provider?.profilePicture || provider?.profileImg || profileImageFallback;
 
-    const languages =
-        provider?.languages && provider.languages.length > 0
-            ? provider.languages
-            : SERVICE_DETAIL_FALLBACKS.languages;
+    // Real languages only — the "Speaks" row is hidden when none are set.
+    const languages = provider?.languages ?? [];
     const educationLevel = provider?.educationLevel;
 
     const isVerified = provider?.isVerified ?? false;
-    const availableToday = service?.isActive ?? SERVICE_DETAIL_FALLBACKS.availableToday;
+    const availableToday = service?.isActive !== false && (service?.provider?.availableForWork ?? true);
 
-    const bio = provider?.bio || SERVICE_DETAIL_FALLBACKS.bio;
+    // "About" shows the service description the provider actually wrote, falling
+    // back to their profile bio. When both are empty the section is hidden —
+    // never a placeholder paragraph.
+    const aboutText = (service?.description || provider?.bio || "").trim();
 
     const priceText = useMemo(() => {
-        if (!service) return SERVICE_DETAIL_FALLBACKS.priceRangeText;
-        const f = formatPrice(service.priceMin, service.priceMax, service.priceType);
-        return f && f !== "Price on request" ? f : SERVICE_DETAIL_FALLBACKS.priceRangeText;
+        if (!service) return "Price on request";
+        return formatPrice(service.priceMin, service.priceMax, service.priceType) || "Price on request";
     }, [service]);
 
-    const statValues: Record<string, number> = {
-        years: SERVICE_DETAIL_FALLBACKS.yearsExperience,
-        jobs: SERVICE_DETAIL_FALLBACKS.jobsCompleted,
-        onTime: SERVICE_DETAIL_FALLBACKS.onTimeRate,
-        clients: SERVICE_DETAIL_FALLBACKS.happyClients,
+    // Real stats only. Counts are 0 for a new provider; rating reads "New"
+    // until the first review; years shows "—" when not provided.
+    const totalReviews = service?.reviews?.totalReviews ?? 0;
+    const statDisplay: Record<string, string> = {
+        years:
+            provider?.yearsOfExperience != null
+                ? String(provider.yearsOfExperience)
+                : "—",
+        jobs: String(service?.reviews?.jobsCompleted ?? 0),
+        rating: totalReviews > 0 ? (service?.reviews?.averageRating ?? 0).toFixed(1) : "New",
+        rehire: String(service?.reviews?.wouldHireAgain ?? 0),
     };
 
     const servicesOffered = useMemo(() => {
         const derived = providerServices
             .map((s) => (typeof s.category === "string" ? s.category : s.category?.name))
             .filter((v): v is string => Boolean(v));
-        const unique = Array.from(new Set(derived));
-        return unique.length > 0 ? unique : SERVICE_DETAIL_FALLBACKS.servicesOffered;
+        return Array.from(new Set(derived));
     }, [providerServices]);
 
-    const distanceText = SERVICE_DETAIL_FALLBACKS.distanceText;
-    const city = SERVICE_DETAIL_FALLBACKS.city;
+    const locationText = useMemo(() => {
+        const raw = service?.serviceAreas;
+        const areas = Array.isArray(raw) ? raw : raw ? [raw as unknown as string] : [];
+        return areas[0] || "";
+    }, [service]);
 
     const messageHref = "/conversations";
 
@@ -327,18 +350,20 @@ function ServiceDetailPage() {
                     >
                         <ShareIcon className="h-5 w-5" style={{ color: colors.text }} />
                     </button>
-                    <button
-                        type="button"
-                        aria-label="Bookmark"
-                        onClick={() => requireAuth(() => setBookmarked((v) => !v))}
-                        className="p-1"
-                    >
-                        <Bookmark
-                            className="h-5 w-5"
-                            style={{ color: colors.text }}
-                            fill={bookmarked ? colors.text : "none"}
-                        />
-                    </button>
+                    {!isOwnService && (
+                        <button
+                            type="button"
+                            aria-label="Bookmark"
+                            onClick={() => requireAuth(() => setBookmarked((v) => !v))}
+                            className="p-1"
+                        >
+                            <Bookmark
+                                className="h-5 w-5"
+                                style={{ color: colors.text }}
+                                fill={bookmarked ? colors.text : "none"}
+                            />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -347,9 +372,10 @@ function ServiceDetailPage() {
                 <section className="flex items-start gap-4">
                     {/* Avatar with Available Today pill */}
                     <div className="relative shrink-0">
-                        <Link
-                            href={profilePath}
-                            aria-label={`View ${providerName}'s profile`}
+                        <button
+                            type="button"
+                            onClick={() => openLightbox([providerPhoto], 0)}
+                            aria-label={`View ${providerName}'s photo`}
                             className="relative block h-[120px] w-[120px] overflow-hidden rounded-full bg-gray-100"
                         >
                             <Image
@@ -363,24 +389,12 @@ function ServiceDetailPage() {
                                     (e.target as HTMLImageElement).src = profileImageFallback;
                                 }}
                             />
-                        </Link>
-                        {availableToday ? (
-                            <div
-                                className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-white px-2.5 py-1 shadow-sm"
-                                style={{ border: `1px solid ${colors.border}` }}
-                            >
-                                <span
-                                    className="inline-block h-2 w-2 rounded-full"
-                                    style={{ backgroundColor: "#22C55E" }}
-                                />
-                                <span
-                                    className="text-[11px] font-semibold"
-                                    style={{ color: colors.text }}
-                                >
-                                    {SERVICE_DETAIL_LABELS.availableToday}
-                                </span>
-                            </div>
-                        ) : null}
+                        </button>
+                        <div
+                            className={`absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold text-white ${availableToday ? "bg-brand/85" : "bg-red-600/85"}`}
+                        >
+                            {availableToday ? SERVICE_DETAIL_LABELS.availableToday : "Unavailable"}
+                        </div>
                     </div>
 
                     {/* Right side: name/handle/title/meta */}
@@ -403,29 +417,31 @@ function ServiceDetailPage() {
                             className="pt-0.5 text-[15px] font-semibold"
                             style={{ color: colors.text }}
                         >
-                            {service.title || "Professional House Cleaning"}
+                            {service.title}
                         </p>
-                        <div
-                            className="flex items-center gap-1.5 text-[13px]"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            <MapPin className="h-4 w-4 shrink-0" style={{ color: colors.text }} />
-                            <span>
-                                {city} • {distanceText}
-                            </span>
-                        </div>
-                        <div
-                            className="flex items-center gap-1.5 text-[13px]"
-                            style={{ color: colors.textSecondary }}
-                        >
-                            <MessageCircle
-                                className="h-4 w-4 shrink-0"
-                                style={{ color: colors.text }}
-                            />
-                            <span>
-                                {SERVICE_DETAIL_LABELS.speaks} {languages.join(", ")}
-                            </span>
-                        </div>
+                        {locationText ? (
+                            <div
+                                className="flex items-center gap-1.5 text-[13px]"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                <MapPin className="h-4 w-4 shrink-0" style={{ color: colors.text }} />
+                                <span>{locationText}</span>
+                            </div>
+                        ) : null}
+                        {languages.length > 0 ? (
+                            <div
+                                className="flex items-center gap-1.5 text-[13px]"
+                                style={{ color: colors.textSecondary }}
+                            >
+                                <MessageCircle
+                                    className="h-4 w-4 shrink-0"
+                                    style={{ color: colors.text }}
+                                />
+                                <span>
+                                    {SERVICE_DETAIL_LABELS.speaks} {languages.join(", ")}
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </section>
 
@@ -544,7 +560,6 @@ function ServiceDetailPage() {
                 >
                     {PROVIDER_STATS.map((stat, idx) => {
                         const Icon = LUCIDE[stat.icon];
-                        const value = statValues[stat.key] ?? 0;
                         return (
                             <div
                                 key={stat.key}
@@ -565,7 +580,7 @@ function ServiceDetailPage() {
                                     className="text-[15px] font-extrabold leading-none"
                                     style={{ color: colors.text }}
                                 >
-                                    {formatStatValue(value, stat.suffix, stat.plusOnGte)}
+                                    {statDisplay[stat.key]}
                                 </p>
                                 <p
                                     className="text-[11px] leading-tight"
@@ -578,40 +593,43 @@ function ServiceDetailPage() {
                     })}
                 </section>
 
-                {/* About */}
-                <section
-                    className="mt-3 rounded-2xl bg-white p-4"
-                    style={{ border: `1px solid ${colors.border}` }}
-                >
-                    <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
-                        {SERVICE_DETAIL_LABELS.aboutPrefix} {firstName}
-                    </h2>
-                    <p
-                        className={`mt-2 whitespace-pre-line text-[13px] leading-[1.55] ${
-                            bioExpanded ? "" : "line-clamp-3"
-                        }`}
-                        style={{ color: colors.textSecondary }}
+                {/* About — the provider's own service description */}
+                {aboutText ? (
+                    <section
+                        className="mt-3 rounded-2xl bg-white p-4"
+                        style={{ border: `1px solid ${colors.border}` }}
                     >
-                        {bio}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setBioExpanded((v) => !v)}
-                        className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold"
-                        style={{ color: colors.primary }}
-                    >
-                        {bioExpanded
-                            ? SERVICE_DETAIL_LABELS.readLess
-                            : SERVICE_DETAIL_LABELS.readMore}
-                        <ChevronDown
-                            className={`h-4 w-4 transition-transform ${
-                                bioExpanded ? "rotate-180" : ""
+                        <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
+                            {SERVICE_DETAIL_LABELS.aboutPrefix} {firstName}
+                        </h2>
+                        <p
+                            className={`mt-2 whitespace-pre-line text-[13px] leading-[1.55] ${
+                                bioExpanded ? "" : "line-clamp-3"
                             }`}
-                        />
-                    </button>
-                </section>
+                            style={{ color: colors.textSecondary }}
+                        >
+                            {aboutText}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setBioExpanded((v) => !v)}
+                            className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold"
+                            style={{ color: colors.primary }}
+                        >
+                            {bioExpanded
+                                ? SERVICE_DETAIL_LABELS.readLess
+                                : SERVICE_DETAIL_LABELS.readMore}
+                            <ChevronDown
+                                className={`h-4 w-4 transition-transform ${
+                                    bioExpanded ? "rotate-180" : ""
+                                }`}
+                            />
+                        </button>
+                    </section>
+                ) : null}
 
                 {/* Services Offered */}
+                {servicesOffered.length > 0 ? (
                 <section className="mt-5">
                     <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
                         {SERVICE_DETAIL_LABELS.servicesOffered}
@@ -642,53 +660,47 @@ function ServiceDetailPage() {
                         })}
                     </div>
                 </section>
+                ) : null}
 
-                {/* Work Photos */}
+                {/* Work Photos — horizontal scroll strip; hidden when provider has none */}
+                {workPhotos.length > 0 ? (
                 <section className="mt-5">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
-                            {SERVICE_DETAIL_LABELS.workPhotos}
-                        </h2>
-                        <button
-                            type="button"
-                            className="text-[13px] font-semibold"
-                            style={{ color: colors.primary }}
-                        >
-                            {SERVICE_DETAIL_LABELS.viewAll}
-                        </button>
-                    </div>
-                    <div className="mt-3 grid grid-cols-5 gap-2">
-                        {Array.from({ length: WORK_PHOTOS_VISIBLE }).map((_, i) => {
-                            const src = workPhotos[i] || serviceImageFallback;
-                            const isLast = i === WORK_PHOTOS_VISIBLE - 1;
-                            const extra = Math.max(0, workPhotosTotal - WORK_PHOTOS_VISIBLE);
-                            return (
-                                <div
-                                    key={i}
-                                    className="relative aspect-square overflow-hidden rounded-lg bg-gray-100"
-                                >
-                                    <Image
-                                        src={src}
-                                        alt=""
-                                        fill
-                                        sizes="80px"
-                                        className="object-cover"
-                                        unoptimized={shouldUnoptimizeImage(src)}
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src =
-                                                serviceImageFallback;
-                                        }}
-                                    />
-                                    {isLast && extra > 0 ? (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-bold text-white">
-                                            +{extra}
-                                        </div>
-                                    ) : null}
-                                </div>
-                            );
-                        })}
+                    <h2 className="text-[16px] font-bold" style={{ color: colors.text }}>
+                        {SERVICE_DETAIL_LABELS.workPhotos}
+                        <span className="ml-2 text-[13px] font-normal" style={{ color: colors.textMuted }}>
+                            ({workPhotos.length})
+                        </span>
+                    </h2>
+                    {/* Negative horizontal margin lets the strip bleed to the screen edge */}
+                    <div
+                        className="mt-3 -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2"
+                        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+                    >
+                        {workPhotos.map((src, i) => (
+                            <button
+                                type="button"
+                                key={i}
+                                onClick={() => openLightbox(workPhotos, i)}
+                                aria-label="View photo"
+                                className="relative h-40 w-40 flex-shrink-0 snap-start overflow-hidden rounded-xl bg-gray-100"
+                            >
+                                <Image
+                                    src={src}
+                                    alt=""
+                                    fill
+                                    sizes="160px"
+                                    className="object-cover"
+                                    unoptimized={shouldUnoptimizeImage(src)}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                            serviceImageFallback;
+                                    }}
+                                />
+                            </button>
+                        ))}
                     </div>
                 </section>
+                ) : null}
 
                 {/* Reviews */}
                 <ReviewsBlock serviceId={service.id} providerId={service.provider?.id} />
@@ -715,6 +727,89 @@ function ServiceDetailPage() {
                     onClose={() => setIsReportOpen(false)}
                 />
             )}
+
+            {/* Image lightbox — navigable with arrows, swipe, and keyboard */}
+            {lightbox && (() => {
+                const { images, index } = lightbox;
+                const src = images[index];
+                const hasPrev = index > 0;
+                const hasNext = index < images.length - 1;
+                let touchStartX = 0;
+                return (
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        onClick={closeLightbox}
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
+                    >
+                        {/* Close */}
+                        <button
+                            type="button"
+                            aria-label="Close"
+                            onClick={closeLightbox}
+                            className="absolute right-4 top-4 z-10 rounded-full bg-white/15 p-2 text-white"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
+
+                        {/* Prev */}
+                        {hasPrev && (
+                            <button
+                                type="button"
+                                aria-label="Previous photo"
+                                onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+                                className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
+                            >
+                                <ChevronLeft className="h-6 w-6" />
+                            </button>
+                        )}
+
+                        {/* Next */}
+                        {hasNext && (
+                            <button
+                                type="button"
+                                aria-label="Next photo"
+                                onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+                                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white hover:bg-white/25"
+                            >
+                                <ChevronRight className="h-6 w-6" />
+                            </button>
+                        )}
+
+                        {/* Image — swipe left/right to navigate */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            key={src}
+                            src={src}
+                            alt=""
+                            onClick={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => { touchStartX = e.touches[0].clientX; }}
+                            onTouchEnd={(e) => {
+                                const dx = e.changedTouches[0].clientX - touchStartX;
+                                if (dx > 50) lightboxPrev();
+                                else if (dx < -50) lightboxNext();
+                            }}
+                            style={{ maxHeight: "85dvh", maxWidth: "calc(100vw - 5rem)", width: "auto", height: "auto" }}
+                            className="rounded-lg"
+                        />
+
+                        {/* Dot indicators */}
+                        {images.length > 1 && (
+                            <div className="absolute bottom-5 flex gap-2">
+                                {images.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        aria-label={`Photo ${i + 1}`}
+                                        onClick={(e) => { e.stopPropagation(); setLightbox({ images, index: i }); }}
+                                        className={`h-1.5 rounded-full transition-all ${i === index ? "w-4 bg-white" : "w-1.5 bg-white/40"}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {isHireModalOpen && service && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
@@ -765,36 +860,46 @@ function ServiceDetailPage() {
                 className="fixed bottom-0 left-0 right-0 z-30 mx-auto w-full max-w-[428px] bg-white px-4 py-3"
                 style={{ borderTop: `1px solid ${colors.border}` }}
             >
-                <div className="flex items-center gap-3">
+                {isOwnService ? (
                     <button
                         type="button"
-                        onClick={() => requireAuth(() => router.push(messageHref), "message")}
-                        className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
-                        style={{
-                            border: `1.5px solid ${colors.primary}`,
-                            color: colors.primary,
-                        }}
+                        onClick={() => router.push(`/more/services/${serviceId}/edit`)}
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white"
+                        style={{ backgroundColor: colors.primary }}
                     >
-                        <MessageCircle className="h-5 w-5" />
-                        {SERVICE_DETAIL_LABELS.message}
+                        <Pencil className="h-4 w-4" />
+                        Edit Service
                     </button>
-                    <button
-                        onClick={() => requireAuth(openHireModal, "hire")}
-                        disabled={submitting || hasRequested || isOwnService}
-                        className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
-                        style={{ backgroundColor: isOwnService || hasRequested ? "#9CA3AF" : colors.primary }}
-                    >
-                        {submitting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : isOwnService ? (
-                            "Your service"
-                        ) : hasRequested ? (
-                            SERVICE_DETAIL_LABELS.requestSent
-                        ) : (
-                            SERVICE_DETAIL_LABELS.requestToHire
-                        )}
-                    </button>
-                </div>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => requireAuth(() => router.push(messageHref), "message")}
+                            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
+                            style={{
+                                border: `1.5px solid ${colors.primary}`,
+                                color: colors.primary,
+                            }}
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                            {SERVICE_DETAIL_LABELS.message}
+                        </button>
+                        <button
+                            onClick={() => requireAuth(openHireModal, "hire")}
+                            disabled={submitting || hasRequested}
+                            className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                            style={{ backgroundColor: hasRequested ? "#9CA3AF" : colors.primary }}
+                        >
+                            {submitting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : hasRequested ? (
+                                SERVICE_DETAIL_LABELS.requestSent
+                            ) : (
+                                SERVICE_DETAIL_LABELS.requestToHire
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
         </div>

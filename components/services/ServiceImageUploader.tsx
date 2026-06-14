@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Plus, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
+import imageCompression from "browser-image-compression";
+
+const MAX_INPUT_MB = 5;
+const COMPRESS_OPTIONS = {
+  maxSizeMB: 0.3,        // target ≤ 300 KB per photo
+  maxWidthOrHeight: 1280, // enough for any service card or lightbox view
+  useWebWorker: true,
+};
 
 interface ServiceImageUploaderProps {
   existingUrls: string[];
@@ -20,11 +28,10 @@ export function ServiceImageUploader({
   onRemoveAt,
 }: ServiceImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   const total = existingUrls.length + pendingFiles.length;
   const canAddMore = total < maxImages;
 
-  // Build object URLs for the in-memory File previews. Revoke them on unmount
-  // and whenever the file list changes to avoid leaking blob URLs.
   const fileBlobUrls = useMemo(
     () => pendingFiles.map((f) => URL.createObjectURL(f)),
     [pendingFiles],
@@ -41,11 +48,30 @@ export function ServiceImageUploader({
     ...fileBlobUrls.map((url, i) => ({ key: `f-${i}-${url}`, src: url, isFile: true })),
   ];
 
-  const handlePicked = (files: FileList | null) => {
+  const handlePicked = async (files: FileList | null) => {
     if (!files) return;
-    const next = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (next.length > 0) onAdd(next);
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (images.length === 0) return;
+
+    const tooBig = images.filter((f) => f.size > MAX_INPUT_MB * 1024 * 1024);
+    if (tooBig.length > 0) {
+      alert(
+        `${tooBig.length} photo${tooBig.length > 1 ? "s" : ""} exceed the ${MAX_INPUT_MB} MB limit and were skipped.`,
+      );
+    }
+    const valid = images.filter((f) => f.size <= MAX_INPUT_MB * 1024 * 1024);
     if (inputRef.current) inputRef.current.value = "";
+    if (valid.length === 0) return;
+
+    setIsCompressing(true);
+    try {
+      const compressed = await Promise.all(
+        valid.map((f) => imageCompression(f, COMPRESS_OPTIONS)),
+      );
+      onAdd(compressed);
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   return (
@@ -78,17 +104,27 @@ export function ServiceImageUploader({
         {canAddMore && (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brand/40 bg-white text-brand hover:bg-surface"
+            onClick={() => !isCompressing && inputRef.current?.click()}
+            disabled={isCompressing}
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brand/40 bg-white text-brand hover:bg-surface disabled:opacity-60"
           >
-            <Plus className="h-5 w-5" />
-            <span className="text-[11px] font-semibold">Add</span>
+            {isCompressing ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-[10px] font-semibold">Optimizing…</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                <span className="text-[11px] font-semibold">Add</span>
+              </>
+            )}
           </button>
         )}
       </div>
 
       <p className="mt-2 text-[11px] text-ink-subtle">
-        Up to {maxImages} images. The first image is your card&apos;s main photo.
+        Up to {maxImages} images · max {MAX_INPUT_MB} MB each. The first image is your card&apos;s main photo.
       </p>
 
       <input

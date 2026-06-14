@@ -8,6 +8,7 @@ import type { Service } from "@/types";
 
 interface OwnerServiceCardRowProps {
   service: Service;
+  onView: (service: Service) => void;
   onEdit: (service: Service) => void;
   /**
    * Fires when the owner taps Deactivate or Activate. The caller is
@@ -47,6 +48,7 @@ interface OwnerServiceCardRowProps {
  */
 export function OwnerServiceCardRow({
   service,
+  onView,
   onEdit,
   onToggleActive,
   workerAvailable = true,
@@ -54,9 +56,7 @@ export function OwnerServiceCardRow({
   const provider = mapServiceToProviderCard(service);
   const isActive = service.isActive !== false;
 
-  // The marketplace card expects a single onClick for the whole card tap.
-  // For the owner, tapping the card opens the edit screen.
-  const handleCardClick = () => onEdit(service);
+  const handleCardClick = () => onView(service);
 
   return (
     <div

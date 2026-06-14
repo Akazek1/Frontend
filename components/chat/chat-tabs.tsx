@@ -52,6 +52,11 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
           </TabsTrigger>
           <TabsTrigger value="Archive" className={triggerClass}>
             Archive
+            {counts && counts.archiveReviewPending > 0 ? (
+              <span className="min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {counts.archiveReviewPending}
+              </span>
+            ) : null}
           </TabsTrigger>
         </TabsList>
       </Tabs>

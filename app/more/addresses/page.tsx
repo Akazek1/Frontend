@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Home, Plus, Loader2, Trash2, Edit3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,7 +48,10 @@ interface FormData {
   isDefault: boolean;
 }
 
+const ADDRESSES_KEY = ["addresses"] as const;
+
 const AddressBook = () => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<FormData>({
     street: "",
     city: "",
@@ -57,28 +61,28 @@ const AddressBook = () => {
     isDefault: false,
   });
   const [addresses, setAddresses] = useState<Address[]>([]);
+  // `isLoading` is for in-flight mutations (submit/delete); the initial fetch
+  // spinner is driven by the cached query below.
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
-  // Fetch addresses from /users/profile
+  // Cached: returning to the address book renders saved addresses instantly.
+  const { data: fetchedAddresses, isLoading: isInitialLoading } = useQuery({
+    queryKey: ADDRESSES_KEY,
+    queryFn: async (): Promise<Address[]> => {
+      const response = await api.get("/users/profile");
+      return response.data.data?.addresses || response.data.addresses || [];
+    },
+  });
+
+  // Mirror server data into local state, which the CRUD handlers mutate
+  // optimistically. After each mutation we invalidate the query (below), so a
+  // refetch re-seeds this with the authoritative list.
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get("/users/profile");
-        const addressesData = response.data.data?.addresses || response.data.addresses || [];
-        setAddresses(addressesData);
-      } catch (err: unknown) {
-        console.error("Error fetching addresses:", err);
-        toast.error("Failed to fetch addresses");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAddresses();
-  }, []);
+    if (fetchedAddresses) setAddresses(fetchedAddresses);
+  }, [fetchedAddresses]);
 
   // Handle input changes
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +177,7 @@ const AddressBook = () => {
       });
       setIsFormVisible(false);
       setEditingAddressId(null);
+      queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
     } catch (err: unknown) {
       const errorMessage = getApiErrorMessage(err, `Failed to ${editingAddressId ? "update" : "add"} address`);
       console.error(`Error ${editingAddressId ? "updating" : "adding"} address:`, err);
@@ -189,6 +194,7 @@ const AddressBook = () => {
     try {
       await api.delete(`/address-book/${addressId}`);
       setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
+      queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
       toast.success("Address deleted successfully");
     } catch (err: unknown) {
       const errorMessage = getApiErrorMessage(err, "Failed to delete address");
@@ -368,7 +374,7 @@ const AddressBook = () => {
       {/* Display Addresses */}
       <div className={appContentClass}>
         {
-          isLoading ? (
+          isLoading || isInitialLoading ? (
             <div className="flex items-center justify-center w-full">
               <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" />
             </div>

@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import api from "@/lib/axios";
+import React, { useState, useRef } from "react";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Service } from "@/types";
+import { useServiceList } from "@/hooks/useServiceList";
+import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
 import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
@@ -15,9 +15,6 @@ const ServicePage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const category = searchParams.get("category");
-    const [services, setServices] = useState<Service[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -33,39 +30,20 @@ const ServicePage = () => {
         minRating: searchParams.get("minRating") ? Number(searchParams.get("minRating")) : undefined,
     });
 
-    const fetchServices = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams();
-            if (category && category !== "all") params.append("category", category);
-            if (searchTerm) params.append("searchTerm", searchTerm);
-            if (filters.minPrice) params.append("minPrice", filters.minPrice.toString());
-            if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString());
-            if (filters.serviceType) params.append("serviceType", filters.serviceType);
-            if (filters.availability) params.append("available", filters.availability === "available" ? "true" : "false");
-            if (filters.location) params.append("location", filters.location);
-            if (filters.distanceKm) params.append("distanceKm", filters.distanceKm.toString());
-            if (filters.minRating) params.append("minRating", filters.minRating.toString());
+    const browseParams: BrowseServicesParams = {
+        ...(category && category !== "all" ? { category } : {}),
+        ...(searchTerm ? { searchTerm } : {}),
+        ...(filters.minPrice ? { minPrice: filters.minPrice } : {}),
+        ...(filters.maxPrice ? { maxPrice: filters.maxPrice } : {}),
+        ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
+        ...(filters.availability ? { available: filters.availability === "available" } : {}),
+        ...(filters.location ? { location: filters.location } : {}),
+        ...(filters.minRating ? { minRating: filters.minRating } : {}),
+    };
 
-            const response = await api.get(`/services?${params.toString()}`);
-            
-            if (response.status !== 200) {
-                throw new Error("Failed to fetch services");
-            }
-            const data: Service[] = await response.data.data;
-            setServices(data);
-        } catch {
-            setError("Something went wrong while fetching services.");
-            setServices([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [category, searchTerm, filters]);
-
-    useEffect(() => {
-        fetchServices();
-    }, [fetchServices]);
+    // Cached + stale-while-revalidate: revisiting this page shows the previous
+    // results instantly instead of a spinner. See hooks/useServiceList.
+    const { data: services = [], isLoading, error } = useServiceList(browseParams);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -136,7 +114,7 @@ const ServicePage = () => {
             {/* Error State */}
             {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-center text-sm">
-                    {error}
+                    Something went wrong while fetching services.
                 </div>
             )}
 

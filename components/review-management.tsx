@@ -72,7 +72,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
 
   const handleEditReview = (review: Review) => {
     setEditingReview(review)
-    setNewReview({ rating: review.rating, comment: review.comment })
+    setNewReview({ rating: review.rating || 0, comment: review.comment || "" })
     setIsModalOpen(true)
   }
 

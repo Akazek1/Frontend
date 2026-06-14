@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   BriefcaseBusiness,
@@ -147,42 +148,46 @@ const channels = [
   },
 ];
 
+const PREFERENCES_KEY = ["notification-preferences"] as const;
+
 const NotificationsPreferences = () => {
+  const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
-  const [isLoading, setIsLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<PreferenceKey | null>(null);
 
-  useEffect(() => {
-    fetchPreferences();
-  }, []);
-
-  const fetchPreferences = async () => {
-    try {
-      setIsLoading(true);
+  // Cached: revisiting the settings page renders the saved toggles instantly.
+  const { data: savedPreferences, isLoading } = useQuery({
+    queryKey: PREFERENCES_KEY,
+    queryFn: async (): Promise<Partial<NotificationPreferences>> => {
       const response = await api.get("/users/profile");
       const saved = response.data.data?.notificationPreferences;
-      if (saved && typeof saved === "object") {
-        setPreferences((prev) => ({ ...prev, ...saved }));
-      }
-    } catch (err) {
-      console.error("Error fetching preferences:", err);
-    } finally {
-      setIsLoading(false);
+      return saved && typeof saved === "object" ? saved : {};
+    },
+  });
+
+  // Mirror the fetched preferences into local state for optimistic toggling.
+  useEffect(() => {
+    if (savedPreferences) {
+      setPreferences((prev) => ({ ...prev, ...savedPreferences }));
     }
-  };
+  }, [savedPreferences]);
 
   const handleToggle = async (key: PreferenceKey) => {
+    const previous = preferences;
     const updated = { ...preferences, [key]: !preferences[key] };
     setPreferences(updated);
     setSavingKey(key);
 
     try {
       await api.patch("/users/notification-preferences", updated);
+      // Keep the cache in sync so a remount within the cache window doesn't
+      // briefly re-show the old value.
+      queryClient.setQueryData<Partial<NotificationPreferences>>(PREFERENCES_KEY, updated);
       toast.success("Notification preferences updated");
     } catch (err) {
       console.error("Error updating preferences:", err);
       toast.error("Failed to update preferences");
-      setPreferences(preferences);
+      setPreferences(previous);
     } finally {
       setSavingKey(null);
     }

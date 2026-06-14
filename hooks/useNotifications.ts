@@ -38,9 +38,20 @@ export function getNotificationType(notification: NotificationItem): string | un
 export function getNotificationHref(notification: NotificationItem): string | null {
   const meta = parseNotificationMetadata(notification.metadata);
 
+  const href = meta.href ? String(meta.href) : "";
+  if (href.startsWith("/")) return href;
+
+  const type = typeof meta.type === "string" ? meta.type : "";
+  const reviewId = meta.reviewId ? String(meta.reviewId) : "";
+  const serviceId = meta.serviceId ? String(meta.serviceId) : "";
+  const providerUsername = meta.providerUsername ? String(meta.providerUsername).replace(/^@/, "") : "";
   const bookingId = meta.bookingId ? String(meta.bookingId) : "";
   const jobId = meta.jobId ? String(meta.jobId) : "";
 
+  if ((type === "NEW_REVIEW" || type === "REVIEW_REPLY") && serviceId && providerUsername) {
+    const params = reviewId ? `?reviewId=${encodeURIComponent(reviewId)}` : "";
+    return `/${encodeURIComponent(providerUsername)}/services/${encodeURIComponent(serviceId)}${params}#reviews`;
+  }
   if (bookingId) return `/conversations/inbox/${encodeURIComponent(bookingId)}`;
   if (jobId) return `/jobs/${encodeURIComponent(jobId)}`;
   return null;

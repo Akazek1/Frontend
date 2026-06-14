@@ -1,9 +1,8 @@
 "use client";
 
-import { User, Users, Mail, Home, Heart, Clock, GraduationCap, type LucideIcon } from "lucide-react";
+import { Users, Mail, Home, Heart, Clock, GraduationCap, type LucideIcon } from "lucide-react";
 
 export interface PersonalInfoProps {
-  dateOfBirth?: string;
   gender?: string;
   email?: string;
   homeLocation?: string;
@@ -11,18 +10,6 @@ export interface PersonalInfoProps {
   preferredWorkTime?: string;
   educationLevel?: string;
 }
-
-const formatDob = (iso?: string) => {
-  if (!iso) return undefined;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return undefined;
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-};
 
 const Row: React.FC<{ icon: LucideIcon; label: string; value?: string }> = ({ icon: Icon, label, value }) => {
   if (!value) return null;
@@ -38,7 +25,6 @@ const Row: React.FC<{ icon: LucideIcon; label: string; value?: string }> = ({ ic
 };
 
 export function PersonalInfo({
-  dateOfBirth,
   gender,
   email,
   homeLocation,
@@ -46,10 +32,8 @@ export function PersonalInfo({
   preferredWorkTime,
   educationLevel,
 }: PersonalInfoProps) {
-  const dob = formatDob(dateOfBirth);
   const formattedGender = gender ? gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase() : undefined;
   const rows = [
-    { icon: User, label: "Date of Birth", value: dob },
     { icon: Users, label: "Gender", value: formattedGender },
     { icon: Mail, label: "Email", value: email },
     { icon: Home, label: "Home Location", value: homeLocation },

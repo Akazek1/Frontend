@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useSelector } from "react-redux"
 import toast from "react-hot-toast"
-import { Loader2, MessageSquareReply, Star } from "lucide-react"
+import { Loader2, MessageSquareReply } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Review } from "@/hooks/useReviews"
 import type { RootState } from "@/store"
@@ -22,7 +22,21 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
   const [reply, setReply] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
+  const author = review.user || review.author || {
+    id: "",
+    firstName: "Previous",
+    lastName: "Partner",
+    profilePicture: "",
+  }
   const canReply = !!onReply && !!currentUserId && review.target?.id === currentUserId && !review.reply
+  const rehireBadge =
+    review.wouldRehire === "YES"
+      ? { emoji: "😊", label: "Would hire again", className: "bg-green-50 text-green-700" }
+      : review.wouldRehire === "MAYBE"
+        ? { emoji: "😐", label: "Might hire again", className: "bg-amber-50 text-amber-700" }
+        : review.wouldRehire === "NO"
+          ? { emoji: "😞", label: "Would not hire again", className: "bg-red-50 text-red-600" }
+          : null
 
   const handleReply = async () => {
     const text = reply.trim()
@@ -49,26 +63,20 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-2">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={review.user.profilePicture} />
-            <AvatarFallback>{review.user.firstName.charAt(0)}</AvatarFallback>
+            <AvatarImage src={author.profilePicture} />
+            <AvatarFallback>{author.firstName.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
             <div className="flex flex-col gap-1">
               <p className="font-semibold text-sm">
-                {review.user.firstName} {review.user.lastName}
+                {author.firstName} {author.lastName}
               </p>
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= review.rating
-                        ? "fill-[#FB9400] stroke-[#FB9400]"
-                        : "fill-none stroke-[#FB9400]"
-                    }`}
-                  />
-                ))}
-              </div>
+              {rehireBadge && (
+                <span className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${rehireBadge.className}`}>
+                  <span aria-hidden>{rehireBadge.emoji}</span>
+                  {rehireBadge.label}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -104,10 +112,14 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
           </div>
         )}
       </div>
-      <p className="text-[13px] leading-[120%] text-ink-muted font-semibold">{review.comment}</p>
-      <p className="text-xs text-gray-400">
-        Posted on {new Date(review.booking.updatedAt).toLocaleDateString()}
-      </p>
+      {review.comment && (
+        <p className="text-[13px] leading-[120%] text-ink-muted font-semibold">{review.comment}</p>
+      )}
+      {review.booking?.updatedAt && (
+        <p className="text-xs text-gray-400">
+          Posted on {new Date(review.booking.updatedAt).toLocaleDateString()}
+        </p>
+      )}
       {review.reply && (
         <div className="ml-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
           <p className="text-[11px] font-bold text-ink">Response from {review.target?.firstName || "provider"}</p>

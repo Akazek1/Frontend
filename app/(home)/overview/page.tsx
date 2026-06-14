@@ -8,7 +8,6 @@ import Categories from "@/components/home/category-scroller";
 import PromoBanner from "@/components/home/promo-banner";
 import SearchResults from "@/components/search/search-result";
 import ServiceProvider from "@/components/home/service-providers";
-import PostJobBanner from "@/components/home/post-job-banner";
 import JobPostingsFeed from "@/components/home/job-postings-feed";
 import ViewModeToggle from "@/components/view-mode-toggle";
 import TutorialModal from "@/components/tutorial-modal";
@@ -144,7 +143,6 @@ const HomeContent = () => {
         ) : viewMode === "employer" ? (
           <>
             <PromoBanner />
-            <PostJobBanner />
             <Categories />
             <ServiceProvider showHeader={true} />
           </>

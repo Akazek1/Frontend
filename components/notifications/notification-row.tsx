@@ -7,7 +7,6 @@ import {
   CheckCircle,
   CreditCard,
   MessageCircle,
-  Star,
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -64,7 +63,7 @@ export function getNotificationPresentation(notification: NotificationItem): Not
     case "JOB_FILLED":
       return { Icon: XCircle, tone: "red", category: "jobs" };
     case "NEW_REVIEW":
-      return { Icon: Star, tone: "gold", category: "jobs" };
+      return { Icon: MessageCircle, tone: "gold", category: "jobs" };
     case "NEW_MESSAGE":
       return { Icon: MessageCircle, tone: "green", category: "messages" };
     default:
@@ -76,7 +75,7 @@ export function getNotificationPresentation(notification: NotificationItem): Not
   }
 
   if (title.includes("review") || title.includes("reminder")) {
-    return { Icon: Star, tone: "gold", category: "jobs" };
+    return { Icon: MessageCircle, tone: "gold", category: "jobs" };
   }
 
   if (title.includes("message")) {

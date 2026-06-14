@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -25,40 +26,56 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
+async function fetchNotificationsPage(page: number) {
+  const res = await api.get(`/users/notifications`, { params: { page, limit: PAGE_SIZE } });
+  const payload = res.data?.data ?? res.data;
+  return {
+    items: (payload?.items ?? []) as NotificationItem[],
+    total: (payload?.total ?? 0) as number,
+  };
+}
+
 const NotificationHistoryPage = () => {
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>("all");
 
-  const load = useCallback(async (nextPage: number, append: boolean) => {
+  // Cached first page → instant render on revisit, no spinner.
+  const { data: firstPage, isLoading: loading } = useQuery({
+    queryKey: ["notifications", "history"],
+    queryFn: () => fetchNotificationsPage(1),
+  });
+
+  // Seed the local list from the cached first page. Re-syncs on a first-page
+  // refetch as long as the user hasn't paged further (page === 1).
+  useEffect(() => {
+    if (firstPage && page === 1) {
+      setItems(firstPage.items);
+      setTotal(firstPage.total);
+    }
+  }, [firstPage, page]);
+
+  const loadMore = useCallback(async () => {
+    const nextPage = page + 1;
     try {
-      if (append) setLoadingMore(true); else setLoading(true);
-      const res = await api.get(`/users/notifications`, { params: { page: nextPage, limit: PAGE_SIZE } });
-      const payload = res.data?.data ?? res.data;
-      const newItems: NotificationItem[] = payload?.items ?? [];
+      setLoadingMore(true);
+      const { items: newItems, total: newTotal } = await fetchNotificationsPage(nextPage);
       setItems((prev) => {
-        if (!append) return newItems;
         const existingIds = new Set(prev.map((item) => item.id));
         return [...prev, ...newItems.filter((item) => !existingIds.has(item.id))];
       });
-      setTotal(payload?.total ?? 0);
+      setTotal(newTotal);
       setPage(nextPage);
     } catch (err) {
       console.error("Error loading notifications:", err);
       toast.error("Failed to load notifications");
     } finally {
-      setLoading(false);
       setLoadingMore(false);
     }
-  }, []);
-
-  useEffect(() => {
-    load(1, false);
-  }, [load]);
+  }, [page]);
 
   const handleClick = async (n: NotificationItem) => {
     if (!n.readAt) {
@@ -183,7 +200,7 @@ const NotificationHistoryPage = () => {
             <div className="flex justify-center pt-4">
               <AppButton
                 type="button"
-                onClick={() => load(page + 1, true)}
+                onClick={loadMore}
                 disabled={loadingMore}
                 appVariant="secondary"
                 className="h-10 rounded-full px-5"

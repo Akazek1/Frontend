@@ -338,6 +338,7 @@ interface TaskDrawerProps {
   isApproved?: boolean;
   tasks: Task[];
   onTasksChange: (tasks: Task[]) => void;
+  onStatusChange?: (status: string) => void;
 }
 
 export function TaskDrawer({
@@ -351,6 +352,7 @@ export function TaskDrawer({
   isApproved = false,
   tasks,
   onTasksChange,
+  onStatusChange,
 }: TaskDrawerProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -376,9 +378,8 @@ export function TaskDrawer({
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
       toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+      onStatusChange?.(newStatus);
       onClose();
-      // The parent ChatRoom will handle the status update via socket or we can force a refresh
-      window.location.reload(); 
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Failed to ${actionName.toLowerCase()}`));
     } finally {

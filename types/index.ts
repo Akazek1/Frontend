@@ -42,6 +42,7 @@ export interface Service {
     dateOfBirth?: string;
     bio?: string;
     educationLevel?: string;
+    yearsOfExperience?: number | null;
     phoneNumber?: string;
     trustScore?: number;
     createdAt?: string;
@@ -57,6 +58,8 @@ export interface Service {
   reviews: {
     averageRating: number;
     totalReviews: number;
+    wouldHireAgain?: number;
+    jobsCompleted?: number;
   };
   serviceAreas: string[];
 }
@@ -74,6 +77,8 @@ export interface Provider {
   price: string;
   rating: number;
   reviews: number;
+  jobsCompleted?: number;
+  wouldHireAgain?: number;
   distance: string;
   available: boolean;
   verified: boolean;

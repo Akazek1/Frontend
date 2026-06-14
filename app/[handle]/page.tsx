@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, notFound } from "next/navigation";
 import { Loader2, Flag } from "lucide-react";
 import api from "@/lib/axios";
@@ -14,6 +14,9 @@ import { ServicesGrid } from "@/components/profile/services-grid";
 import { ReportModal } from "@/components/provider/report-modal";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { ReviewCard } from "@/components/ReviewCard";
+import type { Review } from "@/hooks/useReviews";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type AddressLite = {
   street?: string;
@@ -47,9 +50,36 @@ type UserProfile = {
   availability?: Array<{ id: string; dayOfWeek?: number; startTime?: string; endTime?: string }>;
 };
 
+type HireItem = {
+  bookingId: string;
+  status: string;
+  createdAt: string;
+  partner?: {
+    id: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePicture?: string;
+  };
+  service?: {
+    title?: string;
+    category?: { name?: string };
+  };
+};
+
 const formatLocation = (addr?: AddressLite) => {
   if (!addr) return undefined;
   return [addr.district || addr.sector, addr.city, addr.country].filter(Boolean).join(", ");
+};
+
+const hireStatusClass = (status: string) => {
+  switch (status) {
+    case "COMPLETED": return "bg-brand/10 text-brand";
+    case "CONFIRMED": return "bg-blue-50 text-blue-600";
+    case "PENDING": return "bg-amber-50 text-amber-600";
+    case "CANCELLED": return "bg-red-50 text-red-500";
+    default: return "bg-gray-100 text-gray-500";
+  }
 };
 
 export default function HandleProfilePage() {
@@ -57,6 +87,9 @@ export default function HandleProfilePage() {
   const handle = (params?.handle as string) || "";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [recentHires, setRecentHires] = useState<HireItem[]>([]);
+  const [hiresLoading, setHiresLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUserNotFound, setIsUserNotFound] = useState(false);
@@ -75,11 +108,9 @@ export default function HandleProfilePage() {
         return;
       }
       try {
-        // Always fetch the user record (includes the new profile fields).
         const userResp = await api.get(`/users/username/${handle}`);
         const userData: UserProfile = userResp.data?.data || userResp.data;
 
-        // Fetch services in parallel (separate endpoint, optional).
         let serviceList: Service[] = [];
         try {
           const svcResp = await api.get(`/services?providerUsername=${handle}`);
@@ -89,9 +120,25 @@ export default function HandleProfilePage() {
           serviceList = [];
         }
 
+        // Aggregate reviews across all services
+        let allReviews: Review[] = [];
+        if (serviceList.length > 0) {
+          const results = await Promise.all(
+            serviceList.map((s) =>
+              api.get(`/feedback/service/${s.id}`).catch(() => null)
+            )
+          );
+          for (const r of results) {
+            if (!r) continue;
+            const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
+            allReviews = allReviews.concat(data);
+          }
+        }
+
         if (!cancelled) {
           setProfile(userData);
           setServices(serviceList);
+          setReviews(allReviews);
           setError(null);
         }
       } catch (err) {
@@ -116,6 +163,44 @@ export default function HandleProfilePage() {
     };
   }, [handle]);
 
+  const isOwner = !!(user?.id && profile?.id && user.id === profile.id);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    let cancelled = false;
+
+    async function loadHires() {
+      setHiresLoading(true);
+      try {
+        const resp = await api.get("/bookings", { params: { role: "employer" } });
+        const raw = resp.data?.data || resp.data || [];
+        if (!cancelled) setRecentHires(Array.isArray(raw) ? raw.slice(0, 3) : []);
+      } catch {
+        // no hires or not authenticated
+      } finally {
+        if (!cancelled) setHiresLoading(false);
+      }
+    }
+
+    loadHires();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner]);
+
+  const replyToReview = useCallback(async (reviewId: string, reply: string): Promise<boolean> => {
+    try {
+      const resp = await api.patch(`/feedback/${reviewId}/reply`, { reply });
+      const updated = resp.data?.data || resp.data;
+      setReviews((prev) =>
+        prev.map((r) => (r.id === reviewId ? { ...r, ...updated } : r))
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="bg-surface flex min-h-screen items-center justify-center">
@@ -139,8 +224,6 @@ export default function HandleProfilePage() {
   const homeLocation = formatLocation(addr);
   const availableToday = (profile.availability?.length || 0) > 0;
 
-  // Owner = logged-in user viewing their own profile
-  const isOwner = !!(user?.id && profile.id && user.id === profile.id);
   const displayName = profile.firstName || name;
 
   return (
@@ -163,7 +246,6 @@ export default function HandleProfilePage() {
       <AboutMe bio={profile.bio} />
 
       <PersonalInfo
-        dateOfBirth={profile.dateOfBirth}
         gender={profile.gender}
         email={profile.email}
         homeLocation={homeLocation}
@@ -175,6 +257,79 @@ export default function HandleProfilePage() {
       <WhyClientsChooseMe qualities={profile.topQualities} roles={profile.roles} />
 
       <ServicesGrid services={services} />
+
+      {/* Recent Hires — visible only to the profile owner */}
+      {isOwner && (
+        <section className="mx-4 mt-4 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <h2 className="text-lg font-bold text-ink mb-4">Recent Hires</h2>
+          {hiresLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-brand" />
+            </div>
+          ) : recentHires.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-2">No hires yet</p>
+          ) : (
+            <div className="space-y-4">
+              {recentHires.map((hire) => {
+                const worker = hire.partner;
+                const workerName = worker
+                  ? `${worker.firstName || ""} ${worker.lastName || ""}`.trim() || worker.username || "Worker"
+                  : "Worker";
+                const initials = workerName.charAt(0).toUpperCase();
+                const serviceLabel =
+                  hire.service?.title || hire.service?.category?.name || "Service";
+                const dateLabel = hire.createdAt
+                  ? new Date(hire.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "";
+                return (
+                  <div key={hire.bookingId} className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 flex-shrink-0">
+                      <AvatarImage src={worker?.profilePicture} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-ink truncate">{workerName}</p>
+                      <p className="text-xs text-gray-500 truncate">{serviceLabel}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${hireStatusClass(hire.status)}`}
+                      >
+                        {hire.status.charAt(0) + hire.status.slice(1).toLowerCase()}
+                      </span>
+                      {dateLabel && (
+                        <span className="text-[11px] text-gray-400">{dateLabel}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Reviews */}
+      {reviews.length > 0 && (
+        <section className="mx-4 mt-4 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <h2 className="text-lg font-bold text-ink mb-4">
+            Reviews{reviews.length > 0 ? ` (${reviews.length})` : ""}
+          </h2>
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onReply={isOwner ? replyToReview : undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Report — only visible to other users, not the profile owner */}
       {!isOwner && (

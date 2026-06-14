@@ -23,7 +23,6 @@ import {
   ShieldCheck,
   Shirt,
   Sparkles,
-  Star,
   Trees,
   Wrench,
   Zap,
@@ -33,14 +32,6 @@ import api from "@/lib/axios";
 import { useWorkData } from "@/hooks/useWorkData";
 import jobsService, { Job } from "@/services/jobs-service";
 import { cn, formatPrice } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   PageHeader,
   PageShell,
@@ -60,6 +51,40 @@ import {
   type WorkItem,
 } from "./types";
 import { getInitials, getTimeAgo } from "./utils";
+import { ReviewCard } from "@/components/ReviewCard";
+import type { Review } from "@/hooks/useReviews";
+import {
+  ReviewPromptDialog,
+  type ReviewPromptPayload,
+  type ReviewSubject,
+} from "@/components/reviews/review-prompt-dialog";
+import { BookingReviewsDialog } from "@/components/reviews/booking-reviews-dialog";
+import { getBookingType } from "@/lib/service-display";
+
+function getReviewSubject(item: WorkItem): ReviewSubject {
+  return {
+    title: item.title,
+    subtitle: item.subtitle,
+    meta: item.meta,
+  };
+}
+
+function normalizeBookingReviews(reviews: Review[], bookingUpdatedAt?: string): Review[] {
+  return reviews.map((review) => ({
+    ...review,
+    user: review.user || review.author || {
+      id: "",
+      firstName: "Previous",
+      lastName: "Partner",
+      profilePicture: "",
+    },
+    booking: review.booking || {
+      scheduledFor: "",
+      updatedAt: bookingUpdatedAt || new Date().toISOString(),
+    },
+  }));
+}
+
 export default function WorkPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,9 +94,18 @@ export default function WorkPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [reviewTarget, setReviewTarget] = useState<WorkItem | null>(null);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewDetails, setReviewDetails] = useState<{
+    item: WorkItem;
+    reviews: Review[];
+    loading: boolean;
+    /** Set for employer-side completed bookings whose service is still
+     *  available — routes to the existing booking flow to hire again. */
+    hireHref?: string;
+    /** Labeled job facts shown in the detail dialog. */
+    infoRows?: { label: string; value: string }[];
+  } | null>(null);
+  const [authoredReviewBookingIds, setAuthoredReviewBookingIds] = useState<Set<string>>(new Set());
+  const [receivedReviews, setReceivedReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     const tab = searchParams.get("tab") || searchParams.get("filter");
@@ -79,6 +113,34 @@ export default function WorkPage() {
       setFilter(tab);
     }
   }, [searchParams]);
+
+  // Fetch reviews separately: authored reviews prevent duplicate submissions,
+  // received reviews are shown so employers/workers can read and reply.
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const [receivedResponse, authoredResponse] = await Promise.all([
+          api.get("/feedback/user/me"),
+          api.get("/feedback/user/me/authored"),
+        ]);
+        const received = receivedResponse.data?.data || receivedResponse.data || [];
+        const authored = authoredResponse.data?.data || authoredResponse.data || [];
+        setReceivedReviews(Array.isArray(received) ? normalizeBookingReviews(received) : []);
+        setAuthoredReviewBookingIds(
+          new Set(
+            Array.isArray(authored)
+              ? authored
+                  .map((review: Review) => review.bookingId)
+                  .filter((bookingId): bookingId is string => Boolean(bookingId))
+              : [],
+          ),
+        );
+      } catch {
+        // Silently handle error - user might not have reviews yet
+      }
+    };
+    fetchReviews();
+  }, []);
 
   const sections = useMemo(() => {
     return sectionOrder.reduce<Record<SectionKey, WorkItem[]>>((acc, section) => {
@@ -104,7 +166,7 @@ export default function WorkPage() {
   );
 
   const activeSections = SECTION_GROUPS[filter];
-  const hasAnyActivity = items.length > 0 || jobPosts.length > 0;
+  const hasAnyActivity = items.length > 0 || jobPosts.length > 0 || receivedReviews.length > 0;
   const visibleSections = activeSections.filter((section) => sections[section].length > 0);
   const activeFilterCount = counts[filter];
 
@@ -163,31 +225,97 @@ export default function WorkPage() {
   };
 
   const openReview = (item: WorkItem) => {
-    setReviewTarget(item);
-    setRating(0);
-    setComment("");
-  };
-
-  const submitReview = async () => {
-    if (!reviewTarget?.bookingId || rating < 1 || !comment.trim()) {
-      toast.error("Choose a rating and write a short review.");
+    if (item.bookingId && authoredReviewBookingIds.has(item.bookingId)) {
+      void openBookingReviews(item);
       return;
     }
-    setReviewSubmitting(true);
+    setReviewTarget(item);
+  };
+
+  const submitReview = async (payload: ReviewPromptPayload) => {
+    if (!reviewTarget?.bookingId) return false;
     try {
-      await api.post("/feedback", {
-        rating,
-        comment,
+      const response = await api.post("/feedback", {
+        wouldRehire: payload.wouldRehire,
+        comment: payload.comment,
         bookingId: reviewTarget.bookingId,
       });
       toast.success("Review submitted.");
       setLiveMessage("Review submitted.");
-      setReviewTarget(null);
-      await refetch();
+      setAuthoredReviewBookingIds(prev => new Set(prev).add(reviewTarget.bookingId!));
+      const created = response.data?.data || response.data;
+      if (reviewDetails?.item.bookingId === reviewTarget.bookingId && created) {
+        setReviewDetails((prev) =>
+          prev
+            ? { ...prev, reviews: normalizeBookingReviews([...prev.reviews, created]) }
+            : prev,
+        );
+      }
+      void refetch();
+      return true;
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Could not submit review.";
+      toast.error(message);
+      return false;
+    }
+  };
+
+  const openBookingReviews = async (item: WorkItem) => {
+    if (!item.bookingId) return;
+    setReviewDetails({ item, reviews: [], loading: true });
+    try {
+      const response = await api.get(`/bookings/${item.bookingId}`);
+      const booking = response.data?.data || response.data;
+      const reviews = Array.isArray(booking?.reviews) ? booking.reviews : [];
+
+      // Employer can re-hire: prefer the original service's booking flow; fall
+      // back to the worker's profile when the booking came from a job post.
+      const service = booking?.service;
+      const hireHref =
+        item.role === "employer"
+          ? service?.id
+            ? `/book/${getBookingType(service)}/${service.id}`
+            : item.profileHref
+          : undefined;
+
+      // Clear, labeled facts about the job (replaces the raw card meta).
+      const fmtDate = (value?: string | null) =>
+        value
+          ? new Date(value).toLocaleDateString([], {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          : null;
+      const categoryName: string | undefined =
+        booking?.service?.category?.name || booking?.job?.category?.name;
+      const infoRows: { label: string; value: string }[] = [];
+      if (categoryName && categoryName.toLowerCase() !== "other") {
+        infoRows.push({ label: "Category", value: categoryName });
+      }
+      const scheduled = fmtDate(booking?.scheduledFor);
+      if (scheduled) infoRows.push({ label: "Scheduled", value: scheduled });
+      if (booking?.agreedPrice) {
+        infoRows.push({ label: "Agreed price", value: formatPrice(booking.agreedPrice) });
+      }
+      const closedOn = fmtDate(booking?.updatedAt);
+      if (booking?.status === "COMPLETED" && closedOn) {
+        infoRows.push({ label: "Completed", value: closedOn });
+      } else if (booking?.status === "CANCELLED" && closedOn) {
+        infoRows.push({ label: "Cancelled", value: closedOn });
+      }
+
+      setReviewDetails({
+        item,
+        reviews: normalizeBookingReviews(reviews, booking?.updatedAt),
+        loading: false,
+        hireHref,
+        infoRows,
+      });
     } catch {
-      toast.error("Could not submit review.");
-    } finally {
-      setReviewSubmitting(false);
+      setReviewDetails((prev) => prev ? { ...prev, loading: false } : prev);
+      toast.error("Could not load reviews for this job.");
     }
   };
 
@@ -201,7 +329,7 @@ export default function WorkPage() {
       return;
     }
     if (item.primaryAction === "leaveReview") {
-      openReview(item);
+      void openBookingReviews(item);
       return;
     }
     if (item.primaryAction === "viewApplicants" && item.jobHref) {
@@ -214,6 +342,25 @@ export default function WorkPage() {
     }
     if (item.bookingId) {
       router.push(`/conversations/inbox/${item.bookingId}`);
+    }
+  };
+
+  const replyToReceivedReview = async (reviewId: string, reply: string) => {
+    try {
+      const response = await api.patch(`/feedback/${reviewId}/reply`, { reply });
+      const updated = response.data?.data || response.data;
+      setReceivedReviews((prev) =>
+        prev.map((review) =>
+          review.id === reviewId
+            ? normalizeBookingReviews([{ ...review, ...updated }], review.booking?.updatedAt)[0]
+            : review,
+        ),
+      );
+      return true;
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(message || "Could not post reply");
+      return false;
     }
   };
 
@@ -309,17 +456,64 @@ export default function WorkPage() {
           })
         )}
       </div>
-      <ReviewDialog
-        item={reviewTarget}
-        rating={rating}
-        comment={comment}
-        submitting={reviewSubmitting}
+      {receivedReviews.length > 0 && (
+        <div id="reviews-received" className={cn(appContentClass, "px-4 pt-6 pb-24 scroll-mt-24")}>
+          <h2 className="text-lg font-bold text-ink mb-4">Reviews About You ({receivedReviews.length})</h2>
+          <p className="text-[12px] text-ink-muted mb-4">
+            These are reviews other people left about working with you. You can reply once to each review.
+          </p>
+          <div className="space-y-3 rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-sm">
+            {receivedReviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onReply={replyToReceivedReview}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <BookingReviewsDialog
+        open={Boolean(reviewDetails)}
+        title={reviewDetails?.item.subtitle || reviewDetails?.item.title || "Completed job"}
+        reviews={reviewDetails?.reviews || []}
+        loading={reviewDetails?.loading}
+        infoRows={reviewDetails?.infoRows}
+        hireHref={reviewDetails?.hireHref}
+        canLeaveReview={Boolean(
+          reviewDetails?.item.bookingId &&
+          reviewDetails.item.status === "COMPLETED" &&
+          !authoredReviewBookingIds.has(reviewDetails.item.bookingId)
+        )}
+        alreadyReviewed={Boolean(
+          reviewDetails?.item.bookingId &&
+          authoredReviewBookingIds.has(reviewDetails.item.bookingId)
+        )}
+        onOpenChange={(open) => {
+          if (!open) setReviewDetails(null);
+        }}
+        onLeaveReview={() => {
+          if (reviewDetails?.item) {
+            setReviewTarget(reviewDetails.item);
+            setReviewDetails(null);
+          }
+        }}
+        onReply={replyToReceivedReview}
+      />
+
+      <ReviewPromptDialog
+        open={Boolean(reviewTarget)}
+        subject={reviewTarget ? getReviewSubject(reviewTarget) : null}
+        rehireQuestion={
+          reviewTarget?.role === "provider"
+            ? "Would you work with this person again?"
+            : "Would you hire this person again?"
+        }
         onOpenChange={(open) => {
           if (!open) setReviewTarget(null);
         }}
-        onRatingChange={setRating}
-        onCommentChange={setComment}
-        onSubmit={() => void submitReview()}
+        onSubmit={submitReview}
       />
     </main>
   );
@@ -466,8 +660,11 @@ function DealCard({
     <h3 className="truncate text-[15px] font-black text-ink">{item.title}</h3>
   );
 
+  const isClickable = item.section === "done";
+
   return (
     <article
+      onClick={isClickable ? () => onPrimary(item) : undefined}
       className={cn(
         appListCardClass,
         "overflow-hidden",
@@ -475,6 +672,7 @@ function DealCard({
         accentClasses[item.accent].bar,
         accentClasses[item.accent].border,
         accentClasses[item.accent].card,
+        isClickable && "cursor-pointer transition-shadow hover:shadow-md",
       )}
     >
       <div className="p-3.5">
@@ -485,11 +683,11 @@ function DealCard({
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 {item.profileHref ? (
-                  <Link href={item.profileHref} className="min-w-0 hover:underline">
+                  <Link href={item.profileHref} onClick={(e) => e.stopPropagation()} className="min-w-0 hover:underline">
                     {titleNode}
                   </Link>
                 ) : item.jobHref ? (
-                  <Link href={item.jobHref} className="min-w-0 hover:underline">
+                  <Link href={item.jobHref} onClick={(e) => e.stopPropagation()} className="min-w-0 hover:underline">
                     {titleNode}
                   </Link>
                 ) : (
@@ -660,16 +858,18 @@ function DealCardActions({
     );
   }
 
-  // Section: DONE — leave review (if completed) or view details.
+  // Section: DONE — opens the job detail dialog (info + reviews + rehire).
   if (item.section === "done") {
-    const label = item.primaryAction === "leaveReview" ? "Leave Review" : "View Details";
     return (
       <button
         type="button"
-        onClick={() => onPrimary(item)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onPrimary(item);
+        }}
         className="flex min-h-11 w-full items-center justify-center rounded-lg bg-brand text-[12px] font-black text-white"
       >
-        {label}
+        View Details
       </button>
     );
   }
@@ -1160,82 +1360,4 @@ function JobCategoryIcon({
   if (name.includes("laundry")) return <Shirt className={className} />;
   if (name.includes("security") || name.includes("guard")) return <Shield className={className} />;
   return <Briefcase className={className} />;
-}
-
-function ReviewDialog({
-  item,
-  rating,
-  comment,
-  submitting,
-  onOpenChange,
-  onRatingChange,
-  onCommentChange,
-  onSubmit,
-}: {
-  item: WorkItem | null;
-  rating: number;
-  comment: string;
-  submitting: boolean;
-  onOpenChange: (open: boolean) => void;
-  onRatingChange: (rating: number) => void;
-  onCommentChange: (comment: string) => void;
-  onSubmit: () => void;
-}) {
-  const open = item !== null;
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Leave a review</DialogTitle>
-        </DialogHeader>
-        {item && (
-          <div className="space-y-4">
-            <p className="text-sm text-ink-muted">
-              How was your experience with <span className="font-semibold">{item.title}</span>?
-            </p>
-            <div className="flex items-center justify-center gap-2" role="radiogroup" aria-label="Rating">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-label={`${value} star${value === 1 ? "" : "s"}`}
-                  aria-pressed={rating >= value}
-                  onClick={() => onRatingChange(value)}
-                  className="p-1"
-                >
-                  <Star
-                    className={cn(
-                      "h-8 w-8 transition-colors",
-                      rating >= value ? "fill-yellow-400 text-yellow-400" : "text-gray-300",
-                    )}
-                  />
-                </button>
-              ))}
-            </div>
-            <Textarea
-              value={comment}
-              onChange={(e) => onCommentChange(e.target.value)}
-              placeholder="Share a few words about your experience…"
-              rows={4}
-              aria-label="Review comment"
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={onSubmit}
-                disabled={submitting || rating < 1 || !comment.trim()}
-                className="bg-brand hover:bg-[#0e4209]"
-              >
-                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit review
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
 }

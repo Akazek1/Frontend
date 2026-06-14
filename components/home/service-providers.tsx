@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { Provider, Service } from "@/types";
-import { mapServiceToProviderCard } from "@/lib/service-display";
+import { Service } from "@/types";
+import { useServiceList } from "@/hooks/useServiceList";
+import { getServiceDetailPath, mapServiceToProviderCard } from "@/lib/service-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { getApiErrorMessage } from "@/lib/error-handler";
@@ -45,36 +46,16 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const { user } = useAuth();
   const currentUserId = user?.id;
   const { requireAuth } = useRequireAuth();
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Cached browse list — no spinner when returning to the home page.
+  const { data: rawServices, isLoading: loading, error } = useServiceList();
+  const services = (rawServices ?? []).filter(
+    (service: Service) =>
+      service.id && typeof service.id === "string" && service.id.trim() !== "",
+  );
   const [hireModal, setHireModal] = useState<HireModal | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const response = await api.get("/services");
-        const data = Array.isArray(response.data.data) ? response.data.data : [];
-        const validatedServices = data.filter(
-          (service: Service) =>
-            service.id && typeof service.id === "string" && service.id.trim() !== ""
-        );
-        setServices(validatedServices);
-        setError(null);
-      } catch (err) {
-        const message = (err as Error).message || "Failed to fetch services";
-        setError(message);
-        toast.error(message);
-        setServices([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchServices();
-  }, []);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -100,8 +81,6 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
     };
     fetchBookings();
   }, []);
-
-  const filteredProviders: Provider[] = services.map(mapServiceToProviderCard);
 
   const handleHireSubmit = async () => {
     if (!hireModal) return;
@@ -143,7 +122,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             animate={{ opacity: 1 }}
             className="text-center text-red-500 py-4"
           >
-            {error}
+            Failed to load services.
           </motion.div>
         ) : (
           <motion.div
@@ -153,30 +132,33 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             className="flex flex-col gap-3 pb-8 mt-2"
           >
-            {filteredProviders.length > 0 ? (
-              filteredProviders.map((provider) => (
-                <ServiceCard
-                  key={provider.id}
-                  onClick={() => {
-                    router.push(`/${provider.handle.replace("@", "")}/services/${provider.id}`);
-                  }}
-                  onHireClick={() => {
-                    if (currentUserId && provider.providerId === currentUserId) {
-                      toast.error("You can't book your own service.");
-                      return;
-                    }
-                    if (requestedServiceIds.has(provider.id)) return;
-                    requireAuth(() => setHireModal({
-                      serviceId: provider.id,
-                      providerName: provider.name,
-                      serviceTitle: provider.title,
-                    }), "hire");
-                  }}
-                  {...provider}
-                  hasRequested={requestedServiceIds.has(provider.id)}
-                  isOwnService={Boolean(currentUserId && provider.providerId === currentUserId)}
-                />
-              ))
+            {services.length > 0 ? (
+              services.map((service) => {
+                const provider = mapServiceToProviderCard(service);
+                return (
+                  <ServiceCard
+                    key={provider.id}
+                    onClick={() => {
+                      router.push(getServiceDetailPath(service));
+                    }}
+                    onHireClick={() => {
+                      if (currentUserId && provider.providerId === currentUserId) {
+                        toast.error("You can't book your own service.");
+                        return;
+                      }
+                      if (requestedServiceIds.has(provider.id)) return;
+                      requireAuth(() => setHireModal({
+                        serviceId: provider.id,
+                        providerName: provider.name,
+                        serviceTitle: provider.title,
+                      }), "hire");
+                    }}
+                    {...provider}
+                    hasRequested={requestedServiceIds.has(provider.id)}
+                    isOwnService={Boolean(currentUserId && provider.providerId === currentUserId)}
+                  />
+                );
+              })
             ) : (
               <p className="text-center text-gray-500 py-4">
                 No providers found.

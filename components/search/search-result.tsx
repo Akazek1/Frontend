@@ -569,6 +569,29 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               ? "Try a different keyword or check back later for new postings."
               : "Try a broader search, a different area, or fewer filters."}
           </p>
+
+          {/* Employers who can't find a match can post a job instead — the
+              right moment to capture intent. Hidden in provider (job-search) mode. */}
+          {mode !== "provider" && (
+            <div className="mt-5 rounded-xl border border-brand/20 bg-[#F1F8F1] p-4 text-center">
+              <p className="text-[13px] font-bold text-ink">
+                Can&apos;t find what you need?
+              </p>
+              <p className="mx-auto mt-1 max-w-[240px] text-[12px] leading-5 text-[#687268]">
+                Post a job and verified providers will come to you.
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  requireAuth(() => router.push("/post-job"), "post-job")
+                }
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[13px] font-bold text-white transition-colors hover:bg-[#0f4a0c]"
+              >
+                Post a Job
+                <span aria-hidden>→</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

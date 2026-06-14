@@ -7,33 +7,14 @@ import SectionHeader from "../section-header";
 import { Icons } from "../icons";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
-
-interface Service {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  provider: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    roles?: string[];
-    profileImg: string;
-  };
-  worker: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}
+import { getServiceDetailPath } from "@/lib/service-display";
+import type { Service } from "@/types";
 
 interface DisplayService {
   id: string;
   image: string;
   title: string;
+  href: string;
   type?: "service"; // Optional type to differentiate service cards
 }
 
@@ -45,7 +26,7 @@ const PopulerService = () => {
   const router = useRouter();
 
   const handleCardClick = (service: DisplayService) => {
-    router.push(`/service/?category=${encodeURIComponent(service.title)}`);
+    router.push(service.href);
   };
 
   useEffect(() => {
@@ -65,8 +46,9 @@ const PopulerService = () => {
       // Map services to the display format
       const mappedServices: DisplayService[] = data.map((service) => ({
         id: service.id,
-        image: service.provider.profileImg || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
+        image: service.provider.profileImg || service.provider.profilePicture || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
         title: service.title,
+        href: getServiceDetailPath(service),
         type: "service",
       }));
 

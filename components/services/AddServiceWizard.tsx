@@ -40,6 +40,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
     setField,
     addImageFiles,
     removeImageAt,
+    reorderImages,
     totalImageCount,
     isStep2Valid,
     isStep3Valid,
@@ -212,6 +213,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
             onSetField={setField}
             onAddImages={addImageFiles}
             onRemoveImageAt={removeImageAt}
+            onReorderImages={reorderImages}
             onChangeService={isEdit ? undefined : () => setStep(2)}
             onSubmit={handleSubmit}
             isValid={isStep3Valid}

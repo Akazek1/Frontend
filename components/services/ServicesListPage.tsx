@@ -62,6 +62,11 @@ export function ServicesListPage() {
       });
   }, [services, sort]);
 
+  const handleView = (service: Service) => {
+    const handle = service.provider?.username ?? "";
+    router.push(`/${handle}/services/${service.id}`);
+  };
+
   const handleEdit = (service: Service) => {
     router.push(`/more/services/${service.id}/edit`);
   };
@@ -148,6 +153,7 @@ export function ServicesListPage() {
             <li key={service.id}>
               <OwnerServiceCardRow
                 service={service}
+                onView={handleView}
                 onEdit={handleEdit}
                 onToggleActive={(s) => setPendingToggle(s)}
                 workerAvailable={available}

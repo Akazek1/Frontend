@@ -12,7 +12,8 @@
  */
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { useAuth } from "@/hooks/useAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
@@ -32,100 +33,94 @@ export interface UseWorkDataResult {
   refetch: () => Promise<void>;
 }
 
+interface WorkData {
+  workerBookings: BookingRecord[];
+  employerBookings: BookingRecord[];
+  applications: JobApplication[];
+  jobPosts: Job[];
+  /** True when an endpoint failed for a reason other than missing permission. */
+  hadRealFailure: boolean;
+}
+
+/**
+ * Fetches BOTH worker-side and employer-side data regardless of declared roles.
+ * Reason: a user without the EMPLOYER role can still act as an employer in the
+ * UI (e.g. via "Request to Hire"), which creates a booking with them as the
+ * employerId. The backend filters by req.user.id on both sides, so this is safe
+ * — a single-role user just gets an empty array on the other side. Uses
+ * allSettled so one failing endpoint does not break the page.
+ */
+async function fetchWorkData(): Promise<WorkData> {
+  const [workerResult, employerResult, appsResult, postsResult] = await Promise.allSettled([
+    api.get<{ data: BookingRecord[] }>("/bookings/received"),
+    api.get<{ data: BookingRecord[] }>("/bookings", { params: { role: "employer" } }),
+    jobsService.getMyApplications(),
+    jobsService.getMyJobs(),
+  ]);
+
+  // 401/403 on endpoints the user lacks permission for is expected (we always
+  // fetch both sides). Only a network error or 5xx counts as a real failure.
+  const isExpectedPermissionError = (r: PromiseSettledResult<unknown>) => {
+    if (r.status !== "rejected") return false;
+    const status = (r.reason as { response?: { status?: number } })?.response?.status;
+    return status === 401 || status === 403;
+  };
+
+  return {
+    workerBookings:
+      workerResult.status === "fulfilled" && Array.isArray(workerResult.value.data?.data)
+        ? workerResult.value.data.data
+        : [],
+    employerBookings:
+      employerResult.status === "fulfilled" && Array.isArray(employerResult.value.data?.data)
+        ? employerResult.value.data.data
+        : [],
+    applications:
+      appsResult.status === "fulfilled" && Array.isArray(appsResult.value) ? appsResult.value : [],
+    jobPosts:
+      postsResult.status === "fulfilled" && Array.isArray(postsResult.value) ? postsResult.value : [],
+    hadRealFailure: [workerResult, employerResult, appsResult, postsResult].some(
+      (r) => r.status === "rejected" && !isExpectedPermissionError(r),
+    ),
+  };
+}
+
 export function useWorkData(): UseWorkDataResult {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [workerBookings, setWorkerBookings] = useState<BookingRecord[]>([]);
-  const [employerBookings, setEmployerBookings] = useState<BookingRecord[]>([]);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [jobPosts, setJobPosts] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const roles = user?.roles || [];
   const isProvider = roles.includes("WORKER");
   const isEmployer = roles.includes("EMPLOYER");
 
-  const refetch = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      setLoading(!user);
-      return;
-    }
+  const query = useQuery({
+    queryKey: ["work-data", user?.id],
+    queryFn: fetchWorkData,
+    // Don't fetch until auth has resolved and we actually have a user.
+    enabled: isAuthenticated && !!user && !isLoading,
+  });
 
-    setLoading(true);
-    setError(null);
-    try {
-      // We fetch BOTH worker-side and employer-side data regardless of declared
-      // roles. Reason: a user without the EMPLOYER role can still act as an
-      // employer in the UI (e.g. via "Request to Hire" on a service card),
-      // which creates a booking with them as the employerId. The backend
-      // already filters by req.user.id on both sides, so this is safe — it
-      // just means a single-role user gets an empty array on the other side
-      // instead of a missed-fetch bug. Same logic applies to job posts and
-      // worker applications.
-      const [workerResult, employerResult, appsResult, postsResult] = await Promise.allSettled([
-        api.get<{ data: BookingRecord[] }>("/bookings/received"),
-        api.get<{ data: BookingRecord[] }>("/bookings", { params: { role: "employer" } }),
-        jobsService.getMyApplications(),
-        jobsService.getMyJobs(),
-      ]);
-
-      const nextWorkerBookings =
-        workerResult.status === "fulfilled" && Array.isArray(workerResult.value.data?.data)
-          ? workerResult.value.data.data
-          : [];
-      const nextEmployerBookings =
-        employerResult.status === "fulfilled" && Array.isArray(employerResult.value.data?.data)
-          ? employerResult.value.data.data
-          : [];
-      const nextApplications =
-        appsResult.status === "fulfilled" && Array.isArray(appsResult.value)
-          ? appsResult.value
-          : [];
-      const nextJobPosts =
-        postsResult.status === "fulfilled" && Array.isArray(postsResult.value)
-          ? postsResult.value
-          : [];
-
-      setWorkerBookings(nextWorkerBookings);
-      setEmployerBookings(nextEmployerBookings);
-      setApplications(nextApplications);
-      setJobPosts(nextJobPosts);
-
-      // 401/403 on endpoints the user lacks permission for is expected (we
-      // always fetch both sides — see comment above). Only surface a banner
-      // when something actually went wrong (network error or 5xx).
-      const isExpectedPermissionError = (r: PromiseSettledResult<unknown>) => {
-        if (r.status !== "rejected") return false;
-        const status = (r.reason as { response?: { status?: number } })?.response?.status;
-        return status === 401 || status === 403;
-      };
-      const realFailures = [workerResult, employerResult, appsResult, postsResult].filter(
-        (r) => r.status === "rejected" && !isExpectedPermissionError(r),
-      );
-      if (realFailures.length > 0) {
-        setError("Some work data could not be loaded.");
-      }
-    } catch {
-      setError("Could not load your work right now.");
-      setWorkerBookings([]);
-      setEmployerBookings([]);
-      setApplications([]);
-      setJobPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, isEmployer, isProvider, user]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      void refetch();
-    }
-  }, [isLoading, refetch]);
+  const data = query.data;
 
   const items = useMemo(
-    () => composeWorkItems({ workerBookings, employerBookings, applications, jobPosts }),
-    [applications, employerBookings, jobPosts, workerBookings],
+    () =>
+      composeWorkItems({
+        workerBookings: data?.workerBookings ?? [],
+        employerBookings: data?.employerBookings ?? [],
+        applications: data?.applications ?? [],
+        jobPosts: data?.jobPosts ?? [],
+      }),
+    [data],
   );
+
+  // Preserve the previous Promise<void> contract callers `await`.
+  const refetch = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
+
+  const error = data?.hadRealFailure
+    ? "Some work data could not be loaded."
+    : query.isError
+      ? "Could not load your work right now."
+      : null;
 
   return {
     user,
@@ -133,10 +128,10 @@ export function useWorkData(): UseWorkDataResult {
     isProvider,
     isEmployer,
     isDualRole: isProvider && isEmployer,
-    loading: isLoading || loading,
+    loading: isLoading || query.isLoading,
     error,
     items,
-    jobPosts,
+    jobPosts: data?.jobPosts ?? [],
     refetch,
   };
 }

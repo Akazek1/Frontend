@@ -123,10 +123,9 @@ export function UserProfileHeader({
           </div>
           <p className="text-sm text-gray-500 mb-2">{handle.startsWith("@") ? handle : `@${handle}`}</p>
 
-          {availableToday ? (
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-[#E8F1E5] rounded-full text-sm font-medium text-brand">
-              <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-              Available Today
+          {availableToday !== undefined ? (
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[13px] font-semibold text-white ${availableToday ? "bg-brand/85" : "bg-red-600/85"}`}>
+              {availableToday ? "Available Today" : "Unavailable"}
             </span>
           ) : null}
         </div>

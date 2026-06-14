@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
@@ -17,10 +18,16 @@ const ARCHIVED_STATUSES: string[] = [BOOKING_STATUS.COMPLETED, BOOKING_STATUS.CA
 
 const isArchived = (status: string) => ARCHIVED_STATUSES.includes(status);
 
+// A conversation is "unread" only when the latest message is FROM the partner
+// and I haven't read it. Anything else I've sent or already read counts as
+// "read" — independent of whether the partner has read my last message.
+const isUnreadByMe = (latest: Message | undefined, myId?: string) =>
+  Boolean(latest && latest.senderId !== myId && !latest.isRead);
+
 const getStatusConfig = (status: string): { label: string; pill: string; bar: string } => {
   switch (status) {
     case BOOKING_STATUS.PENDING:
-      return { label: "Awaiting response", pill: "bg-[#E6F4EA] text-[#1E7E34]", bar: "bg-[#34A853]" };
+      return { label: "Pending", pill: "bg-orange-50 text-orange-600", bar: "bg-orange-400" };
     case BOOKING_STATUS.CONFIRMED:
       return { label: "Confirmed", pill: "bg-blue-50 text-blue-600", bar: "bg-blue-500" };
     case BOOKING_STATUS.IN_PROGRESS:
@@ -52,6 +59,8 @@ interface Message {
 interface Booking {
   bookingId: string;
   status: string;
+  createdAt?: string;
+  updatedAt?: string;
   service: {
     id: string;
     title: string;
@@ -66,6 +75,7 @@ interface Booking {
   };
   latestMessage?: Message;
   unreadCount?: number;
+  reviewPending?: boolean;
 }
 
 interface ChatInboxProps {
@@ -73,59 +83,64 @@ interface ChatInboxProps {
   onCounts?: (counts: InboxCounts) => void;
 }
 
+// Fetch + sort the conversation list. Kept pure (no presence side effects) so it
+// can back a cached React Query; presence checks run in the seed effect below.
+async function fetchConversations(): Promise<Booking[]> {
+  const response = await api.get<{ data: Booking[] }>("/bookings");
+  return Array.isArray(response.data.data)
+    ? response.data.data
+        .filter((booking) => booking.latestMessage || isArchived(booking.status))
+        .sort((a, b) => {
+          const aTime = new Date(a.latestMessage?.createdAt || a.updatedAt || a.createdAt || 0).getTime();
+          const bTime = new Date(b.latestMessage?.createdAt || b.updatedAt || b.createdAt || 0).getTime();
+          return bTime - aTime;
+        })
+    : [];
+}
+
 export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "All";
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(false);
   const [presenceMap, setPresenceMap] = useState<Record<string, boolean>>({});
   const { user, token } = useSelector((state: RootState) => state.auth);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get<{ data: Booking[] }>("/bookings");
+  // Cached conversation list — returning to Messages renders instantly, no
+  // spinner. Socket events below keep `bookings` live after the seed.
+  const { data: conversationsData, isLoading: loading, refetch } = useQuery({
+    queryKey: ["conversations", user?.id],
+    queryFn: fetchConversations,
+    enabled: Boolean(token),
+    // Conversations change constantly via sockets; keep the cache short so a
+    // background revisit still refreshes, but the cached list shows first.
+    staleTime: 15_000,
+  });
+  // Stable handle so socket callbacks can trigger a refetch without
+  // re-subscribing the listeners on every render.
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
 
-      const nextBookings = Array.isArray(response.data.data)
-        ? response.data.data
-            .filter((booking) => booking.latestMessage)
-            .sort((a, b) => {
-              const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : 0;
-              const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : 0;
-              return bTime - aTime;
-            })
-        : [];
-
-      setBookings(nextBookings);
-
-      // Check presence for all loaded partners now that we have the list.
-      // The socket connect handler also does this, but only if bookings are
-      // already loaded when the socket connects. This handles the opposite
-      // case: socket was already connected before fetchData finished.
-      const sock = getSocket();
-      if (sock?.connected && nextBookings.length > 0) {
-        nextBookings.forEach((b) => {
-          sock.emit("checkPresence", b.partner.id, (res: { isOnline: boolean }) => {
-            setPresenceMap((prev) => ({ ...prev, [b.partner.id]: res.isOnline }));
-          });
+  // Seed local state from the cached/fetched list, then check presence for all
+  // partners (handles the case where the socket connected before data arrived).
+  useEffect(() => {
+    if (!conversationsData) return;
+    setBookings(conversationsData);
+    const sock = getSocket();
+    if (sock?.connected && conversationsData.length > 0) {
+      conversationsData.forEach((b) => {
+        sock.emit("checkPresence", b.partner.id, (res: { isOnline: boolean }) => {
+          setPresenceMap((prev) => ({ ...prev, [b.partner.id]: res.isOnline }));
         });
-      }
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-      setBookings([]);
-    } finally {
-      setLoading(false);
+      });
     }
-  };
+  }, [conversationsData]);
 
   useEffect(() => {
     if (!token) {
       setBookings([]);
       return;
     }
-
-    fetchData();
 
     // Setup real-time listeners for the inbox
     if (user?.id) {
@@ -149,7 +164,8 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
               return bTime - aTime;
             });
           } else {
-            fetchData();
+            // Brand-new conversation we don't have yet — pull the fresh list.
+            void refetchRef.current();
             return prev;
           }
         });
@@ -254,11 +270,14 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
     const active = bookings.filter((b) => !isArchived(b.status));
     onCounts({
       all: active.length,
-      read: active.filter((b) => b.latestMessage?.isRead === true).length,
-      unread: active.filter(
-        (b) => b.latestMessage?.isRead === false && b.latestMessage?.senderId !== user?.id,
+      read: active.filter(
+        (b) => b.latestMessage && !isUnreadByMe(b.latestMessage, user?.id),
       ).length,
+      unread: active.filter((b) => isUnreadByMe(b.latestMessage, user?.id)).length,
       archive: bookings.filter((b) => isArchived(b.status)).length,
+      archiveReviewPending: bookings.filter(
+        (b) => isArchived(b.status) && b.reviewPending,
+      ).length,
     });
   }, [bookings, user?.id, onCounts]);
 
@@ -270,8 +289,8 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
       const archived = isArchived(booking.status);
       if (tab === "archive") return archived;
       if (archived) return false;
-      if (tab === "read") return booking.latestMessage?.isRead === true;
-      if (tab === "unread") return booking.latestMessage?.isRead === false && booking.latestMessage?.senderId !== user?.id;
+      if (tab === "read") return Boolean(booking.latestMessage) && !isUnreadByMe(booking.latestMessage, user?.id);
+      if (tab === "unread") return isUnreadByMe(booking.latestMessage, user?.id);
       return true;
     });
 
@@ -320,15 +339,19 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
         <div className="space-y-3">
           {filteredBookings.map((booking) => {
             const msg = booking.latestMessage;
-            if (!msg) return null;
-
             const partner = booking.partner;
             if (!partner) return null;
 
             const displayName = `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim();
             const initials = `${partner.firstName?.[0] || ""}${partner.lastName?.[0] || ""}` || "AK";
-            const isUnreadByMe = msg.senderId !== user?.id && !msg.isRead;
+            const isUnreadByMe = Boolean(msg && msg.senderId !== user?.id && !msg.isRead);
             const status = getStatusConfig(booking.status);
+            const fallbackTime = booking.updatedAt || booking.createdAt || new Date().toISOString();
+            const previewText =
+              msg?.content ||
+              (booking.status === BOOKING_STATUS.COMPLETED
+                ? "Job completed. Conversation is read-only."
+                : "Booking closed. Conversation is read-only.");
             const goToProfile = (e: React.MouseEvent) => {
               if (partner.username) {
                 e.stopPropagation();
@@ -367,7 +390,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                       </span>
                       {partner.isVerified ? <VerifiedBadge size={14} /> : null}
                     </span>
-                    <span className="text-[11px] font-medium text-[#9E9E9E]">{formatTimestamp(msg.createdAt)}</span>
+                    <span className="text-[11px] font-medium text-[#9E9E9E]">{formatTimestamp(msg?.createdAt || fallbackTime)}</span>
                   </span>
 
                   <span className="mt-0.5 flex items-center justify-between gap-2">
@@ -381,10 +404,10 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
                   <span className="mt-1 flex items-end justify-between gap-2">
                     <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-ink" : "text-ink-muted"}`}>
-                      {msg.content}
+                      {previewText}
                     </span>
                     <span className="flex flex-shrink-0 items-center gap-1.5">
-                      {msg.senderId === user?.id &&
+                      {msg && msg.senderId === user?.id &&
                         (msg.isRead ? (
                           <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1]" />
                         ) : msg.isDelivered ? (
@@ -395,6 +418,11 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                       {booking.unreadCount && booking.unreadCount > 0 ? (
                         <span className="min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
                           {booking.unreadCount}
+                        </span>
+                      ) : booking.reviewPending ? (
+                        <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          Review
                         </span>
                       ) : null}
                     </span>

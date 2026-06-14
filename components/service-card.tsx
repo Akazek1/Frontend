@@ -1,5 +1,5 @@
 "use client";
-import { Star, MapPin, MessageCircle } from "lucide-react";
+import { Briefcase, Smile, MapPin, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
@@ -22,6 +22,8 @@ interface ServiceCardProps {
   price: string;
   rating: number;
   reviews: number;
+  jobsCompleted?: number;
+  wouldHireAgain?: number;
   distance: string;
   available: boolean;
   verified?: boolean;
@@ -44,8 +46,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   languages,
   location,
   price,
-  rating,
-  reviews,
+  jobsCompleted = 0,
+  wouldHireAgain = 0,
   distance,
   available,
   verified,
@@ -92,11 +94,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     requireAuth(() => {
       (onHireClick || onClick)();
     }, "hire");
-  };
-
-  const formatReviews = (n: number) => {
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return n.toString();
   };
 
   const thumbnailSrc = image || profileImage || "";
@@ -189,16 +186,30 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           {title || "Service"}
         </span>
 
-        {/* Row 4: ⭐ rating · reviews */}
-        <div className="flex items-center gap-1 text-[11px] text-ink-muted">
-          <Star className="w-3 h-3 fill-yellow-400 stroke-yellow-400 flex-shrink-0" />
-          <span className="font-semibold text-ink">
-            {rating > 0 ? rating.toFixed(1) : "New"}
-          </span>
-          <span className="text-ink-muted">
-            ({reviews > 0 ? `${formatReviews(reviews)} reviews` : "0 reviews"})
-          </span>
-        </div>
+        {/* Row 4: trust metrics — jobs done | would rehire */}
+        {jobsCompleted > 0 ? (
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1">
+              <Briefcase className="w-3 h-3 text-brand flex-shrink-0" />
+              <span className="font-bold text-ink">{jobsCompleted}</span>
+              <span className="text-ink-muted">
+                {jobsCompleted === 1 ? "job done" : "jobs done"}
+              </span>
+            </span>
+            {wouldHireAgain > 0 && (
+              <>
+                <span className="text-gray-300">·</span>
+                <span className="flex items-center gap-1">
+                  <Smile className="w-3 h-3 text-brand flex-shrink-0" />
+                  <span className="font-bold text-ink">{wouldHireAgain}</span>
+                  <span className="text-ink-muted">would rehire</span>
+                </span>
+              </>
+            )}
+          </div>
+        ) : (
+          <span className="text-[11px] font-semibold text-brand">New</span>
+        )}
 
         {/* Row 5: 📍 location · distance */}
         <div className="flex items-center gap-1 text-[11px] text-ink-muted">

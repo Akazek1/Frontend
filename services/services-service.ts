@@ -32,6 +32,19 @@ export interface CreateServicePayload {
 
 export type UpdateServicePayload = Partial<CreateServicePayload>;
 
+export interface BrowseServicesParams {
+  category?: string;
+  searchTerm?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  serviceType?: string;
+  available?: boolean;
+  location?: string;
+  minRating?: number;
+  page?: number;
+  limit?: number;
+}
+
 interface ApiEnvelope<T> {
   data?: T;
   statusCode?: number;
@@ -79,7 +92,7 @@ function toBackendBody(payload: CreateServicePayload | UpdateServicePayload) {
   if (typeof priceMin === "number") body.priceMin = priceMin;
   if (typeof priceMax === "number") body.priceMax = priceMax;
   if (chargedPer) body.priceType = chargedPer;
-  if (serviceImages && serviceImages.length > 0) {
+  if (serviceImages !== undefined) {
     body.serviceImages = serviceImages;
   }
   return body;
@@ -92,6 +105,11 @@ function buildMultipart(payload: CreateServicePayload | UpdateServicePayload) {
   return form;
 }
 
+// Photo uploads stream each image to Cloudinary one-by-one on the server, so a
+// few photos can easily take longer than the axios default (30s). Give just the
+// multipart requests a generous timeout instead of raising it globally.
+const UPLOAD_TIMEOUT_MS = 120000;
+
 const servicesService = {
   async list(params: {
     providerId?: string;
@@ -100,6 +118,15 @@ const servicesService = {
     page?: number;
     limit?: number;
   } = {}): Promise<Service[]> {
+    const response = await api.get("/services", { params });
+    return unwrap<Service[]>(response.data);
+  },
+
+  /**
+   * Marketplace browse — the full filter set the public listing pages use.
+   * Returns the personalized/ranked list from GET /services.
+   */
+  async browse(params: BrowseServicesParams = {}): Promise<Service[]> {
     const response = await api.get("/services", { params });
     return unwrap<Service[]>(response.data);
   },
@@ -117,7 +144,7 @@ const servicesService = {
   async create(payload: CreateServicePayload): Promise<Service> {
     const hasFiles = (payload.imageFiles?.length ?? 0) > 0;
     const response = hasFiles
-      ? await api.post("/services", buildMultipart(payload))
+      ? await api.post("/services", buildMultipart(payload), { timeout: UPLOAD_TIMEOUT_MS })
       : await api.post("/services", toBackendBody(payload));
     return unwrap<Service>(response.data);
   },
@@ -125,7 +152,7 @@ const servicesService = {
   async update(id: string, payload: UpdateServicePayload): Promise<Service> {
     const hasFiles = (payload.imageFiles?.length ?? 0) > 0;
     const response = hasFiles
-      ? await api.patch(`/services/${id}`, buildMultipart(payload))
+      ? await api.patch(`/services/${id}`, buildMultipart(payload), { timeout: UPLOAD_TIMEOUT_MS })
       : await api.patch(`/services/${id}`, toBackendBody(payload));
     return unwrap<Service>(response.data);
   },

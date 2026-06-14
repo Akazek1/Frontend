@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -11,8 +11,21 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { BOOKING_STATUS, CHAT_WINDOW_HOURS } from "@/constant";
+import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE } from "@/constant";
 import { TaskDrawer, Task } from "./task-drawer";
+import {
+  ReviewPromptDialog,
+  type ReviewPromptPayload,
+} from "@/components/reviews/review-prompt-dialog";
+import { BookingReviewsDialog } from "@/components/reviews/booking-reviews-dialog";
+import type { Review } from "@/hooks/useReviews";
+
+// Status announcements (accept / cancel / complete) are persisted as regular
+// messages with a real senderId but a distinctive leading emoji marker. We use
+// the marker to render them as centred system notices instead of chat bubbles.
+const SYSTEM_MESSAGE_MARKERS = ["✅", "❌", "🏁"];
+const isSystemMessage = (content: string) =>
+  SYSTEM_MESSAGE_MARKERS.some((marker) => content.startsWith(marker));
 
 interface Message {
   id: string;
@@ -63,6 +76,7 @@ interface BookingDetails {
     username: string;
   };
   messages: Message[];
+  reviews?: Review[];
 }
 
 const ChatRoom = ({ bookingId }: { bookingId: string }) => {
@@ -77,18 +91,19 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [partnerOnline, setPartnerOnline] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Message count at which the pending nudge was last dismissed. The nudge
+  // re-surfaces once PENDING_NUDGE_MESSAGE_THRESHOLD more messages arrive, or
+  // immediately when a reminder lands (baseline reset to 0).
+  const [nudgeDismissBaseline, setNudgeDismissBaseline] = useState(0);
+  const [isReviewPromptOpen, setIsReviewPromptOpen] = useState(false);
+  const [isBookingReviewsOpen, setIsBookingReviewsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
+  const reviewAutoPromptedRef = useRef(false);
 
-  const isArchived = booking?.status === BOOKING_STATUS.COMPLETED && (() => {
-    const now = new Date();
-    const updatedAt = new Date(booking.updatedAt);
-    const diffInHours = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60);
-    return diffInHours > CHAT_WINDOW_HOURS;
-  })();
-
+  const isCompleted = booking?.status === BOOKING_STATUS.COMPLETED;
   const isCancelled = booking?.status === BOOKING_STATUS.CANCELLED;
-  const isReadOnly = isArchived || isCancelled;
+  const isReadOnly = isCompleted || isCancelled;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,6 +112,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   // Fetch booking data independently — only re-runs if bookingId changes
   useEffect(() => {
     readReceiptSentForRef.current.clear();
+    reviewAutoPromptedRef.current = false;
+    setNudgeDismissBaseline(0);
     fetchBookingDetails();
   }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -143,6 +160,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
     const handleNewMessage = (message: Message) => {
       if (message.bookingId !== bookingId) return;
+
+      // A reminder from the partner re-surfaces the nudge even if it was
+      // dismissed, so the recipient sees the Accept button again.
+      if (message.senderId !== user?.id && message.content === PENDING_REMINDER_MESSAGE) {
+        setNudgeDismissBaseline(0);
+      }
 
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === message.id);
@@ -254,6 +277,25 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     scrollToBottom();
   }, [messages]);
 
+  // When a booking is completed, prompt BOTH parties to review — regardless of
+  // who marked it complete. Fires once per open; the persistent "Leave Review"
+  // banner button covers any later visits after the prompt is closed.
+  useEffect(() => {
+    if (!booking || !user) return;
+    if (booking.status !== BOOKING_STATUS.COMPLETED) return;
+    if (reviewAutoPromptedRef.current) return;
+
+    const alreadyReviewed = Boolean(
+      booking.reviews?.some(
+        (review) => review.author?.id === user.id || review.authorId === user.id,
+      ),
+    );
+    if (alreadyReviewed) return;
+
+    reviewAutoPromptedRef.current = true;
+    setIsReviewPromptOpen(true);
+  }, [booking, user]);
+
   const fetchBookingDetails = async () => {
     try {
       setIsLoading(true);
@@ -270,10 +312,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || isSending || !user || isReadOnly) return;
+  const handleSendMessage = async (contentOverride?: string) => {
+    const isOverride = typeof contentOverride === "string";
+    const messageContent = (isOverride ? contentOverride : newMessage).trim();
+    if (!messageContent || isSending || !user || isReadOnly) return;
 
-    const messageContent = newMessage.trim();
     const tempId = `temp-${Date.now()}`;
     
     const optimisticMessage: Message = {
@@ -293,7 +336,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     setMessages((prev) => [...prev, optimisticMessage]);
-    setNewMessage("");
+    if (!isOverride) setNewMessage("");
     setIsSubmitting(true);
     
     try {
@@ -353,6 +396,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     }
   };
 
+  const handleRemindPartner = () => {
+    handleSendMessage(PENDING_REMINDER_MESSAGE);
+  };
+
   const handleApproveRequest = async () => {
     if (!booking || isUpdatingStatus) return;
     
@@ -365,6 +412,118 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       toast.error("Failed to approve request");
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const getMyReview = () =>
+    booking?.reviews?.find((review) => review.author?.id === user?.id || review.authorId === user?.id);
+
+  const currentUserHasReviewed = () => Boolean(getMyReview());
+
+  const normalizeReviewForBooking = (review: Review): Review => ({
+    ...review,
+    user: review.user || review.author || {
+      id: "",
+      firstName: "Previous",
+      lastName: "Partner",
+      profilePicture: "",
+    },
+    booking: review.booking || {
+      scheduledFor: "",
+      updatedAt: booking?.updatedAt || new Date().toISOString(),
+    },
+  });
+
+  const handleBookingStatusChange = (status: string) => {
+    setBooking((prev) =>
+      prev ? { ...prev, status, updatedAt: new Date().toISOString() } : prev,
+    );
+
+    if (status !== BOOKING_STATUS.COMPLETED) return;
+
+    if (currentUserHasReviewed()) {
+      toast("You already reviewed this job.");
+      return;
+    }
+
+    setIsReviewPromptOpen(true);
+  };
+
+  const submitChatReview = async (payload: ReviewPromptPayload) => {
+    if (!booking) return false;
+
+    const existing = getMyReview();
+
+    try {
+      // Completing/editing a review that was submitted without a comment.
+      if (existing) {
+        const comment = payload.comment?.trim();
+        if (!comment) {
+          toast.error("Add a comment to complete your review.");
+          return false;
+        }
+        const response = await api.patch(`/feedback/${existing.id}`, { comment });
+        const updated = response.data?.data || response.data;
+        setBooking((prev) =>
+          prev
+            ? {
+                ...prev,
+                reviews: (prev.reviews || []).map((review) =>
+                  review.id === existing.id
+                    ? normalizeReviewForBooking({ ...review, ...updated, comment })
+                    : review,
+                ),
+              }
+            : prev,
+        );
+        toast.success("Review updated.");
+        return true;
+      }
+
+      const response = await api.post("/feedback", {
+        bookingId: booking.id,
+        wouldRehire: payload.wouldRehire,
+        comment: payload.comment,
+      });
+      const created = response.data?.data || response.data;
+      if (created) {
+        setBooking((prev) =>
+          prev
+            ? {
+                ...prev,
+                reviews: [...(prev.reviews || []), normalizeReviewForBooking(created)],
+              }
+            : prev,
+        );
+      }
+      toast.success("Review submitted.");
+      return true;
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(message || "Could not submit review.");
+      return false;
+    }
+  };
+
+  const replyToBookingReview = async (reviewId: string, reply: string) => {
+    try {
+      const response = await api.patch(`/feedback/${reviewId}/reply`, { reply });
+      const updated = response.data?.data || response.data;
+      setBooking((prev) =>
+        prev
+          ? {
+              ...prev,
+              reviews: (prev.reviews || []).map((review) =>
+                review.id === reviewId ? normalizeReviewForBooking({ ...review, ...updated }) : review,
+              ),
+            }
+          : prev,
+      );
+      return true;
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(message || "Could not post reply.");
+      return false;
     }
   };
 
@@ -389,10 +548,28 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const partnerName = partner ? `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim() : "Unknown Partner";
   const isWorker = user.id === booking.workerId;
   const contextTitle = booking.service?.title || booking.job?.title || "Work request";
+  // Role-aware label for the partner: a worker is described by the service they
+  // provide (e.g. "Driver"); an employer is simply the "Employer" — never the
+  // service title, which would wrongly imply they do that job.
+  const partnerRoleLabel = isWorker ? "Employer" : contextTitle;
+  // Review wording follows the direction of the relationship.
+  const rehireQuestion = isWorker
+    ? "Would you work with this person again?"
+    : "Would you hire this person again?";
   const isPending = booking.status === BOOKING_STATUS.PENDING;
   const isApproved = booking.status !== BOOKING_STATUS.PENDING && booking.status !== BOOKING_STATUS.CANCELLED;
   const incompleteTaskCount = tasks.filter((t) => !t.isCompleted).length;
   const hasTaskTab = tasks.length > 0 || isApproved;
+  const bookingReviews = (booking.reviews || []).map(normalizeReviewForBooking);
+  const myReview = getMyReview();
+  // A review left without a comment is treated as incomplete, so the user can
+  // still finish it ("in case it was skipped") instead of being locked out.
+  const myReviewNeedsComment = Boolean(myReview && !myReview.comment?.trim());
+  const hasCompleteReview = Boolean(myReview && myReview.comment?.trim());
+  const hasReviewedThisBooking = currentUserHasReviewed();
+  const showPendingNudge =
+    isPending &&
+    messages.length - nudgeDismissBaseline >= PENDING_NUDGE_MESSAGE_THRESHOLD;
 
   return (
     <div className="bg-surface relative isolate flex h-screen flex-col overflow-hidden">
@@ -417,7 +594,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
             {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Online</span>}
           </div>
-          <p className="truncate text-[11px] text-ink-subtle font-medium">{contextTitle}</p>
+          <p className="truncate text-[11px] text-ink-subtle font-medium">{partnerRoleLabel}</p>
         </div>
 
         <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -442,6 +619,33 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         isApproved={isApproved}
         tasks={tasks}
         onTasksChange={setTasks}
+        onStatusChange={handleBookingStatusChange}
+      />
+
+      <ReviewPromptDialog
+        open={isReviewPromptOpen}
+        subject={{
+          title: partnerName,
+          subtitle: partnerRoleLabel,
+        }}
+        rehireQuestion={rehireQuestion}
+        initialRehire={myReview?.wouldRehire ?? null}
+        initialComment={myReview?.comment ?? ""}
+        onOpenChange={setIsReviewPromptOpen}
+        onSubmit={submitChatReview}
+      />
+
+      <BookingReviewsDialog
+        open={isBookingReviewsOpen}
+        title={contextTitle}
+        reviews={bookingReviews}
+        canLeaveReview={booking.status === BOOKING_STATUS.COMPLETED && !hasCompleteReview}
+        onOpenChange={setIsBookingReviewsOpen}
+        onLeaveReview={() => {
+          setIsBookingReviewsOpen(false);
+          setIsReviewPromptOpen(true);
+        }}
+        onReply={replyToBookingReview}
       />
 
       {/* Right-edge sticky task tab */}
@@ -462,10 +666,26 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Banner for Status */}
-      {isArchived && (
-        <div className="flex items-center justify-center gap-2 bg-gray-100 py-2 text-[11px] font-medium text-gray-600 shadow-inner">
-          <Archive className="h-3.5 w-3.5" />
-          This conversation is archived.
+      {isCompleted && (
+        <div className="flex flex-col items-center justify-center gap-2 bg-gray-100 px-3 py-3 text-[11px] font-medium text-gray-600 shadow-inner">
+          <div className="flex items-center gap-2">
+            <Archive className="h-3.5 w-3.5" />
+            This job is complete. Messages remain visible, but chat is read-only.
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              if (hasCompleteReview) {
+                setIsBookingReviewsOpen(true);
+              } else {
+                setIsReviewPromptOpen(true);
+              }
+            }}
+            className="h-8 rounded-full bg-brand px-4 text-[11px] font-bold text-white hover:bg-brand-dark"
+          >
+            {hasCompleteReview ? "View Review" : "Leave Review"}
+          </Button>
         </div>
       )}
       {isCancelled && (
@@ -477,14 +697,14 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {isPending && !isWorker && (
         <div className="flex flex-col items-center gap-1 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
-            Offer sent. Work is not confirmed until the provider accepts.
+            Offer sent. You are protected once the provider accepts here.
           </p>
         </div>
       )}
       {isPending && isWorker && (
         <div className="flex flex-col items-center gap-2 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
-            You have an official offer. Accept only if you agree to the work details.
+            You have an offer. Accept here to start — your pay and reviews stay protected. Accept only if you agree to the work details.
           </p>
           <Button 
             onClick={handleApproveRequest}
@@ -504,12 +724,22 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           <p className="text-[11px] font-semibold text-ink">Booking Details</p>
           <p className="mt-1 text-[10px] text-ink-subtle">
             {isPending
-              ? "This work is not confirmed yet. Confirm through Akazek before starting."
+              ? "This work isn't confirmed yet. Confirm here before starting so your pay and reviews are protected."
               : "Keep all communications within Akazek to ensure your safety and protection."}
           </p>
         </div>
 
         {messages.map((msg) => {
+          if (isSystemMessage(msg.content)) {
+            return (
+              <div key={msg.id} className="flex justify-center">
+                <div className="max-w-[300px] rounded-full bg-black/[0.04] px-3 py-1.5 text-center text-[10px] font-medium text-ink-subtle">
+                  {msg.content}
+                </div>
+              </div>
+            );
+          }
+
           const isMe = msg.senderId === user.id;
           const status = msg.status;
 
@@ -546,6 +776,53 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             </div>
           );
         })}
+        {showPendingNudge && (
+          <div className="mx-auto max-w-[300px] rounded-xl border border-brand/25 bg-brand/[0.06] p-3 shadow-sm">
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" />
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-brand">
+                  {isWorker ? "Ready to start?" : `Waiting for ${partner?.firstName || "the provider"}`}
+                </p>
+                <p className="mt-0.5 text-[10px] leading-relaxed text-ink-subtle">
+                  {isWorker
+                    ? "Tap Accept to start the job. Your pay and reviews are protected here."
+                    : `${partner?.firstName || "The provider"} has not accepted yet. Do not pay or start outside Akazek — you are protected once they accept here.`}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNudgeDismissBaseline(messages.length)}
+                aria-label="Dismiss reminder"
+                className="rounded-full p-0.5 text-ink-subtle hover:bg-black/5 hover:text-ink"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {isWorker ? (
+              <Button
+                onClick={handleApproveRequest}
+                disabled={isUpdatingStatus}
+                size="sm"
+                className="mt-2 h-9 w-full rounded-full bg-brand text-[12px] font-bold text-white hover:bg-brand-dark"
+              >
+                {isUpdatingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-4 w-4" />}
+                Accept Offer
+              </Button>
+            ) : (
+              <Button
+                onClick={handleRemindPartner}
+                disabled={isSending}
+                size="sm"
+                variant="outline"
+                className="mt-2 h-9 w-full rounded-full border-brand/30 text-[12px] font-bold text-brand hover:bg-brand/5"
+              >
+                {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Remind {partner?.firstName || "provider"}</>}
+              </Button>
+            )}
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </main>
 
@@ -553,7 +830,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
         <div className="flex items-end gap-2">
           <Textarea
-            placeholder={isReadOnly ? "This conversation is archived" : "Type a message..."}
+            placeholder={isReadOnly ? "This conversation is read-only" : "Type a message..."}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -562,7 +839,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-brand/20 scrollbar-hide"
           />
           <Button
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             size="icon"
             disabled={!newMessage.trim() || isSending || isReadOnly}
             className="h-11 w-11 flex-shrink-0 rounded-full bg-brand text-white hover:bg-brand-dark"

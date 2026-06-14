@@ -196,6 +196,25 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     });
   }, []);
 
+  const reorderImages = useCallback((fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setForm((prev) => {
+      // Flatten both arrays into a unified list
+      type Entry = { kind: "e"; url: string } | { kind: "n"; file: File };
+      const unified: Entry[] = [
+        ...prev.existingImageUrls.map((url): Entry => ({ kind: "e", url })),
+        ...prev.newImageFiles.map((file): Entry => ({ kind: "n", file })),
+      ];
+      const [moved] = unified.splice(fromIdx, 1);
+      unified.splice(toIdx, 0, moved);
+      return {
+        ...prev,
+        existingImageUrls: unified.filter((x): x is { kind: "e"; url: string } => x.kind === "e").map((x) => x.url),
+        newImageFiles: unified.filter((x): x is { kind: "n"; file: File } => x.kind === "n").map((x) => x.file),
+      };
+    });
+  }, []);
+
   const totalImageCount = useMemo(
     () => form.existingImageUrls.length + form.newImageFiles.length,
     [form.existingImageUrls.length, form.newImageFiles.length],
@@ -266,6 +285,7 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     setField,
     addImageFiles,
     removeImageAt,
+    reorderImages,
     totalImageCount,
     isStep1Valid,
     isStep2Valid,

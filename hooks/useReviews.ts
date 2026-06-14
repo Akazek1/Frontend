@@ -3,8 +3,12 @@ import api from "@/lib/axios"
 
 export interface Review {
   id: string
-  rating: number
-  comment: string
+  bookingId?: string
+  authorId?: string
+  targetId?: string
+  rating?: number | null
+  wouldRehire?: "YES" | "MAYBE" | "NO" | null
+  comment?: string | null
   reply?: string | null
   repliedAt?: string | null
   replyUpdatedAt?: string | null
@@ -26,7 +30,7 @@ export interface Review {
     lastName: string
     profilePicture?: string
   }
-  booking: {
+  booking?: {
     scheduledFor: string
     updatedAt: string
   }
@@ -64,16 +68,17 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
         const normalizedReviews = reviewsData.map(normalizeReview)
 
         const filteredReviews = filterByUserId
-          ? normalizedReviews.filter((review: Review) => review.user.id === filterByUserId)
+          ? normalizedReviews.filter((review: Review) => review.user?.id === filterByUserId)
           : normalizedReviews
 
         setReviews(filteredReviews)
         setTotalReviews(filteredReviews.length)
 
+        const ratedReviews = filteredReviews.filter((review: Review) => typeof review.rating === "number")
         const avgRating =
-          filteredReviews.length > 0
-            ? filteredReviews.reduce((sum: number, review: Review) => sum + review.rating, 0) /
-              filteredReviews.length
+          ratedReviews.length > 0
+            ? ratedReviews.reduce((sum: number, review: Review) => sum + (review.rating || 0), 0) /
+              ratedReviews.length
             : 0
         setAverageRating(avgRating)
       } catch (error: unknown) {

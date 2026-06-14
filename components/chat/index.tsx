@@ -11,11 +11,13 @@ export interface InboxCounts {
   read: number;
   unread: number;
   archive: number;
+  /** Archived bookings where the current user still owes a review. */
+  archiveReviewPending: number;
 }
 
 const Chat = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [counts, setCounts] = useState<InboxCounts>({ all: 0, read: 0, unread: 0, archive: 0 });
+  const [counts, setCounts] = useState<InboxCounts>({ all: 0, read: 0, unread: 0, archive: 0, archiveReviewPending: 0 });
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);

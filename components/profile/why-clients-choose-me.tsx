@@ -2,10 +2,7 @@
 
 import { QUALITY_DEFS, type QualityKey, QUALITY_KEYS } from "@/constant/user-qualities";
 
-export function WhyClientsChooseMe({ qualities, roles }: { qualities?: string[]; roles?: string[] }) {
-  const isWorker = (roles || []).includes("WORKER");
-  if (!isWorker) return null;
-
+export function WhyClientsChooseMe({ qualities }: { qualities?: string[]; roles?: string[] }) {
   const valid: QualityKey[] = (qualities || []).filter((q): q is QualityKey =>
     (QUALITY_KEYS as readonly string[]).includes(q)
   );
