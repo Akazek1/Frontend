@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
 interface Organization {
   id: string
   name: string
-  type: "SERVICE_COMPANY" | "PLACEMENT_AGENCY"
+  type: "SERVICE_COMPANY" | "STAFFING_AGENCY"
   phone: string | null
   email: string | null
   address: string | null
@@ -47,7 +47,7 @@ interface OrganizationResponse {
 
 const ORG_TYPE_LABEL: Record<string, string> = {
   SERVICE_COMPANY: "Service Company",
-  PLACEMENT_AGENCY: "Placement Agency",
+  STAFFING_AGENCY: "Staffing Agency",
 }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {

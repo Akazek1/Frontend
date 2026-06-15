@@ -558,7 +558,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     : "Would you hire this person again?";
   const isPending = booking.status === BOOKING_STATUS.PENDING;
   const isApproved = booking.status !== BOOKING_STATUS.PENDING && booking.status !== BOOKING_STATUS.CANCELLED;
-  const incompleteTaskCount = tasks.filter((t) => !t.isCompleted).length;
+  const incompleteTaskCount = tasks.filter((t) => !t.isCompleted && !t.isCanceled).length;
   const hasTaskTab = tasks.length > 0 || isApproved;
   const bookingReviews = (booking.reviews || []).map(normalizeReviewForBooking);
   const myReview = getMyReview();
@@ -615,7 +615,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         userId={user.id}
         employerId={booking.employerId}
         workerId={booking.workerId}
-        isInProgress={booking.status === BOOKING_STATUS.IN_PROGRESS}
+        status={booking.status}
         isApproved={isApproved}
         tasks={tasks}
         onTasksChange={setTasks}

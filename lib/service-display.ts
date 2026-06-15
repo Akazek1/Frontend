@@ -35,7 +35,7 @@ export function getProviderHandle(provider?: Service["provider"] | null) {
 
 export function getBookingType(service?: Partial<Service> | null) {
   const provider = service?.provider;
-  return isEmployer(provider?.roles) ? "AGENCY" : "INDIVIDUAL";
+  return isEmployer(provider?.roles) ? "STAFFING_AGENCY" : "INDIVIDUAL";
 }
 
 export function mapServiceToProviderCard(service: Service): Provider {

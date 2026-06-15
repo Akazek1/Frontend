@@ -9,7 +9,7 @@ import api from "@/lib/axios"
 import { getApiErrorMessage } from "@/lib/error-handler"
 import { getAuthToken } from "@/lib/auth-utils"
 
-type OrgType = "SERVICE_COMPANY" | "PLACEMENT_AGENCY"
+type OrgType = "SERVICE_COMPANY" | "STAFFING_AGENCY"
 type Step = "type" | "details" | "success"
 
 interface OrgFormData {
@@ -67,19 +67,19 @@ function OrgTypeStep({
         </button>
 
         <button
-          onClick={() => onSelect("PLACEMENT_AGENCY")}
+          onClick={() => onSelect("STAFFING_AGENCY")}
           className={`relative p-5 rounded-xl border-2 text-left transition-all ${
-            selected === "PLACEMENT_AGENCY"
+            selected === "STAFFING_AGENCY"
               ? "bg-brand text-white border-brand"
               : "bg-white text-gray-700 border-gray-300 hover:border-brand"
           }`}
         >
-          {selected === "PLACEMENT_AGENCY" && (
+          {selected === "STAFFING_AGENCY" && (
             <CheckCircle className="absolute top-3 right-3 w-5 h-5 text-white" />
           )}
           <div className="flex items-start gap-4">
-            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "PLACEMENT_AGENCY" ? "bg-white/20" : "bg-surface"}`}>
-              <Briefcase className={`w-6 h-6 ${selected === "PLACEMENT_AGENCY" ? "text-white" : "text-brand"}`} />
+            <div className={`p-2 rounded-lg flex-shrink-0 ${selected === "STAFFING_AGENCY" ? "bg-white/20" : "bg-surface"}`}>
+              <Briefcase className={`w-6 h-6 ${selected === "STAFFING_AGENCY" ? "text-white" : "text-brand"}`} />
             </div>
             <div>
               <h3 className="font-bold text-base mb-1">Placement Agency</h3>

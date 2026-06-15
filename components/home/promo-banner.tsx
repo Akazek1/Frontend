@@ -65,7 +65,8 @@ function useDynamicBanners(): HeroSlide[] {
   const [slides, setSlides] = useState<HeroSlide[]>(defaultSlides);
   useEffect(() => {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
-    fetch(`${baseURL}/admin/banners`)
+    // Public endpoint (no auth required) — returns active banners only
+    fetch(`${baseURL}/banners`)
       .then((r) => r.ok ? r.json() : null)
       .then((json) => {
         if (!json) return;

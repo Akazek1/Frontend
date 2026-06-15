@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
 
-type ServiceTypeFilter = "INDIVIDUAL" | "AGENCY" | "COMPANY";
+type ServiceTypeFilter = "INDIVIDUAL" | "STAFFING_AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
 
 interface SearchFilters {
@@ -82,7 +82,7 @@ interface ApplicationSummary {
 
 const SERVICE_TYPES: Array<{ label: string; value: ServiceTypeFilter }> = [
   { label: "Individual", value: "INDIVIDUAL" },
-  { label: "Agency", value: "AGENCY" },
+  { label: "Staffing Agency", value: "STAFFING_AGENCY" },
   { label: "Company", value: "COMPANY" },
 ];
 

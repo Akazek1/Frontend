@@ -103,7 +103,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                <SelectItem value="AGENCY">Agency</SelectItem>
+                <SelectItem value="STAFFING_AGENCY">Staffing Agency</SelectItem>
                 <SelectItem value="COMPANY">Company</SelectItem>
               </SelectContent>
             </Select>
