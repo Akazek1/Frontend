@@ -99,7 +99,12 @@ const jobsService = {
   },
 
   getMyApplications: async () => {
-    const response = await api.get("/jobs/my-applications");
+    // Optional "enhancement" call — fired from public pages (home feed, search)
+    // to decorate jobs with the user's applied state. Opt out of the global 401
+    // redirect so a stale/expired token here doesn't bounce guests to home.
+    const response = await api.get("/jobs/my-applications", {
+      skipAuthRedirect: true,
+    });
     return response.data.data;
   },
 

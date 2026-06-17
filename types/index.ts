@@ -47,6 +47,13 @@ export interface Service {
     trustScore?: number;
     createdAt?: string;
     availableForWork?: boolean;
+    agency?: {
+      id: string;
+      name: string;
+      logoUrl: string | null;
+      verified: boolean;
+      _count?: { workers: number; placements: number };
+    } | null;
   };
   worker?: {
     id: string;
@@ -62,6 +69,34 @@ export interface Service {
     jobsCompleted?: number;
   };
   serviceAreas: string[];
+}
+
+export interface AgencyPlacement {
+  id: string;
+  status: "ACTIVE" | "TERMINATED" | "OPTED_OUT";
+  placedAt: string;
+  endedAt: string | null;
+  commissionAmount: number | null;
+  commissionPaid: boolean;
+  worker: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture: string | null;
+    isVerified: boolean;
+    trustScore: number;
+    username: string | null;
+    services?: Array<{ id: string; title: string; priceMin: number | null; priceMax: number | null; priceType: string | null }>;
+  };
+  agency: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    verified: boolean;
+    phone: string | null;
+    _count?: { workers: number; placements: number };
+  };
+  employer: { id: string; firstName: string; lastName: string };
 }
 
 export interface Provider {
@@ -86,4 +121,10 @@ export interface Provider {
   phoneNumber?: string;
   providerId?: string;
   username?: string;
+  agency?: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    verified: boolean;
+  } | null;
 }

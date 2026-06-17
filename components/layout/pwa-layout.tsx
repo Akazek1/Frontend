@@ -30,15 +30,24 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }, [isAuthenticated, pathname, router]);
 
+  // The agency console (Tier 2) and the business auth screens are full-width,
+  // responsive surfaces with their own chrome. They break out of the phone
+  // container that wraps the consumer (worker/employer) app.
+  if (pathname.startsWith("/agency") || pathname.startsWith("/business")) {
+    return <>{children}</>;
+  }
+
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
     /^\/[^/]+\/services\/[^/]+(\/edit)?$/.test(pathname);
   const isJobDetail = /^\/jobs\/[^/]+/.test(pathname);
+  const isInquiryDetail = /^\/inquiries\/[^/]+$/.test(pathname);
   const shouldHideNavigation =
     hideNavigationPaths.includes(pathname) ||
     pathname.startsWith("/conversations/inbox") ||
     isServiceDetail ||
+    isInquiryDetail ||
     (isJobDetail && !isAuthenticated);
 
   return (

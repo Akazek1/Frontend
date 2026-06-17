@@ -127,9 +127,10 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const searchCacheRef = useRef<Map<string, { services?: Service[]; jobs?: Job[] }>>(new Map());
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { requireAuth } = useRequireAuth();
-  const currentUserId = user?.id;
+  // Owner detection requires a live session; `user` can persist without a token.
+  const currentUserId = isAuthenticated ? user?.id : undefined;
 
   const popularSearches = useMemo(
     () =>
@@ -192,7 +193,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
     const fetchRequestedServices = async () => {
       try {
-        const response = await api.get("/bookings", { params: { role: "employer" } });
+        const response = await api.get("/bookings", { params: { role: "employer" }, skipAuthRedirect: true });
         const bookings = Array.isArray(response.data.data)
           ? response.data.data
           : Array.isArray(response.data)

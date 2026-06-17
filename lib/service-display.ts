@@ -70,6 +70,7 @@ export function mapServiceToProviderCard(service: Service): Provider {
     providerId: service.providerId,
     username: service.provider.username,
     profileImage: service.provider.profilePicture || service.provider.profileImg,
+    agency: service.provider?.agency ?? null,
   };
 }
 

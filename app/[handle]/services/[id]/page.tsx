@@ -83,8 +83,9 @@ interface ExistingBookingSummary {
 function ServiceDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const serviceId = params.id as string;
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const { requireAuth } = useRequireAuth();
 
     const [service, setService] = useState<Service | null>(null);
@@ -103,6 +104,11 @@ function ServiceDetailPage() {
     const lightboxNext = () => setLightbox(lb => lb && lb.index < lb.images.length - 1 ? { ...lb, index: lb.index + 1 } : lb);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
     const [hireNotes, setHireNotes] = useState("");
+    // Agency-backed workers: employer contacts the agency (an inquiry), not a direct booking.
+    const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+    const [inquiryNote, setInquiryNote] = useState("");
+    const [inquirySubmitting, setInquirySubmitting] = useState(false);
+    const [inquirySent, setInquirySent] = useState(false);
 
     useEffect(() => {
         async function fetchService() {
@@ -167,6 +173,17 @@ function ServiceDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lightbox]);
 
+    // Deep-link from a list card's "Contact Agency": open the same inquiry
+    // modal the profile button opens, then drop the flag so closing it
+    // doesn't re-trigger.
+    useEffect(() => {
+        if (!service?.provider?.agency) return;
+        if (searchParams.get("contact") !== "agency") return;
+        requireAuth(() => setIsInquiryOpen(true), "hire");
+        router.replace(`/${params.handle}/services/${serviceId}`, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [service, searchParams]);
+
     const provider = service?.provider;
     const providerName = useMemo(() => getProviderName(provider), [provider]);
     const providerHandle = useMemo(() => getProviderHandle(provider), [provider]);
@@ -224,8 +241,12 @@ function ServiceDetailPage() {
 
     const messageHref = "/conversations";
 
+    // Owner-only UI (e.g. "Edit Service") must require a genuine session — not
+    // just a stale persisted `user`. `user` is hydrated from localStorage
+    // independently of the token, so a logged-out visitor can still carry a
+    // `user` object; gate on isAuthenticated (token-backed) to be safe.
     const isOwnService = Boolean(
-        user?.id && service && (service.providerId === user.id || service.provider?.id === user.id)
+        isAuthenticated && user?.id && service && (service.providerId === user.id || service.provider?.id === user.id)
     );
 
     const openHireModal = () => {
@@ -236,6 +257,30 @@ function ServiceDetailPage() {
         }
         setHireNotes("");
         setIsHireModalOpen(true);
+    };
+
+    const handleInquirySubmit = async () => {
+        if (!service?.provider?.agency || inquirySubmitting) return;
+        if (inquiryNote.trim().length < 5) {
+            toast.error("Please add a short note about what you need.");
+            return;
+        }
+        setInquirySubmitting(true);
+        try {
+            await api.post("/inquiries", {
+                agencyId: service.provider.agency.id,
+                workerOfInterestId: service.provider.id,
+                note: inquiryNote.trim(),
+            });
+            toast.success(`Inquiry sent to ${service.provider.agency.name}!`);
+            setInquirySent(true);
+            setIsInquiryOpen(false);
+            setInquiryNote("");
+        } catch (err) {
+            toast.error(getApiErrorMessage(err, "Failed to send inquiry."));
+        } finally {
+            setInquirySubmitting(false);
+        }
     };
 
     const handleHireSubmit = async () => {
@@ -460,6 +505,90 @@ function ServiceDetailPage() {
                         </span>
                     </div>
                 ) : null}
+
+                {/* Agency backing section — only for agency-backed workers */}
+                {provider?.agency && (
+                    <div className="mt-4 flex flex-col gap-3">
+                        {/* BACKED BY card */}
+                        <div className="rounded-2xl border border-[#C8E6C4] bg-[#EEF8EA] p-4">
+                            <div className="mb-3 flex items-center gap-1">
+                                <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                    Backed by
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    {provider.agency.logoUrl ? (
+                                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-white shadow">
+                                            <Image
+                                                src={provider.agency.logoUrl}
+                                                alt={provider.agency.name}
+                                                width={48}
+                                                height={48}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-white bg-brand shadow">
+                                            <span className="text-[16px] font-bold text-white">
+                                                {provider.agency.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1">
+                                            <span className="truncate text-[14px] font-bold text-ink">
+                                                {provider.agency.name}
+                                            </span>
+                                            {provider.agency.verified && <VerifiedBadge size={14} />}
+                                        </div>
+                                        {provider.agency._count && (
+                                            <p className="text-[11px] text-ink-muted">
+                                                {provider.agency._count.workers} Active Workers · {provider.agency._count.placements} Placements
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <Link
+                                    href={`/organization/${provider.agency.id}`}
+                                    className="flex-shrink-0 rounded-lg border border-brand px-3 py-1.5 text-[11px] font-semibold text-brand"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    View Profile
+                                </Link>
+                            </div>
+                            {/* Trust badges row */}
+                            <div className="mt-3 flex items-center gap-3 flex-wrap">
+                                {["ID Verified", "Police Checked", "Replacement Guaranteed"].map((badge) => (
+                                    <span key={badge} className="flex items-center gap-1 text-[11px] font-medium text-brand">
+                                        <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                                        {badge}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Hiring Protection card */}
+                        <div className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <div
+                                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                                style={{ backgroundColor: colors.backgroundTertiary }}
+                            >
+                                <ShieldCheck className="h-5 w-5" style={{ color: colors.primary }} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-bold text-ink">Hiring Protection</p>
+                                <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">
+                                    If this worker doesn&apos;t work out, {provider.agency.name} guarantees a free replacement within the coverage window.
+                                </p>
+                            </div>
+                            <div className="flex-shrink-0 text-right">
+                                <p className="text-[11px] font-bold text-brand">Covered for</p>
+                                <p className="text-[13px] font-extrabold text-brand">30 Days</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Price + Availability card */}
                 <section
@@ -811,6 +940,48 @@ function ServiceDetailPage() {
                 );
             })()}
 
+            {isInquiryOpen && service?.provider?.agency && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
+                    <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Contact Agency</p>
+                                <h3 className="text-[17px] font-black text-ink mt-0.5">{service.provider.agency.name}</h3>
+                                <p className="text-[13px] text-gray-400">About {providerName}</p>
+                            </div>
+                            <button onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }} className="p-1 text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-[12px] leading-relaxed text-gray-500">
+                            Send a short note to the agency. They&apos;ll review your request and reach out to discuss before placing a worker with you.
+                        </p>
+                        <textarea
+                            value={inquiryNote}
+                            onChange={(e) => setInquiryNote(e.target.value)}
+                            rows={4}
+                            placeholder="e.g. I'm looking for a full-time nanny in Kicukiro, starting next month."
+                            className="w-full rounded-2xl border border-gray-200 p-3 text-[14px] outline-none focus:border-brand resize-none"
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }}
+                                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleInquirySubmit}
+                                disabled={inquirySubmitting}
+                                className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                            >
+                                {inquirySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Inquiry"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isHireModalOpen && service && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
                     <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
@@ -870,6 +1041,27 @@ function ServiceDetailPage() {
                         <Pencil className="h-4 w-4" />
                         Edit Service
                     </button>
+                ) : provider?.agency ? (
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={`/organization/${provider.agency.id}`}
+                            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
+                            style={{
+                                border: `1.5px solid ${colors.primary}`,
+                                color: colors.primary,
+                            }}
+                        >
+                            View Agency
+                        </Link>
+                        <button
+                            onClick={() => requireAuth(() => setIsInquiryOpen(true), "hire")}
+                            disabled={inquirySent}
+                            className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                            style={{ backgroundColor: inquirySent ? "#9CA3AF" : colors.primary }}
+                        >
+                            {inquirySent ? "Inquiry Sent" : "Contact Agency"}
+                        </button>
+                    </div>
                 ) : (
                     <div className="flex items-center gap-3">
                         <button

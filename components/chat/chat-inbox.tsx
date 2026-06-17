@@ -76,7 +76,17 @@ interface Booking {
   latestMessage?: Message;
   unreadCount?: number;
   reviewPending?: boolean;
+  // Agency inquiry conversations (employer ↔ agency) are surfaced here too.
+  isInquiry?: boolean;
+  inquiryId?: string;
+  preview?: string;
 }
+
+const INQUIRY_PILL: Record<string, { label: string; pill: string; bar: string }> = {
+  PENDING: { label: "Inquiry sent", pill: "bg-orange-50 text-orange-600", bar: "bg-orange-400" },
+  TALKING: { label: "In conversation", pill: "bg-blue-50 text-blue-600", bar: "bg-blue-500" },
+  HANDED_OVER: { label: "Awaiting worker", pill: "bg-amber-50 text-amber-600", bar: "bg-amber-400" },
+};
 
 interface ChatInboxProps {
   searchQuery: string;

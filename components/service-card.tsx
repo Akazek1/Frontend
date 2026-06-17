@@ -1,5 +1,5 @@
 "use client";
-import { Briefcase, Smile, MapPin, MessageCircle } from "lucide-react";
+import { Briefcase, Smile, MapPin, MessageCircle, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
@@ -8,6 +8,13 @@ import { redactName } from "@/lib/privacy-utils";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { SERVICE_DETAIL_LABELS } from "@/constant/service-detail";
+
+interface AgencyInfo {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  verified: boolean;
+}
 
 interface ServiceCardProps {
   id: string;
@@ -28,6 +35,7 @@ interface ServiceCardProps {
   available: boolean;
   verified?: boolean;
   tags?: string[];
+  agency?: AgencyInfo | null;
   onClick: () => void;
   onHireClick?: () => void;
   onRemoveBookmark?: () => void;
@@ -52,6 +60,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   available,
   verified,
   tags = [],
+  agency,
   onClick,
   onHireClick,
   onRemoveBookmark,
@@ -227,6 +236,27 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </div>
         )}
 
+        {/* Agency backing badge — only shown for agency-backed workers */}
+        {agency && (
+          <div className="mt-0.5 rounded-lg bg-[#EEF8EA] border border-[#C8E6C4] px-2 py-1.5 flex flex-col gap-1">
+            <div className="flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-brand flex-shrink-0" />
+              <span className="text-[10px] font-bold text-brand truncate">
+                Backed by {agency.name}
+              </span>
+              {agency.verified && <VerifiedBadge size={12} />}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[" ID Verified", "Police Checked", "Replacement Guaranteed"].map((badge) => (
+                <span key={badge} className="flex items-center gap-0.5 text-[9px] font-medium text-brand/80">
+                  <ShieldCheck className="w-2.5 h-2.5" />
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Row 5: price */}
         <p className="text-brand font-bold text-[13px]">{price || "—"}</p>
 
@@ -242,23 +272,43 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               </span>
             ))}
           </div>
-          <button
-            onClick={handleHireClick}
-            disabled={hasRequested || isOwnService}
-            className={`flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap ${
-              isOwnService
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+          {!isOwnService && agency ? (
+            // Agency-backed workers aren't hired directly — the employer
+            // contacts the agency. Open the profile's Contact-Agency inquiry
+            // modal directly via the `contact=agency` flag (same experience as
+            // tapping "Contact Agency" on the worker's profile).
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handle) {
+                  router.push(`/${handle.replace(/^@/, "")}/services/${id}?contact=agency`);
+                } else {
+                  onClick();
+                }
+              }}
+              className="flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-brand text-white hover:bg-[#0f4a0c]"
+            >
+              Contact Agency
+            </button>
+          ) : (
+            <button
+              onClick={handleHireClick}
+              disabled={hasRequested || isOwnService}
+              className={`flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap ${
+                isOwnService
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : hasRequested
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-brand text-white hover:bg-[#0f4a0c]"
+              }`}
+            >
+              {isOwnService
+                ? "Your service"
                 : hasRequested
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-brand text-white hover:bg-[#0f4a0c]"
-            }`}
-          >
-            {isOwnService
-              ? "Your service"
-              : hasRequested
-              ? SERVICE_DETAIL_LABELS.requestSent
-              : SERVICE_DETAIL_LABELS.requestToHire}
-          </button>
+                ? SERVICE_DETAIL_LABELS.requestSent
+                : SERVICE_DETAIL_LABELS.requestToHire}
+            </button>
+          )}
         </div>
       </div>
     </div>

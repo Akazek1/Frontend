@@ -43,8 +43,10 @@ interface BookingSummary {
 
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
-  const { user } = useAuth();
-  const currentUserId = user?.id;
+  const { user, isAuthenticated } = useAuth();
+  // Only treat someone as the owner when they have a live session — `user` can
+  // linger in storage without a valid token.
+  const currentUserId = isAuthenticated ? user?.id : undefined;
   const { requireAuth } = useRequireAuth();
   // Cached browse list — no spinner when returning to the home page.
   const { data: rawServices, isLoading: loading, error } = useServiceList();
@@ -58,9 +60,18 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // Optional decoration: marks cards the user has already requested. It's a
+    // protected call, so guests (no live session) must not fire it — otherwise
+    // every guest browsing the home page triggers a 401. skipAuthRedirect keeps
+    // a stale/expired token from hard-bouncing a browser to home.
+    if (!currentUserId) return;
+
     const fetchBookings = async () => {
       try {
-        const response = await api.get<{ data?: BookingSummary[] } | BookingSummary[]>("/bookings", { params: { role: "employer" } });
+        const response = await api.get<{ data?: BookingSummary[] } | BookingSummary[]>(
+          "/bookings",
+          { params: { role: "employer" }, skipAuthRedirect: true },
+        );
         const responseData = response.data;
         const bookings = Array.isArray(responseData)
           ? responseData
@@ -80,7 +91,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
       }
     };
     fetchBookings();
-  }, []);
+  }, [currentUserId]);
 
   const handleHireSubmit = async () => {
     if (!hireModal) return;

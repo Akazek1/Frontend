@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogIn } from "lucide-react"
+import { LogIn, Users, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
@@ -205,6 +205,30 @@ export function LoginForm() {
         >
           Change phone number
         </button>
+      )}
+
+      {/* Agency / company sign-in (email + password) */}
+      {!otpSent && (
+        <>
+          <div className="flex items-center gap-3 pt-1">
+            <span className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-400">or</span>
+            <span className="h-px flex-1 bg-gray-200" />
+          </div>
+          <Link
+            href="/business/login"
+            className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface">
+              <Users className="h-5 w-5 text-brand" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold text-ink">Agency or company?</span>
+              <span className="block text-xs text-gray-500">Sign in with email and password</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          </Link>
+        </>
       )}
 
       {/* Sign-up escape hatch */}

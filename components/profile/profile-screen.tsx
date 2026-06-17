@@ -14,6 +14,7 @@ import {
   User,
   Bookmark,
   Lock,
+  Building2,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import Image from "next/image";
@@ -82,9 +83,15 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  const isWorker = Boolean(user?.roles?.includes("WORKER" as never));
+
   const mainActions = [
     { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile" },
     { name: "My Services", description: "Create and manage service cards", Icon: Briefcase, href: "/more/services" },
+    // Agency inquiry flow — workers see hand-over offers, others see inquiries they sent.
+    isWorker
+      ? { name: "Placement Offers", description: "Agency placement offers for you", Icon: Building2, href: "/inquiries" }
+      : { name: "Agency Inquiries", description: "Requests you sent to agencies", Icon: Building2, href: "/inquiries" },
     { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/more/saved" },
     { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/more/notifications" },
   ];
