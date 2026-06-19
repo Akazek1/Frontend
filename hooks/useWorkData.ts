@@ -88,10 +88,10 @@ async function fetchWorkData(): Promise<WorkData> {
 export function useWorkData(): UseWorkDataResult {
   const { user, isAuthenticated, isLoading } = useAuth();
   const roles = user?.roles || [];
-  // Phase 1 reads-flip: provider status comes from the isProvider flag.
-  // Employer remains universal (any authenticated user can hire).
+  // Provider status comes from the isProvider flag; hiring (employer) is open
+  // to every authenticated user (the EMPLOYER role has been retired).
   const isProvider = Boolean(user?.isProvider);
-  const isEmployer = roles.includes("EMPLOYER");
+  const isEmployer = isAuthenticated;
 
   const query = useQuery({
     queryKey: ["work-data", user?.id],

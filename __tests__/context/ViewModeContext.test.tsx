@@ -57,11 +57,8 @@ describe("ViewModeContext", () => {
     })
 
     const { result } = renderHook(() => useViewMode(), { wrapper })
-    
-    act(() => {
-      result.current.toggleViewMode()
-    })
-    
+
+    // A provider defaults to the provider view; toggling flips it and back.
     expect(result.current.viewMode).toBe("provider")
 
     act(() => {
@@ -69,6 +66,12 @@ describe("ViewModeContext", () => {
     })
 
     expect(result.current.viewMode).toBe("employer")
+
+    act(() => {
+      result.current.toggleViewMode()
+    })
+
+    expect(result.current.viewMode).toBe("provider")
   })
 
   it("lets a non-provider switch into provider view (no lock)", () => {

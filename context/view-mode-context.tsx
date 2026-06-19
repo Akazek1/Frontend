@@ -20,7 +20,7 @@ interface ViewModeProviderProps {
 const VIEW_MODE_STORAGE_KEY = "hwa_view_mode";
 
 export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) => {
-  const { user, roles, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [viewMode, setViewModeState] = useState<ViewMode>("employer");
   const [isInitialized, setIsInitialized] = useState(false);
   // Both views are accessible to everyone (guests AND registered users) — the
@@ -28,7 +28,8 @@ export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) 
   // expressing interest), enforced server-side. `onlyWorker` here just picks a
   // sensible *default* view; it does not restrict toggling.
   const isProvider = Boolean(user?.isProvider);
-  const onlyWorker = isAuthenticated && isProvider && !roles.includes("EMPLOYER");
+  // A provider with no other (non-individual) roles defaults to the provider view.
+  const onlyWorker = isAuthenticated && isProvider;
 
   // Initialize from saved preference, else a sensible default.
   useEffect(() => {
