@@ -26,6 +26,8 @@ export interface AuthResponse {
       lastName: string;
       email: string;
       roles: UserRole[];
+      // Provider capability (replaces the WORKER role; populated by the backend).
+      isProvider?: boolean;
       isMobileVerified: boolean;
       isEmailVerified: boolean;
       profilePicture?: string;

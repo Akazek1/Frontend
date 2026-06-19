@@ -29,10 +29,11 @@ describe("ViewModeContext", () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       roles: ["EMPLOYER"],
+      user: { isProvider: false },
     })
 
     const { result } = renderHook(() => useViewMode(), { wrapper })
-    
+
     expect(result.current.viewMode).toBe("employer")
   })
 
@@ -40,6 +41,7 @@ describe("ViewModeContext", () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       roles: ["WORKER"],
+      user: { isProvider: true },
     })
 
     const { result } = renderHook(() => useViewMode(), { wrapper })
@@ -51,6 +53,7 @@ describe("ViewModeContext", () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       roles: ["EMPLOYER", "WORKER"],
+      user: { isProvider: true },
     })
 
     const { result } = renderHook(() => useViewMode(), { wrapper })

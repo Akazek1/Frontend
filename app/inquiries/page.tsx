@@ -14,7 +14,7 @@ export default function InquiriesListPage() {
   const [items, setItems] = useState<AgencyInquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isWorker = Boolean(user?.roles?.includes("WORKER" as never));
+  const isWorker = Boolean(user?.isProvider);
 
   useEffect(() => {
     async function load() {

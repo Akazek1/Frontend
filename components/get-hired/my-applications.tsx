@@ -29,7 +29,7 @@ export const MyApplications: React.FC = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const user = useSelector((state: RootState) => state.auth.user);
-  const hasWorkerRole = user?.roles?.includes('WORKER');
+  const hasWorkerRole = Boolean(user?.isProvider);
 
   useEffect(() => {
     const fetchApps = async () => {

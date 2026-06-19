@@ -20,11 +20,15 @@ interface ViewModeProviderProps {
 const VIEW_MODE_STORAGE_KEY = "hwa_view_mode";
 
 export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) => {
-  const { roles, isAuthenticated } = useAuth();
+  const { user, roles, isAuthenticated } = useAuth();
   const [viewMode, setViewModeState] = useState<ViewMode>("employer");
   const [isInitialized, setIsInitialized] = useState(false);
-  const onlyEmployer = isAuthenticated && roles.length === 1 && roles[0] === "EMPLOYER";
-  const onlyWorker = isAuthenticated && roles.length === 1 && roles[0] === "WORKER";
+  // Phase 1 reads-flip: provider status comes from isProvider. Employer stays
+  // universal, so "only employer" = authenticated but not a provider, and
+  // "only worker" = a provider who isn't also an employer.
+  const isProvider = Boolean(user?.isProvider);
+  const onlyEmployer = isAuthenticated && !isProvider;
+  const onlyWorker = isAuthenticated && isProvider && !roles.includes("EMPLOYER");
 
   // Initialize from localStorage or roles
   useEffect(() => {

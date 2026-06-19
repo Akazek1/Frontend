@@ -83,7 +83,7 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  const isWorker = Boolean(user?.roles?.includes("WORKER" as never));
+  const isWorker = Boolean(user?.isProvider);
 
   const mainActions = [
     { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile" },
