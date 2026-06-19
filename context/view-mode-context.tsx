@@ -23,43 +23,30 @@ export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) 
   const { user, roles, isAuthenticated } = useAuth();
   const [viewMode, setViewModeState] = useState<ViewMode>("employer");
   const [isInitialized, setIsInitialized] = useState(false);
-  // Phase 1 reads-flip: provider status comes from isProvider. Employer stays
-  // universal, so "only employer" = authenticated but not a provider, and
-  // "only worker" = a provider who isn't also an employer.
+  // Both views are accessible to everyone (guests AND registered users) — the
+  // toggle is never locked. Provider status only gates *actions* (e.g.
+  // expressing interest), enforced server-side. `onlyWorker` here just picks a
+  // sensible *default* view; it does not restrict toggling.
   const isProvider = Boolean(user?.isProvider);
-  const onlyEmployer = isAuthenticated && !isProvider;
   const onlyWorker = isAuthenticated && isProvider && !roles.includes("EMPLOYER");
 
-  // Initialize from localStorage or roles
+  // Initialize from saved preference, else a sensible default.
   useEffect(() => {
     if (typeof window !== "undefined" && !isInitialized) {
       const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-      
-      if (onlyEmployer) {
-        setViewModeState("employer");
-        setIsInitialized(true);
-      } else if (saved === "provider" || saved === "employer") {
+
+      if (saved === "provider" || saved === "employer") {
         setViewModeState(saved);
-        setIsInitialized(true);
-      } else if (isAuthenticated && roles.length > 0) {
-        // Default based on roles
-        const newMode = onlyWorker ? "provider" : "employer";
-        setViewModeState(newMode);
-        setIsInitialized(true);
       } else if (!isAuthenticated && isGuestBrowsingEnabled()) {
         // Guests default to the jobs feed ("Find work") per the redesign.
         setViewModeState("provider");
-        setIsInitialized(true);
+      } else if (isAuthenticated) {
+        // Sole providers land on the provider view; everyone else on employer.
+        setViewModeState(onlyWorker ? "provider" : "employer");
       }
+      setIsInitialized(true);
     }
-  }, [isAuthenticated, roles, isInitialized, onlyEmployer, onlyWorker]);
-
-  useEffect(() => {
-    if (!isInitialized || typeof window === "undefined" || !onlyEmployer) return;
-
-    setViewModeState("employer");
-    localStorage.setItem(VIEW_MODE_STORAGE_KEY, "employer");
-  }, [isInitialized, onlyEmployer]);
+  }, [isAuthenticated, onlyWorker, isInitialized]);
 
   // Save to localStorage whenever viewMode changes
   useEffect(() => {

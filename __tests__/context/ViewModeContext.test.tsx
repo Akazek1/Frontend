@@ -67,7 +67,28 @@ describe("ViewModeContext", () => {
     act(() => {
       result.current.toggleViewMode()
     })
-    
+
     expect(result.current.viewMode).toBe("employer")
+  })
+
+  it("lets a non-provider switch into provider view (no lock)", () => {
+    // A registered user who is not a provider must still be able to access the
+    // provider view — view access is open to everyone; only actions are gated.
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      roles: ["EMPLOYER"],
+      user: { isProvider: false },
+    })
+
+    const { result } = renderHook(() => useViewMode(), { wrapper })
+
+    expect(result.current.viewMode).toBe("employer")
+
+    act(() => {
+      result.current.setViewMode("provider")
+    })
+
+    // Must stick — not force-reverted back to employer.
+    expect(result.current.viewMode).toBe("provider")
   })
 })
