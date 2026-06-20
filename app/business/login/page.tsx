@@ -29,6 +29,12 @@ export default function BusinessLoginPage() {
       if (!data?.token) throw new Error("No token returned");
       localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      // After an admin reset, force a password change before entering the app.
+      if (data.mustChangePassword) {
+        toast("Please set a new password to continue.");
+        window.location.href = "/business/change-password";
+        return;
+      }
       toast.success("Welcome back!");
       // Hard navigation so the auth state re-hydrates from the stored token.
       window.location.href = "/agency";
