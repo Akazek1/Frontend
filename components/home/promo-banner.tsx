@@ -13,6 +13,7 @@ export interface HeroSlide {
   primaryCta: { label: string; href: string };
   secondaryCta: { label: string; href: string };
   image: string;
+  mediaType?: "IMAGE" | "VIDEO";
   bgColor: string;
 }
 
@@ -21,6 +22,7 @@ interface ApiBanner {
   title: string | null;
   subtitle: string | null;
   imageUrl: string;
+  mediaType?: "IMAGE" | "VIDEO";
   ctaText: string | null;
   ctaLink: string | null;
   isActive: boolean;
@@ -38,6 +40,7 @@ const defaultSlides: HeroSlide[] = [
     primaryCta: { label: "Browse Services", href: "/service?category=all" },
     secondaryCta: { label: "How it works", href: "/onboarding" },
     image: "/images/Banner.png",
+    mediaType: "IMAGE",
     bgColor: "#F0FAF0",
   },
 ];
@@ -57,6 +60,7 @@ function apiBannersToSlides(banners: ApiBanner[]): HeroSlide[] {
     primaryCta: { label: b.ctaText || "Learn More", href: b.ctaLink || "/" },
     secondaryCta: { label: "Browse Services", href: "/service?category=all" },
     image: b.imageUrl,
+    mediaType: b.mediaType || "IMAGE",
     bgColor: "#F0FAF0",
   }));
 }
@@ -177,13 +181,24 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
 
           {/* Right image */}
           <div className="relative w-[120px] sm:w-[150px] flex-shrink-0 self-stretch overflow-hidden">
-            <Image
-              src={slide.image}
-              alt="Banner"
-              fill
-              className="object-cover object-right"
-              priority
-            />
+            {slide.mediaType === "VIDEO" ? (
+              <video
+                src={slide.image}
+                className="h-full w-full object-cover object-right"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <Image
+                src={slide.image}
+                alt="Banner"
+                fill
+                className="object-cover object-right"
+                priority
+              />
+            )}
           </div>
         </div>
 

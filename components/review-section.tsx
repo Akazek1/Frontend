@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Star, Loader2 } from "lucide-react"
+import { Loader2, Smile } from "lucide-react"
 import { useReviews } from "@/hooks/useReviews"
 import { ReviewCard } from "@/components/ReviewCard"
 
@@ -10,7 +10,7 @@ interface ReviewSectionProps {
 }
 
 const ReviewSection: React.FC<ReviewSectionProps> = ({ serviceId }) => {
-  const { reviews, averageRating, totalReviews, loading, replyToReview } = useReviews({ serviceId })
+  const { reviews, wouldRehireCount, totalReviews, loading, replyToReview } = useReviews({ serviceId })
 
   if (loading) {
     return (
@@ -24,8 +24,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ serviceId }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500 flex items-center gap-2">
-          <Star className="w-4 h-4 fill-[#FB9400] stroke-[#FB9400]" />
-          {averageRating.toFixed(1)} | {totalReviews} reviews
+          <Smile className="w-4 h-4 text-brand" />
+          {wouldRehireCount} would rehire · {totalReviews} reviews
         </p>
       </div>
 

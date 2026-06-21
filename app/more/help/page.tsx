@@ -34,7 +34,7 @@ const HelpAndSupport = () => {
       id: 2,
       question: "How do I hire a service worker?",
       answer:
-        "Browse services in the 'Home' section, filter by category and location, and tap on a service. Review the worker's profile, ratings, and availability. Tap 'Book Now', select your preferred date and time, enter your address, and confirm payment. The worker will receive your booking request.",
+        "Browse services in the 'Home' section, filter by category and location, and tap on a service. Review the worker's profile, completed jobs, would-hire-again feedback, and availability. Tap 'Book Now', select your preferred date and time, enter your address, and confirm payment. The worker will receive your booking request.",
     },
     {
       id: 3,
@@ -70,7 +70,7 @@ const HelpAndSupport = () => {
       id: 8,
       question: "How do I leave a review?",
       answer:
-        "After a booking is completed, you'll be prompted to leave a review. Rate the worker's service (1-5 stars) and add comments about their professionalism, punctuality, and quality of work. Reviews help build trust in the community and help other employers make informed decisions.",
+        "After a booking is completed, you'll be prompted to share whether you would hire or work with the person again, plus an optional comment about professionalism, punctuality, and quality of work. Reviews help build trust in the community and help other users make informed decisions.",
     },
     {
       id: 9,

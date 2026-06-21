@@ -18,7 +18,6 @@ import {
   Pencil,
   Phone,
   ShieldCheck,
-  Star,
   Trash2,
   User as UserIcon,
 } from "lucide-react";
@@ -242,15 +241,9 @@ export default function WorkerDetailPage() {
                 <OverviewRow icon={MessageSquare} label="Languages" value={worker.languages?.length ? worker.languages.join(", ") : "—"} />
                 <OverviewRow icon={Briefcase} label="Experience" value={worker.yearsOfExperience != null ? `${worker.yearsOfExperience} years` : "—"} />
                 <OverviewRow
-                  icon={Star}
-                  label="Rating"
-                  value={
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      {worker.rating ? worker.rating.toFixed(1) : "New"}
-                      {worker.reviewCount > 0 && <span className="text-ink-muted">({worker.reviewCount} reviews)</span>}
-                    </span>
-                  }
+                  icon={MessageSquare}
+                  label="Reviews"
+                  value={worker.reviewCount > 0 ? `${worker.reviewCount} reviews` : "No reviews yet"}
                 />
               </div>
             </div>

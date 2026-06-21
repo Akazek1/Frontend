@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Shirt,
   Sparkles,
+  Star,
   Trees,
   Wrench,
   Zap,
@@ -69,6 +70,15 @@ function getReviewSubject(item: WorkItem): ReviewSubject {
   };
 }
 
+// A review is editable for a 14-day grace period after posting, and only until
+// the reviewed party replies (mirrors the backend rule in feedback.service).
+const REVIEW_EDIT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+function isReviewEditable(review?: Review | null): boolean {
+  if (!review || review.reply) return false;
+  if (!review.createdAt) return true; // unknown age — let the server decide
+  return Date.now() - new Date(review.createdAt).getTime() < REVIEW_EDIT_WINDOW_MS;
+}
+
 function normalizeBookingReviews(reviews: Review[], bookingUpdatedAt?: string): Review[] {
   return reviews.map((review) => ({
     ...review,
@@ -94,6 +104,8 @@ export default function WorkPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
   const [reviewTarget, setReviewTarget] = useState<WorkItem | null>(null);
+  // When set, the review dialog is in EDIT mode for an already-authored review.
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [reviewDetails, setReviewDetails] = useState<{
     item: WorkItem;
     reviews: Review[];
@@ -105,6 +117,9 @@ export default function WorkPage() {
     infoRows?: { label: string; value: string }[];
   } | null>(null);
   const [authoredReviewBookingIds, setAuthoredReviewBookingIds] = useState<Set<string>>(new Set());
+  // Full authored reviews keyed by bookingId — used to prefill the edit dialog
+  // and decide whether a review is still editable.
+  const [authoredReviewsByBooking, setAuthoredReviewsByBooking] = useState<Map<string, Review>>(new Map());
   const [receivedReviews, setReceivedReviews] = useState<Review[]>([]);
 
   useEffect(() => {
@@ -126,13 +141,19 @@ export default function WorkPage() {
         const received = receivedResponse.data?.data || receivedResponse.data || [];
         const authored = authoredResponse.data?.data || authoredResponse.data || [];
         setReceivedReviews(Array.isArray(received) ? normalizeBookingReviews(received) : []);
+        const authoredList: Review[] = Array.isArray(authored) ? authored : [];
         setAuthoredReviewBookingIds(
           new Set(
-            Array.isArray(authored)
-              ? authored
-                  .map((review: Review) => review.bookingId)
-                  .filter((bookingId): bookingId is string => Boolean(bookingId))
-              : [],
+            authoredList
+              .map((review: Review) => review.bookingId)
+              .filter((bookingId): bookingId is string => Boolean(bookingId)),
+          ),
+        );
+        setAuthoredReviewsByBooking(
+          new Map(
+            authoredList
+              .filter((review) => Boolean(review.bookingId))
+              .map((review) => [review.bookingId as string, review]),
           ),
         );
       } catch {
@@ -143,17 +164,30 @@ export default function WorkPage() {
   }, []);
 
   const sections = useMemo(() => {
-    return sectionOrder.reduce<Record<SectionKey, WorkItem[]>>((acc, section) => {
-      acc[section] = items.filter((item) => item.section === section);
-      return acc;
-    }, {
-      awaitingReview: [],
-      awaitingReply: [],
-      expressedInterest: [],
-      activeDeals: [],
-      done: [],
-    });
-  }, [items]);
+    const grouped = sectionOrder.reduce<Record<SectionKey, WorkItem[]>>(
+      (acc, section) => {
+        acc[section] = items.filter((item) => item.section === section);
+        return acc;
+      },
+      {
+        awaitingReview: [],
+        awaitingReply: [],
+        expressedInterest: [],
+        activeDeals: [],
+        done: [],
+      },
+    );
+    // Surface completed-but-unreviewed bookings at the top of "Done" so the
+    // pending review prompt isn't buried under already-reviewed history.
+    const owesReview = (item: WorkItem) =>
+      item.status === "COMPLETED" &&
+      !!item.bookingId &&
+      !authoredReviewBookingIds.has(item.bookingId);
+    grouped.done = [...grouped.done].sort(
+      (a, b) => Number(owesReview(b)) - Number(owesReview(a)),
+    );
+    return grouped;
+  }, [items, authoredReviewBookingIds]);
 
   const counts = useMemo(
     () => ({
@@ -225,25 +259,49 @@ export default function WorkPage() {
   };
 
   const openReview = (item: WorkItem) => {
-    if (item.bookingId && authoredReviewBookingIds.has(item.bookingId)) {
-      void openBookingReviews(item);
+    const existing = item.bookingId
+      ? authoredReviewsByBooking.get(item.bookingId)
+      : undefined;
+    if (existing) {
+      // Already reviewed: edit it while still inside the grace period, else
+      // fall back to the read-only booking reviews.
+      if (isReviewEditable(existing)) {
+        setEditingReview(existing);
+        setReviewTarget(item);
+      } else {
+        void openBookingReviews(item);
+      }
       return;
     }
+    setEditingReview(null);
     setReviewTarget(item);
   };
 
   const submitReview = async (payload: ReviewPromptPayload) => {
     if (!reviewTarget?.bookingId) return false;
     try {
-      const response = await api.post("/feedback", {
-        wouldRehire: payload.wouldRehire,
-        comment: payload.comment,
-        bookingId: reviewTarget.bookingId,
-      });
-      toast.success("Review submitted.");
-      setLiveMessage("Review submitted.");
+      // Edit an existing review (PATCH) vs. create a new one (POST).
+      const response = editingReview
+        ? await api.patch(`/feedback/${editingReview.id}`, {
+            wouldRehire: payload.wouldRehire,
+            comment: payload.comment ?? "",
+          })
+        : await api.post("/feedback", {
+            wouldRehire: payload.wouldRehire,
+            comment: payload.comment,
+            bookingId: reviewTarget.bookingId,
+          });
+      toast.success(editingReview ? "Review updated." : "Review submitted.");
+      setLiveMessage(editingReview ? "Review updated." : "Review submitted.");
       setAuthoredReviewBookingIds(prev => new Set(prev).add(reviewTarget.bookingId!));
       const created = response.data?.data || response.data;
+      if (created && reviewTarget.bookingId) {
+        setAuthoredReviewsByBooking((prev) => {
+          const next = new Map(prev);
+          next.set(reviewTarget.bookingId!, created);
+          return next;
+        });
+      }
       if (reviewDetails?.item.bookingId === reviewTarget.bookingId && created) {
         setReviewDetails((prev) =>
           prev
@@ -445,7 +503,19 @@ export default function WorkPage() {
                     item={item}
                     isDualRole={isDualRole}
                     isActing={actingId === item.id}
+                    needsReview={
+                      item.section === "done" &&
+                      item.status === "COMPLETED" &&
+                      !!item.bookingId &&
+                      !authoredReviewBookingIds.has(item.bookingId)
+                    }
+                    canEditReview={
+                      item.section === "done" &&
+                      !!item.bookingId &&
+                      isReviewEditable(authoredReviewsByBooking.get(item.bookingId))
+                    }
                     onPrimary={openPrimary}
+                    onReview={openReview}
                     onReject={(target) => void handleBookingStatus(target, "CANCELLED")}
                     onReminder={(target) => void handleReminder(target)}
                     onWithdraw={(target) => void handleWithdraw(target)}
@@ -510,8 +580,13 @@ export default function WorkPage() {
             ? "Would you work with this person again?"
             : "Would you hire this person again?"
         }
+        initialRehire={editingReview?.wouldRehire ?? null}
+        initialComment={editingReview?.comment ?? ""}
         onOpenChange={(open) => {
-          if (!open) setReviewTarget(null);
+          if (!open) {
+            setReviewTarget(null);
+            setEditingReview(null);
+          }
         }}
         onSubmit={submitReview}
       />
@@ -637,7 +712,10 @@ function DealCard({
   item,
   isDualRole,
   isActing,
+  needsReview = false,
+  canEditReview = false,
   onPrimary,
+  onReview,
   onReject,
   onReminder,
   onWithdraw,
@@ -645,7 +723,13 @@ function DealCard({
   item: WorkItem;
   isDualRole: boolean;
   isActing: boolean;
+  // A completed booking the current user hasn't reviewed yet — show the
+  // "Leave a Review" prompt directly on the card.
+  needsReview?: boolean;
+  // Already reviewed but still within the edit window — offer "Edit review".
+  canEditReview?: boolean;
   onPrimary: (item: WorkItem) => void;
+  onReview: (item: WorkItem) => void;
   onReject: (item: WorkItem) => void;
   onReminder: (item: WorkItem) => void;
   onWithdraw: (item: WorkItem) => void;
@@ -694,8 +778,15 @@ function DealCard({
                   titleNode
                 )}
               </div>
-              {!hideStatusBadge && (
-                <StatusBadge status={item.status} label={item.statusLabel} />
+              {needsReview ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10px] font-black text-[#C2630B]">
+                  <Star className="h-3 w-3 fill-[#C2630B] stroke-[#C2630B]" />
+                  Review owed
+                </span>
+              ) : (
+                !hideStatusBadge && (
+                  <StatusBadge status={item.status} label={item.statusLabel} />
+                )
               )}
             </div>
 
@@ -740,7 +831,10 @@ function DealCard({
         <DealCardActions
           item={item}
           isActing={isActing}
+          needsReview={needsReview}
+          canEditReview={canEditReview}
           onPrimary={onPrimary}
+          onReview={onReview}
           onReject={onReject}
           onReminder={onReminder}
           onWithdraw={onWithdraw}
@@ -757,14 +851,20 @@ function DealCard({
 function DealCardActions({
   item,
   isActing,
+  needsReview = false,
+  canEditReview = false,
   onPrimary,
+  onReview,
   onReject,
   onReminder,
   onWithdraw,
 }: {
   item: WorkItem;
   isActing: boolean;
+  needsReview?: boolean;
+  canEditReview?: boolean;
   onPrimary: (item: WorkItem) => void;
+  onReview: (item: WorkItem) => void;
   onReject: (item: WorkItem) => void;
   onReminder: (item: WorkItem) => void;
   onWithdraw: (item: WorkItem) => void;
@@ -860,6 +960,64 @@ function DealCardActions({
 
   // Section: DONE — opens the job detail dialog (info + reviews + rehire).
   if (item.section === "done") {
+    // A completed booking the user hasn't reviewed yet — lead with the review
+    // prompt so the feedback loop is one tap away, not buried in details.
+    if (needsReview) {
+      return (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReview(item);
+            }}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[12px] font-black text-white"
+          >
+            <Star className="h-4 w-4 fill-white stroke-white" />
+            Leave a Review
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrimary(item);
+            }}
+            className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
+          >
+            View Details
+          </button>
+        </div>
+      );
+    }
+    // Already reviewed and still inside the 14-day edit window — let the author
+    // amend their review (locked once the other party replies, server-enforced).
+    if (canEditReview) {
+      return (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReview(item);
+            }}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
+          >
+            <Star className="h-4 w-4" />
+            Edit review
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrimary(item);
+            }}
+            className="flex min-h-11 w-full items-center justify-center rounded-lg bg-brand text-[12px] font-black text-white"
+          >
+            View Details
+          </button>
+        </div>
+      );
+    }
     return (
       <button
         type="button"

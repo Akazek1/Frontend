@@ -26,7 +26,6 @@ import {
   MessageCircleMore,
   Search,
   ShieldCheck,
-  Star,
   Trash2,
   User,
   X,
@@ -501,7 +500,7 @@ function ApplicantCard({
 }) {
   const w = app.worker;
   const name = `${w?.firstName || ""} ${w?.lastName || ""}`.trim() || "Worker";
-  const rating = w?.trustScore || 0;
+  const trustScore = w?.trustScore || 0;
   const jobs = w?.jobsCompleted || 0;
   const years = w?.yearsOfExperience;
   const langs = w?.languages || [];
@@ -516,11 +515,12 @@ function ApplicantCard({
             <h3 className="truncate text-[14px] font-black text-ink">{name}</h3>
             {w?.isVerified && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-brand" />}
           </div>
-          {(rating > 0 || jobs > 0) && (
-            <p className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-muted">
-              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold text-ink">{rating ? rating.toFixed(1) : "—"}</span>
-              {jobs > 0 && <span className="text-ink-subtle">({jobs} jobs)</span>}
+          {(trustScore > 0 || jobs > 0) && (
+            <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-muted">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand" />
+              {trustScore > 0 && <span className="font-bold text-ink">Trust {trustScore.toFixed(1)}</span>}
+              {trustScore > 0 && jobs > 0 && <span className="text-ink-subtle">•</span>}
+              {jobs > 0 && <span className="text-ink-subtle">{jobs} jobs done</span>}
             </p>
           )}
           <p className="mt-0.5 text-[12px] text-ink-muted">

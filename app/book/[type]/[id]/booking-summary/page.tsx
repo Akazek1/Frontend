@@ -85,8 +85,12 @@ const BookingSummary = () => {
                 const mappedProvider: Provider = {
                     id: service.id,
                     image: service.serviceImage || "/default-service.svg",
-                    name: `${service.provider.firstName} ${service.provider.lastName}`,
-                    handle: `${service.provider.firstName.toLowerCase()}${service.provider.lastName.toLowerCase()}`,
+                    name: service.provider
+                        ? `${service.provider.firstName} ${service.provider.lastName}`
+                        : service.company?.name || "Company",
+                    handle: service.provider
+                        ? `${service.provider.firstName.toLowerCase()}${service.provider.lastName.toLowerCase()}`
+                        : undefined,
                     title: service.title,
                     experience: service.description || "No experience provided",
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
@@ -97,7 +101,7 @@ const BookingSummary = () => {
                     distance: "2 miles",
                     available: true,
                     verified: true,
-                    type: isEmployer(service.provider.roles) ? "Agency" : "Professional",
+                    type: isEmployer(service.provider?.roles) ? "Agency" : "Professional",
                 };
 
                 setProvider(mappedProvider);

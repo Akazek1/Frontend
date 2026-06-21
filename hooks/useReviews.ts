@@ -33,7 +33,15 @@ export interface Review {
   booking?: {
     scheduledFor: string
     updatedAt: string
+    // Present on every review payload (the booking relation is included). Used
+    // to label the rehire badge by direction: target = worker is an
+    // employer→worker review ("hire"); target = employer is worker→employer
+    // ("work with").
+    workerId?: string
+    employerId?: string
   }
+  createdAt?: string
+  editCount?: number
 }
 
 const normalizeReview = (review: Review): Review => ({
@@ -54,6 +62,7 @@ interface UseReviewsOptions {
 export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [averageRating, setAverageRating] = useState<number>(0)
+  const [wouldRehireCount, setWouldRehireCount] = useState<number>(0)
   const [totalReviews, setTotalReviews] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -73,6 +82,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
 
         setReviews(filteredReviews)
         setTotalReviews(filteredReviews.length)
+        setWouldRehireCount(filteredReviews.filter((review: Review) => review.wouldRehire === "YES").length)
 
         const ratedReviews = filteredReviews.filter((review: Review) => typeof review.rating === "number")
         const avgRating =
@@ -86,6 +96,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
         if (reviewsError?.response?.status === 404) {
           setReviews([])
           setTotalReviews(0)
+          setWouldRehireCount(0)
           setAverageRating(0)
         } else {
           console.error("Failed to fetch reviews:", error)
@@ -153,6 +164,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
   return {
     reviews,
     averageRating,
+    wouldRehireCount,
     totalReviews,
     loading,
     submitReview,

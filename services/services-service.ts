@@ -40,7 +40,6 @@ export interface BrowseServicesParams {
   serviceType?: string;
   available?: boolean;
   location?: string;
-  minRating?: number;
   page?: number;
   limit?: number;
 }

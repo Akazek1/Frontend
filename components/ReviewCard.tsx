@@ -29,13 +29,21 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
     profilePicture: "",
   }
   const canReply = !!onReply && !!currentUserId && review.target?.id === currentUserId && !review.reply
+
+  // Direction-aware label: when the reviewed person (target) is the worker, this
+  // is an employer rating a worker ("hire"); when the target is the employer,
+  // it's a worker rating an employer ("work with"). Default to "hire" (the
+  // common service-page case) when booking roles aren't present.
+  const targetIsEmployer =
+    !!review.booking?.employerId && review.target?.id === review.booking.employerId
+  const verb = targetIsEmployer ? "work with" : "hire"
   const rehireBadge =
     review.wouldRehire === "YES"
-      ? { emoji: "😊", label: "Would hire again", className: "bg-green-50 text-green-700" }
+      ? { emoji: "😊", label: `Would ${verb} again`, className: "bg-green-50 text-green-700" }
       : review.wouldRehire === "MAYBE"
-        ? { emoji: "😐", label: "Might hire again", className: "bg-amber-50 text-amber-700" }
+        ? { emoji: "😐", label: `Might ${verb} again`, className: "bg-amber-50 text-amber-700" }
         : review.wouldRehire === "NO"
-          ? { emoji: "😞", label: "Would not hire again", className: "bg-red-50 text-red-600" }
+          ? { emoji: "😞", label: `Would not ${verb} again`, className: "bg-red-50 text-red-600" }
           : null
 
   const handleReply = async () => {

@@ -20,6 +20,10 @@ import {
 } from "@/lib/service-display";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import {
+  ReviewPromptDialog,
+  type ReviewPromptPayload,
+} from "@/components/reviews/review-prompt-dialog";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import {
@@ -44,7 +48,6 @@ interface SearchFilters {
   distanceKm?: number;
   minPrice?: number;
   maxPrice?: number;
-  minRating?: number;
 }
 
 interface JobFilters {
@@ -70,10 +73,14 @@ interface HireModal {
 }
 
 interface ExistingBooking {
+  id?: string;
   status?: string;
   service?: {
     id?: string;
   } | null;
+  // Reviews authored by the current employer for this booking (backend filters
+  // to the caller) — empty on a completed booking means it's still unreviewed.
+  reviews?: { id: string }[];
 }
 
 interface ApplicationSummary {
@@ -93,8 +100,6 @@ const AVAILABILITY_OPTIONS: Array<{ label: string; value: AvailabilityFilter }> 
 
 const DISTANCE_OPTIONS = [2, 5, 10, 25];
 const LOCATION_OPTIONS = ["Kicukiro", "Nyarugenge", "Gasabo", "Kigali", "Remera"];
-const RATING_OPTIONS = [4.5, 4, 3.5];
-
 const buildSearchCacheKey = (type: "jobs" | "services", query: string, filters: object) => {
   const normalizedFilters = Object.entries(filters)
     .filter(([, value]) => value !== undefined && value !== "")
@@ -120,6 +125,9 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const [notes, setNotes] = useState("");
   const [submittingHire, setSubmittingHire] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
+  // serviceId -> bookingId of a completed-but-unreviewed job (review-first re-hire).
+  const [reviewableByService, setReviewableByService] = useState<Map<string, string>>(new Map());
+  const [reviewModal, setReviewModal] = useState<{ service: Service; bookingId: string } | null>(null);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [isApplyingJob, setIsApplyingJob] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -199,14 +207,30 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           : Array.isArray(response.data)
           ? response.data
           : [];
-        const inactive = new Set(["CANCELLED", "REJECTED"]);
-        setRequestedServiceIds(
-          new Set(
-            (bookings as ExistingBooking[])
-              .filter((booking) => booking.service?.id && !inactive.has(String(booking.status).toUpperCase()))
-              .map((booking) => booking.service?.id as string),
-          ),
+        const active = new Set(["PENDING", "CONFIRMED", "IN_PROGRESS"]);
+        const list = bookings as ExistingBooking[];
+        const activeIds = new Set(
+          list
+            .filter((b) => b.service?.id && active.has(String(b.status).toUpperCase()))
+            .map((b) => b.service?.id as string),
         );
+        setRequestedServiceIds(activeIds);
+        // Completed jobs you haven't reviewed → card leads with "Leave a review"
+        // (unless there's also an active booking for that service).
+        const reviewable = new Map<string, string>();
+        for (const b of list) {
+          const sid = b.service?.id;
+          if (
+            sid &&
+            b.id &&
+            !activeIds.has(sid) &&
+            String(b.status).toUpperCase() === "COMPLETED" &&
+            (b.reviews?.length ?? 0) === 0
+          ) {
+            if (!reviewable.has(sid)) reviewable.set(sid, b.id);
+          }
+        }
+        setReviewableByService(reviewable);
       } catch {
         // Non-blocking: search results can still show and the API will validate duplicates.
       }
@@ -300,7 +324,6 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     if (selectedFilters.distanceKm) params.set("distanceKm", String(selectedFilters.distanceKm));
     if (selectedFilters.minPrice) params.set("minPrice", String(selectedFilters.minPrice));
     if (selectedFilters.maxPrice) params.set("maxPrice", String(selectedFilters.maxPrice));
-    if (selectedFilters.minRating) params.set("minRating", String(selectedFilters.minRating));
     params.set("limit", "12");
 
     try {
@@ -363,10 +386,34 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     if (!query.trim()) onExitPanel?.();
   };
 
-  const openHireModal = (service: Service) => {
-    const providerName = `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || "Provider";
+  const submitProviderReview = async (payload: ReviewPromptPayload) => {
+    if (!reviewModal) return false;
+    try {
+      await api.post("/feedback", {
+        wouldRehire: payload.wouldRehire,
+        comment: payload.comment,
+        bookingId: reviewModal.bookingId,
+      });
+      toast.success("Review submitted.");
+      // Card returns to "Request to Hire".
+      setReviewableByService((prev) => {
+        const next = new Map(prev);
+        next.delete(reviewModal.service.id);
+        return next;
+      });
+      return true;
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Could not submit your review."));
+      return false;
+    }
+  };
 
-    if (currentUserId && service.provider.id === currentUserId) {
+  const openHireModal = (service: Service) => {
+    const providerName = service.provider
+      ? `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || "Provider"
+      : service.company?.name || "Company";
+
+    if (currentUserId && service.provider?.id === currentUserId) {
       toast.error("You can't book your own service.");
       return;
     }
@@ -448,7 +495,6 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     filters.distanceKm && { key: "distanceKm" as const, label: `${filters.distanceKm} km`, onRemove: () => removeServiceFilter("distanceKm") },
     filters.minPrice && { key: "minPrice" as const, label: `From ${filters.minPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("minPrice") },
     filters.maxPrice && { key: "maxPrice" as const, label: `Up to ${filters.maxPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("maxPrice") },
-    filters.minRating && { key: "minRating" as const, label: `${filters.minRating}+ stars`, onRemove: () => removeServiceFilter("minRating") },
   ].filter(Boolean) as Array<{ key: string; label?: string; onRemove: () => void }>;
 
   const jobFilterLabels = [
@@ -536,13 +582,18 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
             <div className="grid gap-4">
               {services.map((service) => {
                 const card = mapServiceToProviderCard(service);
+                const reviewBookingId = reviewableByService.get(service.id);
 
                 return (
                   <ServiceCard
                     key={service.id}
                     {...card}
                     hasRequested={requestedServiceIds.has(service.id)}
-                    isOwnService={Boolean(currentUserId && service.provider.id === currentUserId)}
+                    isOwnService={Boolean(currentUserId && service.provider?.id === currentUserId)}
+                    needsReview={Boolean(reviewBookingId)}
+                    onLeaveReview={() =>
+                      reviewBookingId && setReviewModal({ service, bookingId: reviewBookingId })
+                    }
                     onClick={() => router.push(getServiceDetailPath(service))}
                     onHireClick={() => openHireModal(service)}
                   />
@@ -613,6 +664,23 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           </div>
         </div>
       )}
+
+      <ReviewPromptDialog
+        open={Boolean(reviewModal)}
+        subject={
+          reviewModal
+            ? {
+                title: mapServiceToProviderCard(reviewModal.service).name,
+                subtitle: reviewModal.service.title,
+              }
+            : null
+        }
+        rehireQuestion="Would you hire this person again?"
+        onOpenChange={(open) => {
+          if (!open) setReviewModal(null);
+        }}
+        onSubmit={submitProviderReview}
+      />
 
       {hireModal && (
         <>
@@ -771,21 +839,6 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                     </div>
                   </FilterGroup>
 
-                  <FilterGroup title="Rating">
-                    <div className="grid grid-cols-3 gap-2">
-                      {RATING_OPTIONS.map((rating) => (
-                        <OptionButton
-                          key={rating}
-                          label={`${rating}+`}
-                          selected={draftFilters.minRating === rating}
-                          onClick={() => setDraftFilters((c) => ({
-                            ...c,
-                            minRating: c.minRating === rating ? undefined : rating,
-                          }))}
-                        />
-                      ))}
-                    </div>
-                  </FilterGroup>
                 </>
               )}
             </SheetBody>

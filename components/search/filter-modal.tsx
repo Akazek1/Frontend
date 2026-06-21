@@ -30,7 +30,6 @@ export interface FilterValues {
   availability?: string;
   location?: string;
   distanceKm?: number;
-  minRating?: number;
 }
 
 const LOCATIONS = ["Kicukiro", "Nyarugenge", "Gasabo", "Kigali", "Remera"];
@@ -103,7 +102,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                <SelectItem value="STAFFING_AGENCY">Staffing Agency</SelectItem>
                 <SelectItem value="COMPANY">Company</SelectItem>
               </SelectContent>
             </Select>
@@ -164,25 +162,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Rating */}
-          <div className="space-y-3">
-            <Label className={appFieldLabelClass}>Minimum Rating</Label>
-            <Select
-              value={filters.minRating?.toString() || "0"}
-              onValueChange={(value) => setFilters({ ...filters, minRating: Number(value) || undefined })}
-            >
-              <SelectTrigger className={cn(appInputClass, "w-full")}>
-                <SelectValue placeholder="Any Rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Any Rating</SelectItem>
-                <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                <SelectItem value="4.0">4.0+ Stars</SelectItem>
-                <SelectItem value="3.5">3.5+ Stars</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </SheetBody>
 

@@ -1,5 +1,5 @@
 "use client";
-import { Star, Flag } from "lucide-react";
+import { Flag, Smile } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
@@ -13,6 +13,7 @@ interface ProfileHeaderProps {
   profilePicture?: string;
   isVerified?: boolean;
   createdAt?: string;
+  wouldHireAgain?: number;
   rating?: number;
   reviewCount?: number;
   trustScore?: number;
@@ -26,7 +27,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   profilePicture,
   isVerified,
   createdAt,
-  rating = 0,
+  wouldHireAgain = 0,
   reviewCount = 0,
   trustScore = 0,
   onReportClick,
@@ -104,13 +105,18 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             )}
           </div>
 
-          {/* Rating + Trust Score */}
+          {/* Trust signals */}
           <div className="flex items-center gap-4 flex-wrap">
-            {rating > 0 && (
+            {wouldHireAgain > 0 && (
               <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 stroke-yellow-400" />
-                <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span>
-                <span className="text-sm text-gray-500">({reviewCount} reviews)</span>
+                <Smile className="h-4 w-4 text-brand" />
+                <span className="font-semibold text-gray-900">{wouldHireAgain}</span>
+                <span className="text-sm text-gray-500">would hire again</span>
+              </div>
+            )}
+            {reviewCount > 0 && (
+              <div className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium text-gray-700">
+                {reviewCount} reviews
               </div>
             )}
             {trustScore > 0 && trustScore <= 5 && (

@@ -37,7 +37,11 @@ export default function BusinessLoginPage() {
       }
       toast.success("Welcome back!");
       // Hard navigation so the auth state re-hydrates from the stored token.
-      window.location.href = "/agency";
+      // Service companies land on their service console; agencies on /agency.
+      window.location.href =
+        data.user?.orgType === "SERVICE_COMPANY"
+          ? "/business/services"
+          : "/agency";
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Invalid email or password"));
       setLoading(false);

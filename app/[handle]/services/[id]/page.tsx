@@ -56,6 +56,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { ReportModal } from "@/components/provider/report-modal";
 import { ReviewCard } from "@/components/ReviewCard";
+import {
+    ReviewPromptDialog,
+    type ReviewPromptPayload,
+} from "@/components/reviews/review-prompt-dialog";
 import { useReviews } from "@/hooks/useReviews";
 import toast from "react-hot-toast";
 
@@ -64,7 +68,6 @@ const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: R
     ClipboardCheck,
     Clock,
     Users,
-    Star,
     Smile,
     Home: HomeIcon,
     Sparkles,
@@ -74,10 +77,14 @@ const LUCIDE: Record<string, React.ComponentType<{ className?: string; style?: R
 };
 
 interface ExistingBookingSummary {
+    id?: string;
     status?: string;
     service?: {
         id?: string;
     };
+    // Reviews authored by the current employer for this booking (backend filters
+    // to the caller) — empty means the completed job is still unreviewed.
+    reviews?: { id: string }[];
 }
 
 function ServiceDetailPage() {
@@ -96,6 +103,9 @@ function ServiceDetailPage() {
     const [bookmarked, setBookmarked] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [hasRequested, setHasRequested] = useState(false);
+    // Booking id of a completed-but-unreviewed job with this provider, if any.
+    const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
+    const [reviewOpen, setReviewOpen] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
     const openLightbox = (images: string[], index: number) => setLightbox({ images, index });
@@ -146,13 +156,25 @@ function ServiceDetailPage() {
                     : Array.isArray(res.data)
                     ? res.data
                     : [];
-                const inactive = new Set(["CANCELLED", "REJECTED"]);
-                const found = (bookings as ExistingBookingSummary[]).some(
-                    (booking) =>
-                        booking.service?.id === serviceId &&
-                        !inactive.has(String(booking.status).toUpperCase())
+                const active = new Set(["PENDING", "CONFIRMED", "IN_PROGRESS"]);
+                const mine = (bookings as ExistingBookingSummary[]).filter(
+                    (booking) => booking.service?.id === serviceId,
                 );
-                setHasRequested(found);
+                const hasActive = mine.some((booking) =>
+                    active.has(String(booking.status).toUpperCase()),
+                );
+                setHasRequested(hasActive);
+                // No active engagement, but a completed job you haven't reviewed
+                // yet → lead with the review prompt (review-first re-hire).
+                const unreviewed = hasActive
+                    ? undefined
+                    : mine.find(
+                          (booking) =>
+                              String(booking.status).toUpperCase() === "COMPLETED" &&
+                              (booking.reviews?.length ?? 0) === 0 &&
+                              booking.id,
+                      );
+                setReviewBookingId(unreviewed?.id ?? null);
             } catch {
                 // silent
             }
@@ -185,23 +207,38 @@ function ServiceDetailPage() {
     }, [service, searchParams]);
 
     const provider = service?.provider;
-    const providerName = useMemo(() => getProviderName(provider), [provider]);
+    // Project 2 Phase E — a company-owned card has no individual provider; the
+    // owner shown in the header is the Service Company instead.
+    const company = service?.company;
+    const isCompanyCard = !provider && !!company;
+    const providerName = useMemo(
+        () => (isCompanyCard ? company?.name || "Company" : getProviderName(provider)),
+        [isCompanyCard, company, provider],
+    );
     const providerHandle = useMemo(() => getProviderHandle(provider), [provider]);
-    const profilePath = `/${providerHandle.replace(/^@/, "")}`;
-    const firstName = provider?.firstName || providerName.split(" ")[0] || "Provider";
+    // Company cards don't have an individual profile to link to.
+    const profilePath = isCompanyCard ? null : `/${providerHandle.replace(/^@/, "")}`;
+    const firstName = isCompanyCard
+        ? company?.name || "Company"
+        : provider?.firstName || providerName.split(" ")[0] || "Provider";
 
     const serviceImages = useMemo(() => getServiceImages(service), [service]);
     const workPhotos = serviceImages;
 
-    const providerPhoto =
-        provider?.profilePicture || provider?.profileImg || profileImageFallback;
+    const providerPhoto = isCompanyCard
+        ? company?.logoUrl || profileImageFallback
+        : provider?.profilePicture || provider?.profileImg || profileImageFallback;
 
     // Real languages only — the "Speaks" row is hidden when none are set.
     const languages = provider?.languages ?? [];
     const educationLevel = provider?.educationLevel;
 
-    const isVerified = provider?.isVerified ?? false;
-    const availableToday = service?.isActive !== false && (service?.provider?.availableForWork ?? true);
+    const isVerified = isCompanyCard
+        ? company?.verified ?? false
+        : provider?.isVerified ?? false;
+    const availableToday = isCompanyCard
+        ? service?.isActive !== false
+        : service?.isActive !== false && (service?.provider?.availableForWork ?? true);
 
     // "About" shows the service description the provider actually wrote, falling
     // back to their profile bio. When both are empty the section is hidden —
@@ -213,16 +250,14 @@ function ServiceDetailPage() {
         return formatPrice(service.priceMin, service.priceMax, service.priceType) || "Price on request";
     }, [service]);
 
-    // Real stats only. Counts are 0 for a new provider; rating reads "New"
-    // until the first review; years shows "—" when not provided.
-    const totalReviews = service?.reviews?.totalReviews ?? 0;
+    // Real stats only. Counts are 0 for a new provider; years shows "—" when
+    // not provided. We no longer surface star ratings in the user experience.
     const statDisplay: Record<string, string> = {
         years:
             provider?.yearsOfExperience != null
                 ? String(provider.yearsOfExperience)
                 : "—",
         jobs: String(service?.reviews?.jobsCompleted ?? 0),
-        rating: totalReviews > 0 ? (service?.reviews?.averageRating ?? 0).toFixed(1) : "New",
         rehire: String(service?.reviews?.wouldHireAgain ?? 0),
     };
 
@@ -248,6 +283,27 @@ function ServiceDetailPage() {
     const isOwnService = Boolean(
         isAuthenticated && user?.id && service && (service.providerId === user.id || service.provider?.id === user.id)
     );
+
+    // Review-first re-hire: a completed job you haven't reviewed yet leads with
+    // a review prompt instead of the hire button.
+    const needsReview = !hasRequested && !!reviewBookingId && !isOwnService;
+
+    const submitProviderReview = async (payload: ReviewPromptPayload) => {
+        if (!reviewBookingId) return false;
+        try {
+            await api.post("/feedback", {
+                wouldRehire: payload.wouldRehire,
+                comment: payload.comment,
+                bookingId: reviewBookingId,
+            });
+            toast.success("Review submitted.");
+            setReviewBookingId(null); // card returns to "Request to Hire"
+            return true;
+        } catch (err) {
+            toast.error(getApiErrorMessage(err, "Could not submit your review."));
+            return false;
+        }
+    };
 
     const openHireModal = () => {
         if (!service || hasRequested) return;
@@ -444,20 +500,38 @@ function ServiceDetailPage() {
 
                     {/* Right side: name/handle/title/meta */}
                     <div className="min-w-0 flex-1 space-y-1.5 pt-1">
-                        <Link href={profilePath} className="block group">
-                            <div className="flex items-center gap-1.5">
-                                <h1
-                                    className="truncate text-[22px] font-extrabold leading-tight group-hover:underline"
-                                    style={{ color: colors.text }}
-                                >
-                                    {providerName}
-                                </h1>
-                                {isVerified ? <VerifiedBadge size={20} /> : null}
+                        {profilePath ? (
+                            <Link href={profilePath} className="block group">
+                                <div className="flex items-center gap-1.5">
+                                    <h1
+                                        className="truncate text-[22px] font-extrabold leading-tight group-hover:underline"
+                                        style={{ color: colors.text }}
+                                    >
+                                        {providerName}
+                                    </h1>
+                                    {isVerified ? <VerifiedBadge size={20} /> : null}
+                                </div>
+                                <p className="text-sm" style={{ color: colors.textLight }}>
+                                    {providerHandle}
+                                </p>
+                            </Link>
+                        ) : (
+                            // Company-owned card — no individual profile to link to.
+                            <div className="block">
+                                <div className="flex items-center gap-1.5">
+                                    <h1
+                                        className="truncate text-[22px] font-extrabold leading-tight"
+                                        style={{ color: colors.text }}
+                                    >
+                                        {providerName}
+                                    </h1>
+                                    {isVerified ? <VerifiedBadge size={20} /> : null}
+                                </div>
+                                <p className="text-sm" style={{ color: colors.textLight }}>
+                                    Service company
+                                </p>
                             </div>
-                            <p className="text-sm" style={{ color: colors.textLight }}>
-                                {providerHandle}
-                            </p>
-                        </Link>
+                        )}
                         <p
                             className="pt-0.5 text-[15px] font-semibold"
                             style={{ color: colors.text }}
@@ -684,7 +758,7 @@ function ServiceDetailPage() {
 
                 {/* Stats strip */}
                 <section
-                    className="mt-3 grid grid-cols-4 rounded-2xl bg-white"
+                    className="mt-3 grid grid-cols-3 rounded-2xl bg-white"
                     style={{ border: `1px solid ${colors.border}` }}
                 >
                     {PROVIDER_STATS.map((stat, idx) => {
@@ -856,6 +930,14 @@ function ServiceDetailPage() {
                     onClose={() => setIsReportOpen(false)}
                 />
             )}
+
+            <ReviewPromptDialog
+                open={reviewOpen}
+                subject={{ title: providerName, subtitle: service?.title }}
+                rehireQuestion="Would you hire this person again?"
+                onOpenChange={setReviewOpen}
+                onSubmit={submitProviderReview}
+            />
 
             {/* Image lightbox — navigable with arrows, swipe, and keyboard */}
             {lightbox && (() => {
@@ -1076,20 +1158,31 @@ function ServiceDetailPage() {
                             <MessageCircle className="h-5 w-5" />
                             {SERVICE_DETAIL_LABELS.message}
                         </button>
-                        <button
-                            onClick={() => requireAuth(openHireModal, "hire")}
-                            disabled={submitting || hasRequested}
-                            className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
-                            style={{ backgroundColor: hasRequested ? "#9CA3AF" : colors.primary }}
-                        >
-                            {submitting ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : hasRequested ? (
-                                SERVICE_DETAIL_LABELS.requestSent
-                            ) : (
-                                SERVICE_DETAIL_LABELS.requestToHire
-                            )}
-                        </button>
+                        {needsReview ? (
+                            <button
+                                onClick={() => requireAuth(() => setReviewOpen(true), "review")}
+                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white"
+                                style={{ backgroundColor: "#C2630B" }}
+                            >
+                                <Star className="h-5 w-5 fill-white stroke-white" />
+                                Leave a review
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => requireAuth(openHireModal, "hire")}
+                                disabled={submitting || hasRequested}
+                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                                style={{ backgroundColor: hasRequested ? "#9CA3AF" : colors.primary }}
+                            >
+                                {submitting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : hasRequested ? (
+                                    SERVICE_DETAIL_LABELS.requestSent
+                                ) : (
+                                    SERVICE_DETAIL_LABELS.requestToHire
+                                )}
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

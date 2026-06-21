@@ -9,12 +9,12 @@ import {
   Clock,
   Globe,
   Mail,
+  MessageSquare,
   MapPin,
   MoreHorizontal,
   Pencil,
   Phone,
   ShieldCheck,
-  Star,
   Users,
 } from "lucide-react";
 import api from "@/lib/axios";
@@ -195,9 +195,9 @@ export default function AgencyProfilePage() {
             <StatCard icon={<Users className="h-5 w-5 text-brand" />} value={stats.totalWorkers} label="Total Workers" />
             <StatCard icon={<Briefcase className="h-5 w-5 text-brand" />} value={stats.totalPlacements} label="Total Placements" />
             <StatCard
-              icon={<Star className="h-5 w-5 fill-amber-400 text-amber-400" />}
-              value={stats.averageRating ? stats.averageRating.toFixed(1) : "New"}
-              label={stats.reviewCount > 0 ? `Rating (${stats.reviewCount})` : "Average Rating"}
+              icon={<MessageSquare className="h-5 w-5 text-brand" />}
+              value={stats.reviewCount}
+              label={stats.reviewCount === 1 ? "Review" : "Reviews"}
             />
           </div>
 
@@ -228,9 +228,9 @@ export default function AgencyProfilePage() {
                       <p className="truncate text-[12px] text-ink-muted">{w.skill ?? "—"}</p>
                     </div>
                     <StatusPill label={w.onJob ? "On Job" : "Available"} tone={w.onJob ? "amber" : "green"} />
-                    <div className="hidden w-14 items-center justify-end gap-1 text-[12px] sm:flex">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-bold text-ink">{w.rating ? w.rating.toFixed(1) : "—"}</span>
+                    <div className="hidden w-20 items-center justify-end gap-1 text-[12px] text-ink-muted sm:flex">
+                      <MessageSquare className="h-3.5 w-3.5 text-brand" />
+                      <span className="font-bold text-ink">{w.reviewCount}</span>
                     </div>
                   </Link>
                 ))}

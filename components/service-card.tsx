@@ -1,5 +1,5 @@
 "use client";
-import { Briefcase, Smile, MapPin, MessageCircle, ShieldCheck } from "lucide-react";
+import { Briefcase, Smile, MapPin, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useBookmark } from "@/context/bookmark-context";
@@ -27,8 +27,8 @@ interface ServiceCardProps {
   languages: string;
   location: string;
   price: string;
-  rating: number;
-  reviews: number;
+  rating?: number;
+  reviews?: number;
   jobsCompleted?: number;
   wouldHireAgain?: number;
   distance: string;
@@ -42,6 +42,10 @@ interface ServiceCardProps {
   isBookmarked?: boolean;
   hasRequested?: boolean;
   isOwnService?: boolean;
+  /** You have a completed-but-unreviewed job with this provider — the card
+   *  leads with "Leave a review" until you've reviewed that last job. */
+  needsReview?: boolean;
+  onLeaveReview?: () => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -67,6 +71,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   isBookmarked: isBookmarkedProp,
   hasRequested = false,
   isOwnService = false,
+  needsReview = false,
+  onLeaveReview,
 }) => {
   const router = useRouter();
   const { isBookmarked: isBookmarkedContext, toggleBookmark, isLoading } = useBookmark("services");
@@ -289,6 +295,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               className="flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-brand text-white hover:bg-[#0f4a0c]"
             >
               Contact Agency
+            </button>
+          ) : !isOwnService && needsReview ? (
+            // You have a completed job with this provider you haven't reviewed —
+            // leave that review before hiring again (review-first flow).
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onLeaveReview?.();
+              }}
+              className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-[#C2630B] text-white hover:bg-[#a4530a]"
+            >
+              <Star className="w-3.5 h-3.5 fill-white stroke-white" />
+              Leave a review
             </button>
           ) : (
             <button

@@ -13,6 +13,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import {
+  ReviewPromptDialog,
+  type ReviewPromptPayload,
+} from "@/components/reviews/review-prompt-dialog";
+import {
   AppButton,
   FormField,
   SheetBody,
@@ -35,10 +39,14 @@ interface ServiceProviderProps {
 }
 
 interface BookingSummary {
+  id?: string;
   status?: string;
   service?: {
     id?: string;
   };
+  // Reviews authored by the current employer for this booking (backend filters
+  // to the caller) — empty on a completed booking means it's still unreviewed.
+  reviews?: { id: string }[];
 }
 
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
@@ -58,6 +66,9 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
+  // serviceId -> bookingId of a completed-but-unreviewed job (review-first re-hire).
+  const [reviewableByService, setReviewableByService] = useState<Map<string, string>>(new Map());
+  const [reviewModal, setReviewModal] = useState<{ serviceId: string; bookingId: string; name: string; title: string } | null>(null);
 
   useEffect(() => {
     // Optional decoration: marks cards the user has already requested. It's a
@@ -78,14 +89,30 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
           : Array.isArray(responseData.data)
             ? responseData.data
             : [];
-        const inactive = new Set(["CANCELLED", "REJECTED"]);
-        const ids = new Set<string>(
+        const active = new Set(["PENDING", "CONFIRMED", "IN_PROGRESS"]);
+        const activeIds = new Set<string>(
           bookings
-            .filter((b) => b.service?.id && !inactive.has(String(b.status).toUpperCase()))
+            .filter((b) => b.service?.id && active.has(String(b.status).toUpperCase()))
             .map((b) => b.service?.id)
             .filter((id): id is string => Boolean(id))
         );
-        setRequestedServiceIds(ids);
+        setRequestedServiceIds(activeIds);
+        // Completed jobs you haven't reviewed → card leads with "Leave a review".
+        const reviewable = new Map<string, string>();
+        for (const b of bookings) {
+          const sid = b.service?.id;
+          if (
+            sid &&
+            b.id &&
+            !activeIds.has(sid) &&
+            String(b.status).toUpperCase() === "COMPLETED" &&
+            (b.reviews?.length ?? 0) === 0 &&
+            !reviewable.has(sid)
+          ) {
+            reviewable.set(sid, b.id);
+          }
+        }
+        setReviewableByService(reviewable);
       } catch {
         // silent — button just defaults to "Request to Hire"
       }
@@ -113,6 +140,28 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
       toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const submitProviderReview = async (payload: ReviewPromptPayload) => {
+    if (!reviewModal) return false;
+    try {
+      await api.post("/feedback", {
+        wouldRehire: payload.wouldRehire,
+        comment: payload.comment,
+        bookingId: reviewModal.bookingId,
+      });
+      toast.success("Review submitted.");
+      // Card returns to "Request to Hire".
+      setReviewableByService((prev) => {
+        const next = new Map(prev);
+        next.delete(reviewModal.serviceId);
+        return next;
+      });
+      return true;
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Could not submit your review."));
+      return false;
     }
   };
 
@@ -167,6 +216,17 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                     {...provider}
                     hasRequested={requestedServiceIds.has(provider.id)}
                     isOwnService={Boolean(currentUserId && provider.providerId === currentUserId)}
+                    needsReview={reviewableByService.has(provider.id)}
+                    onLeaveReview={() => {
+                      const bookingId = reviewableByService.get(provider.id);
+                      if (bookingId)
+                        setReviewModal({
+                          serviceId: provider.id,
+                          bookingId,
+                          name: provider.name,
+                          title: provider.title,
+                        });
+                    }}
                   />
                 );
               })
@@ -178,6 +238,20 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ReviewPromptDialog
+        open={Boolean(reviewModal)}
+        subject={
+          reviewModal
+            ? { title: reviewModal.name, subtitle: reviewModal.title }
+            : null
+        }
+        rehireQuestion="Would you hire this person again?"
+        onOpenChange={(open) => {
+          if (!open) setReviewModal(null);
+        }}
+        onSubmit={submitProviderReview}
+      />
 
       {/* Request to Hire modal */}
       {hireModal && (

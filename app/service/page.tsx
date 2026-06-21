@@ -6,7 +6,7 @@ import { useServiceList } from "@/hooks/useServiceList";
 import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
-import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
+import { getBookingType, getServiceDetailPath, mapServiceToProviderCard } from "@/lib/service-display";
 import { Icons } from "@/components/icons";
 import FilterModal, { FilterValues } from "@/components/search/filter-modal";
 
@@ -27,7 +27,6 @@ const ServicePage = () => {
         availability: searchParams.get("availability") || undefined,
         location: searchParams.get("location") || undefined,
         distanceKm: searchParams.get("distanceKm") ? Number(searchParams.get("distanceKm")) : undefined,
-        minRating: searchParams.get("minRating") ? Number(searchParams.get("minRating")) : undefined,
     });
 
     const browseParams: BrowseServicesParams = {
@@ -38,7 +37,6 @@ const ServicePage = () => {
         ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
         ...(filters.availability ? { available: filters.availability === "available" } : {}),
         ...(filters.location ? { location: filters.location } : {}),
-        ...(filters.minRating ? { minRating: filters.minRating } : {}),
     };
 
     // Cached + stale-while-revalidate: revisiting this page shows the previous
@@ -62,7 +60,7 @@ const ServicePage = () => {
         if (newFilters.availability) params.set("availability", newFilters.availability); else params.delete("availability");
         if (newFilters.location) params.set("location", newFilters.location); else params.delete("location");
         if (newFilters.distanceKm) params.set("distanceKm", newFilters.distanceKm.toString()); else params.delete("distanceKm");
-        if (newFilters.minRating) params.set("minRating", newFilters.minRating.toString()); else params.delete("minRating");
+        params.delete("minRating");
         router.push(`/service?${params.toString()}`);
     };
 
@@ -126,21 +124,8 @@ const ServicePage = () => {
                             {services.map((service) => (
                                 <ServiceCard
                                     key={service.id}
-                                    id={service.id}
-                                    image={getServiceCardImage(service)}
-                                    profileImage={service.provider.profilePicture}
-                                    name={`${service.provider.firstName} ${service.provider.lastName}`}
-                                    handle={getProviderHandle(service.provider)}
-                                    title={service.title}
-                                    experience={service.provider.bio || ""}
-                                    languages={Array.isArray(service.provider.languages) ? service.provider.languages.join(", ") : ""}
-                                    location={Array.isArray(service.serviceAreas) ? (service.serviceAreas[0] || "") : service.serviceAreas || ""}
-                                    price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
-                                    rating={service.reviews?.averageRating || 0}
-                                    reviews={service.reviews?.totalReviews || 0}
+                                    {...mapServiceToProviderCard(service)}
                                     distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
-                                    available={service.isActive}
-                                    verified={service.provider.isVerified}
                                     onClick={() => router.push(getServiceDetailPath(service))}
                                     onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                                 />

@@ -28,11 +28,11 @@ export const SERVICE_DETAIL_LABELS = {
   serviceNotFound: "Service not found",
 } as const;
 
-export type StatKey = "years" | "jobs" | "rating" | "rehire";
+export type StatKey = "years" | "jobs" | "rehire";
 
 export interface ProviderStat {
   key: StatKey;
-  icon: "Briefcase" | "ClipboardCheck" | "Star" | "Smile";
+  icon: "Briefcase" | "ClipboardCheck" | "Smile";
   label: string;
 }
 
@@ -41,7 +41,6 @@ export interface ProviderStat {
 export const PROVIDER_STATS: ProviderStat[] = [
   { key: "years", icon: "Briefcase", label: "Years Exp" },
   { key: "jobs", icon: "ClipboardCheck", label: "Jobs Done" },
-  { key: "rating", icon: "Star", label: "Rating" },
   { key: "rehire", icon: "Smile", label: "Would Rehire" },
 ];
 

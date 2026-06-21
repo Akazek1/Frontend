@@ -25,7 +25,11 @@ export interface Service {
   serviceImage: string | null;
   serviceImages?: string[];
   isActive: boolean;
-  providerId?: string;
+  // Project 2 Phase E — a card is owned by EITHER an individual provider OR a
+  // Service Company; the other side is null. Company cards also carry an
+  // approval status (only APPROVED ones reach the marketplace).
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  providerId?: string | null;
   provider: {
     id: string;
     username?: string;
@@ -54,7 +58,21 @@ export interface Service {
       verified: boolean;
       _count?: { workers: number; placements: number };
     } | null;
-  };
+  } | null;
+  companyId?: string | null;
+  company?: {
+    id: string;
+    name: string;
+    type?: string;
+    logoUrl: string | null;
+    verified: boolean;
+    description?: string | null;
+    website?: string | null;
+    coverImageUrl?: string | null;
+    operatingHours?: string | null;
+    address?: string | null;
+    phone?: string | null;
+  } | null;
   worker?: {
     id: string;
     firstName: string;
@@ -104,7 +122,7 @@ export interface Provider {
   image: string;
   profileImage?: string;
   name: string;
-  handle: string;
+  handle?: string;
   title: string;
   experience: string;
   languages: string;

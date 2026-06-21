@@ -46,7 +46,7 @@ const PopulerService = () => {
       // Map services to the display format
       const mappedServices: DisplayService[] = data.map((service) => ({
         id: service.id,
-        image: service.provider.profileImg || service.provider.profilePicture || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
+        image: service.provider?.profileImg || service.provider?.profilePicture || service.company?.logoUrl || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
         title: service.title,
         href: getServiceDetailPath(service),
         type: "service",
