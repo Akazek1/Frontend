@@ -52,6 +52,10 @@ export function getNotificationHref(notification: NotificationItem): string | nu
     const params = reviewId ? `?reviewId=${encodeURIComponent(reviewId)}` : "";
     return `/${encodeURIComponent(providerUsername)}/services/${encodeURIComponent(serviceId)}${params}#reviews`;
   }
+  // A hire request has no chat room yet — the provider reviews it (employer +
+  // note) and accepts to chat from the Work "requests" view. Routing to the
+  // booking's inbox here would drop them into an empty, locked room.
+  if (type === "HIRE_REQUEST") return "/work?tab=requests";
   if (bookingId) return `/conversations/inbox/${encodeURIComponent(bookingId)}`;
   if (jobId) return `/jobs/${encodeURIComponent(jobId)}`;
   return null;

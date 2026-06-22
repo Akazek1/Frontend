@@ -47,6 +47,8 @@ export interface BookingRecord {
   partner?: Person | null;
   address?: { city?: string; street?: string } | null;
   review?: { rating: number; comment?: string } | null;
+  notes?: string | null;
+  latestMessage?: unknown | null;
 }
 
 export interface WorkItem {
@@ -68,8 +70,12 @@ export interface WorkItem {
   bookingId?: string;
   applicationId?: string;
   jobId?: string;
+  /** Employer-only: route to re-book the same service ("Hire Again") on a
+   *  completed booking. Undefined when re-hiring isn't applicable. */
+  hireHref?: string;
   primaryAction?:
     | "acceptBooking"
+    | "acceptChat"
     | "openChat"
     | "leaveReview"
     | "viewApplicants"
@@ -80,6 +86,8 @@ export interface WorkItem {
     | "viewDetails"
     | "markComplete"
     | "withdrawApplication";
+  requestNote?: string;
+  chatOpened?: boolean;
   /** ISO timestamp the underlying record was created — used by the card to decide whether to render a "New" badge. */
   createdAt?: string;
 }

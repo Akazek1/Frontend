@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Smile } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import api from "@/lib/axios";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -26,6 +27,16 @@ import type { Review } from "@/hooks/useReviews";
 const SYSTEM_MESSAGE_MARKERS = ["✅", "❌", "🏁"];
 const isSystemMessage = (content: string) =>
   SYSTEM_MESSAGE_MARKERS.some((marker) => content.startsWith(marker));
+
+// Curated set of common chat emojis — keeps the picker lightweight (no extra
+// dependency) while covering everyday reactions for work conversations.
+const QUICK_EMOJIS = [
+  "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😉", "😎", "🤔",
+  "🙂", "🙃", "😅", "😇", "🥰", "😋", "😜", "🤗", "🤩", "🥳",
+  "👍", "👎", "👏", "🙏", "🙌", "💪", "👌", "✌️", "🤝", "👋",
+  "❤️", "🔥", "✨", "🎉", "💯", "✅", "❌", "⭐", "💰", "📍",
+  "😢", "😭", "😡", "😤", "😱", "😴", "🤧", "🤒", "😬", "🤷",
+];
 
 interface Message {
   id: string;
@@ -98,6 +109,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [isReviewPromptOpen, setIsReviewPromptOpen] = useState(false);
   const [isBookingReviewsOpen, setIsBookingReviewsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
   const reviewAutoPromptedRef = useRef(false);
 
@@ -402,7 +416,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   const handleApproveRequest = async () => {
     if (!booking || isUpdatingStatus) return;
-    
+
     setIsUpdatingStatus(true);
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: BOOKING_STATUS.CONFIRMED });
@@ -410,6 +424,25 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       fetchBookingDetails();
     } catch {
       toast.error("Failed to approve request");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // The employer who sent the offer can revoke it while it is still pending —
+  // e.g. they chatted and couldn't agree on the work. Cancelling a PENDING
+  // booking is permitted for either party by the backend.
+  const handleRevokeOffer = async () => {
+    if (!booking || isUpdatingStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await api.patch(`/bookings/${bookingId}/status`, { status: BOOKING_STATUS.CANCELLED });
+      toast.success("Offer revoked.");
+      setIsConfirmingRevoke(false);
+      fetchBookingDetails();
+    } catch {
+      toast.error("Failed to revoke offer");
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -531,7 +564,30 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+      // The textarea is never disabled mid-send, so it keeps focus; this just
+      // guards against any edge re-render dropping it so the user can keep typing.
+      inputRef.current?.focus();
     }
+  };
+
+  // Insert an emoji at the current caret position (or append) and keep the
+  // textarea focused so typing can continue seamlessly.
+  const insertEmoji = (emoji: string) => {
+    const el = inputRef.current;
+    if (!el) {
+      setNewMessage((prev) => prev + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? newMessage.length;
+    const end = el.selectionEnd ?? newMessage.length;
+    const next = newMessage.slice(0, start) + emoji + newMessage.slice(end);
+    setNewMessage(next);
+    // Restore caret just after the inserted emoji on the next tick.
+    requestAnimationFrame(() => {
+      el.focus();
+      const caret = start + emoji.length;
+      el.setSelectionRange(caret, caret);
+    });
   };
 
   if (isLoading) {
@@ -695,10 +751,47 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         </div>
       )}
       {isPending && !isWorker && (
-        <div className="flex flex-col items-center gap-1 bg-orange-50 p-3 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
             Offer sent. You are protected once the provider accepts here.
           </p>
+          {isConfirmingRevoke ? (
+            <div className="flex w-full max-w-[300px] flex-col items-center gap-1.5">
+              <p className="text-center text-[11px] font-bold text-red-600">
+                Revoke this offer? This cancels the request.
+              </p>
+              <div className="flex w-full gap-2">
+                <Button
+                  onClick={handleRevokeOffer}
+                  disabled={isUpdatingStatus}
+                  size="sm"
+                  className="h-8 flex-1 rounded-full bg-red-500 text-[11px] font-bold text-white hover:bg-red-600"
+                >
+                  {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, revoke"}
+                </Button>
+                <Button
+                  onClick={() => setIsConfirmingRevoke(false)}
+                  disabled={isUpdatingStatus}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 flex-1 rounded-full border-gray-300 text-[11px] font-bold text-ink hover:bg-gray-50"
+                >
+                  Keep offer
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setIsConfirmingRevoke(true)}
+              disabled={isUpdatingStatus}
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-full border-red-300 px-4 text-[11px] font-bold text-red-600 hover:bg-red-50"
+            >
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Revoke Offer
+            </Button>
+          )}
         </div>
       )}
       {isPending && isWorker && (
@@ -829,12 +922,46 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {/* Input Area */}
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
         <div className="flex items-end gap-2">
+          <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                disabled={isReadOnly}
+                aria-label="Add emoji"
+                className="h-11 w-11 flex-shrink-0 rounded-full text-ink-subtle hover:bg-gray-100 hover:text-brand"
+              >
+                <Smile className="h-5 w-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              side="top"
+              className="w-[280px] p-2"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <div className="grid grid-cols-8 gap-0.5">
+                {QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => insertEmoji(emoji)}
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-lg hover:bg-gray-100 active:scale-90"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Textarea
+            ref={inputRef}
             placeholder={isReadOnly ? "This conversation is read-only" : "Type a message..."}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isSending || isReadOnly}
+            disabled={isReadOnly}
             rows={1}
             className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-brand/20 scrollbar-hide"
           />

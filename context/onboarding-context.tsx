@@ -25,8 +25,10 @@ interface DocumentData {
 // 0 = RoleSelection
 // 1 = SignupForm (name + DOB + email + phone + T&C, with inline OTP)
 // 2 = LoginForm (returning users)
-// 4 = DocumentUploadStep (workers only)
+// 3 = ProfilePictureStep (workers only — comes first, account already created)
+// 4 = DocumentUploadStep / ID (workers only — no Back, account already created)
 // 5 = ServiceCategorySelector (workers only)
+// 6 = AllSetStep (workers only — offer to add their first service)
 
 interface OnboardingContextType {
   currentStep: number
@@ -325,7 +327,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         if (process.env.NODE_ENV === "development" && otpCode === "111111") {
           toast.success("OTP verified (dev mode)")
           if (firstName.trim()) {
-            setCurrentStep(4)
+            setCurrentStep(3)
           } else {
             setCurrentStep(1) // collect name first
           }
@@ -347,7 +349,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (user.firstName && user.firstName.trim() !== "") {
         const roles = ((user.roles || []) as ("EMPLOYER" | "WORKER")[])
         if (roles.includes("WORKER") && !user.workerOnboardingComplete) {
-          setCurrentStep(4)
+          setCurrentStep(3) // profile picture first
           return
         }
         if (roles.includes("EMPLOYER") && !user.employerOnboardingComplete) {
@@ -362,7 +364,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         // New user — we already collected their name at step 1
         const roles = await completeSignupForNewUser(user)
         if (roles.includes("WORKER")) {
-          setCurrentStep(4) // doc upload
+          setCurrentStep(3) // profile picture first, then ID
         } else {
           await completeRoleOnboarding(["EMPLOYER"])
           dispatch(updateUser({ employerOnboardingComplete: true }))
@@ -379,7 +381,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (isNetwork && process.env.NODE_ENV === "development" && otpCode === "111111") {
         toast.success("OTP verified (dev mode)")
         if (firstName.trim()) {
-          setCurrentStep(4)
+          setCurrentStep(3)
         } else {
           setCurrentStep(1)
         }
@@ -436,7 +438,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("user", JSON.stringify(updatedUser))
       toast.success("Welcome!")
       if (roles.includes("WORKER")) {
-        setCurrentStep(4)
+        setCurrentStep(3) // profile picture first
       } else {
         redirectHome(false)
       }
@@ -465,7 +467,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       toast.success("Welcome! You're all set.")
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
       localStorage.setItem("hasSeenTutorial", "true")
-      window.location.href = "/?tutorial=true"
+      // Final step: offer to add their first service instead of bouncing home.
+      setCurrentStep(6)
     } catch {
       toast.error("Failed to complete setup. Please try again.")
     }

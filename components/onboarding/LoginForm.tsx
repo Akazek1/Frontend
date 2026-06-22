@@ -46,9 +46,14 @@ export function LoginForm() {
     setChecking(true)
     try {
       const res = await api.get(`/auth/check-user/${formatted}`)
-      const { exists } = res.data?.data || res.data
+      const { exists, blocked } = res.data?.data || res.data
       if (!exists) {
         setPhoneError("No account found with this number. Please sign up instead.")
+        setChecking(false)
+        return
+      }
+      if (blocked) {
+        setPhoneError("This account has been suspended. Please contact support if you believe this is a mistake.")
         setChecking(false)
         return
       }

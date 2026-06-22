@@ -103,8 +103,8 @@ const ProfileScreen = () => {
   ];
 
   const legalItems = [
-    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/more/privacy" },
-    { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/more/terms" },
+    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/privacy" },
+    { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/terms" },
   ];
 
   const handleLogout = async () => {

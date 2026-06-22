@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/app-primitives";
 import { cn } from "@/lib/utils";
 import ProfileImageUploader from "@/components/profile/profile-img-uloader";
+import IdUploadDialog from "@/components/profile/id-upload-dialog";
 import APP_CONFIG from "@/constant/app.config";
 import { QUALITY_DEFS, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
 
@@ -219,6 +220,28 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [initialLocation, setInitialLocation] = useState({ city: "", district: "", sector: "" });
+  // Identity-document status drives the "ID verified" trust badge + upload CTA.
+  const [idStatus, setIdStatus] = useState<"NONE" | "PENDING_VERIFICATION" | "APPROVED" | "REJECTED">("NONE");
+  const [showIdUpload, setShowIdUpload] = useState(false);
+
+  const refreshIdStatus = useCallback(async () => {
+    try {
+      const res = await api.get("/documents/user/my-documents");
+      const docs = res.data?.data || res.data || [];
+      const idDoc = Array.isArray(docs)
+        ? docs.find((d: { type?: string }) =>
+            ["GOVERNMENT_ID", "PASSPORT", "DRIVER_LICENSE"].includes(d.type || ""),
+          )
+        : null;
+      setIdStatus((idDoc?.status as typeof idStatus) || "NONE");
+    } catch {
+      // Non-fatal — badge simply falls back to the "upload" state.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) void refreshIdStatus();
+  }, [user, refreshIdStatus]);
 
   const canEdit = idEditable && !saving;
   const maxBirthDate = useMemo(getMaxBirthDate, []);
@@ -836,25 +859,60 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
           <SectionShell icon={ShieldCheck} title="Trust badges" description="Verification statuses are kept in sync with existing account data.">
             {[
               { icon: Phone, label: "Phone verified", action: "Verified", done: Boolean(form.phoneNumber) },
-              { icon: FileBadge, label: "ID verified", action: "Upload ID", done: false },
+              {
+                icon: FileBadge,
+                label: "ID verified",
+                // Reflect the live document status: approved → done, pending →
+                // "In review", rejected → "Re-upload", none → "Upload ID".
+                action:
+                  idStatus === "APPROVED"
+                    ? "Verified"
+                    : idStatus === "PENDING_VERIFICATION"
+                      ? "In review"
+                      : idStatus === "REJECTED"
+                        ? "Re-upload"
+                        : "Upload ID",
+                done: idStatus === "APPROVED",
+                onClick:
+                  idStatus === "APPROVED" || idStatus === "PENDING_VERIFICATION"
+                    ? undefined
+                    : () => setShowIdUpload(true),
+              },
               { icon: ClipboardCheck, label: "Background checked", action: "Verify", done: false },
               { icon: ShieldCheck, label: "Insurance", action: "Add", done: false },
             ].map((item) => {
               const Icon = item.icon;
+              const clickable = "onClick" in item && typeof item.onClick === "function";
               return (
                 <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1 text-[13px] font-black text-ink">{item.label}</span>
-                  <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${item.done ? "bg-[#EEF8EA] text-brand" : "border border-[#BFD9BA] text-brand"}`}>
-                    {item.action}
-                  </span>
+                  {clickable ? (
+                    <button
+                      type="button"
+                      onClick={(item as { onClick: () => void }).onClick}
+                      className="rounded-md border border-[#BFD9BA] px-2.5 py-1 text-[11px] font-black text-brand hover:bg-[#EEF8EA]"
+                    >
+                      {item.action}
+                    </button>
+                  ) : (
+                    <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${item.done ? "bg-[#EEF8EA] text-brand" : "border border-[#BFD9BA] text-brand"}`}>
+                      {item.action}
+                    </span>
+                  )}
                 </div>
               );
             })}
           </SectionShell>
         ) : null}
+
+        <IdUploadDialog
+          open={showIdUpload}
+          onOpenChange={setShowIdUpload}
+          onUploaded={() => void refreshIdStatus()}
+        />
 
         {activeSection !== "overview" ? SaveBar : null}
       </form>

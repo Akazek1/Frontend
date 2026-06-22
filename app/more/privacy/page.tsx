@@ -1,29 +1,7 @@
-import React from "react";
-import BackButtonHeader from "@/components/header/back-button-header";
-import { Separator } from "@/components/ui/separator";
-import { PrivacyPolicyData } from "@/constant";
-import { PageShell, appContentClass } from "@/components/ui/app-primitives";
+import { redirect } from "next/navigation";
 
-const PrivacyPolicy = () => {
-  return (
-    <PageShell className="gap-5 font-urbanist">
-      {/* Header */}
-      <BackButtonHeader text="Privacy Policy" />
-      <Separator />
-      <div className={`${appContentClass} gap-8`}>
-        {PrivacyPolicyData.map((section) => (
-          <section key={section.id} className="space-y-6">
-            <h2 className="font-urbanist text-[20px] font-bold leading-6 text-ink">
-              {section.id}. {section.title}
-            </h2>
-            <p className="font-urbanist text-[14px] font-normal leading-6 tracking-[0.2px] text-ink-muted">
-              {section.content}
-            </p>
-          </section>
-        ))}
-      </div>
-    </PageShell>
-  );
-};
-
-export default PrivacyPolicy;
+// Privacy policy now lives at the public /privacy route (readable without auth).
+// Keep this path working by redirecting to the canonical page.
+export default function MorePrivacyRedirect() {
+  redirect("/privacy");
+}

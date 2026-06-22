@@ -45,9 +45,16 @@ interface BookingSummary {
     id?: string;
   };
   // Reviews authored by the current employer for this booking (backend filters
-  // to the caller) — empty on a completed booking means it's still unreviewed.
-  reviews?: { id: string }[];
+  // to the caller). A review with no comment is "incomplete" — the rehire choice
+  // was saved but the comment skipped, so it can still be finished.
+  reviews?: { id: string; comment?: string | null; wouldRehire?: "YES" | "MAYBE" | "NO" | null }[];
 }
+
+type ReviewableEntry = {
+  bookingId: string;
+  wouldRehire: "YES" | "MAYBE" | "NO" | null;
+  comment: string;
+};
 
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
@@ -66,9 +73,11 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
-  // serviceId -> bookingId of a completed-but-unreviewed job (review-first re-hire).
-  const [reviewableByService, setReviewableByService] = useState<Map<string, string>>(new Map());
-  const [reviewModal, setReviewModal] = useState<{ serviceId: string; bookingId: string; name: string; title: string } | null>(null);
+  // serviceId -> details of a completed job that still needs (or can finish) a
+  // review (review-first re-hire). Includes incomplete reviews so a skipped
+  // comment can be completed without re-asking the rehire question.
+  const [reviewableByService, setReviewableByService] = useState<Map<string, ReviewableEntry>>(new Map());
+  const [reviewModal, setReviewModal] = useState<{ serviceId: string; bookingId: string; name: string; title: string; wouldRehire: "YES" | "MAYBE" | "NO" | null; comment: string } | null>(null);
 
   useEffect(() => {
     // Optional decoration: marks cards the user has already requested. It's a
@@ -97,20 +106,22 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             .filter((id): id is string => Boolean(id))
         );
         setRequestedServiceIds(activeIds);
-        // Completed jobs you haven't reviewed → card leads with "Leave a review".
-        const reviewable = new Map<string, string>();
+        // Completed jobs whose review is missing OR was left without a comment →
+        // card leads with "Leave a review". An incomplete review carries its
+        // saved rehire choice so the dialog can skip re-asking it.
+        const reviewable = new Map<string, ReviewableEntry>();
         for (const b of bookings) {
           const sid = b.service?.id;
-          if (
-            sid &&
-            b.id &&
-            !activeIds.has(sid) &&
-            String(b.status).toUpperCase() === "COMPLETED" &&
-            (b.reviews?.length ?? 0) === 0 &&
-            !reviewable.has(sid)
-          ) {
-            reviewable.set(sid, b.id);
-          }
+          if (!sid || !b.id || activeIds.has(sid) || reviewable.has(sid)) continue;
+          if (String(b.status).toUpperCase() !== "COMPLETED") continue;
+          const myReview = b.reviews?.[0];
+          const isComplete = Boolean(myReview?.comment && myReview.comment.trim());
+          if (isComplete) continue; // already fully reviewed
+          reviewable.set(sid, {
+            bookingId: b.id,
+            wouldRehire: myReview?.wouldRehire ?? null,
+            comment: myReview?.comment ?? "",
+          });
         }
         setReviewableByService(reviewable);
       } catch {
@@ -218,13 +229,15 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                     isOwnService={Boolean(currentUserId && provider.providerId === currentUserId)}
                     needsReview={reviewableByService.has(provider.id)}
                     onLeaveReview={() => {
-                      const bookingId = reviewableByService.get(provider.id);
-                      if (bookingId)
+                      const entry = reviewableByService.get(provider.id);
+                      if (entry)
                         setReviewModal({
                           serviceId: provider.id,
-                          bookingId,
+                          bookingId: entry.bookingId,
                           name: provider.name,
                           title: provider.title,
+                          wouldRehire: entry.wouldRehire,
+                          comment: entry.comment,
                         });
                     }}
                   />
@@ -247,6 +260,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             : null
         }
         rehireQuestion="Would you hire this person again?"
+        initialRehire={reviewModal?.wouldRehire ?? null}
+        initialComment={reviewModal?.comment ?? ""}
         onOpenChange={(open) => {
           if (!open) setReviewModal(null);
         }}

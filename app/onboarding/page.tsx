@@ -8,13 +8,18 @@ import { SignupForm } from "@/components/onboarding/SignupForm"
 import { LoginForm } from "@/components/onboarding/LoginForm"
 import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
 import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
+import { ProfilePictureStep } from "@/components/onboarding/ProfilePictureStep"
+import { AllSetStep } from "@/components/onboarding/AllSetStep"
+import { useRouter } from "next/navigation"
 
-// Steps 4 and 5 manage their own full-screen layout
-const FULL_SCREEN_STEPS = [4, 5]
+// Steps 3, 4, 5 and 6 manage their own full-screen layout
+const FULL_SCREEN_STEPS = [3, 4, 5, 6]
 
 function OnboardingContent() {
+  const router = useRouter()
   const {
     currentStep,
+    setCurrentStep,
     handleBack,
     handleDocumentUpload,
     handleCategoriesSelected,
@@ -26,12 +31,17 @@ function OnboardingContent() {
       case 0: return <RoleSelection />
       case 1: return <SignupForm />
       case 2: return <LoginForm />
+      case 3:
+        // Profile picture comes first; advance to the ID step on continue.
+        return <ProfilePictureStep onContinue={() => setCurrentStep(4)} />
       case 4:
         return (
           <DocumentUploadStep
             onUploadSuccess={handleDocumentUpload}
             onCancel={handleBack}
             isLoading={isLoading}
+            // Account already exists at this point — no "Back".
+            showBack={false}
           />
         )
       case 5:
@@ -40,6 +50,13 @@ function OnboardingContent() {
             onContinue={handleCategoriesSelected}
             onBack={handleBack}
             isLoading={isLoading}
+          />
+        )
+      case 6:
+        return (
+          <AllSetStep
+            onAddService={() => router.push("/more/services/new")}
+            onFinish={() => { window.location.href = "/?tutorial=true" }}
           />
         )
       default: return null

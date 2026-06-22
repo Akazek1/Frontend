@@ -25,6 +25,7 @@ import {
   Sparkles,
   Star,
   Trees,
+  UserPlus,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -37,8 +38,15 @@ import {
   PageHeader,
   PageShell,
   EmptyState,
+  AppButton,
+  SheetOverlay,
+  SheetPanel,
+  SheetHeader,
+  SheetBody,
+  SheetFooter,
   appContentClass,
   appListCardClass,
+  appTextareaClass,
 } from "@/components/ui/app-primitives";
 import {
   FILTER_LABELS,
@@ -103,6 +111,9 @@ export default function WorkPage() {
   const [expandedSection, setExpandedSection] = useState<SectionKey | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  // Accept-chat note sheet (provider adds an optional opening message).
+  const [acceptChatTarget, setAcceptChatTarget] = useState<WorkItem | null>(null);
+  const [acceptChatNote, setAcceptChatNote] = useState("");
   const [reviewTarget, setReviewTarget] = useState<WorkItem | null>(null);
   // When set, the review dialog is in EDIT mode for an already-authored review.
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -219,6 +230,34 @@ export default function WorkPage() {
       if (status === "CONFIRMED") router.push(`/conversations/inbox/${item.bookingId}`);
     } catch {
       toast.error(status === "CONFIRMED" ? "Could not accept this offer." : "Could not reject this request.");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  // Opening the accept-chat sheet lets the provider add a note that becomes the
+  // first message; the room is created on confirm.
+  const handleAcceptChat = (item: WorkItem) => {
+    if (!item.bookingId) return;
+    setAcceptChatTarget(item);
+    setAcceptChatNote("");
+  };
+
+  const confirmAcceptChat = async () => {
+    const item = acceptChatTarget;
+    if (!item?.bookingId) return;
+    setActingId(item.id);
+    try {
+      const note = acceptChatNote.trim();
+      await api.post(`/bookings/${item.bookingId}/accept-chat`, note ? { note } : {});
+      const message = "Chat accepted. The employer has been notified.";
+      toast.success(message);
+      setLiveMessage(message);
+      setAcceptChatTarget(null);
+      await refetch();
+      router.push(`/conversations/inbox/${item.bookingId}`);
+    } catch {
+      toast.error("Could not accept this chat request.");
     } finally {
       setActingId(null);
     }
@@ -378,6 +417,10 @@ export default function WorkPage() {
   };
 
   const openPrimary = (item: WorkItem) => {
+    if (item.primaryAction === "acceptChat") {
+      void handleAcceptChat(item);
+      return;
+    }
     if (item.primaryAction === "acceptBooking") {
       void handleBookingStatus(item, "CONFIRMED");
       return;
@@ -590,6 +633,55 @@ export default function WorkPage() {
         }}
         onSubmit={submitReview}
       />
+
+      {acceptChatTarget && (
+        <>
+          <SheetOverlay onClick={() => setAcceptChatTarget(null)} aria-hidden="true" />
+          <SheetPanel className="max-w-sm rounded-t-[28px]" onClose={() => setAcceptChatTarget(null)}>
+            <SheetHeader
+              title={`Chat with ${acceptChatTarget.title}`}
+              subtitle="Add a note to start the conversation (optional)"
+              onClose={() => setAcceptChatTarget(null)}
+              className="border-b-0 pb-2"
+            />
+            <SheetBody className="space-y-4 pt-2">
+              {acceptChatTarget.requestNote && (
+                <div className="rounded-xl bg-gray-50 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-ink-subtle">Their request</p>
+                  <p className="mt-1 text-[13px] text-ink">{acceptChatTarget.requestNote}</p>
+                </div>
+              )}
+              <textarea
+                value={acceptChatNote}
+                onChange={(e) => setAcceptChatNote(e.target.value)}
+                placeholder="e.g. Hi! Yes, I'm available — when would you like to start?"
+                rows={3}
+                className={cn(appTextareaClass, "min-h-[88px]")}
+              />
+            </SheetBody>
+            <SheetFooter className="flex gap-3">
+              <AppButton
+                appVariant="secondary"
+                onClick={() => setAcceptChatTarget(null)}
+                className="flex-1"
+              >
+                Cancel
+              </AppButton>
+              <AppButton
+                onClick={() => void confirmAcceptChat()}
+                disabled={actingId === acceptChatTarget.id}
+                className="flex-1"
+              >
+                {actingId === acceptChatTarget.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Accept & open chat"
+                )}
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
+      )}
     </main>
   );
 }
@@ -824,6 +916,11 @@ function DealCard({
                 {isDualRole && (item.role === "provider" ? "As Provider" : "As Employer")}
               </p>
             )}
+            {item.requestNote && (
+              <p className="mt-2 line-clamp-2 rounded-lg bg-white/70 px-2 py-1.5 text-[12px] font-medium text-ink-muted">
+                {item.requestNote}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -887,6 +984,30 @@ function DealCardActions({
   // Per design: no View Profile button — name in the card is clickable to the profile.
   // Buttons: Message (top, full width) then Accept | Reject (bottom row).
   if (item.section === "awaitingReview" && item.kind === "booking") {
+    if (!item.chatOpened) {
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={isActing}
+            onClick={() => onPrimary(item)}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand text-[12px] font-black text-white disabled:opacity-60"
+          >
+            {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
+            Accept Chat
+          </button>
+          <button
+            type="button"
+            disabled={isActing}
+            onClick={() => onReject(item)}
+            className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
+          >
+            Reject
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2">
         <MessageButton bookingId={item.bookingId} className="w-full" />
@@ -898,7 +1019,7 @@ function DealCardActions({
             className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#C17A5D] text-[12px] font-black text-white disabled:opacity-60"
           >
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
-            Accept
+            Accept Job
           </button>
           <button
             type="button"
@@ -924,7 +1045,13 @@ function DealCardActions({
           onClick={() => onReject(item)}
           label="Revoke"
         />
-        <SendReminderButton item={item} onReminder={onReminder} />
+        {item.chatOpened ? (
+          <MessageButton bookingId={item.bookingId} />
+        ) : (
+          <span className="flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-center text-[12px] font-black text-ink-muted">
+            Waiting for chat
+          </span>
+        )}
       </div>
     );
   }
@@ -989,29 +1116,54 @@ function DealCardActions({
         </div>
       );
     }
+    // Completed + reviewed employer booking: the feedback loop is closed, so
+    // lead with "Hire Again" (re-book the same service) — the explicit re-hire
+    // path requested for the Done list.
+    const canHireAgain =
+      item.role === "employer" && item.status === "COMPLETED" && Boolean(item.hireHref);
     // Already reviewed and still inside the 14-day edit window — let the author
     // amend their review (locked once the other party replies, server-enforced).
     if (canEditReview) {
       return (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onReview(item);
-            }}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
-          >
-            <Star className="h-4 w-4" />
-            Edit review
-          </button>
+          {canHireAgain && <HireAgainButton href={item.hireHref!} />}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReview(item);
+              }}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
+            >
+              <Star className="h-4 w-4" />
+              Edit review
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrimary(item);
+              }}
+              className="flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
+            >
+              View Details
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (canHireAgain) {
+      return (
+        <div className="space-y-2">
+          <HireAgainButton href={item.hireHref!} />
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPrimary(item);
             }}
-            className="flex min-h-11 w-full items-center justify-center rounded-lg bg-brand text-[12px] font-black text-white"
+            className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
           >
             View Details
           </button>
@@ -1063,6 +1215,19 @@ function RevokeButton({
       {isActing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
       {label}
     </button>
+  );
+}
+
+function HireAgainButton({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      onClick={(e) => e.stopPropagation()}
+      className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-brand text-[12px] font-black text-white"
+    >
+      <UserPlus className="h-4 w-4" />
+      Hire Again
+    </Link>
   );
 }
 

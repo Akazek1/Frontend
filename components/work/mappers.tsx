@@ -39,6 +39,17 @@ export const toBookingItem = (
   const isPending = booking.status === "PENDING";
   const isDone = ["COMPLETED", "CANCELLED"].includes(booking.status);
   const isActive = ["CONFIRMED", "IN_PROGRESS"].includes(booking.status);
+  const chatOpened = Boolean(booking.latestMessage);
+
+  // Employers can re-book a completed service straight from the Done list.
+  // Routes to the service detail page (which hosts the hire flow); falls back
+  // to the worker's profile when the booking originated from a job post.
+  const hireHref =
+    role === "employer" && booking.status === "COMPLETED"
+      ? booking.service?.id
+        ? `/service/${booking.service.id}`
+        : getProfileHref(person)
+      : undefined;
 
   return {
     id: `booking-${role}-${id}`,
@@ -62,10 +73,15 @@ export const toBookingItem = (
     avatarUrl: person?.profilePicture,
     profileHref: getProfileHref(person),
     bookingId: id,
+    hireHref,
     createdAt: booking.createdAt,
+    requestNote: booking.notes?.trim() || undefined,
+    chatOpened,
     primaryAction:
       isPending && role === "provider"
-        ? "acceptBooking"
+        ? chatOpened
+          ? "acceptBooking"
+          : "acceptChat"
         : booking.status === "COMPLETED"
           ? "leaveReview"
           : isDone

@@ -18,6 +18,7 @@ import {
 import { WizardStep2ChooseService } from "@/components/services/wizard/WizardStep2ChooseService";
 import { WizardStep3AddDetails } from "@/components/services/wizard/WizardStep3AddDetails";
 import { WizardStep4Confirmation } from "@/components/services/wizard/WizardStep4Confirmation";
+import ServicePrerequisiteGate from "@/components/services/service-prerequisite-gate";
 
 const ALL_ID = "all";
 
@@ -52,6 +53,13 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   } = useAddServiceForm({ service });
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(isEdit ? 3 : 1);
+  // Gate new-service creation behind the trust basics (profile picture + ID).
+  // Shown for every new service until the user explicitly continues; the gate
+  // itself auto-continues when both prerequisites are already satisfied. We must
+  // NOT key this on `user.profilePicture` — doing so dismissed the gate the
+  // instant a photo was added, skipping the ID step.
+  const [prereqContinued, setPrereqContinued] = useState(false);
+  const showPrereqGate = !isEdit && !prereqContinued;
   const [tree, setTree] = useState<WizardGrouping[]>([]);
   const [treeLoading, setTreeLoading] = useState(true);
   const [createdService, setCreatedService] = useState<Service | null>(null);
@@ -159,6 +167,19 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
       };
     return null; // success screen has no header
   })();
+
+  if (showPrereqGate) {
+    return (
+      <PageShell padded={false} bottomNav={false}>
+        <WizardHeader
+          title="Create a service"
+          subtitle="A quick trust check first"
+          onBack={() => router.back()}
+        />
+        <ServicePrerequisiteGate onContinue={() => setPrereqContinued(true)} />
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell padded={false} bottomNav={false}>

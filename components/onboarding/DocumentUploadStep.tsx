@@ -5,6 +5,7 @@ import { Upload, X } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
 import { getApiErrorMessage } from "@/lib/error-handler"
+import { optimizeImage, validateImageFile } from "@/utils/image-optimizer"
 import Image from "next/image"
 
 interface UploadedDocument {
@@ -25,39 +26,58 @@ interface DocumentUploadStepProps {
   onUploadSuccess: (document: UploadedDocument) => void
   onCancel: () => void
   isLoading?: boolean
+  /** Hide the secondary Back/Cancel button. Used in onboarding where the
+   *  account already exists, so there is nothing to go "back" to. */
+  showBack?: boolean
+  /** Label for the secondary button when shown (e.g. "Back" or "Cancel"). */
+  backLabel?: string
 }
 
 export const DocumentUploadStep = ({
   onUploadSuccess,
   onCancel,
   isLoading = false,
+  showBack = true,
+  backLabel = "Back",
 }: DocumentUploadStepProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileSelect = (file: File) => {
-    // Validate file type
-    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-      toast.error("Only JPEG and PNG images are allowed")
+  const handleFileSelect = async (file: File) => {
+    // Validate (accepts common image types up to 10MB before optimization).
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid image file")
       return
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB")
-      return
-    }
+    try {
+      // Compress/resize large photos down to a small JPEG before upload — the
+      // same approach used for service images and profile pictures. Keeps ID
+      // text legible (1600px) while staying well under the 5MB server limit.
+      toast.loading("Optimizing image...", { id: "doc-optimizing" })
+      const optimized = await optimizeImage(file, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.85,
+        maxSizeMB: 1, // Target ~1MB
+      })
+      toast.dismiss("doc-optimizing")
 
-    setSelectedFile(file)
+      setSelectedFile(optimized)
 
-    // Create preview
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string)
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(optimized)
+    } catch (err) {
+      toast.dismiss("doc-optimizing")
+      toast.error(err instanceof Error ? err.message : "Failed to process image")
     }
-    reader.readAsDataURL(file)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -178,14 +198,18 @@ export const DocumentUploadStep = ({
       )}
 
       <div className="flex gap-4 mt-8">
+        {showBack && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-gray-400 transition-colors disabled:opacity-50"
+            disabled={isUploading || isLoading}
+          >
+            {backLabel}
+          </button>
+        )}
         <button
-          onClick={onCancel}
-          className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-gray-400 transition-colors disabled:opacity-50"
-          disabled={isUploading || isLoading}
-        >
-          Back
-        </button>
-        <button
+          type="button"
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || isLoading}
           className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

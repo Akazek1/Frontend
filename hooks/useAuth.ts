@@ -22,6 +22,11 @@ import type {
 import { toast } from "react-hot-toast";
 import { getAuthToken } from "@/lib/auth-utils";
 
+// Ensures the session is validated against the backend at most once per full
+// page load, even though many components call useAuth. Reset naturally on reload
+// (module re-evaluates).
+let sessionRevalidated = false;
+
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -35,12 +40,18 @@ export const useAuth = () => {
     return roles.includes(role);
   };
 
-  // Check authentication status on mount
+  // Validate the session on mount whenever a token is present — including when a
+  // (possibly stale) user was rehydrated from redux-persist. Trusting a cached
+  // user without re-checking the token leaves a broken "looks logged in but every
+  // request 401s" shell after the token expires or is invalidated. Hitting
+  // /auth/me forces a resolution: a valid token refreshes the user, an invalid
+  // one trips the axios 401 handler which clears the session and drops to the
+  // guest home. Guarded to fire once per page load (not per useAuth consumer).
   useEffect(() => {
-    if (effectiveIsAuthenticated && !user) {
-      dispatch(getCurrentUser());
-    }
-  }, [dispatch, effectiveIsAuthenticated, user]);
+    if (!effectiveIsAuthenticated || sessionRevalidated) return;
+    sessionRevalidated = true;
+    dispatch(getCurrentUser());
+  }, [dispatch, effectiveIsAuthenticated]);
 
   // Send OTP function
   const handleSendOtp = async (data: SendOtpRequest) => {
