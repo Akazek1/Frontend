@@ -1,11 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AppButton,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
+  appFieldLabelClass,
+  appInputClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -44,38 +53,38 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom duration-300">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-bold">Filter Services</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <>
+      <SheetOverlay className="bg-black/50" onClick={onClose} aria-hidden="true" />
+      <SheetPanel className="overflow-hidden sm:rounded-3xl" side="bottom" onClose={onClose}>
+        <SheetHeader
+          title="Filters"
+          subtitle="Narrow down job results."
+          onClose={onClose}
+        />
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+        <SheetBody className="max-h-[70vh] space-y-5">
           {/* Price Range */}
           <div className="space-y-3">
-            <Label className="text-sm font-bold text-gray-700">Price Range (RWF)</Label>
+            <Label className={appFieldLabelClass}>Budget range (RWF)</Label>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <span className="text-[10px] text-gray-500 uppercase font-bold">Min</span>
                 <Input
                   type="number"
-                  placeholder="0"
+                  placeholder="RWF"
                   value={filters.minPrice || ""}
                   onChange={(e) => setFilters({ ...filters, minPrice: Number(e.target.value) || undefined })}
-                  className="rounded-xl border-gray-200"
+                  className={appInputClass}
                 />
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] text-gray-500 uppercase font-bold">Max</span>
                 <Input
                   type="number"
-                  placeholder="50,000+"
+                  placeholder="RWF"
                   value={filters.maxPrice || ""}
                   onChange={(e) => setFilters({ ...filters, maxPrice: Number(e.target.value) || undefined })}
-                  className="rounded-xl border-gray-200"
+                  className={appInputClass}
                 />
               </div>
             </div>
@@ -83,18 +92,18 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
 
           {/* Service Type */}
           <div className="space-y-3">
-            <Label className="text-sm font-bold text-gray-700">Service Type</Label>
+            <Label className={appFieldLabelClass}>Service Type</Label>
             <Select
               value={filters.serviceType || "all"}
               onValueChange={(value) => setFilters({ ...filters, serviceType: value === "all" ? undefined : value })}
             >
-              <SelectTrigger className="w-full rounded-xl border-gray-200">
+              <SelectTrigger className={cn(appInputClass, "w-full")}>
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                <SelectItem value="AGENCY">Agency</SelectItem>
+                <SelectItem value="STAFFING_AGENCY">Staffing Agency</SelectItem>
                 <SelectItem value="COMPANY">Company</SelectItem>
               </SelectContent>
             </Select>
@@ -102,12 +111,12 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
 
           {/* Availability */}
           <div className="space-y-3">
-            <Label className="text-sm font-bold text-gray-700">Availability</Label>
+            <Label className={appFieldLabelClass}>Availability</Label>
             <Select
               value={filters.availability || "all"}
               onValueChange={(value) => setFilters({ ...filters, availability: value === "all" ? undefined : value })}
             >
-              <SelectTrigger className="w-full rounded-xl border-gray-200">
+              <SelectTrigger className={cn(appInputClass, "w-full")}>
                 <SelectValue placeholder="Any Availability" />
               </SelectTrigger>
               <SelectContent>
@@ -121,12 +130,12 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
           {/* Area and Distance */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <Label className="text-sm font-bold text-gray-700">Area</Label>
+              <Label className={appFieldLabelClass}>Area</Label>
               <Select
                 value={filters.location || "all"}
                 onValueChange={(value) => setFilters({ ...filters, location: value === "all" ? undefined : value })}
               >
-                <SelectTrigger className="w-full rounded-xl border-gray-200">
+                <SelectTrigger className={cn(appInputClass, "w-full")}>
                   <SelectValue placeholder="Any Area" />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,12 +147,12 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               </Select>
             </div>
             <div className="space-y-3">
-              <Label className="text-sm font-bold text-gray-700">Distance</Label>
+              <Label className={appFieldLabelClass}>Distance</Label>
               <Select
                 value={filters.distanceKm?.toString() || "all"}
                 onValueChange={(value) => setFilters({ ...filters, distanceKm: value === "all" ? undefined : Number(value) })}
               >
-                <SelectTrigger className="w-full rounded-xl border-gray-200">
+                <SelectTrigger className={cn(appInputClass, "w-full")}>
                   <SelectValue placeholder="Any Distance" />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,12 +168,12 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
 
           {/* Rating */}
           <div className="space-y-3">
-            <Label className="text-sm font-bold text-gray-700">Minimum Rating</Label>
+            <Label className={appFieldLabelClass}>Minimum Rating</Label>
             <Select
               value={filters.minRating?.toString() || "0"}
               onValueChange={(value) => setFilters({ ...filters, minRating: Number(value) || undefined })}
             >
-              <SelectTrigger className="w-full rounded-xl border-gray-200">
+              <SelectTrigger className={cn(appInputClass, "w-full")}>
                 <SelectValue placeholder="Any Rating" />
               </SelectTrigger>
               <SelectContent>
@@ -175,18 +184,18 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, onApply, ini
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </SheetBody>
 
-        <div className="p-4 bg-gray-50 flex items-center gap-3">
-          <Button variant="outline" onClick={handleReset} className="flex-1 rounded-xl h-12 font-bold">
+        <SheetFooter className="flex items-center gap-3">
+          <AppButton appVariant="secondary" onClick={handleReset} className="flex-1">
             Reset
-          </Button>
-          <Button onClick={handleApply} className="flex-1 rounded-xl h-12 bg-[#145B10] hover:bg-[#0F4D0C] font-bold">
-            Apply Filters
-          </Button>
-        </div>
-      </div>
-    </div>
+          </AppButton>
+          <AppButton onClick={handleApply} className="flex-1">
+            Apply
+          </AppButton>
+        </SheetFooter>
+      </SheetPanel>
+    </>
   );
 };
 

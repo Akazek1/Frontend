@@ -31,9 +31,9 @@ export default function Error({ error, reset }: ErrorProps) {
   // First attempt: auto-reload is in flight — show a brief spinner
   if (isChunkError && reloading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-center px-6">
-          <div className="w-8 h-8 border-2 border-[#1B5E20] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-brand-strong border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-gray-500">Loading…</p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function Error({ error, reset }: ErrorProps) {
   // Auto-reload already tried and still failing — ask the user to act
   if (isChunkError && alreadyReloaded) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
           <p className="text-4xl">🔄</p>
           <h1 className="text-lg font-bold text-gray-900">App updated</h1>
@@ -55,7 +55,7 @@ export default function Error({ error, reset }: ErrorProps) {
               sessionStorage.removeItem("_chunk_reload")
               window.location.reload()
             }}
-            className="mt-2 px-6 py-3 bg-[#1B5E20] text-white text-sm font-semibold rounded-full hover:bg-[#145B10] transition-colors"
+            className="mt-2 px-6 py-3 bg-brand-strong text-white text-sm font-semibold rounded-full hover:bg-brand transition-colors"
           >
             Refresh page
           </button>
@@ -66,7 +66,7 @@ export default function Error({ error, reset }: ErrorProps) {
 
   // All other errors — show a friendly message with a retry button
   return (
-    <div className="flex h-screen items-center justify-center bg-white">
+    <div className="bg-surface flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
         <p className="text-4xl">😕</p>
         <h1 className="text-lg font-bold text-gray-900">Something went wrong</h1>
@@ -75,7 +75,7 @@ export default function Error({ error, reset }: ErrorProps) {
         </p>
         <button
           onClick={reset}
-          className="mt-2 px-6 py-3 bg-[#1B5E20] text-white text-sm font-semibold rounded-full hover:bg-[#145B10] transition-colors"
+          className="mt-2 px-6 py-3 bg-brand-strong text-white text-sm font-semibold rounded-full hover:bg-brand transition-colors"
         >
           Try again
         </button>

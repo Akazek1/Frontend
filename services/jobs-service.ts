@@ -15,7 +15,13 @@ export interface Job {
   status: "OPEN" | "CLOSED" | "AWARDED" | "CANCELLED";
   createdAt: string;
   category: { id: string; name: string };
-  address?: { id: string; street: string; city: string };
+  address?: {
+    id: string;
+    street?: string | null;
+    city: string;
+    district?: string | null;
+    sector?: string | null;
+  };
   employer: {
     id: string;
     firstName: string;
@@ -24,6 +30,17 @@ export interface Job {
     isVerified: boolean;
     bio?: string;
   };
+  /** First few applications (avatars only) for the preview strip on the My Job Posts page. */
+  applications?: Array<{
+    id: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+    worker?: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      profilePicture?: string | null;
+    };
+  }>;
   _count?: { applications: number };
 }
 
@@ -31,6 +48,7 @@ export interface JobApplication {
   id: string;
   jobId: string;
   workerId: string;
+  bookingId?: string | null;
   message?: string;
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
   createdAt: string;
@@ -42,6 +60,10 @@ export interface JobApplication {
     profilePicture?: string;
     isVerified: boolean;
     phoneNumber?: string;
+    yearsOfExperience?: number | null;
+    languages?: string[];
+    jobsCompleted?: number;
+    trustScore?: number;
   };
 }
 
@@ -77,7 +99,12 @@ const jobsService = {
   },
 
   getMyApplications: async () => {
-    const response = await api.get("/jobs/my-applications");
+    // Optional "enhancement" call — fired from public pages (home feed, search)
+    // to decorate jobs with the user's applied state. Opt out of the global 401
+    // redirect so a stale/expired token here doesn't bounce guests to home.
+    const response = await api.get("/jobs/my-applications", {
+      skipAuthRedirect: true,
+    });
     return response.data.data;
   },
 
@@ -88,6 +115,11 @@ const jobsService = {
 
   updateApplicationStatus: async (applicationId: string, status: string) => {
     const response = await api.patch(`/jobs/applications/${applicationId}/status`, { status });
+    return response.data.data;
+  },
+
+  withdrawApplication: async (applicationId: string) => {
+    const response = await api.patch(`/jobs/applications/${applicationId}/withdraw`);
     return response.data.data;
   },
 };

@@ -4,7 +4,6 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Briefcase, ArrowRight } from "lucide-react";
 import ViewModeToggle from "./view-mode-toggle";
-import { useViewMode } from "@/context/view-mode-context";
 import { APP_CONFIG } from "@/constant/app.config";
 
 interface TutorialModalProps {
@@ -13,8 +12,6 @@ interface TutorialModalProps {
 }
 
 const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
-  const { viewMode } = useViewMode();
-
   if (!isOpen) return null;
 
   return (
@@ -57,8 +54,8 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-[#F1FCEF] rounded-lg">
-                  <div className="p-2 bg-[#145B10] rounded-lg mt-0.5">
+                <div className="flex items-start gap-3 p-3 bg-surface rounded-lg">
+                  <div className="p-2 bg-brand rounded-lg mt-0.5">
                     <User className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -69,8 +66,8 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-[#F1FCEF] rounded-lg">
-                  <div className="p-2 bg-[#145B10] rounded-lg mt-0.5">
+                <div className="flex items-start gap-3 p-3 bg-surface rounded-lg">
+                  <div className="p-2 bg-brand rounded-lg mt-0.5">
                     <Briefcase className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -86,7 +83,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
             <div className="pt-4 border-t border-gray-200">
               <button
                 onClick={onClose}
-                className="w-full bg-[#145B10] text-white py-3 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-[#1B5E20] transition-colors"
+                className="w-full bg-brand text-white py-3 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-brand-strong transition-colors"
               >
                 Got it!
                 <ArrowRight className="w-5 h-5" />
@@ -100,4 +97,3 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default TutorialModal;
-

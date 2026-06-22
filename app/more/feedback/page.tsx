@@ -5,9 +5,17 @@ import BackButtonHeader from "@/components/header/back-button-header";
 import { Star, Loader2 } from "lucide-react";
 import { Inter } from "next/font/google";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
+import {
+  AppButton,
+  FormField,
+  PageShell,
+  appContentClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -49,21 +57,18 @@ const Feedback = () => {
       setMessage(""); 
     } catch (err) {
       console.error("Error submitting feedback:", err);
-      const errorMessage =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).response?.data?.message || "Failed to submit feedback";
-      toast.error(errorMessage);
+      toast.error(getApiErrorMessage(err, "Failed to submit feedback"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={`bg-[#F1FCEF] p-6 pb-16 space-y-6 ${inter.className}`}>
+    <PageShell className={cn("gap-5", inter.className)}>
       {/* Header */}
       <BackButtonHeader text="Share Feedback" />
-      <div className="flex flex-col cursor-pointer gap-5">
-        <h1 className="text-[#212121] text-xl font-medium leading-6 pr-6">
+      <div className={cn(appContentClass, "cursor-pointer gap-5")}>
+        <h1 className="text-ink text-xl font-medium leading-6 pr-6">
           How would you rate the app experience?
         </h1>
         <div className="flex items-center gap-4">
@@ -78,16 +83,18 @@ const Feedback = () => {
             />
           ))}
         </div>
-        <Textarea
-          className="text-[#9E9E9E] placeholder:text-[#9E9E9E] leading-7 text-sm placeholder:text-sm placeholder:font-semibold font-semibold"
-          placeholder="Type in your feedback"
-          rows={6}
-          value={message}
-          onChange={handleMessageChange}
-        />
-        <Button
+        <FormField label="Feedback" className="space-y-2">
+          <Textarea
+            className={cn(appTextareaClass, "min-h-[140px]")}
+            placeholder="Type in your feedback"
+            rows={6}
+            value={message}
+            onChange={handleMessageChange}
+          />
+        </FormField>
+        <AppButton
           onClick={handleSubmit}
-          className="bg-[#167021] py-[18px] px-4 h-full rounded-[40px] hover:bg-[#167021]/90 font-bold text-base leading-6 font-urbanist"
+          className="w-full font-urbanist text-base"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -98,9 +105,9 @@ const Feedback = () => {
           ) : (
             "Submit"
           )}
-        </Button>
+        </AppButton>
       </div>
-    </div>
+    </PageShell>
   );
 };
 

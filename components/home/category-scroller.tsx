@@ -71,10 +71,10 @@ export default function Categories() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-[#1B2431] font-semibold text-[16px]">Popular Categories</h2>
+        <h2 className="text-ink font-semibold text-[16px]">Service Categories</h2>
         <button
           onClick={() => router.push("/service?category=all")}
-          className="text-[12px] text-[#145B10] font-semibold"
+          className="text-[12px] text-brand font-semibold"
         >
           See all
         </button>
@@ -82,7 +82,7 @@ export default function Categories() {
 
       {isLoading ? (
         <div className="w-full flex items-center justify-center py-4">
-          <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+          <Loader2 className="w-6 h-6 animate-spin text-brand" />
         </div>
       ) : (
         <Scroller

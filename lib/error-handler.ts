@@ -8,6 +8,46 @@ export interface ApiError {
   originalError?: unknown
 }
 
+interface ApiErrorResponseData {
+  message?: string | string[]
+  data?: {
+    message?: string | string[]
+  }
+  errors?: string[]
+}
+
+interface ErrorWithCode {
+  code?: string
+}
+
+export function getApiErrorMessage(
+  error: unknown,
+  fallback: string = "An error occurred. Please try again."
+): string {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as ApiErrorResponseData | undefined
+    const message = data?.message ?? data?.data?.message
+    if (Array.isArray(message)) return message.join(", ")
+    if (message) return message
+  }
+
+  if (error instanceof Error && error.message) return error.message
+  return fallback
+}
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return typeof error === "object" && error !== null && (error as ErrorWithCode).code === code
+}
+
+export function getApiErrorStatus(error: unknown): number | undefined {
+  return error instanceof AxiosError ? error.response?.status : undefined
+}
+
+function formatApiMessage(message: string | string[] | undefined, fallback: string): string {
+  if (Array.isArray(message)) return message[0] || fallback
+  return message || fallback
+}
+
 /**
  * Centralized error handler for API calls
  * Provides consistent error messages and logging
@@ -19,14 +59,14 @@ export function handleApiError(
   // Handle AxiosError
   if (error instanceof AxiosError) {
     const status = error.response?.status ?? 0
-    const data = error.response?.data as any
+    const data = error.response?.data as ApiErrorResponseData | undefined
 
     // Handle specific HTTP status codes
     switch (status) {
       case 400:
         return {
           status,
-          message: data?.message || "Invalid request. Please check your input.",
+          message: formatApiMessage(data?.message, "Invalid request. Please check your input."),
           code: "BAD_REQUEST",
           originalError: error,
         }
@@ -36,7 +76,7 @@ export function handleApiError(
         if (typeof window !== "undefined") {
           localStorage.removeItem("token")
           localStorage.removeItem("user")
-          window.location.href = "/onboarding"
+          window.location.href = "/"
         }
         return {
           status,
@@ -56,7 +96,7 @@ export function handleApiError(
       case 404:
         return {
           status,
-          message: data?.message || "The requested resource was not found.",
+          message: formatApiMessage(data?.message, "The requested resource was not found."),
           code: "NOT_FOUND",
           originalError: error,
         }
@@ -64,7 +104,7 @@ export function handleApiError(
       case 409:
         return {
           status,
-          message: data?.message || "This resource already exists.",
+          message: formatApiMessage(data?.message, "This resource already exists."),
           code: "CONFLICT",
           originalError: error,
         }
@@ -110,7 +150,7 @@ export function handleApiError(
       default:
         return {
           status,
-          message: data?.message || defaultMessage,
+          message: formatApiMessage(data?.message, defaultMessage),
           code: "UNKNOWN_ERROR",
           originalError: error,
         }
@@ -130,7 +170,7 @@ export function handleApiError(
   }
 
   // Handle timeout
-  if ((error as any)?.code === "ECONNABORTED") {
+  if (hasErrorCode(error, "ECONNABORTED")) {
     return {
       status: 0,
       message: "Request timeout. Please try again.",
@@ -204,5 +244,5 @@ export function isRetryableError(error: unknown): boolean {
     return error.message.includes("fetch") || error.message.includes("network")
   }
 
-  return (error as any)?.code === "ECONNABORTED"
+  return hasErrorCode(error, "ECONNABORTED")
 }

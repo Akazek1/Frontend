@@ -142,8 +142,8 @@ const SlotSelectionDialog: React.FC<SlotSelectionDialogProps> = ({
                                     <div
                                         key={date.dateString}
                                         className={`flex flex-col items-center cursor-pointer p-3 rounded-lg border ${selectedDate === date.dateString
-                                                ? "bg-[#145B10] text-white border-[#145B10]"
-                                                : "bg-[#437C40] text-white border-[#145B10] hover:bg-[#618f5e]"
+                                                ? "bg-brand text-white border-brand"
+                                                : "bg-[#437C40] text-white border-brand hover:bg-[#618f5e]"
                                             }`}
                                         onClick={() => handleDateSelect(date.dateString)}
                                     >
@@ -168,8 +168,8 @@ const SlotSelectionDialog: React.FC<SlotSelectionDialogProps> = ({
                                             key={index}
                                             variant="outline"
                                             className={`px-3  ${selectedTime === time
-                                                    ? "bg-[#145B10] text-white border-[#145B10]"
-                                                    : "bg-[#437C40] text-white border-[#145B10] hover:bg-[#618f5e]"
+                                                    ? "bg-brand text-white border-brand"
+                                                    : "bg-[#437C40] text-white border-brand hover:bg-[#618f5e]"
                                                 }`}
                                             onClick={() => handleTimeSelect(time)}
                                         >

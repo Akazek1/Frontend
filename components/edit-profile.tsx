@@ -1,656 +1,863 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { ChevronDown, Loader2, CalendarIcon, Mail, User, Phone, Languages, FileText, MapPin } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import BackButtonHeader from "@/components/header/back-button-header";
+  AtSign,
+  BookOpen,
+  BriefcaseBusiness,
+  Calendar,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
+  Eye,
+  FileBadge,
+  GraduationCap,
+  IdCard,
+  Languages,
+  Loader2,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
+
+import api from "@/lib/axios";
 import { AppDispatch, RootState } from "@/store";
 import { updateUser } from "@/store/slices/auth-slice";
-import { useRouter } from "next/navigation";
-import api from "@/lib/axios";
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import toast from "react-hot-toast";
-import { colors } from "@/constant/colors";
-import APP_CONFIG from "@/constant/app.config";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  PageHeader,
+  appCardClass,
+  appInputClass,
+  appPrimaryButtonClass,
+  appStickyHeaderClass,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 import ProfileImageUploader from "@/components/profile/profile-img-uloader";
+import APP_CONFIG from "@/constant/app.config";
+import { QUALITY_DEFS, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
 
-// Interface for form data to ensure type safety
-interface FormData {
-    firstName: string;
-    lastName: string;
-    username: string;
-    dateOfBirth: string;
-    email: string;
-    country: string;
-    phone: string;
-    gender: string;
-    languages: string[];
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    certificate: File | null;
-}
-
-const EditProfile = ({ idEditable = true }: { idEditable?: boolean }) => {
-    const dispatch = useDispatch<AppDispatch>();
-    const router = useRouter();
-    const { user } = useSelector((state: RootState) => state.auth);
-
-    // Strip 250 country code prefix for clean display in input
-    const stripCountryCode = (phone: string) => phone.replace(/^250/, "");
-
-    const [formData, setFormData] = useState<FormData>({
-        firstName: user?.firstName || "",
-        lastName: user?.lastName || "",
-        username: user?.username || "",
-        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split("T")[0] : "",
-        email: user?.email || "",
-        country: user?.country || "Rwanda",
-        phone: stripCountryCode(user?.phoneNumber || ""), // Store without 250 prefix (added at save time)
-        gender: user?.gender || "",
-        languages: user?.languages || [],
-        street: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        certificate: null,
-    });
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            if (user) {
-                try {
-                    const response = await api.get(`/users/profile`);
-                    const userData = response.data?.data || {};
-                    setFormData((prev) => ({
-                        ...prev,
-                        firstName: userData.firstName || "",
-                        lastName: userData.lastName || "",
-                        username: userData.username || "",
-                        dateOfBirth: userData.dateOfBirth ? new Date(userData.dateOfBirth).toISOString().split("T")[0] : "",
-                        email: userData.email || "",
-                        country: userData.country || "Rwanda",
-                        phone: stripCountryCode(userData.phoneNumber || ""), // Strip 250 prefix for display
-                        gender: userData.gender || "",
-                        languages: userData.languages || [],
-                        street: userData.address?.street || "",
-                        city: userData.address?.city || "",
-                        state: userData.address?.state || "",
-                        postalCode: userData.address?.postalCode || "",
-                        certificate: null,
-                    }));
-                } catch {
-                    toast.error("Failed to load user data");
-                }
-            }
-        };
-        fetchUserData();
-    }, [user]);
-
-    React.useEffect(() => {
-        if (!user) {
-            toast.error("User not authenticated");
-            router.push("/onboarding");
-        }
-    }, [user, router]);
-
-    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-    }, []);
-
-    const handleSelectChange = useCallback((name: string, value: string) => {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-    }, []);
-
-    const handleLanguageChange = useCallback((language: string) => {
-        setFormData((prev) => {
-            const languages = prev.languages.includes(language)
-                ? prev.languages.filter((lang) => lang !== language)
-                : [...prev.languages, language];
-            return { ...prev, languages };
-        });
-        setErrors((prev) => ({ ...prev, languages: "" }));
-    }, []);
-
-    const toggleLanguageDropdown = useCallback(() => {
-        setIsLanguageDropdownOpen((prev) => !prev);
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsLanguageDropdownOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleCertificateChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0] || null;
-
-        const allowedTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
-
-        if (file && !allowedTypes.includes(file.type)) {
-            setErrors((prev) => ({ ...prev, certificate: "Please upload a PDF or image file (PNG, JPG, JPEG, WEBP)" }));
-            return;
-        }
-
-        setFormData((prev) => ({ ...prev, certificate: file }));
-        setErrors((prev) => ({ ...prev, certificate: "" }));
-    }, []);
-
-
-    const validateForm = useCallback(() => {
-        const newErrors: { [key: string]: string } = {};
-
-        if (!formData.firstName.trim()) {
-            newErrors.firstName = "First name is required";
-        }
-        if (!formData.dateOfBirth) {
-            newErrors.dateOfBirth = "Date of birth is required";
-        } else if (isNaN(new Date(formData.dateOfBirth).getTime())) {
-            newErrors.dateOfBirth = "Invalid date of birth";
-        }
-        if (!formData.email.trim()) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "Invalid email format";
-        }
-        if (!formData.phone.trim()) {
-            newErrors.phone = "Phone number is required";
-        }
-        if (!formData.gender) {
-            newErrors.gender = "Gender is required";
-        }
-        if (!formData.country) {
-            newErrors.country = "Country is required";
-        }
-        if (formData.languages.length === 0) {
-            newErrors.languages = "At least one language is required";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [formData]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!validateForm()) {
-            toast.error("Please fix the form errors");
-            return;
-        }
-
-        setIsLoading(true);
-        setErrors({});
-
-        try {
-            const gender = formData.gender?.toUpperCase();
-            if (!["MALE", "FEMALE", "OTHER"].includes(gender)) {
-                throw new Error("Invalid gender value");
-            }
-
-            const dateOfBirth = new Date(formData.dateOfBirth);
-            if (isNaN(dateOfBirth.getTime())) {
-                throw new Error("Invalid date of birth");
-            }
-
-            // Phone number is read-only (locked after signup), use the existing user phone number.
-            // This avoids validation failures when stored data is malformed (e.g. legacy double-prefix data).
-            // Source of truth: the user's existing phone number from auth state.
-            let phoneNumber = String(user?.phoneNumber || "").trim().replace(/\D/g, "");
-
-            // Ensure proper format: should be 250 + 9 digits
-            if (phoneNumber && !phoneNumber.startsWith("250")) {
-                // Add 250 prefix if missing
-                phoneNumber = "250" + phoneNumber;
-            }
-
-            // Normalize: if there's any prefix issue (e.g. 250250...), keep only the last 12 chars
-            if (phoneNumber.length > 12) {
-                phoneNumber = "250" + phoneNumber.slice(-9);
-            }
-
-            // Only validate if we have a phone number (it should always exist after signup)
-            const validPhoneRegex = /^250\d{9}$/;
-            if (phoneNumber && !validPhoneRegex.test(phoneNumber)) {
-                // If phone is malformed in DB, log warning but don't block save of other fields
-                console.warn("Phone number format issue:", phoneNumber);
-            }
-
-            // Generate username if not provided
-            let username = formData.username;
-            if (!username && formData.firstName) {
-                const firstPart = formData.firstName.toLowerCase().slice(0, 5);
-                const lastPart = formData.lastName?.toLowerCase().slice(0, 4) || "";
-                username = firstPart + lastPart;
-
-                // Check if available, add number if taken
-                try {
-                  let availCheck = await api.get(`/users/username/${username}/check`);
-                  if (!availCheck.data.available) {
-                    let counter = 1;
-                    while (!availCheck.data.available && counter < 100) {
-                      const newUsername = username + counter;
-                      availCheck = await api.get(`/users/username/${newUsername}/check`);
-                      if (availCheck.data.available) {
-                        username = newUsername;
-                        break;
-                      }
-                      counter++;
-                    }
-                  }
-                } catch {
-                  // If check fails, just use the generated username
-                }
-            }
-
-            // Validate username if provided
-            if (username) {
-                const usernameRegex = /^[a-z0-9_-]{3,30}$/;
-                if (!usernameRegex.test(username)) {
-                    throw new Error("Username must be 3-30 characters, lowercase letters, numbers, underscores, or hyphens only");
-                }
-
-                // Check username availability
-                try {
-                    const checkResponse = await api.get(`/users/username/${username}/check`);
-                    if (!checkResponse.data.available && user?.username !== username) {
-                        throw new Error("Username is already taken");
-                    }
-                } catch (checkErr: unknown) {
-                    const usernameCheckError = checkErr as { response?: { status?: number; data?: { message?: string } }; message?: string };
-                    if (usernameCheckError.response?.status === 400) {
-                        throw new Error(usernameCheckError.response?.data?.message || "Invalid username format");
-                    }
-                    if (usernameCheckError.message?.includes("already taken")) {
-                        throw checkErr;
-                    }
-                }
-            }
-
-            const payload = {
-                phoneNumber,
-                firstName: String(formData.firstName),
-                lastName: String(formData.lastName),
-                username: username ? String(username) : undefined,
-                email: String(formData.email),
-                gender,
-                dateOfBirth: dateOfBirth.toISOString(),
-                languages: formData.languages.map(String),
-                // certificate: formData.certificate ?? null,
-            };
-
-            // Use PATCH for profile updates (username can be updated via PATCH)
-            const profileResponse = await api.patch("/users/profile", payload);
-
-            const userData = profileResponse?.data?.data;
-
-            const updatedUser = {
-                id: userData.id,
-                username: userData.username,
-                phoneNumber: userData.phoneNumber,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                email: userData.email,
-                isProfileComplete: userData.isProfileComplete ?? user?.isProfileComplete,
-                isMobileVerified: userData.isMobileVerified ?? user?.isMobileVerified,
-                isEmailVerified: userData.isEmailVerified ?? user?.isEmailVerified,
-                gender: userData.gender,
-                dateOfBirth: userData.dateOfBirth,
-                languages: userData.languages,
-                country: userData.country,
-            };
-
-            dispatch(updateUser(updatedUser));
-            toast.success("Profile updated successfully");
-            router.push("/more");
-        } catch (err: unknown) {
-            const errorMessage =
-                (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-                "Failed to update profile";
-            setErrors({ form: errorMessage });
-            toast.error(errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
-    const availableLanguages = APP_CONFIG.profile.languages;
-    const genderOptions = APP_CONFIG.profile.genders;
-
-    return (
-        <div className={`px-4 sm:px-6 ${idEditable ? "pt-4 pb-24" : "py-4"} min-h-screen overflow-y-auto touch-pan-y`} style={{ backgroundColor: colors.background }}>
-            {idEditable && <BackButtonHeader text="Edit Profile" backHref="/more" className="pb-6" />}
-
-            <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
-                {idEditable && (
-                    <div className="rounded-lg bg-white p-4 shadow-sm" style={{ border: `1px solid ${colors.border}` }}>
-                        <div className="flex items-start gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: colors.backgroundTertiary, color: colors.primary }}>
-                                <User className="h-5 w-5" />
-                            </span>
-                            <div>
-                                <h1 className="text-base font-bold leading-5" style={{ color: colors.text }}>Personal information</h1>
-                                <p className="mt-1 text-xs leading-5" style={{ color: colors.textMuted }}>
-                                    Keep your public profile accurate. Your phone number stays locked for account safety.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {idEditable && (
-                    <div className="rounded-lg bg-white p-4 shadow-sm" style={{ border: `1px solid ${colors.border}` }}>
-                        <ProfileImageUploader />
-                    </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-1">
-                    <User className="h-4 w-4" style={{ color: colors.primary }} />
-                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Identity</h2>
-                </div>
-                {/* First Name */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">First Name</Label>
-                    <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        disabled={!idEditable}
-                        onChange={handleChange}
-                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.firstName ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
-                        placeholder="Enter first name"
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                    />
-                    {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName}</p>}
-                </div>
-
-                {/* Last Name */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Last Name</Label>
-                    <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        disabled={!idEditable}
-                        onChange={handleChange}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 touch-manipulation"
-                        placeholder="Enter last name (Optional)"
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                    />
-                </div>
-
-                {/* Username */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">
-                        Username <span className="text-gray-400 text-xs">(for sharing your profile)</span>
-                    </Label>
-                    <Input
-                        id="username"
-                        name="username"
-                        value={formData.username}
-                        disabled={!idEditable}
-                        onChange={(e) => {
-                            // Convert to lowercase and remove invalid characters
-                            const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-                            setFormData((prev) => ({ ...prev, username: value }));
-                            setErrors((prev) => ({ ...prev, username: "" }));
-                        }}
-                        className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.username ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
-                        placeholder="your-username"
-                        maxLength={30}
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                    />
-                    {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
-                    {formData.username && (
-                        <p className="text-xs text-gray-500">
-                            Your profile link: {typeof window !== "undefined" ? window.location.origin : ""}/{formData.username}
-                        </p>
-                    )}
-                </div>
-
-                {/* Date of Birth */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Date of Birth</Label>
-                    <div className="relative">
-                        <Input
-                            id="dateOfBirth"
-                            name="dateOfBirth"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            disabled={!idEditable}
-                            onChange={handleChange}
-                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.dateOfBirth ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
-                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                        />
-                        <CalendarIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    </div>
-                    {errors.dateOfBirth && <p className="text-red-500 text-xs">{errors.dateOfBirth}</p>}
-                </div>
-
-                <div className="flex items-center gap-2 pt-3">
-                    <Mail className="h-4 w-4" style={{ color: colors.primary }} />
-                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Contact</h2>
-                </div>
-
-                {/* Email */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Email</Label>
-                    <div className="relative">
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            disabled={!idEditable}
-                            onChange={handleChange}
-                            className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] pl-9 focus:outline-none border ${errors.email ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
-                            placeholder="Enter email"
-                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                        />
-                        <Mail className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    </div>
-                    {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
-                </div>
-
-                <div className="flex items-center gap-2 pt-3">
-                    <MapPin className="h-4 w-4" style={{ color: colors.primary }} />
-                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Location</h2>
-                </div>
-
-                {/* Country */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Country</Label>
-                    <Input
-                        id="country"
-                        name="country"
-                        value="Rwanda"
-                        disabled
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 text-gray-500 touch-manipulation"
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                    />
-                    {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
-                </div>
-
-                {/* Phone Number - Read Only */}
-                <div className={`space-y-1`}>
-                    <Label className={`font-semibold text-xs text-secondary-foreground`}>Phone Number</Label>
-                    <div className="flex items-center rounded-lg overflow-hidden w-full h-14 bg-gray-100" style={{ border: `1px solid ${colors.borderSecondary}` }}>
-                        <div className="flex items-center gap-1.5 pl-2 pr-4 h-full bg-white" style={{ borderRight: `1px solid ${colors.borderSecondary}` }}>
-                            <Image
-                                height={14}
-                                width={20}
-                                src="https://flagcdn.com/w40/rw.png"
-                                alt="Rwanda Flag"
-                                className="w-5 h-3.5 object-cover rounded-sm"
-                            />
-                            <span className="text-[#212121] font-semibold text-xs">+250</span>
-                        </div>
-                        <input
-                            id="phone"
-                            type="tel"
-                            inputMode="numeric"
-                            value={formData.phone}
-                            placeholder="Phone Number"
-                            readOnly
-                            disabled
-                            className="h-full w-full px-3 text-[#212121] font-semibold text-sm bg-gray-100 cursor-not-allowed border-none outline-none focus:outline-none focus:ring-0 focus:border-none active:outline-none active:ring-0 active:border-none shadow-none touch-manipulation"
-                            maxLength={9}
-                        />
-                    </div>
-                    <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <Phone className="h-3.5 w-3.5" />
-                        Phone number cannot be changed
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2 pt-3">
-                    <Languages className="h-4 w-4" style={{ color: colors.primary }} />
-                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Profile details</h2>
-                </div>
-
-                {/* Gender */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Gender</Label>
-                    <Select
-                        value={formData.gender}
-                        onValueChange={(value) => handleSelectChange("gender", value)}
-                        disabled={!idEditable}
-                    >
-                        <SelectTrigger
-                            id="gender"
-                            className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.gender ? "border-red-500" : "border-none"} focus:ring-2 touch-manipulation`}
-                            style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                        >
-                            <SelectValue placeholder="Select gender" />
-                            <ChevronDown className="w-4 h-4 text-black fill-black absolute right-5 focus-within:rotate-180 transition ease-in duration-150" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {genderOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {errors.gender && <p className="text-red-500 text-xs">{errors.gender}</p>}
-                </div>
-
-                {/* Languages Spoken */}
-                <div className="relative space-y-1" ref={dropdownRef}>
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">Languages Spoken</Label>
-                    <div
-                        onClick={toggleLanguageDropdown}
-                        className={`${idEditable ? "" : "pointer-events-none opacity-50"} relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.languages ? "border-red-500" : "border-none"} focus:ring-2 cursor-pointer flex items-center justify-between touch-manipulation`}
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            toggleLanguageDropdown();
-                          }
-                        }}
-                    >
-                        <span className="truncate">
-                            {formData.languages.length > 0 ? formData.languages.join(", ") : "Select languages"}
-                        </span>
-                        <ChevronDown
-                            className={`w-4 h-4 text-black fill-black transition-transform duration-150 ${isLanguageDropdownOpen ? "rotate-180" : ""}`}
-                        />
-                    </div>
-                    {isLanguageDropdownOpen && (
-                        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {availableLanguages.map((language) => (
-                                <div
-                                    key={language}
-                                    onClick={() => handleLanguageChange(language)}
-                                    className="flex items-center px-3 py-1.5 cursor-pointer hover:bg-gray-100 touch-manipulation"
-                                >
-                                    <span className="flex-1 text-sm">{language}</span>
-                                    {formData.languages.includes(language) && (
-                                        <span className="text-green-500 ml-2 text-sm">✓</span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {errors.languages && <p className="text-red-500 text-xs">{errors.languages}</p>}
-                </div>
-
-                <div className="flex items-center gap-2 pt-3">
-                    <FileText className="h-4 w-4" style={{ color: colors.primary }} />
-                    <h2 className="text-sm font-bold" style={{ color: colors.text }}>Verification</h2>
-                </div>
-
-                {/* Certificate Upload */}
-                <div className="space-y-1">
-                    <Label className="font-semibold text-secondary-foreground/50 text-xs">National ID (PDF)</Label>
-                    <Input
-                        id="certificate"
-                        type="file"
-                        onChange={handleCertificateChange}
-                        disabled={!idEditable}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-2 touch-manipulation"
-                        accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
-                        style={{ "--tw-ring-color": colors.primary } as React.CSSProperties}
-                    />
-                    {formData.certificate && (
-                        <p className="text-xs text-gray-500 mt-1 truncate">
-                            Selected file: {formData.certificate.name}
-                        </p>
-                    )}
-                    {errors.certificate && <p className="text-red-500 text-xs">{errors.certificate}</p>}
-                </div>
-
-                {/* Update Button */}
-                {idEditable && (
-                    <Button
-                        size="lg"
-                        type="submit"
-                        className="sticky bottom-4 z-10 w-full text-white rounded-lg font-bold text-base py-2.5 px-4 h-14 transition-colors touch-manipulation shadow-lg"
-                        style={{
-                          backgroundColor: colors.primaryHover,
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = colors.primaryActive;
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.backgroundColor = colors.primaryHover;
-                        }}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Updating...
-                            </>
-                        ) : (
-                            "Update"
-                        )}
-                    </Button>
-                )}
-            </form>
-        </div>
-    );
+type ProfileForm = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  dateOfBirth: string;
+  gender: string;
+  phoneNumber: string;
+  languages: string[];
+  bio: string;
+  educationLevel: string;
+  healthStatus: string;
+  preferredWorkTime: string;
+  topQualities: string[];
+  city: string;
+  district: string;
+  sector: string;
 };
 
-export default EditProfile;
+type Errors = Partial<Record<keyof ProfileForm | "form", string>>;
+type EditSection = "overview" | "identity" | "location" | "languages" | "work" | "trust";
+
+const LEGAL_WORKING_AGE = 18;
+const BIO_LIMIT = 500;
+
+const EDUCATION_OPTIONS = [
+  "No formal education",
+  "Primary school",
+  "Lower secondary",
+  "Upper secondary / high school",
+  "Vocational / TVET",
+  "University",
+  "Other",
+];
+
+const WORK_TIME_OPTIONS = [
+  "Morning",
+  "Afternoon",
+  "Evening",
+  "Full day",
+  "Live-in",
+  "Flexible",
+];
+
+const HEALTH_OPTIONS = [
+  "Fit for work",
+  "Can do light work",
+  "Prefer not to say",
+];
+
+const normalizePhone = (phone?: string) => {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("250")) return digits;
+  return `250${digits}`;
+};
+
+const displayLocalPhone = (phone?: string) => normalizePhone(phone).replace(/^250/, "");
+
+const toDateInput = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
+
+const getMaxBirthDate = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - LEGAL_WORKING_AGE);
+  return date.toISOString().slice(0, 10);
+};
+
+const getAge = (dateValue: string) => {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) age -= 1;
+  return age;
+};
+
+const fullName = (form: ProfileForm) =>
+  [form.firstName, form.lastName].filter(Boolean).join(" ").trim() || "Your profile";
+
+const inputClass =
+  appInputClass;
+
+const selectClass =
+  appInputClass;
+
+const SectionShell = ({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) => (
+  <section className={appCardClass}>
+    <div className="mb-4 flex items-start gap-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-[16px] font-black leading-5 text-ink">{title}</h2>
+        {description ? <p className="mt-1 text-[12px] leading-5 text-[#53604F]">{description}</p> : null}
+      </div>
+    </div>
+    <div className="space-y-4">{children}</div>
+  </section>
+);
+
+const Field = ({
+  label,
+  error,
+  hint,
+  children,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
+}) => (
+  <div className="space-y-1.5">
+    <Label className="text-[12px] font-black text-[#374033]">{label}</Label>
+    {children}
+    {hint ? <p className="text-[11px] leading-4 text-[#6B7668]">{hint}</p> : null}
+    {error ? <p className="text-[11px] font-semibold text-red-500">{error}</p> : null}
+  </div>
+);
+
+export default function EditProfile({ idEditable = true }: { idEditable?: boolean }) {
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const [activeSection, setActiveSection] = useState<EditSection>("overview");
+  const [form, setForm] = useState<ProfileForm>({
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    username: user?.username || "",
+    email: user?.email || "",
+    dateOfBirth: toDateInput(user?.dateOfBirth),
+    gender: user?.gender || "",
+    phoneNumber: displayLocalPhone(user?.phoneNumber),
+    languages: user?.languages || [],
+    bio: user?.bio || "",
+    educationLevel: user?.educationLevel || "",
+    healthStatus: user?.healthStatus || "",
+    preferredWorkTime: user?.preferredWorkTime || "",
+    topQualities: user?.topQualities || [],
+    city: "",
+    district: "",
+    sector: "",
+  });
+  const [errors, setErrors] = useState<Errors>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [initialLocation, setInitialLocation] = useState({ city: "", district: "", sector: "" });
+
+  const canEdit = idEditable && !saving;
+  const maxBirthDate = useMemo(getMaxBirthDate, []);
+
+  useEffect(() => {
+    if (!user) {
+      toast.error("Please log in to edit your profile");
+      router.push("/onboarding");
+    }
+  }, [router, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfile() {
+      if (!user) return;
+      try {
+        setLoading(true);
+        const response = await api.get("/users/profile");
+        const data = response.data?.data || response.data || {};
+        if (cancelled) return;
+        const location = {
+          city: data.addresses?.[0]?.city || "",
+          district: data.addresses?.[0]?.district || "",
+          sector: data.addresses?.[0]?.sector || "",
+        };
+        setForm({
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+          username: data.username || "",
+          email: data.email || "",
+          dateOfBirth: toDateInput(data.dateOfBirth),
+          gender: data.gender || "",
+          phoneNumber: displayLocalPhone(data.phoneNumber),
+          languages: Array.isArray(data.languages) ? data.languages : [],
+          bio: data.bio || "",
+          educationLevel: data.educationLevel || "",
+          healthStatus: data.healthStatus || "",
+          preferredWorkTime: data.preferredWorkTime || "",
+          topQualities: Array.isArray(data.topQualities) ? data.topQualities : [],
+          city: location.city,
+          district: location.district,
+          sector: location.sector,
+        });
+        setInitialLocation(location);
+      } catch {
+        toast.error("Failed to load profile");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const profileUrl = useMemo(() => {
+    if (!form.username || typeof window === "undefined") return "";
+    return `${window.location.origin}/${form.username}`;
+  }, [form.username]);
+
+  const profileCompletion = useMemo(() => {
+    const checks = [
+      form.firstName.trim(),
+      form.lastName.trim(),
+      form.gender,
+      form.dateOfBirth,
+      form.phoneNumber,
+      form.languages.length > 0,
+      form.bio.trim(),
+      form.city.trim(),
+      form.educationLevel,
+      form.preferredWorkTime,
+      form.topQualities.length > 0,
+    ];
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }, [form]);
+
+  const profileCompletionMessage = useMemo(() => {
+    if (profileCompletion === 100) return "Your profile is complete and ready for employers.";
+    if (profileCompletion >= 85) return "Almost there. Complete a few more sections.";
+    return "Add more details to help employers decide faster.";
+  }, [profileCompletion]);
+
+  const setField = useCallback(<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: undefined, form: undefined }));
+  }, []);
+
+  const toggleLanguage = (language: string) => {
+    setField(
+      "languages",
+      form.languages.includes(language)
+        ? form.languages.filter((item) => item !== language)
+        : [...form.languages, language],
+    );
+  };
+
+  const toggleQuality = (quality: QualityKey) => {
+    const selected = form.topQualities.includes(quality);
+    if (!selected && form.topQualities.length >= 3) {
+      toast.error("Choose up to 3 qualities");
+      return;
+    }
+    setField(
+      "topQualities",
+      selected
+        ? form.topQualities.filter((item) => item !== quality)
+        : [...form.topQualities, quality],
+    );
+  };
+
+  const validate = () => {
+    const next: Errors = {};
+    const age = form.dateOfBirth ? getAge(form.dateOfBirth) : null;
+
+    if (!form.firstName.trim()) next.firstName = "First name is required";
+    if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email.trim())) {
+      next.email = "Enter a valid email";
+    }
+    if (!form.gender) next.gender = "Gender is required";
+    if (!form.dateOfBirth) next.dateOfBirth = "Date of birth is required";
+    if (form.dateOfBirth && Number.isNaN(new Date(form.dateOfBirth).getTime())) {
+      next.dateOfBirth = "Enter a valid date";
+    }
+    if (age !== null && age < LEGAL_WORKING_AGE) {
+      next.dateOfBirth = `You must be at least ${LEGAL_WORKING_AGE} to work in Rwanda`;
+    }
+    if (form.languages.length === 0) next.languages = "Choose at least one language";
+    if (form.username && !/^[a-z0-9_-]{3,30}$/.test(form.username)) {
+      next.username = "Use 3-30 lowercase letters, numbers, underscores, or hyphens";
+    }
+    if (form.bio.length > BIO_LIMIT) next.bio = `Keep your bio under ${BIO_LIMIT} characters`;
+    if ((form.district.trim() || form.sector.trim()) && !form.city.trim()) {
+      next.city = "City is required when adding a location";
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!idEditable) return;
+    if (!validate()) {
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const username = form.username.trim() || undefined;
+      if (username && username !== user?.username) {
+        const check = await api.get(`/users/username/${username}/check`);
+        if (!check.data?.available) {
+          setErrors((prev) => ({ ...prev, username: "Username is already taken" }));
+          toast.error("Username is already taken");
+          setSaving(false);
+          setActiveSection("identity");
+          return;
+        }
+      }
+
+      const payload = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        username,
+        ...(form.email.trim() ? { email: form.email.trim() } : {}),
+        gender: form.gender,
+        dateOfBirth: new Date(form.dateOfBirth).toISOString(),
+        languages: form.languages,
+        bio: form.bio.trim(),
+        educationLevel: form.educationLevel || undefined,
+        healthStatus: form.healthStatus || undefined,
+        preferredWorkTime: form.preferredWorkTime || undefined,
+        topQualities: form.topQualities,
+      };
+
+      const response = await api.patch("/users/profile", payload);
+      const updated = response.data?.data || response.data;
+
+      const nextLocation = {
+        city: form.city.trim(),
+        district: form.district.trim(),
+        sector: form.sector.trim(),
+      };
+      const locationChanged =
+        nextLocation.city !== initialLocation.city ||
+        nextLocation.district !== initialLocation.district ||
+        nextLocation.sector !== initialLocation.sector;
+
+      if (nextLocation.city && locationChanged) {
+        await api.post("/users/addresses", {
+          city: nextLocation.city,
+          district: nextLocation.district || undefined,
+          sector: nextLocation.sector || undefined,
+          isDefault: true,
+        });
+        setInitialLocation(nextLocation);
+      }
+
+      dispatch(updateUser({
+        id: updated.id,
+        username: updated.username,
+        phoneNumber: updated.phoneNumber,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
+        gender: updated.gender,
+        dateOfBirth: updated.dateOfBirth,
+        languages: updated.languages,
+        bio: updated.bio,
+        educationLevel: updated.educationLevel,
+        healthStatus: updated.healthStatus,
+        preferredWorkTime: updated.preferredWorkTime,
+        topQualities: updated.topQualities,
+        profilePicture: updated.profilePicture,
+      }));
+
+      toast.success("Profile updated");
+      setActiveSection("overview");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to update profile";
+      setErrors((prev) => ({ ...prev, form: message }));
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openSection = (section: EditSection) => {
+    setErrors((prev) => ({ ...prev, form: undefined }));
+    setActiveSection(section);
+  };
+
+  const sectionTitle = {
+    overview: idEditable ? "Edit Profile" : "Profile Preview",
+    identity: "Identity",
+    location: "Location",
+    languages: "Languages",
+    work: "About your work",
+    trust: "Verification & trust",
+  }[activeSection];
+
+  const sectionDescription = {
+    overview: "Keep your details accurate and build trust.",
+    identity: "",
+    location: "Set the areas where you are available for work.",
+    languages: "Choose all languages you can comfortably use.",
+    work: "Tell employers what makes you reliable and professional.",
+    trust: "Complete checks that help employers hire with confidence.",
+  }[activeSection];
+
+  if (loading) {
+    return (
+      <div className="bg-surface flex min-h-dvh items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  const Header = (
+    <PageHeader
+      title={sectionTitle}
+      subtitle={sectionDescription || undefined}
+      onBack={() => (activeSection === "overview" ? router.back() : openSection("overview"))}
+      className={cn(appStickyHeaderClass, "z-20 border-b border-[#E1EBDD]")}
+    />
+  );
+
+  const SaveBar = idEditable ? (
+    <div className="fixed bottom-14 left-0 right-0 z-30 mx-auto max-w-[428px] border-t border-[#E1EBDD] bg-white p-4">
+      <Button
+        type="submit"
+        disabled={saving}
+        className={cn(appPrimaryButtonClass, "w-full")}
+      >
+        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+        Save changes
+      </Button>
+    </div>
+  ) : null;
+
+  return (
+    <div className="bg-surface min-h-dvh pb-44">
+      {Header}
+      <form onSubmit={handleSubmit} className="mx-auto max-w-[428px] space-y-4 px-4 pt-4">
+        {errors.form ? (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600">
+            {errors.form}
+          </div>
+        ) : null}
+
+        {activeSection === "overview" ? (
+          <>
+            <section className={cn(appCardClass, "p-5 text-center")}>
+              {idEditable ? (
+                <ProfileImageUploader />
+              ) : (
+                <>
+                  <div className="mx-auto mb-3 flex h-28 w-28 items-center justify-center rounded-full bg-[#EEF8EA]">
+                    <User className="h-12 w-12 text-brand" />
+                  </div>
+                  <h2 className="text-[21px] font-black leading-7 text-ink">{fullName(form)}</h2>
+                </>
+              )}
+              <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-black text-brand">
+                <ShieldCheck className="h-4 w-4" />
+                Verified phone
+              </p>
+            </section>
+
+            <section className={appCardClass}>
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[13px] font-black text-ink">Profile completeness</p>
+                    <p className="text-[13px] font-black text-ink">{profileCompletion}%</p>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#E5E9E3]">
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${profileCompletion}%` }} />
+                  </div>
+                  <p className="mt-2 text-[11px] leading-4 text-[#53604F]">{profileCompletionMessage}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-[17px] font-black text-ink">Complete your profile</h2>
+              {[
+                {
+                  key: "identity" as EditSection,
+                  icon: IdCard,
+                  title: "Identity",
+                  subtitle: "Name, date of birth, contact",
+                  done: Boolean(form.firstName && form.gender && form.dateOfBirth),
+                },
+                {
+                  key: "location" as EditSection,
+                  icon: MapPin,
+                  title: "Location",
+                  subtitle: "Where you are based",
+                  done: Boolean(form.city),
+                },
+                {
+                  key: "languages" as EditSection,
+                  icon: Languages,
+                  title: "Languages",
+                  subtitle: "Languages you can speak",
+                  done: form.languages.length > 0,
+                },
+                {
+                  key: "work" as EditSection,
+                  icon: BookOpen,
+                  title: "About your work",
+                  subtitle: "Bio, experience, availability, skills",
+                  done: Boolean(form.bio || form.educationLevel || form.preferredWorkTime || form.topQualities.length),
+                },
+                {
+                  key: "trust" as EditSection,
+                  icon: ShieldCheck,
+                  title: "Verification & trust",
+                  subtitle: "Phone, ID, background, insurance",
+                  done: Boolean(form.phoneNumber),
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => openSection(item.key)}
+                    className="flex min-h-[72px] w-full items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3 text-left shadow-sm transition hover:border-[#BFD9BA]"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] font-black text-ink">{item.title}</span>
+                      <span className="mt-0.5 block text-[11px] leading-4 text-[#53604F]">{item.subtitle}</span>
+                    </span>
+                    {item.done ? <CheckCircle2 className="h-4 w-4 text-brand" /> : <ChevronRight className="h-5 w-5 text-[#53604F]" />}
+                  </button>
+                );
+              })}
+            </section>
+
+            <section className={appCardClass}>
+              <h2 className="mb-3 flex items-center gap-2 text-[14px] font-black text-ink">
+                <ShieldCheck className="h-4 w-4 text-brand" />
+                Why this matters
+              </h2>
+              {["Build trust with employers", "Increase your chances of being hired", "Help employers find the right match", "Stand out with a complete profile"].map((item) => (
+                <p key={item} className="mt-3 flex items-center gap-2 text-[12px] font-medium text-[#374033]">
+                  <CheckCircle2 className="h-4 w-4 text-brand" />
+                  {item}
+                </p>
+              ))}
+            </section>
+
+            {profileUrl ? (
+              <Button
+                type="button"
+                onClick={() => router.push(`/${form.username}`)}
+                className={cn(appPrimaryButtonClass, "w-full")}
+              >
+                <Eye className="h-4 w-4" />
+                Preview profile
+              </Button>
+            ) : null}
+          </>
+        ) : null}
+
+        {activeSection === "identity" ? (
+          <SectionShell icon={User} title="Identity" description="Email is optional. Your phone remains the main account contact.">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="First name" error={errors.firstName}>
+                <Input value={form.firstName} disabled={!canEdit} onChange={(event) => setField("firstName", event.target.value)} className={inputClass} placeholder="First name" />
+              </Field>
+              <Field label="Last name">
+                <Input value={form.lastName} disabled={!canEdit} onChange={(event) => setField("lastName", event.target.value)} className={inputClass} placeholder="Last name" />
+              </Field>
+            </div>
+
+            <Field label="Username" error={errors.username} hint={profileUrl ? `Profile link: ${profileUrl}` : undefined}>
+              <div className="relative">
+                <AtSign className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
+                <Input
+                  value={form.username}
+                  disabled={!canEdit}
+                  onChange={(event) => setField("username", event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                  className={`${inputClass} pl-9`}
+                  placeholder="your-name"
+                  maxLength={30}
+                />
+              </div>
+            </Field>
+
+            <Field label="Date of birth" error={errors.dateOfBirth} hint={`Workers must be at least ${LEGAL_WORKING_AGE} years old.`}>
+              <div className="relative">
+                <Input type="date" value={form.dateOfBirth} max={maxBirthDate} disabled={!canEdit} onChange={(event) => setField("dateOfBirth", event.target.value)} className={`${inputClass} pr-10`} />
+                <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#53604F]" />
+              </div>
+            </Field>
+
+            <Field label="Gender" error={errors.gender}>
+              <div className="grid grid-cols-3 gap-2">
+                {APP_CONFIG.profile.genders.map((gender) => {
+                  const active = form.gender === gender.value;
+                  return (
+                    <button
+                      key={gender.value}
+                      type="button"
+                      disabled={!canEdit}
+                      onClick={() => setField("gender", gender.value)}
+                      className={`flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl border px-2 text-center text-[12px] font-black transition ${
+                        active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
+                      } disabled:opacity-60`}
+                    >
+                      <User className="h-4 w-4" />
+                      {gender.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <Field label="Phone number">
+              <div className="flex h-12 overflow-hidden rounded-xl border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
+                <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-ink">+250</span>
+                <div className="relative min-w-0 flex-1">
+                  <Input value={form.phoneNumber} readOnly disabled className="h-full rounded-none border-0 bg-[#F4F7F2] pr-10 text-[14px] font-black text-ink-muted" />
+                  <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
+                </div>
+              </div>
+            </Field>
+
+            <Field label="Email (optional)" error={errors.email}>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
+                <Input type="email" value={form.email} disabled={!canEdit} onChange={(event) => setField("email", event.target.value)} className={`${inputClass} pl-9`} placeholder="you@example.com" />
+              </div>
+            </Field>
+
+            <div className="rounded-lg bg-[#EEF8EA] p-4 text-[12px] font-medium leading-5 text-[#374033]">
+              <Lock className="mb-2 h-4 w-4 text-brand" />
+              Your contact information is private and only shared after a booking is confirmed.
+            </div>
+          </SectionShell>
+        ) : null}
+
+        {activeSection === "location" ? (
+          <SectionShell icon={MapPin} title="Location" description="Use the general area employers should use for matching.">
+            <Field label="City" error={errors.city}>
+              <Input value={form.city} disabled={!canEdit} onChange={(event) => setField("city", event.target.value)} className={inputClass} placeholder="Kigali" />
+            </Field>
+            <Field label="District">
+              <Input value={form.district} disabled={!canEdit} onChange={(event) => setField("district", event.target.value)} className={inputClass} placeholder="Kicukiro" />
+            </Field>
+            <Field label="Sector">
+              <Input value={form.sector} disabled={!canEdit} onChange={(event) => setField("sector", event.target.value)} className={inputClass} placeholder="Gatenga" />
+            </Field>
+          </SectionShell>
+        ) : null}
+
+        {activeSection === "languages" ? (
+          <SectionShell icon={Languages} title="Languages" description="Choose every language you can comfortably use with clients.">
+            <div className="grid grid-cols-1 gap-2">
+              {APP_CONFIG.profile.languages.map((language) => {
+                const active = form.languages.includes(language);
+                return (
+                  <button
+                    key={language}
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={() => toggleLanguage(language)}
+                    className={`flex h-12 items-center justify-between rounded-xl border px-3 text-left text-[13px] font-black transition ${
+                      active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
+                    } disabled:opacity-60`}
+                  >
+                    {language}
+                    {active ? <Check className="h-4 w-4" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+            {errors.languages ? <p className="text-[11px] font-semibold text-red-500">{errors.languages}</p> : null}
+          </SectionShell>
+        ) : null}
+
+        {activeSection === "work" ? (
+          <>
+            <SectionShell icon={BookOpen} title="About your work" description="Keep it practical, specific, and easy for employers to scan.">
+              <Field label="Bio" error={errors.bio} hint={`${form.bio.length}/${BIO_LIMIT}`}>
+                <Textarea
+                  value={form.bio}
+                  disabled={!canEdit}
+                  onChange={(event) => setField("bio", event.target.value.slice(0, BIO_LIMIT))}
+                  className={appTextareaClass}
+                  placeholder="Briefly describe your experience, what you do best, and what employers should know about you."
+                />
+              </Field>
+
+              <Field label="Top qualities (select up to 3)">
+                <div className="grid grid-cols-2 gap-2">
+                  {QUALITY_KEYS.map((quality) => {
+                    const def = QUALITY_DEFS[quality];
+                    const Icon = def.icon;
+                    const active = form.topQualities.includes(quality);
+                    return (
+                      <button
+                        key={quality}
+                        type="button"
+                        disabled={!canEdit}
+                        onClick={() => toggleQuality(quality)}
+                        className={`flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border p-2 text-center text-[11px] font-black leading-4 transition ${
+                          active ? "border-brand bg-[#EEF8EA] text-brand" : "border-[#E1EBDD] bg-white text-ink"
+                        } disabled:opacity-60`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {def.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+            </SectionShell>
+
+            <SectionShell icon={BriefcaseBusiness} title="Work details" description="These remain optional, but help with better matching.">
+              <Field label="Education">
+                <Select value={form.educationLevel} onValueChange={(value) => setField("educationLevel", value)} disabled={!canEdit}>
+                  <SelectTrigger className={selectClass}>
+                    <SelectValue placeholder="Select education level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EDUCATION_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] leading-4 text-[#6B7668]">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Self-reported. No school document is required.
+                </p>
+              </Field>
+              <Field label="Health / work capacity">
+                <Select value={form.healthStatus} onValueChange={(value) => setField("healthStatus", value)} disabled={!canEdit}>
+                  <SelectTrigger className={selectClass}>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HEALTH_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Preferred work time">
+                <Select value={form.preferredWorkTime} onValueChange={(value) => setField("preferredWorkTime", value)} disabled={!canEdit}>
+                  <SelectTrigger className={selectClass}>
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WORK_TIME_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </SectionShell>
+          </>
+        ) : null}
+
+        {activeSection === "trust" ? (
+          <SectionShell icon={ShieldCheck} title="Trust badges" description="Verification statuses are kept in sync with existing account data.">
+            {[
+              { icon: Phone, label: "Phone verified", action: "Verified", done: Boolean(form.phoneNumber) },
+              { icon: FileBadge, label: "ID verified", action: "Upload ID", done: false },
+              { icon: ClipboardCheck, label: "Background checked", action: "Verify", done: false },
+              { icon: ShieldCheck, label: "Insurance", action: "Add", done: false },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-[#E1EBDD] bg-white p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1 text-[13px] font-black text-ink">{item.label}</span>
+                  <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${item.done ? "bg-[#EEF8EA] text-brand" : "border border-[#BFD9BA] text-brand"}`}>
+                    {item.action}
+                  </span>
+                </div>
+              );
+            })}
+          </SectionShell>
+        ) : null}
+
+        {activeSection !== "overview" ? SaveBar : null}
+      </form>
+    </div>
+  );
+}

@@ -4,6 +4,8 @@ import { getAuthToken } from "@/lib/auth-utils";
 // Define types for auth requests and responses
 export interface SendOtpRequest {
   phoneNumber: string;
+  // 'login' = number must already exist; 'signup' = number must be new.
+  purpose?: "login" | "signup";
 }
 
 export interface VerifyOtpRequest {
@@ -28,9 +30,16 @@ export interface AuthResponse {
       isEmailVerified: boolean;
       profilePicture?: string;
       isProfileComplete?: boolean;
+      employerOnboardingComplete?: boolean;
+      workerOnboardingComplete?: boolean;
       dateOfBirth?: string;
       gender?: string;
       languages?: string[];
+      bio?: string;
+      educationLevel?: string;
+      healthStatus?: string;
+      preferredWorkTime?: string;
+      topQualities?: string[];
       country?: string;
       username?: string;
     };

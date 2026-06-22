@@ -1,8 +1,18 @@
 import axios from "axios";
 import { getAuthToken } from "@/lib/auth-utils";
 
+// Per-request opt-out for the global 401 handling below. Set on "enhancement"
+// calls — optional, authenticated helper requests fired from otherwise-public
+// pages (e.g. /jobs/my-applications on the home feed). A 401 on these must NOT
+// clear the session or hard-redirect to home; the caller handles it quietly.
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    skipAuthRedirect?: boolean;
+  }
+}
+
 // Determine the API base URL
-let baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
 
 const api = axios.create({
   baseURL,
@@ -45,19 +55,28 @@ api.interceptors.response.use(
     // A guest (no token) browsing public pages may hit an authed endpoint
     // and get a 401 — that must NOT bounce them to onboarding; let the
     // calling component handle it quietly.
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.skipAuthRedirect
+    ) {
       originalRequest._retry = true;
       const hadToken = !!getAuthToken();
 
       try {
         if (hadToken && typeof window !== "undefined") {
+          // Clear the whole session, not just the token. Leaving `user` behind
+          // produces a stale half-logged-in state where the UI still thinks it's
+          // authenticated and keeps firing protected calls that 401 again.
           localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("persist:root");
           document.cookie =
             "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           // Don't redirect if already on the onboarding page — let the
           // onboarding context handle auth errors in its own catch blocks.
           if (!window.location.pathname.startsWith("/onboarding")) {
-            window.location.href = "/onboarding";
+            window.location.href = "/";
           }
         }
       } catch (refreshError) {

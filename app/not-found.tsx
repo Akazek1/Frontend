@@ -75,7 +75,7 @@ export default function NotFound() {
             </div>
             <div>
               <p className="font-bold text-sm leading-none mb-0.5" style={{ color: colors.text }}>Support Center</p>
-              <p className="text-[10px] leading-tight opacity-80" style={{ color: colors.textSecondary }}>We're here to help you 24/7.</p>
+              <p className="text-[10px] leading-tight opacity-80" style={{ color: colors.textSecondary }}>We&apos;re here to help you 24/7.</p>
             </div>
           </div>
         </div>

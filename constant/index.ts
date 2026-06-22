@@ -2,7 +2,7 @@ import { NavItem } from "@/types";
 
 export const navItems: NavItem[] = [
   { title: "Home", url: "/", icon: "HomeIcon" },
-  { title: "Bookings", url: "/bookings", icon: "PackageOpen" },
+  { title: "Work", url: "/work", icon: "BriefcaseBusiness", matchPattern: "/work/*" },
   { title: "Message", url: "/conversations", icon: "MessageIcon" },
   {
     title: "More",
@@ -21,6 +21,17 @@ export const BOOKING_STATUS = {
 } as const;
 
 export const CHAT_WINDOW_HOURS = 72;
+
+// After this many messages on a still-PENDING booking, surface a gentle,
+// non-blocking nudge encouraging users to confirm the work through Akazek
+// instead of arranging it informally in chat.
+export const PENDING_NUDGE_MESSAGE_THRESHOLD = 6;
+
+// Preset text sent when an employer taps "Remind" on the pending nudge.
+// Shared so the recipient's client can recognise it and re-surface the
+// nudge (with its Accept button) even after they dismissed it.
+export const PENDING_REMINDER_MESSAGE =
+  "Hi, can you accept the offer here so we can start? Thanks!";
 
 export const PrivacyPolicyData = [
   {

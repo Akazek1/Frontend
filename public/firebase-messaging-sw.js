@@ -24,3 +24,36 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  let targetUrl = "/";
+
+  if (data.bookingId) {
+    targetUrl = `/conversations/inbox/${encodeURIComponent(data.bookingId)}`;
+  } else if (data.jobId) {
+    targetUrl = `/jobs/${encodeURIComponent(data.jobId)}`;
+  }
+
+  if (data.notificationId) {
+    const separator = targetUrl.includes("?") ? "&" : "?";
+    targetUrl += `${separator}notificationId=${encodeURIComponent(data.notificationId)}`;
+  }
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        const url = new URL(targetUrl, self.location.origin).href;
+        for (const client of clientList) {
+          if ("focus" in client) {
+            client.navigate(url);
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) return clients.openWindow(url);
+      }),
+  );
+});

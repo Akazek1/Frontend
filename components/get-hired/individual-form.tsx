@@ -4,7 +4,7 @@
 import type React from "react"
 import { type FormEvent, useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronDown, Loader2, Pencil, Trash2 } from "lucide-react"
+import { ChevronDown, Eye, Loader2, Pencil, Trash2 } from "lucide-react"
 import api from "@/lib/axios"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input"
 
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 import ImagePicker from "../image-picker"
 import ServiceCard from "../service-card"
@@ -33,9 +34,11 @@ interface Service {
   id: string
   title: string
   description: string
-  price: number
+  price?: number
+  priceMin?: number | null
+  priceMax?: number | null
+  priceType?: string | null
   category: { id: string; name: string } | string
-  serviceType: string
   scopeOfService: string
   areaServed?: string
   serviceImage: string | null
@@ -49,6 +52,7 @@ interface Service {
     lastName: string
     email: string
     roles?: string[]
+    isVerified?: boolean
   }
   providerId: string
   worker: {
@@ -59,41 +63,27 @@ interface Service {
   } | null
   workerId: string | null
   serviceAreas: string[]
-  availability: {
-    id: string
-    serviceId: string
-    dayOfWeek: number
-    startTime: string
-    endTime: string
-    createdAt: string
-    updatedAt: string
-  }[]
   reviews: {
     averageRating: number;
     totalReviews: number;
   };
 }
 
-// Availability interface for service availability
-interface Availability {
-  dayOfWeek: number
-  startTime: string
-  endTime: string
-  enabled: boolean
-}
-
 // IndividualData interface for form data
 interface IndividualData {
   category: string
   price: number
-  serviceType: string
   scopeOfService: string
   areaServed?: string
   title: string
-  availability: Availability[]
   serviceImage: File | string | null
   serviceImages: (File | string)[]
   workerId?: string // Added workerId field
+}
+
+interface Category {
+  id: string
+  name: string
 }
 
 // ServiceFormProps interface for the ServiceForm component
@@ -115,26 +105,32 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   onCancel,
   isWorker,
 }) => {
-  const [selectedDayGroup, setSelectedDayGroup] = useState<string>("Weekdays")
-  const [availabilityStatus, setAvailabilityStatus] = useState<string>("unavailable")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [workerList, setWorkerList] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(false)
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>(initialData.workerId || "")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const dayGroups = [
-    { value: "Weekdays", label: "Weekdays (Mon-Fri)", days: [1, 2, 3, 4, 5] },
-    { value: "Weekends", label: "Weekends (Sat-Sun)", days: [6, 7] },
-    { value: "Monday", label: "Monday", days: [1] },
-    { value: "Tuesday", label: "Tuesday", days: [2] },
-    { value: "Wednesday", label: "Wednesday", days: [3] },
-    { value: "Thursday", label: "Thursday", days: [4] },
-    { value: "Friday", label: "Friday", days: [5] },
-    { value: "Saturday", label: "Saturday", days: [6] },
-    { value: "Sunday", label: "Sunday", days: [7] },
-  ]
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true)
+        const response = await api.get("/services/categories")
+        const categoryData = response.data?.data || response.data || []
+        setCategories(Array.isArray(categoryData) ? categoryData : [])
+      } catch {
+        toast.error("Failed to load service categories")
+        setCategories([])
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
 
   useEffect(() => {
     const getAgencyWorker = async () => {
@@ -203,28 +199,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     })
   }, [initialData.serviceImage, initialData.serviceImages])
 
-  const handleAvailabilityChange = (days: number[], field: keyof Availability | "status", value: string | boolean) => {
-    setData((prev) => ({
-      ...prev,
-      availability: prev.availability.map((avail) => {
-        if (days.includes(avail.dayOfWeek)) {
-          if (field === "status") {
-            return { ...avail, enabled: value === "available" }
-          }
-          return { ...avail, [field]: value, enabled: true }
-        }
-        return avail
-      }),
-    }))
-  }
-
-  const currentDays = dayGroups.find((group) => group.value === selectedDayGroup)?.days || [1]
-  const firstDayAvail = initialData.availability.find((a) => currentDays.includes(a.dayOfWeek)) || {
-    startTime: "09:00",
-    endTime: "17:00",
-    enabled: false,
-  }
-
   const handleImageSelect = (file: File) => {
     setData((prev) => ({ ...prev, serviceImage: file, serviceImages: [file] }))
     const reader = new FileReader()
@@ -259,7 +233,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
                   setData((prev) => ({ ...prev, workerId: value }))
                 }}
               >
-                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+                <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand w-full">
                   <SelectValue placeholder="Select Worker" />
                   <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
                 </SelectTrigger>
@@ -283,40 +257,41 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       <ImagePicker onImageSelect={handleImageSelect} onImagesSelect={handleImagesSelect} initialPreview={imagePreview} initialPreviews={imagePreviews} multiple />
 
       <div className="space-y-0.5">
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Title</Label>
+        <Input
+          value={initialData.title}
+          onChange={(e) => setData((prev) => ({ ...prev, title: e.target.value }))}
+          placeholder="e.g. Deep home cleaning"
+          className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand"
+        />
+      </div>
+
+      <div className="space-y-0.5">
         <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Category</Label>
         <Select
           value={initialData.category}
-          disabled={initialData.category !== ""}
-          onValueChange={(value) => setData((prev) => ({ ...prev, category: value }))}
+          onValueChange={(value) => {
+            const category = categories.find((item) => item.id === value)
+            setData((prev) => ({ ...prev, category: value, title: category?.name || prev.title }))
+          }}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-brand w-full">
             <SelectValue placeholder="Select Service" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
           </SelectTrigger>
           <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
-            {[
-              { value: "electrician", label: "Electrician" },
-              { value: "babysitter", label: "Baby Sitter" },
-              { value: "painter", label: "Painter" },
-              { value: "househelp", label: "House Help" },
-              { value: "plumber", label: "Plumber" },
-              { value: "carpenter", label: "Carpenter" },
-              { value: "gardener", label: "Gardener" },
-              { value: "cook", label: "Cook" },
-              { value: "driver", label: "Driver" },
-              { value: "laundry", label: "Laundry Service" },
-              { value: "security", label: "Security Guard" },
-              { value: "acrepair", label: "AC Repair" },
-              { value: "technician", label: "Appliance Technician" },
-              { value: "cleaning", label: "Home Cleaning" },
-              { value: "mover", label: "Mover & Packer" },
-            ].map((service) => (
+            {loadingCategories && (
+              <SelectItem value="loading" disabled>
+                Loading categories...
+              </SelectItem>
+            )}
+            {!loadingCategories && categories.map((service) => (
               <SelectItem
-                key={service.value}
-                value={service.value}
+                key={service.id}
+                value={service.id}
                 className="text-sm font-semibold whitespace-normal break-words px-4 py-2"
               >
-                {service.label}
+                {service.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -333,7 +308,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
           }
           onValueChange={(value) => setData((prev) => ({ ...prev, price: Number.parseInt(value) }))}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-brand">
             <SelectValue placeholder="Select Price" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
           </SelectTrigger>
@@ -352,77 +327,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       </div>
 
       <div className="space-y-0.5">
-        <Label className="font-semibold text-secondary-foreground/50 text-xs">Availability</Label>
-        <div className="space-y-2">
-          <Select
-            value={selectedDayGroup}
-            onValueChange={(value) => {
-              setSelectedDayGroup(value)
-              const days = dayGroups.find((group) => group.value === value)?.days || [1]
-              const firstAvail = initialData.availability.find((a) => days.includes(a.dayOfWeek))
-              setAvailabilityStatus(firstAvail?.enabled ? "available" : "unavailable")
-            }}
-          >
-            <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10] w-full">
-              <SelectValue placeholder="Select Day Group" />
-              <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
-            </SelectTrigger>
-            <SelectContent>
-              {dayGroups.map((group) => (
-                <SelectItem key={group.value} value={group.value} className="text-sm font-semibold">
-                  {group.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={availabilityStatus}
-            onValueChange={(value) => {
-              setAvailabilityStatus(value)
-              handleAvailabilityChange(currentDays, "status", value)
-            }}
-          >
-            <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10] w-full">
-              <SelectValue placeholder="Status" />
-              <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="unavailable">Unavailable</SelectItem>
-            </SelectContent>
-          </Select>
-          {availabilityStatus === "available" && (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Start Time</Label>
-                <Input
-                  type="time"
-                  value={firstDayAvail.startTime}
-                  onChange={(e) => handleAvailabilityChange(currentDays, "startTime", e.target.value)}
-                  className="rounded-lg border-[#145B10] focus:ring-[#145B10] font-medium"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">End Time</Label>
-                <Input
-                  type="time"
-                  value={firstDayAvail.endTime}
-                  onChange={(e) => handleAvailabilityChange(currentDays, "endTime", e.target.value)}
-                  className="rounded-lg border-[#145B10] focus:ring-[#145B10] font-medium"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-0.5">
         <Label className="font-semibold text-secondary-foreground/50 text-xs">Area of Service</Label>
         <Select
           value={initialData.areaServed}
           onValueChange={(value) => setData((prev) => ({ ...prev, areaServed: value }))}
         >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
+          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-brand">
             <SelectValue placeholder="Area of service" />
             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
           </SelectTrigger>
@@ -447,70 +357,29 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
       </div>
 
       <div className="space-y-0.5">
-        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Type</Label>
-        <Select
-          value={initialData.serviceType}
-          onValueChange={(value) => setData((prev) => ({ ...prev, serviceType: value }))}
-        >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-[#145B10]">
-            <SelectValue placeholder="Select Service Type" />
-            <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition-transform duration-300" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem className="text-sm font-semibold" value="RESIDENTIAL">
-              Residential
-            </SelectItem>
-            <SelectItem className="text-sm font-semibold" value="COMMERCIAL">
-              Commercial
-            </SelectItem>
-            <SelectItem className="text-sm font-semibold" value="BOTH">
-              Residential & Commercial
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-0.5">
-        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Scope</Label>
-        <Select
+        <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Description</Label>
+        <Textarea
           value={initialData.scopeOfService}
-          onValueChange={(value) => setData((prev) => ({ ...prev, scopeOfService: value }))}
-        >
-          <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border-none focus:ring-2 focus:ring-[#145B10] w-full">
-            <SelectValue placeholder="Select Property Type" />
-            <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 top-1/2 -translate-y-1/2 transition-transform duration-300" />
-          </SelectTrigger>
-          <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
-            {[
-              "1B",
-              "2B",
-              "3B",
-              "4B",
-              "Condo",
-              "Townhome",
-              "Multi-family",
-              "1B,2B,3B,4B,Condo,Townhome,Multi-family",
-            ].map((value, index) => (
-              <SelectItem
-                key={index}
-                value={value}
-                className="whitespace-normal break-words font-semibold px-4 py-2 text-sm"
-              >
-                {value === "1B,2B,3B,4B,Condo,Townhome,Multi-family" ? "All Property Types" : value}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(e) => setData((prev) => ({ ...prev, scopeOfService: e.target.value }))}
+          placeholder="Describe what is included, what you bring, and what kind of home or client this service is best for."
+          rows={5}
+          className="bg-white text-sm font-medium rounded-lg px-5 py-4 border-none focus:ring-2 focus:ring-brand"
+        />
       </div>
 
       <div className="flex space-x-2">
         <Button
           size="lg"
           type="submit"
-          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-[#0F4D0C] transition-colors"
+          className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-12 hover:bg-brand-dark transition-colors"
           disabled={submitting}
         >
-          {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Save"}
+          {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+            <span className="inline-flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Preview Card
+            </span>
+          )}
         </Button>
         {onCancel && (
           <Button
@@ -538,27 +407,105 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [draftPreviewImage, setDraftPreviewImage] = useState<string | null>(null)
   const { user } = useSelector((state: RootState) => state.auth)
   const [imagePreviews, setImagePreviews] = useState<Record<string, string | null>>({})
+  const previewUser = user as typeof user & {
+    isVerified?: boolean
+    languages?: string[]
+  }
 
-  const defaultAvailability: Availability[] = [
-    { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 2, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 3, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 4, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 5, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 6, startTime: "09:00", endTime: "17:00", enabled: false },
-    { dayOfWeek: 7, startTime: "09:00", endTime: "17:00", enabled: false },
-  ]
+  const getCategoryName = (category: Service["category"]) =>
+    typeof category === "object" ? category?.name || "" : category || ""
+
+  const getPriceRange = (price: number) => {
+    if (price === 1500) return { priceMin: 1000, priceMax: 2000 }
+    if (price === 4500) return { priceMin: 3000, priceMax: 6000 }
+    if (price === 8000) return { priceMin: 6000, priceMax: 10000 }
+    return { priceMin: price, priceMax: price }
+  }
+
+  const getPriceOptionFromService = (service: Service) => {
+    if (service.price) return service.price
+    if (service.priceMin === 1000 && service.priceMax === 2000) return 1500
+    if (service.priceMin === 3000 && service.priceMax === 6000) return 4500
+    if (service.priceMin === 6000 && service.priceMax === 10000) return 8000
+    return Number(service.priceMin ?? service.priceMax ?? 0)
+  }
+
+  const getServiceAreas = (areaServed?: string) => {
+    if (!areaServed) return []
+    if (areaServed === "all") return ["Kigali", "Nyarugenge", "Gasabo", "Kicukiro"]
+    return areaServed
+      .split(",")
+      .map((area) => area.trim())
+      .filter(Boolean)
+      .map((area) => area.charAt(0).toUpperCase() + area.slice(1))
+  }
+
+  const formatServicePrice = (service: Service) => {
+    const min = service.priceMin ?? service.price
+    const max = service.priceMax ?? service.price
+    if (!min && !max) return "Negotiable"
+    if (min && max && min !== max) return `${min} - ${max} RWF/day`
+    return `${min || max} RWF/day`
+  }
+
+  const formatDraftPrice = (price: number) => {
+    const { priceMin, priceMax } = getPriceRange(price)
+    if (!priceMin && !priceMax) return "Negotiable"
+    if (priceMin !== priceMax) return `${priceMin} - ${priceMax} RWF/day`
+    return `${priceMin} RWF/day`
+  }
+
+  const getDraftPreviewImage = async (data: IndividualData) => {
+    const image = data.serviceImages[0] || data.serviceImage
+    if (!image) return null
+    if (typeof image === "string") return image
+
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : "")
+      reader.readAsDataURL(image)
+    })
+  }
+
+  const validateServiceDraft = (data: IndividualData) => {
+    if (!data.title.trim()) {
+      toast.error("Please add a service title")
+      return false
+    }
+
+    if (!data.category) {
+      toast.error("Please select a service category")
+      return false
+    }
+
+    if (!data.price || data.price < 0) {
+      toast.error("Please select a service price")
+      return false
+    }
+
+    if (!data.areaServed) {
+      toast.error("Please select an area of service")
+      return false
+    }
+
+    if (!data.scopeOfService.trim()) {
+      toast.error("Please describe the service")
+      return false
+    }
+
+    return true
+  }
 
   const [individualData, setIndividualData] = useState<IndividualData>({
     category: "",
     price: 0,
-    serviceType: "",
     scopeOfService: "",
     areaServed: "",
     title: "",
-    availability: defaultAvailability,
     serviceImage: null,
     serviceImages: [],
     workerId: "", // Added workerId to initial state
@@ -598,8 +545,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       try {
         const response = await retryWithBackoff(() => api.get(`/services?providerId=${user.id}`))
         const fetchedServices = response.data.data || []
-        console.log(fetchedServices);
-        
+
         setServices(fetchedServices)
         const previews: Record<string, string | null> = {}
         fetchedServices.forEach((service: Service) => {
@@ -618,29 +564,15 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
 
   // Initialize update form data for a service
   const initializeUpdateData = (service: Service) => {
-    const availability = defaultAvailability.map((defaultAvail) => {
-      const serviceAvail = service.availability.find((avail) => avail.dayOfWeek === defaultAvail.dayOfWeek)
-      return serviceAvail
-        ? {
-          dayOfWeek: serviceAvail.dayOfWeek,
-          startTime: serviceAvail.startTime.slice(11, 16),
-          endTime: serviceAvail.endTime.slice(11, 16),
-          enabled: true,
-        }
-        : defaultAvail
-    })
-
     // Set form state (no image File initially)
-    setUpdateData((prev: any) => ({
+        setUpdateData((prev: any) => ({
       ...prev,
       [service.id]: {
-        category: (typeof service.category === "object" ? service.category?.name : service.category) || "",
-        price: Number(service.price) || 0,
-        serviceType: service.serviceType || "",
+        category: (typeof service.category === "object" ? service.category?.id : "") || "",
+        price: getPriceOptionFromService(service),
         scopeOfService: service.description || "",
         areaServed: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.areaServed || "",
         title: service.title || "",
-        availability,
         serviceImage: service.serviceImage,
         serviceImages: service.serviceImages || [],
         workerId: service.workerId || "", // Include workerId in update data
@@ -662,7 +594,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
   }
 
   // Handle service creation
-  const handleServiceSubmit = async (e: FormEvent) => {
+  const handleServicePreview = async (e: FormEvent) => {
     e.preventDefault()
 
     // if (user?.isProfileComplete) {
@@ -670,48 +602,50 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     //   return
     // }
 
+    if (!validateServiceDraft(individualData)) {
+      return
+    }
+
+    const previewImage = await getDraftPreviewImage(individualData)
+    setDraftPreviewImage(previewImage)
+    setPreviewOpen(true)
+  }
+
+  const saveServiceDraft = async () => {
+    if (!validateServiceDraft(individualData)) return
+
     setSubmitting(true)
-    const formData = new FormData()
-    formData.append("category", individualData.category.toLowerCase())
-    formData.append("price", individualData.price.toString())
-    formData.append("serviceType", individualData.serviceType)
-    formData.append("scopeOfService", individualData.scopeOfService)
-    formData.append("areaServed", individualData.areaServed || "")
-    formData.append("title", individualData.category)
-
-    // Add workerId if isWorker is true and workerId is selected
-    if (isWorker && individualData.workerId) {
-      formData.append("workerId", individualData.workerId)
+    const { priceMin, priceMax } = getPriceRange(individualData.price)
+    const servicePayload = {
+      categoryId: individualData.category,
+      priceMin,
+      priceMax,
+      priceType: "daily",
+      description: individualData.scopeOfService,
+      serviceAreas: getServiceAreas(individualData.areaServed),
+      title: individualData.title || "Household Service",
     }
-
-    if (individualData.serviceImage instanceof File) {
-      formData.append("serviceImage", individualData.serviceImage)
-    }
-
-    individualData.serviceImages.forEach((image) => {
-      if (image instanceof File) {
-        formData.append("serviceImages", image)
-      }
-    })
-
-    formData.append(
-      "availability",
-      JSON.stringify(
-        individualData.availability
-          .filter((avail) => avail.enabled)
-          .map((avail) => ({
-            startTime: avail.startTime,
-            endTime: avail.endTime,
-          })),
-      ),
-    )
+    const imageFiles = individualData.serviceImages.filter((image): image is File => image instanceof File)
 
     try {
-      const response = await retryWithBackoff(() =>
-        api.post("/services", formData, {
+      const response = await retryWithBackoff(() => {
+        if (imageFiles.length === 0) {
+          return api.post("/services", servicePayload)
+        }
+
+        const formData = new FormData()
+        Object.entries(servicePayload).forEach(([key, value]) => {
+          formData.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value))
+        })
+        imageFiles.forEach((image) => formData.append("serviceImages", image))
+        if (individualData.serviceImage instanceof File) {
+          formData.append("serviceImage", individualData.serviceImage)
+        }
+
+        return api.post("/services", formData, {
           headers: { "Content-Type": "multipart/form-data" },
-        }),
-      )
+        })
+      })
 
       toast.success("Service submitted successfully")
       const newService = response.data.data
@@ -719,11 +653,9 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       setIndividualData({
         category: "",
         price: 0,
-        serviceType: "",
         scopeOfService: "",
         areaServed: "",
         title: "",
-        availability: defaultAvailability,
         serviceImage: null,
         serviceImages: [],
         workerId: "", // Reset workerId
@@ -732,6 +664,8 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         ...prev,
         [newService.id]: newService.serviceImages?.[0] || newService.serviceImage,
       }))
+      setPreviewOpen(false)
+      setDraftPreviewImage(null)
     } catch (error: unknown) {
       const message =
         typeof error === "object" &&
@@ -761,69 +695,51 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
       return
     }
 
+    const { priceMin, priceMax } = getPriceRange(price)
     const servicePayload = {
-      category: data.category.toLowerCase(),
-      price: price,
-      serviceType: data.serviceType,
-      scopeOfService: data.scopeOfService,
-      areaServed: data.areaServed ?? "",
-      title: data.category,
-      availability: data.availability
-        .filter((avail) => avail.enabled)
-        .map((avail) => ({
-          startTime: avail.startTime,
-          endTime: avail.endTime,
-        })),
-      ...(isWorker && data.workerId && { workerId: data.workerId }), // Include workerId in update if applicable
+      categoryId: data.category,
+      priceMin,
+      priceMax,
+      priceType: "daily",
+      description: data.scopeOfService,
+      serviceAreas: getServiceAreas(data.areaServed),
+      title: data.title || getCategoryName(services.find((service) => service.id === serviceId)?.category || ""),
     }
-
-    const formData = new FormData()
-    formData.append("data", JSON.stringify(servicePayload)) // backend parses `data` as JSON
-
-    if (data.serviceImage instanceof File) {
-      formData.append("serviceImage", data.serviceImage)
-    }
-
-    data.serviceImages.forEach((image) => {
-      if (image instanceof File) {
-        formData.append("serviceImages", image)
-      }
-    })
+    const imageFiles = data.serviceImages.filter((image): image is File => image instanceof File)
 
     try {
-      const response = await retryWithBackoff(() =>
-        api.patch(`/services/${serviceId}`, formData, {
+      const response = await retryWithBackoff(() => {
+        if (imageFiles.length === 0 && !(data.serviceImage instanceof File)) {
+          return api.patch(`/services/${serviceId}`, servicePayload)
+        }
+
+        const formData = new FormData()
+        formData.append("data", JSON.stringify(servicePayload))
+        imageFiles.forEach((image) => formData.append("serviceImages", image))
+        if (data.serviceImage instanceof File) {
+          formData.append("serviceImage", data.serviceImage)
+        }
+
+        return api.patch(`/services/${serviceId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
-        }),
-      )
+        })
+      })
 
       toast.success("Service updated successfully")
-      const updatedService = response.data
+      const updatedService = response.data?.data || response.data
       setServices(
         services.map((service) =>
           service.id === serviceId
             ? {
               ...service,
-              category: data.category,
+              ...updatedService,
               price: price,
-              serviceType: data.serviceType,
               scopeOfService: data.scopeOfService,
               areaServed: data.areaServed,
-              title: data.title,
+              title: updatedService.title || data.title,
               serviceImage: updatedService.serviceImage || service.serviceImage,
               serviceImages: updatedService.serviceImages || service.serviceImages,
               workerId: data.workerId || service.workerId, // Update workerId
-              availability: data.availability
-                .filter((avail) => avail.enabled)
-                .map((avail) => ({
-                  id: "",
-                  serviceId,
-                  dayOfWeek: avail.dayOfWeek,
-                  startTime: `1970-01-01T${avail.startTime}:00Z`,
-                  endTime: `1970-01-01T${avail.endTime}:00Z`,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                })),
             }
             : service,
         ),
@@ -876,28 +792,65 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
     setDeleteModalOpen(true)
   }
 
-  // Format availability for display
-  // const formatAvailability = (availability: Service["availability"]) => {
-  //   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  //   return availability
-  //     .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-  //     .map((avail) => {
-  //       const start = avail.startTime.slice(11, 16)
-  //       const end = avail.endTime.slice(11, 16)
-  //       return `${daysOfWeek[avail.dayOfWeek - 1]}: ${start} - ${end}`
-  //     })
-  //     .join(", ")
-  // }
-
   return (
     <div className="space-y-8">
       <ServiceForm
         initialData={individualData}
-        onSubmit={handleServiceSubmit}
+        onSubmit={handleServicePreview}
         submitting={submitting}
         setData={setIndividualData}
         isWorker={isWorker}
       />
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="w-[92%] max-w-[520px]">
+          <DialogHeader className="text-start">
+            <DialogTitle>Preview Service Card</DialogTitle>
+            <DialogDescription>
+              Review the card before saving. You can go back and edit anything that does not feel right.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <ServiceCard
+              id="draft-service-preview"
+              image={draftPreviewImage || "/placeholder.svg?height=200&width=200"}
+              name={`${previewUser?.firstName || ""} ${previewUser?.lastName || ""}`.trim() || "Your name"}
+              title={individualData.title || "Service title"}
+              experience={individualData.scopeOfService || "Service description"}
+              languages={Array.isArray(previewUser?.languages) ? previewUser.languages.join(", ") : "English, Kinyarwanda"}
+              location={getServiceAreas(individualData.areaServed).join(", ") || "Service area"}
+              price={formatDraftPrice(individualData.price)}
+              rating={0}
+              reviews={0}
+              distance="2.5 km"
+              available
+              verified={Boolean(previewUser?.isVerified)}
+              onClick={() => undefined}
+            />
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600">
+              <p className="font-semibold text-gray-800">Details included on save</p>
+              <p>Category: {individualData.title || "Not selected"}</p>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col w-full items-center gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setPreviewOpen(false)}
+              disabled={submitting}
+            >
+              Edit Details
+            </Button>
+            <Button
+              className="w-full bg-[#167021] hover:bg-brand-dark"
+              onClick={saveServiceDraft}
+              disabled={submitting}
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Service"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="pb-6">
         <h1 className="text-lg font-bold">{isWorker ? "Worker's Service" : "Your Services"}</h1>
@@ -920,15 +873,15 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                       : `Not Available`
                   }
                   title={service.title}
-                  experience={service.scopeOfService || "No experience provided"}
+                  experience={service.description || service.scopeOfService || "No experience provided"}
                   languages="English, Kinyarwanda"
                   location={service.areaServed || service.serviceAreas?.join(", ") || "No location provided"}
-                  price={`${service.price} RWF/day`}
+                  price={formatServicePrice(service)}
                   rating={service?.reviews?.averageRating || 0}
                   reviews={service?.reviews?.totalReviews || 0}
                   distance="2.5 km"
                   available={service.isActive}
-                  verified={isEmployer(service?.provider?.roles)}
+                  verified={service?.provider?.isVerified || isEmployer(service?.provider?.roles)}
                   onClick={() => handleEditClick(service)}
                 />
                 <div className="flex items-center justify-between gap-2">
@@ -936,7 +889,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEditClick(service)}
-                    className="flex-1 text-[#145B10] hover:text-[#20471e] border-[#20471e] border hover:bg-red-50 z-10"
+                    className="flex-1 text-brand hover:text-[#20471e] border-[#20471e] border hover:bg-red-50 z-10"
                   >
                     <Pencil className="w-4 h-4" />
                     Edit

@@ -1,31 +1,60 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useSocketConnection } from "@/hooks/useSocketConnection";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import { useEffect } from "react";
+import api from "@/lib/axios";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   usePushNotifications();
+  useSocketConnection();
 
-  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization"];
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const notificationId = searchParams.get("notificationId");
+    if (!isAuthenticated || !notificationId) return;
+
+    api.patch(`/users/notifications/${notificationId}/read`).catch(() => {});
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("notificationId");
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [isAuthenticated, pathname, router]);
+
+  // The agency console (Tier 2) and the business auth screens are full-width,
+  // responsive surfaces with their own chrome. They break out of the phone
+  // container that wraps the consumer (worker/employer) app.
+  if (pathname.startsWith("/agency") || pathname.startsWith("/business")) {
+    return <>{children}</>;
+  }
+
+  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
-    /^\/[^/]+\/services\/[^/]+$/.test(pathname);
+    /^\/[^/]+\/services\/[^/]+(\/edit)?$/.test(pathname);
   const isJobDetail = /^\/jobs\/[^/]+/.test(pathname);
+  const isInquiryDetail = /^\/inquiries\/[^/]+$/.test(pathname);
   const shouldHideNavigation =
     hideNavigationPaths.includes(pathname) ||
     pathname.startsWith("/conversations/inbox") ||
     isServiceDetail ||
+    isInquiryDetail ||
     (isJobDetail && !isAuthenticated);
 
   return (
-    <div className="bg-[#F1FCEF] max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
+    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
       {/* Main content area with scrolling */}
       <main
-        className={`flex-1 ${
+        className={`flex-1 overflow-x-hidden ${
           shouldHideNavigation
             ? (isServiceDetail || isJobDetail)
               ? "overflow-y-auto scrollbar-hide"

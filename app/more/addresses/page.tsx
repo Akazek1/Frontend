@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { Plus, Loader2, Trash2, Edit3 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Home, Plus, Loader2, Trash2, Edit3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,9 +13,19 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
+import {
+  AppButton,
+  Card,
+  EmptyState,
+  FormField,
+  PageShell,
+  appContentClass,
+  appInputClass,
+} from "@/components/ui/app-primitives";
+import { getApiErrorMessage } from "@/lib/error-handler";
+import { cn } from "@/lib/utils";
 
 // Interface for address data
 interface Address {
@@ -38,7 +48,10 @@ interface FormData {
   isDefault: boolean;
 }
 
+const ADDRESSES_KEY = ["addresses"] as const;
+
 const AddressBook = () => {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<FormData>({
     street: "",
     city: "",
@@ -48,28 +61,28 @@ const AddressBook = () => {
     isDefault: false,
   });
   const [addresses, setAddresses] = useState<Address[]>([]);
+  // `isLoading` is for in-flight mutations (submit/delete); the initial fetch
+  // spinner is driven by the cached query below.
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
-  // Fetch addresses from /users/profile
+  // Cached: returning to the address book renders saved addresses instantly.
+  const { data: fetchedAddresses, isLoading: isInitialLoading } = useQuery({
+    queryKey: ADDRESSES_KEY,
+    queryFn: async (): Promise<Address[]> => {
+      const response = await api.get("/users/profile");
+      return response.data.data?.addresses || response.data.addresses || [];
+    },
+  });
+
+  // Mirror server data into local state, which the CRUD handlers mutate
+  // optimistically. After each mutation we invalidate the query (below), so a
+  // refetch re-seeds this with the authoritative list.
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get("/users/profile");
-        const addressesData = response.data.data?.addresses || response.data.addresses || [];
-        setAddresses(addressesData);
-      } catch (err: unknown) {
-        console.error("Error fetching addresses:", err);
-        toast.error("Failed to fetch addresses");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAddresses();
-  }, []);
+    if (fetchedAddresses) setAddresses(fetchedAddresses);
+  }, [fetchedAddresses]);
 
   // Handle input changes
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,10 +177,9 @@ const AddressBook = () => {
       });
       setIsFormVisible(false);
       setEditingAddressId(null);
+      queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
     } catch (err: unknown) {
-      const errorMessage =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        `Failed to ${editingAddressId ? "update" : "add"} address`;
+      const errorMessage = getApiErrorMessage(err, `Failed to ${editingAddressId ? "update" : "add"} address`);
       console.error(`Error ${editingAddressId ? "updating" : "adding"} address:`, err);
       setErrors({ form: errorMessage });
       toast.error(errorMessage);
@@ -182,11 +194,10 @@ const AddressBook = () => {
     try {
       await api.delete(`/address-book/${addressId}`);
       setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
+      queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
       toast.success("Address deleted successfully");
     } catch (err: unknown) {
-      const errorMessage =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete address";
+      const errorMessage = getApiErrorMessage(err, "Failed to delete address");
       console.error("Error deleting address:", err);
       toast.error(errorMessage);
     } finally {
@@ -225,90 +236,82 @@ const AddressBook = () => {
   };
 
   return (
-    <div className="bg-[#F1FCEF] px-6 py-11 space-y-6 min-h-screen">
-      {/* Header */}
+    <PageShell className="gap-5">
       <BackButtonHeader text="Address Book" backHref="/more" />
 
       {/* Add Address Button */}
-      <div
-        className="flex items-center cursor-pointer gap-2 px-2"
+      <button
+        type="button"
+        className="flex items-center gap-2 px-1 text-[#167021]"
         onClick={toggleFormVisibility}
       >
-        <Plus className="text-[#167021]" />
-        <h1 className="text-[#167021] font-medium text-base leading-5">
+        <Plus className="h-4 w-4" />
+        <span className="text-base font-semibold leading-5">
           {isFormVisible ? "Cancel" : "Add another address"}
-        </h1>
-      </div>
+        </span>
+      </button>
 
       {/* Form */}
       {isFormVisible && (
-        <form onSubmit={handleSubmit} className="space-y-6 pb-4">
+        <Card>
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Street */}
-          <div className="space-y-2">
+          <FormField label="Street" error={errors.street}>
             <Input
               id="street"
               name="street"
               value={formData.street}
               onChange={handleChange}
-              className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.street ? "border-red-500" : "border-none"
-                } focus:ring-[#145B10]`}
+              className={cn(appInputClass, errors.street && "border-red-500")}
               placeholder="Enter street address"
             />
-            {errors.street && <p className="text-red-500 text-sm">{errors.street}</p>}
-          </div>
+          </FormField>
 
           {/* City */}
-          <div className="space-y-2">
+          <FormField label="City" error={errors.city}>
             <Input
               id="city"
               name="city"
               value={formData.city}
               onChange={handleChange}
-              className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.city ? "border-red-500" : "border-none"
-                } focus:ring-[#145B10]`}
+              className={cn(appInputClass, errors.city && "border-red-500")}
               placeholder="Enter city"
             />
-            {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
-          </div>
+          </FormField>
 
           {/* State */}
-          <div className="space-y-2">
+          <FormField label="State" error={errors.state}>
             <Input
               id="state"
               name="state"
               value={formData.state}
               onChange={handleChange}
-              className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.state ? "border-red-500" : "border-none"
-                } focus:ring-[#145B10]`}
+              className={cn(appInputClass, errors.state && "border-red-500")}
               placeholder="Enter state"
             />
-            {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-          </div>
+          </FormField>
 
           {/* Postal Code */}
-          <div className="space-y-2">
+          <FormField label="Postal Code" error={errors.postalCode}>
             <Input
               id="postalCode"
               name="postalCode"
               value={formData.postalCode}
               onChange={handleChange}
-              className={`bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.postalCode ? "border-red-500" : "border-none"
-                } focus:ring-[#145B10]`}
+              className={cn(appInputClass, errors.postalCode && "border-red-500")}
               placeholder="Enter postal code"
             />
-            {errors.postalCode && <p className="text-red-500 text-sm">{errors.postalCode}</p>}
-          </div>
+          </FormField>
 
           {/* Country */}
-          <div className="space-y-2">
+          <FormField label="Country" error={errors.country}>
             <Select
               value={formData.country}
               onValueChange={(value) => handleSelectChange("country", value)}
             >
               <SelectTrigger
                 id="country"
-                className={`relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border ${errors.country ? "border-red-500" : "border-none"
-                  } focus:ring-[#145B10]`}
+                className={cn(appInputClass, "relative", errors.country && "border-red-500")}
               >
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
@@ -319,8 +322,7 @@ const AddressBook = () => {
                 <SelectItem value="India">India</SelectItem>
               </SelectContent>
             </Select>
-            {errors.country && <p className="text-red-500 text-sm">{errors.country}</p>}
-          </div>
+          </FormField>
 
           {/* Default Address Checkbox */}
           <div className="flex items-center space-x-2">
@@ -339,10 +341,10 @@ const AddressBook = () => {
 
           <div className="flex flex-col gap-2">
             {/* Submit Button */}
-            <Button
+            <AppButton
               size="lg"
               type="submit"
-              className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 py-[18px] px-4 h-full hover:bg-[#0F4D0C] transition-colors"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -353,70 +355,75 @@ const AddressBook = () => {
               ) : (
                 editingAddressId ? "Update Address" : "Add Address"
               )}
-            </Button>
+            </AppButton>
             {/* Cancel Button */}
-            <Button
+            <AppButton
               size="lg"
-              className="w-full bg-transparent hover:bg-[#167021]/10 border-[#167021] border text-[#167021] rounded-full font-bold leading-6 py-[18px] px-4 h-full"
+              type="button"
+              appVariant="secondary"
+              className="w-full"
               onClick={toggleFormVisibility}
             >
               Cancel
-            </Button>
+            </AppButton>
           </div>
         </form>
+        </Card>
       )}
 
-      <Separator />
-
       {/* Display Addresses */}
-      <div className="space-y-6 pb-6">
+      <div className={appContentClass}>
         {
-          isLoading ? (
+          isLoading || isInitialLoading ? (
             <div className="flex items-center justify-center w-full">
               <Loader2 className="mr-2 h-4 w-4 animate-spin text-center" />
             </div>
           ) : (
             addresses.length === 0 ? (
-              <p className="text-[#757575] font-medium text-sm">
-                No addresses found. Add an address above.
-              </p>
+              <EmptyState
+                icon={Home}
+                title="No addresses found"
+                description="Add an address above so bookings can use your saved locations."
+              />
             ) : (
               addresses.map((address, index) => (
-                <div key={address.id} className="space-y-2">
+                <Card key={address.id} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h1 className="text-[#161616] text-base leading-5 font-semibold">
                       {address.isDefault ? "Default Address" : `Address ${index + 1}`}
                     </h1>
                     <div className="flex">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
+                        type="button"
+                        className="rounded-full p-2 hover:bg-surface"
                         onClick={() => handleEdit(address)}
                         disabled={isLoading}
+                        aria-label="Edit address"
                       >
                         <Edit3 className="h-4 w-4 text-[#167021]" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-full p-2 hover:bg-red-50"
                         onClick={() => handleDelete(address.id)}
                         disabled={isLoading}
+                        aria-label="Delete address"
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
-                  <p className="text-[#757575] font-medium text-sm max-w-[70%]">
+                  <p className="text-ink-subtle font-medium text-sm">
                     {`${address.street}, ${address.state}, ${address.postalCode}, ${address.city}, ${address.country}`}
                   </p>
-                </div>
+                </Card>
               ))
             )
           )
         }
 
       </div>
-    </div>
+    </PageShell>
   );
 };
 

@@ -3,6 +3,12 @@ import type { NextRequest } from "next/server";
 import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 
 export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === "/bookings" || request.nextUrl.pathname === "/jobs") {
+    const workUrl = new URL("/work", request.url);
+    workUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(workUrl, 301);
+  }
+
   // Check for token in cookies or Authorization header
   const token =
     request.cookies.get("token")?.value ||
@@ -17,14 +23,13 @@ export function middleware(request: NextRequest) {
   const guestBrowsing = isGuestBrowsingEnabled();
 
   // Protected routes that require authentication
-  const protectedRoutesBase = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/conversations", "/organization", "/post-job", "/received-bookings"];
+  const protectedRoutesBase = ["/profile", "/more", "/book", "/checkout", "/bookings", "/jobs", "/work", "/conversations", "/organization", "/post-job", "/received-bookings"];
 
   // Public routes that don't require authentication
   const publicRoutesBase = ["/provider"];
 
   const protectedRoutes = protectedRoutesBase;
   const publicRoutes = publicRoutesBase;
-  const homeProtected = !guestBrowsing;
 
   // Under guest browsing, /jobs/[id] (job detail) is public for browsing,
   // but /jobs exact (worker dashboard) stays protected.
@@ -39,7 +44,7 @@ export function middleware(request: NextRequest) {
         request.nextUrl.pathname.startsWith(route + "/")
     );
 
-  const protectedRoots = homeProtected ? ["/", ...protectedRoutes] : protectedRoutes;
+  const protectedRoots = protectedRoutes;
 
   const isProtectedRoute = protectedRoots.some(
     (route) =>
@@ -77,7 +82,6 @@ export function middleware(request: NextRequest) {
 // See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    "/",
     "/profile/:path*",
     "/more/:path*",
     "/book/:path*",
@@ -85,6 +89,7 @@ export const config = {
     "/provider/:path*",
     "/bookings/:path*",
     "/jobs/:path*",
+    "/work/:path*",
     "/conversations/:path*",
     "/organization/:path*",
     "/post-job/:path*",

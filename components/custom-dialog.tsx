@@ -51,7 +51,7 @@ const CustomDialog: React.FC<CustomDialogProps> = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className={`relative bg-[#145B10] text-white rounded-[10px] max-w-[90%] max-h-[80vh] overflow-y-auto ${className}`}
+                className={`relative bg-brand text-white rounded-[10px] max-w-[90%] max-h-[80vh] overflow-y-auto ${className}`}
             >
                 {/* Close Button */}
                 <button

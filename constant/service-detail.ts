@@ -6,8 +6,7 @@
 
 export const SERVICE_DETAIL_LABELS = {
   availableToday: "Available Today",
-  idVerified: "ID Verified",
-  backgroundChecked: "Background Checked",
+  verified: "Verified",
   priceLabel: "Price",
   priceCaption: "Price varies based on task and size",
   availabilityLabel: "Availability",
@@ -29,50 +28,22 @@ export const SERVICE_DETAIL_LABELS = {
   serviceNotFound: "Service not found",
 } as const;
 
-export type StatKey = "years" | "jobs" | "onTime" | "clients";
+export type StatKey = "years" | "jobs" | "rating" | "rehire";
 
 export interface ProviderStat {
   key: StatKey;
-  icon: "Briefcase" | "ClipboardCheck" | "Clock" | "Users";
+  icon: "Briefcase" | "ClipboardCheck" | "Star" | "Smile";
   label: string;
-  suffix?: string;
-  plusOnGte?: number; // append "+" when value >= this threshold
 }
 
+// Only metrics backed by real data. Values are computed on the detail page
+// from the provider's yearsOfExperience and the service's review/job stats.
 export const PROVIDER_STATS: ProviderStat[] = [
-  { key: "years", icon: "Briefcase", label: "Years Experience", plusOnGte: 1 },
-  { key: "jobs", icon: "ClipboardCheck", label: "Jobs Completed" },
-  { key: "onTime", icon: "Clock", label: "On-time Rate", suffix: "%" },
-  { key: "clients", icon: "Users", label: "Happy Clients", plusOnGte: 10 },
+  { key: "years", icon: "Briefcase", label: "Years Exp" },
+  { key: "jobs", icon: "ClipboardCheck", label: "Jobs Done" },
+  { key: "rating", icon: "Star", label: "Rating" },
+  { key: "rehire", icon: "Smile", label: "Would Rehire" },
 ];
-
-/**
- * Mock-fill defaults — used ONLY when the API doesn't yet return the field.
- * Remove a fallback once the corresponding backend field is wired up.
- */
-export const SERVICE_DETAIL_FALLBACKS = {
-  distanceText: "2.5 km away",
-  city: "Kicukiro, Kigali",
-  languages: ["Kinyarwanda", "English"],
-  yearsExperience: 2,
-  jobsCompleted: 48,
-  onTimeRate: 95,
-  happyClients: 12,
-  idVerified: true,
-  backgroundChecked: true,
-  availableToday: true,
-  bio: "I am a dedicated and trustworthy cleaner with over 2 years of experience helping families keep their homes clean, fresh, and organized.\nI pay attention to detail and always respect your space and time.",
-  servicesOffered: [
-    "House Cleaning",
-    "Deep Cleaning",
-    "Kitchen Cleaning",
-    "Laundry & Ironing",
-    "Window Cleaning",
-  ],
-  // total photos used to compute the "+N" overlay on the last visible tile
-  workPhotosTotal: 13,
-  priceRangeText: "5,000 – 15,000 RWF/day",
-};
 
 // Map service-category names → lucide icon names for the pills
 export const SERVICE_CATEGORY_ICONS: Record<string, string> = {

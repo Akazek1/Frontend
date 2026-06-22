@@ -8,7 +8,6 @@ import { ChevronDown, Loader2, Trash2, Pencil, XCircle, User, Mail, Phone, Langu
 import { MultiSelectLanguage } from "../multi-language-select"
 import toast from "react-hot-toast"
 import { Label } from "../ui/label"
-import { getAuthToken } from "@/lib/auth-utils"
 
 // Define interfaces
 interface AgencyWorker {
@@ -20,13 +19,6 @@ interface AgencyWorker {
     dateOfBirth: string;
     languages: string[];
     gender: string;
-}
-
-interface WorkerResponse {
-    data: AgencyWorker[];
-    statusCode: number;
-    message: string;
-    timestamp: string;
 }
 
 const AgencyWorkerManagement: React.FC = () => {
@@ -42,7 +34,7 @@ const AgencyWorkerManagement: React.FC = () => {
     const [nationalIdFile, setNationalIdFile] = useState<File | null>(null)
     const [workerList, setWorkerList] = useState<AgencyWorker[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [error, setError] = useState<string | null>(null)
+    const [error] = useState<string | null>(null)
     const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null)
 
     useEffect(() => {
@@ -108,15 +100,6 @@ const AgencyWorkerManagement: React.FC = () => {
             if (file) {
                 formData.append("file", file)
             }
-
-            const token = getAuthToken();
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token || ""}`,
-                    "Content-Type": "multipart/form-data",
-                },
-                withCredentials: true,
-            };
 
             toast.success("Worker management coming soon!");
 
@@ -203,7 +186,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         id="firstName"
                         value={agencyWorker.firstName}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, firstName: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                         placeholder="Worker's First Name"
                         required
                     />
@@ -214,7 +197,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         id="lastName"
                         value={agencyWorker.lastName}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, lastName: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                         placeholder="Worker's Last Name"
                         required
                     />
@@ -226,7 +209,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         type="email"
                         value={agencyWorker.email}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, email: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                         placeholder="Worker's Email"
                         required
                     />
@@ -238,7 +221,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         type="tel"
                         value={agencyWorker.phoneNumber}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, phoneNumber: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                         placeholder="Worker's Phone Number"
                         required
                     />
@@ -254,7 +237,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         value={agencyWorker.gender}
                         onValueChange={(value) => setAgencyWorker((prev) => ({ ...prev, gender: value }))}
                     >
-                        <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-[#145B10]">
+                        <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-brand">
                             <SelectValue placeholder="Select gender" />
                             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition" />
                         </SelectTrigger>
@@ -272,7 +255,7 @@ const AgencyWorkerManagement: React.FC = () => {
                         type="date"
                         value={agencyWorker.dateOfBirth}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                     />
                     <span className="text-[10px] text-secondary-foreground/50">Must be older than 18</span>
                 </div>
@@ -283,14 +266,14 @@ const AgencyWorkerManagement: React.FC = () => {
                         type="file"
                         accept=".pdf,image/*"
                         onChange={(e) => setNationalIdFile(e.target.files?.[0] || null)}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-[#145B10]"
+                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
                         required={!editingWorkerId}
                     />
                 </div>
                 <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-14 hover:bg-[#0F4D0C] transition-colors disabled:opacity-50"
+                    className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-14 hover:bg-brand-dark transition-colors disabled:opacity-50"
                 >
                     {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : editingWorkerId ? "Update Worker" : "Add Worker"}
                 </Button>
@@ -330,7 +313,7 @@ const AgencyWorkerManagement: React.FC = () => {
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="bg-blue-100 text-[#145B10] rounded-full h-6 w-6 flex items-center justify-center">
+                                        <div className="bg-blue-100 text-brand rounded-full h-6 w-6 flex items-center justify-center">
                                             <User className="w-4 h-4" />
                                         </div>
                                         <div className=" min-w-0 ">
@@ -344,7 +327,7 @@ const AgencyWorkerManagement: React.FC = () => {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleEditWorker(worker)}
-                                            className="text-[#145B10] hover:text-[#145B10]/50 border-blue-200 hover:bg-blue-50"
+                                            className="text-brand hover:text-brand/50 border-blue-200 hover:bg-blue-50"
                                         >
                                             <Pencil className="w-4 h-4 mr-2" />
 

@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Phone } from "lucide-react"
 import { useOnboarding } from "@/context/onboarding-context"
 
@@ -17,20 +18,20 @@ export function PhoneNumberEntry() {
     <div className="w-full">
       {/* Icon header */}
       <div className="flex justify-center mb-6">
-        <div className="p-4 bg-[#F1FCEF] rounded-2xl">
-          <Phone className="w-8 h-8 text-[#145B10]" strokeWidth={1.5} />
+        <div className="p-4 bg-surface rounded-2xl">
+          <Phone className="w-8 h-8 text-brand" strokeWidth={1.5} />
         </div>
       </div>
 
       <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">
-        What's your number?
+        What&apos;s your number?
       </h2>
       <p className="text-sm text-gray-500 text-center mb-6">
-        We'll send a verification code to confirm it's you
+        We&apos;ll send a verification code to confirm it&apos;s you
       </p>
 
       {/* Phone input */}
-      <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden w-full mb-4 focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20 transition-all">
+      <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden w-full mb-4 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20 transition-all">
         <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
           <Image
             height={40}
@@ -69,7 +70,7 @@ export function PhoneNumberEntry() {
           <div
             className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
               termsAccepted
-                ? "bg-[#145B10] border-[#145B10]"
+                ? "bg-brand border-brand"
                 : "bg-white border-gray-300"
             }`}
           >
@@ -82,13 +83,13 @@ export function PhoneNumberEntry() {
         </div>
         <span className="text-sm text-gray-500 leading-relaxed">
           I have read and agree to the{" "}
-          <a href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+          <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
+          <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
             Privacy Policy
-          </a>
+          </Link>
         </span>
       </label>
     </div>

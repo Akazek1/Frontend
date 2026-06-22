@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +6,6 @@ import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, Calendar, MapPin, Ticket } from "lucide-react";
-import { Icons } from "@/components/icons";
 import {
     Select,
     SelectContent,
@@ -22,6 +20,13 @@ import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { isEmployer } from "@/lib/roles";
+import {
+    AppButton,
+    AppSectionHeader,
+    Card,
+    PageShell,
+    appInputClass,
+} from "@/components/ui/app-primitives";
 
 // Define the address interface
 interface Address {
@@ -45,10 +50,9 @@ const BookingSummary = () => {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [additionalServices, setAdditionalServices] = useState<Service[]>([]);
-    const [selectedAdditionalServiceIds, setSelectedAdditionalServiceIds] = useState<string[]>([]);
+    const [selectedAdditionalServiceIds] = useState<string[]>([]);
     const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
     const [isLoadingService, setIsLoadingService] = useState(true);
-    const [isLoadingAdditionalServices, setIsLoadingAdditionalServices] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch service details and set provider
@@ -132,7 +136,6 @@ const BookingSummary = () => {
     useEffect(() => {
         const fetchAdditionalServices = async () => {
             try {
-                setIsLoadingAdditionalServices(true);
                 const category = "all"; // Adjust category as needed
                 const response = await api.get(`/services?category=${encodeURIComponent(category.toLowerCase())}`);
                 const services = response.data.data || [];
@@ -140,8 +143,6 @@ const BookingSummary = () => {
             } catch (err) {
                 console.error("Error fetching additional services:", err);
                 toast.error("Failed to fetch additional services");
-            } finally {
-                setIsLoadingAdditionalServices(false);
             }
         };
         fetchAdditionalServices();
@@ -232,8 +233,8 @@ const BookingSummary = () => {
 
     if (isLoadingService || !provider || !selectedDate || !selectedTime) {
         return (
-            <div className="min-h-screen bg-[#F1FCEF] flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+            <div className="min-h-screen bg-surface flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-brand" />
             </div>
         );
     }
@@ -249,77 +250,76 @@ const BookingSummary = () => {
     const grandTotal = itemTotal - discount + deliveryFee;
 
     return (
-        <div className="flex flex-col bg-[#F1FCEF] min-h-screen overflow-y-auto touch-pan-y pb-12">
-            <main className="flex-1 p-3 sm:p-4 md:p-6 space-y-4 max-w-lg mx-auto">
+        <PageShell className="gap-4 touch-pan-y">
                 <BackButtonHeader text="Booking Summary" backHref={`/book/${provider.type}/${provider.id}`} />
 
                 {/* Main Provider */}
-                <div className="bg-white rounded-2xl p-4 space-y-3 shadow-sm">
+                <Card className="space-y-3">
                     <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12 sm:w-14 sm:h-14">
                             <AvatarImage src={provider.image} className="object-cover" />
                             <AvatarFallback>{provider.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-base sm:text-lg font-semibold text-[#1B2431]">{provider.name}</h2>
-                            <p className="text-sm font-bold text-[#212121]">{provider.title}</p>
+                            <h2 className="text-base sm:text-lg font-semibold text-ink">{provider.name}</h2>
+                            <p className="text-sm font-bold text-ink">{provider.title}</p>
                         </div>
                     </div>
-                    <p className="text-[#616161] text-sm font-semibold">
-                        <strong className="font-bold text-[#212121] text-base">Description</strong>
+                    <p className="text-ink-muted text-sm font-semibold">
+                        <strong className="font-bold text-ink text-base">Description</strong>
                         <br />
                         {provider.experience}
                     </p>
                     <div className="flex items-center justify-between">
-                        <span className="text-[#145B10] font-bold text-sm sm:text-base">{provider.price} RWF/day</span>
+                        <span className="text-brand font-bold text-sm sm:text-base">{provider.price} RWF/day</span>
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 border-[1.5px] border-[#145B10] text-[#145B10] rounded-none p-0 touch-manipulation"
+                                className="w-8 h-8 border-[1.5px] border-brand text-brand rounded-none p-0 touch-manipulation"
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={quantity <= 1}
                             >
                                 <ArrowDown className="w-4 h-4" />
                             </Button>
-                            <span className="text-[#145B10] font-bold text-sm w-8 text-center">{quantity}</span>
+                            <span className="text-brand font-bold text-sm w-8 text-center">{quantity}</span>
                             <Button
                                 variant="outline"
-                                className="w-8 h-8 border-[1.5px] border-[#145B10] text-[#145B10] rounded-none p-0 touch-manipulation"
+                                className="w-8 h-8 border-[1.5px] border-brand text-brand rounded-none p-0 touch-manipulation"
                                 onClick={() => handleQuantityChange(1)}
                             >
                                 <ArrowUp className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Frequently Added Together */}
-                {/* <h3 className="font-medium text-[#212121] text-base">Frequently Added Together</h3>
+                {/* <h3 className="font-medium text-ink text-base">Frequently Added Together</h3>
                 <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm">
                     {isLoadingAdditionalServices ? (
                         <div className="flex items-center justify-center">
-                            <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+                            <Loader2 className="w-6 h-6 animate-spin text-brand" />
                         </div>
                     ) : additionalServices.length === 0 ? (
-                        <p className="text-[#616161] text-sm font-medium">No additional services available.</p>
+                        <p className="text-ink-muted text-sm font-medium">No additional services available.</p>
                     ) : (
                         additionalServices.map((service) => (
                             <div key={service.id} className="space-y-3">
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1">
-                                        <h2 className="text-base sm:text-lg font-semibold text-[#1B2431]">
+                                        <h2 className="text-base sm:text-lg font-semibold text-ink">
                                             {`${service.provider.firstName} ${service.provider.lastName}`}
                                         </h2>
-                                        <p className="text-sm font-bold text-[#212121]">{service.title}</p>
-                                        <p className="text-sm text-[#616161] font-medium">
+                                        <p className="text-sm font-bold text-ink">{service.title}</p>
+                                        <p className="text-sm text-ink-muted font-medium">
                                             {service.description || "No description provided"}
                                         </p>
-                                        <p className="text-[#145B10] font-bold text-sm">{service.price} RWF/day</p>
+                                        <p className="text-brand font-bold text-sm">{service.price} RWF/day</p>
                                     </div>
                                 </div>
                                 <div className="w-full flex justify-end">
                                     <Button
-                                        className="rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2 px-3 touch-manipulation"
+                                        className="rounded-full font-bold bg-brand text-white hover:bg-brand/90 text-sm py-2 px-3 touch-manipulation"
                                         onClick={() => handleAddService(service.id)}
                                     >
                                         {selectedAdditionalServiceIds.includes(service.id) ? "Remove" : "Add Service"}
@@ -331,28 +331,28 @@ const BookingSummary = () => {
                 </div> */}
 
                 {/* Booking Details */}
-                <h3 className="text-[#212121] font-medium text-base">Booking Details</h3>
-                <div className="rounded-2xl p-4 bg-white space-y-3 shadow-sm">
+                <Card className="space-y-3">
+                    <AppSectionHeader title="Booking Details" />
                     {/* Address Selection */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-[#212121]" />
-                            <span className="text-[#145B10] font-medium text-sm">Service Address</span>
+                            <MapPin className="w-4 h-4 text-ink" />
+                            <span className="text-brand font-medium text-sm">Service Address</span>
                         </div>
                         {isLoadingAddresses ? (
-                            <div className="bg-[#F1FCEF] flex items-center justify-center">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#145B10]" />
+                            <div className="bg-surface flex items-center justify-center">
+                                <Loader2 className="w-5 h-5 animate-spin text-brand" />
                             </div>
                         ) : addresses.length === 0 ? (
-                            <p className="text-[#616161] text-sm font-medium">
+                            <p className="text-ink-muted text-sm font-medium">
                                 No addresses found.{" "}
-                                <Link href="/more/addresses" className="text-[#145B10] underline">
+                                <Link href="/more/addresses" className="text-brand underline">
                                     Add an address
                                 </Link>
                             </p>
                         ) : (
                             <Select value={selectedAddressId || undefined} onValueChange={handleAddressChange}>
-                                <SelectTrigger className="bg-white text-sm font-semibold rounded-lg py-2.5 border-none focus:ring-2 focus:ring-[#145B10] w-full touch-manipulation">
+                                <SelectTrigger className={`${appInputClass} w-full touch-manipulation`}>
                                     <SelectValue placeholder="Select an address" />
                                 </SelectTrigger>
                                 <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
@@ -369,7 +369,7 @@ const BookingSummary = () => {
                     {/* Date and Time */}
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Calendar className="w-4 h-4 stroke-black" />
-                        <span className="text-[#145B10] font-medium text-sm">
+                        <span className="text-brand font-medium text-sm">
                             {selectedDate} at {selectedTime}
                         </span>
                     </div>
@@ -377,32 +377,33 @@ const BookingSummary = () => {
                     {/* Coupon */}
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Ticket className="w-4 h-4 stroke-black" />
-                        <span className="text-[#145B10] font-medium text-sm">Apply Coupons</span>
+                        <span className="text-brand font-medium text-sm">Apply Coupons</span>
                     </div>
-                </div>
+                </Card>
 
                 {/* Pricing Breakdown */}
-                <div className="rounded-2xl p-4 bg-white space-y-3 shadow-sm">
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                <Card className="space-y-3">
+                    <AppSectionHeader title="Pricing" />
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Item Totals</span>
                         <span>{itemTotal} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Discounts</span>
                         <span>{discount} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#616161] font-medium text-sm">
+                    <div className="flex justify-between text-ink-muted font-medium text-sm">
                         <span>Delivery Fee</span>
                         <span>{deliveryFee} RWF</span>
                     </div>
-                    <div className="flex justify-between text-[#1B2431] font-bold text-sm">
+                    <div className="flex justify-between text-ink font-bold text-sm">
                         <span>Grand Total</span>
                         <span>{grandTotal} RWF</span>
                     </div>
-                </div>
+                </Card>
                 <div className="w-full flex items-center justify-center">
-                    <Button
-                        className="w-[90%] sm:w-[50%] mx-auto rounded-full font-bold bg-[#145B10] text-white hover:bg-[#145B10]/90 text-sm py-2.5 touch-manipulation"
+                    <AppButton
+                        className="w-full touch-manipulation"
                         onClick={handleProceedToCheckout}
                         disabled={isSubmitting}
                     >
@@ -414,10 +415,9 @@ const BookingSummary = () => {
                         ) : (
                             "Proceed To Checkout"
                         )}
-                    </Button>
+                    </AppButton>
                 </div>
-            </main>
-        </div>
+        </PageShell>
     );
 };
 

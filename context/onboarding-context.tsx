@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
 import { updateUser, setSession } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
+import { getSignupToken } from "@/lib/auth-utils"
 import { toast } from "react-hot-toast"
 import type { AuthResponse, UserRole } from "@/services/auth-service"
 
@@ -22,9 +23,8 @@ interface DocumentData {
 
 // Step layout:
 // 0 = RoleSelection
-// 1 = BasicInfoForm (name + email — collected BEFORE phone)
-// 2 = PhoneNumberEntry + T&C checkbox
-// 3 = OTPVerification
+// 1 = SignupForm (name + DOB + email + phone + T&C, with inline OTP)
+// 2 = LoginForm (returning users)
 // 4 = DocumentUploadStep (workers only)
 // 5 = ServiceCategorySelector (workers only)
 
@@ -47,6 +47,8 @@ interface OnboardingContextType {
   setLastName: (name: string) => void
   email: string
   setEmail: (email: string) => void
+  dateOfBirth: string
+  setDateOfBirth: (dob: string) => void
   selectedRoles: ("EMPLOYER" | "WORKER")[]
   setSelectedRoles: (roles: ("EMPLOYER" | "WORKER")[]) => void
   selectedCategories: string[]
@@ -65,7 +67,7 @@ interface OnboardingContextType {
   isLoading: boolean
   resendCooldown: number
 
-  handleSendOtp: () => Promise<boolean>
+  handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
@@ -103,6 +105,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [verifiedUser, setVerifiedUser] = useState<UserData>(null)
   const [uploadedDocument, setUploadedDocument] = useState<DocumentData | null>(null)
@@ -210,7 +213,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (activeInputIndex !== index) setActiveInputIndex(index)
   }, [activeInputIndex])
 
-  const handleSendOtp = useCallback(async (): Promise<boolean> => {
+  const handleSendOtp = useCallback(async (purpose?: "login" | "signup"): Promise<boolean> => {
     if (!phoneNumber) {
       toast.error("Please enter a phone number")
       return false
@@ -229,7 +232,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPhoneNumber(cleaned)
 
     try {
-      const success = await sendOtp({ phoneNumber: formatted })
+      const success = await sendOtp({ phoneNumber: formatted, purpose })
       if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
@@ -274,6 +277,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [redirectUrl])
 
+  const completeRoleOnboarding = useCallback(async (roles: ("EMPLOYER" | "WORKER")[]) => {
+    await Promise.all(
+      roles.map((role) =>
+        api.patch("/users/complete-onboarding", { role }, { withCredentials: true })
+      )
+    )
+  }, [])
+
   const handleVerifyOtp = useCallback(async (otpCode: string) => {
     const cleanPhone = (() => {
       let c = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
@@ -283,13 +294,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const completeSignupForNewUser = async (_user: NonNullable<UserData>) => {
       const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
-      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles }
+      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth }
       if (lastName.trim()) payload.lastName = lastName.trim()
       if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
 
-      const res = await api.post("/auth/complete-signup", payload, { withCredentials: true })
+      // The signup token lives under its own key (not the session `token`), so
+      // the global axios interceptor won't attach it — pass it explicitly.
+      const signupToken = getSignupToken()
+      const res = await api.post("/auth/complete-signup", payload, {
+        withCredentials: true,
+        headers: signupToken ? { Authorization: `Bearer ${signupToken}` } : undefined,
+      })
       const data = res.data?.data || res.data
-      const newUser = { ...data.user, roles }
+      const newUser = {
+        ...data.user,
+        roles,
+        employerOnboardingComplete: roles.includes("EMPLOYER") && !roles.includes("WORKER"),
+        workerOnboardingComplete: false,
+      }
       // setSession atomically marks the user as authenticated with the real JWT
       dispatch(setSession({ user: newUser, token: data.token }))
       return roles
@@ -323,7 +345,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       if (user.firstName && user.firstName.trim() !== "") {
-        // Returning user with complete profile → home
+        const roles = ((user.roles || []) as ("EMPLOYER" | "WORKER")[])
+        if (roles.includes("WORKER") && !user.workerOnboardingComplete) {
+          setCurrentStep(4)
+          return
+        }
+        if (roles.includes("EMPLOYER") && !user.employerOnboardingComplete) {
+          await completeRoleOnboarding(["EMPLOYER"])
+          dispatch(updateUser({ employerOnboardingComplete: true }))
+        }
         redirectHome(false)
         return
       }
@@ -334,6 +364,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         if (roles.includes("WORKER")) {
           setCurrentStep(4) // doc upload
         } else {
+          await completeRoleOnboarding(["EMPLOYER"])
+          dispatch(updateUser({ employerOnboardingComplete: true }))
           toast.success("Welcome! Let's get started.")
           redirectHome(true)
         }
@@ -360,7 +392,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setActiveInputIndex(0)
       setTimeout(() => inputsRef.current[0]?.focus(), 50)
     }
-  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, selectedRoles, dispatch, redirectHome])
+  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, selectedRoles, dispatch, redirectHome, completeRoleOnboarding])
 
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
@@ -384,7 +416,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const updated = (res.data as any)?.data || res.data
 
       await api.post("/users/role-selection", { roles }, { withCredentials: true })
-      await api.patch("/users/complete-onboarding", { role: roles[0] }, { withCredentials: true })
+      if (roles.includes("EMPLOYER") && !roles.includes("WORKER")) {
+        await completeRoleOnboarding(["EMPLOYER"])
+      }
 
       const updatedUser = {
         ...verifiedUser,
@@ -394,12 +428,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         email: email.trim() || verifiedUser?.email || updated.email,
         phoneNumber: verifiedUser?.phoneNumber,
         roles,
+        employerOnboardingComplete: roles.includes("EMPLOYER") && !roles.includes("WORKER"),
+        workerOnboardingComplete: verifiedUser?.workerOnboardingComplete ?? false,
       }
 
       dispatch(updateUser(updatedUser))
       localStorage.setItem("user", JSON.stringify(updatedUser))
       toast.success("Welcome!")
-      redirectHome(false)
+      if (roles.includes("WORKER")) {
+        setCurrentStep(4)
+      } else {
+        redirectHome(false)
+      }
     } catch (error) {
       const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
       if (err.response?.status === 401) {
@@ -410,7 +450,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const raw = err.response?.data?.message
       toast.error((Array.isArray(raw) ? raw[0] : raw) || "Failed to save information. Please try again.")
     }
-  }, [firstName, lastName, email, selectedRoles, verifiedUser, dispatch, redirectHome])
+  }, [firstName, lastName, email, selectedRoles, verifiedUser, dispatch, redirectHome, completeRoleOnboarding])
 
   const handleDocumentUpload = useCallback((document: DocumentData) => {
     setUploadedDocument(document)
@@ -421,6 +461,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setSelectedCategories(categories)
     try {
       await api.patch("/users/complete-onboarding", { role: "WORKER" }, { withCredentials: true })
+      dispatch(updateUser({ workerOnboardingComplete: true }))
       toast.success("Welcome! You're all set.")
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
       localStorage.setItem("hasSeenTutorial", "true")
@@ -428,7 +469,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } catch {
       toast.error("Failed to complete setup. Please try again.")
     }
-  }, [])
+  }, [dispatch])
 
   const handleNext = useCallback(async () => {
     if (currentStep === 0) { // role selection → signup form
@@ -467,6 +508,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setLastName,
     email,
     setEmail,
+    dateOfBirth,
+    setDateOfBirth,
     selectedRoles,
     setSelectedRoles,
     selectedCategories,

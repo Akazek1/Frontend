@@ -5,6 +5,7 @@ import "./globals.css";
 import Layout from "@/components/layout/pwa-layout";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/store/provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { BookmarkProvider } from "@/context/bookmark-context"; // Ensure this import is correct
 import { ViewModeProvider } from "@/context/view-mode-context";
 import { AuthGateProvider } from "@/context/auth-gate-context";
@@ -44,17 +45,19 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <Providers>
-          <ViewModeProvider>
-            <BookmarkProvider>
-              <AuthGateProvider>
-                <Layout>
-                  <Toaster position="top-center" />
-                  {children}
-                </Layout>
-                <AuthGateSheet />
-              </AuthGateProvider>
-            </BookmarkProvider>
-          </ViewModeProvider>
+          <QueryProvider>
+            <ViewModeProvider>
+              <BookmarkProvider>
+                <AuthGateProvider>
+                  <Layout>
+                    <Toaster position="top-center" />
+                    {children}
+                  </Layout>
+                  <AuthGateSheet />
+                </AuthGateProvider>
+              </BookmarkProvider>
+            </ViewModeProvider>
+          </QueryProvider>
         </Providers>
       </body>
     </html>

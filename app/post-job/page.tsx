@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import jobsService from "@/services/jobs-service";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface Category {
   id: string;
@@ -64,23 +65,25 @@ const PostJobPage: React.FC = () => {
         title: form.title,
         description: form.description,
         categoryId: form.categoryId,
+        district: form.district || undefined,
+        city: "Kigali",
         budgetMin: form.budgetMin ? Number(form.budgetMin) : undefined,
         budgetMax: form.budgetMax ? Number(form.budgetMax) : undefined,
         startDate: form.startDate || undefined,
         scheduleType: form.scheduleType,
       });
       toast.success("Job posted successfully!");
-      router.push("/jobs");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to post job.");
+      router.push("/work/job-posts");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to post job."));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F1FCEF]">
-      <div className="sticky top-0 z-20 bg-[#F1FCEF] px-4 pt-4 pb-3 shadow-sm">
+    <div className="min-h-screen bg-surface">
+      <div className="sticky top-0 z-20 bg-surface px-4 pt-4 pb-3 shadow-sm">
         <BackButtonHeader text="Post a Custom Job" backHref="/" />
       </div>
 
@@ -88,11 +91,11 @@ const PostJobPage: React.FC = () => {
 
         {/* What do you need? */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-[#1B2431]">What do you need?</h2>
+          <h2 className="text-[13px] font-bold text-ink">What do you need?</h2>
 
           {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">
+            <label className="text-[12px] font-semibold text-ink">
               Job title <span className="text-red-500">*</span>
             </label>
             <input
@@ -100,19 +103,19 @@ const PostJobPage: React.FC = () => {
               placeholder="e.g. Need a cleaner for Saturday morning"
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
           </div>
 
           {/* Category */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">
+            <label className="text-[12px] font-semibold text-ink">
               Category <span className="text-red-500">*</span>
             </label>
             <select
               value={form.categoryId}
               onChange={(e) => set("categoryId", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] bg-white focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
               <option value="">Select a category</option>
               {categories.map((c) => (
@@ -123,7 +126,7 @@ const PostJobPage: React.FC = () => {
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">
+            <label className="text-[12px] font-semibold text-ink">
               Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -131,24 +134,24 @@ const PostJobPage: React.FC = () => {
               placeholder="Describe what you need in detail — size of home, number of rooms, any special requirements..."
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30 resize-none"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
             />
           </div>
         </div>
 
         {/* Location & Timing */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-[#1B2431]">Location & Timing</h2>
+          <h2 className="text-[13px] font-bold text-ink">Location & Timing</h2>
 
           {/* Location */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">
+            <label className="text-[12px] font-semibold text-ink">
               District <span className="text-red-500">*</span>
             </label>
             <select
               value={form.district}
               onChange={(e) => set("district", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] bg-white focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
               <option value="">Select your district</option>
               {DISTRICTS.map((d) => (
@@ -159,19 +162,19 @@ const PostJobPage: React.FC = () => {
 
           {/* Preferred date */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">Preferred start date</label>
+            <label className="text-[12px] font-semibold text-ink">Preferred start date</label>
             <input
               type="date"
               value={form.startDate}
               min={new Date().toISOString().split("T")[0]}
               onChange={(e) => set("startDate", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
           </div>
 
           {/* Schedule Type */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-[#1B2431]">Schedule</label>
+            <label className="text-[12px] font-semibold text-ink">Schedule</label>
             <div className="flex flex-wrap gap-2">
               {["one-time", "daily", "weekly", "monthly", "live-in"].map((opt) => (
                 <button
@@ -180,8 +183,8 @@ const PostJobPage: React.FC = () => {
                   onClick={() => set("scheduleType", opt)}
                   className={`px-3 py-2 rounded-xl text-[11px] font-semibold capitalize border transition-colors ${
                     form.scheduleType === opt
-                      ? "bg-[#145B10] text-white border-[#145B10]"
-                      : "bg-white text-[#616161] border-gray-200"
+                      ? "bg-brand text-white border-brand"
+                      : "bg-white text-ink-muted border-gray-200"
                   }`}
                 >
                   {opt}
@@ -193,26 +196,26 @@ const PostJobPage: React.FC = () => {
 
         {/* Budget */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-[#1B2431]">Budget <span className="text-[11px] font-normal text-gray-400">(optional)</span></h2>
+          <h2 className="text-[13px] font-bold text-ink">Budget <span className="text-[11px] font-normal text-gray-400">(optional)</span></h2>
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
-              <label className="text-[12px] font-semibold text-[#1B2431]">Min (RWF)</label>
+              <label className="text-[12px] font-semibold text-ink">Min (RWF)</label>
               <input
                 type="number"
                 placeholder="e.g. 5000"
                 value={form.budgetMin}
                 onChange={(e) => set("budgetMin", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </div>
             <div className="flex-1 space-y-1.5">
-              <label className="text-[12px] font-semibold text-[#1B2431]">Max (RWF)</label>
+              <label className="text-[12px] font-semibold text-ink">Max (RWF)</label>
               <input
                 type="number"
                 placeholder="e.g. 15000"
                 value={form.budgetMax}
                 onChange={(e) => set("budgetMax", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-[#1B2431] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#145B10]/30"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </div>
           </div>
@@ -222,7 +225,7 @@ const PostJobPage: React.FC = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#145B10] text-white font-bold py-3.5 rounded-2xl text-[14px] flex items-center justify-center gap-2 hover:bg-[#0f4a0c] transition-colors disabled:opacity-60"
+          className="w-full bg-brand text-white font-bold py-3.5 rounded-2xl text-[14px] flex items-center justify-center gap-2 hover:bg-[#0f4a0c] transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {loading ? "Posting…" : "Post Job"}

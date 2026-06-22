@@ -35,7 +35,7 @@ export const MultiSelectLanguage = ({
             )}
             <Button
                 variant="outline"
-                className="relative w-full justify-between bg-white text-sm font-semibold rounded-lg h-14 border-none focus:ring-[#145B10]"
+                className="relative w-full justify-between bg-white text-sm font-semibold rounded-lg h-14 border-none focus:ring-brand"
                 onClick={() => setOpen(!open)}
             >
                 <span>

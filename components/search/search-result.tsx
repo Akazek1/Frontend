@@ -1,29 +1,40 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Icons } from "@/components/icons";
-import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft,
+  Briefcase,
   Check,
   Loader2,
   Search,
-  SlidersHorizontal,
   X,
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import jobsService, { Job } from "@/services/jobs-service";
+import { JobPostCard } from "@/components/job-post-card";
 import {
-  getBookingType,
-  getProviderHandle,
-  getServiceCardImage,
   getServiceDetailPath,
+  mapServiceToProviderCard,
 } from "@/lib/service-display";
+import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import toast from "react-hot-toast";
+import { getApiErrorMessage } from "@/lib/error-handler";
+import {
+  AppButton,
+  FormField,
+  SheetBody,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPanel,
+  appTextareaClass,
+} from "@/components/ui/app-primitives";
+import { cn } from "@/lib/utils";
 
-type ServiceTypeFilter = "INDIVIDUAL" | "AGENCY" | "COMPANY";
+type ServiceTypeFilter = "INDIVIDUAL" | "STAFFING_AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
 
 interface SearchFilters {
@@ -36,15 +47,42 @@ interface SearchFilters {
   minRating?: number;
 }
 
+interface JobFilters {
+  minBudget?: number;
+  maxBudget?: number;
+  location?: string;
+}
+
 interface SearchResultsProps {
   query: string;
-  onBack: () => void;
-  initialFilterOpen?: boolean;
+  onQueryChange: (q: string) => void;
+  mode?: "employer" | "provider";
+  /** Increment to imperatively open the filter panel from outside */
+  filterTrigger?: number;
+  /** Called when filters are reset with no active query — lets the parent unmount this panel */
+  onExitPanel?: () => void;
+}
+
+interface HireModal {
+  serviceId: string;
+  providerName: string;
+  serviceTitle: string;
+}
+
+interface ExistingBooking {
+  status?: string;
+  service?: {
+    id?: string;
+  } | null;
+}
+
+interface ApplicationSummary {
+  jobId: string;
 }
 
 const SERVICE_TYPES: Array<{ label: string; value: ServiceTypeFilter }> = [
   { label: "Individual", value: "INDIVIDUAL" },
-  { label: "Agency", value: "AGENCY" },
+  { label: "Staffing Agency", value: "STAFFING_AGENCY" },
   { label: "Company", value: "COMPANY" },
 ];
 
@@ -57,43 +95,68 @@ const DISTANCE_OPTIONS = [2, 5, 10, 25];
 const LOCATION_OPTIONS = ["Kicukiro", "Nyarugenge", "Gasabo", "Kigali", "Remera"];
 const RATING_OPTIONS = [4.5, 4, 3.5];
 
-const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false }: SearchResultsProps) => {
-  const [query, setQuery] = useState(initialQuery);
+const buildSearchCacheKey = (type: "jobs" | "services", query: string, filters: object) => {
+  const normalizedFilters = Object.entries(filters)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  return JSON.stringify({
+    type,
+    query: query.trim().toLowerCase(),
+    filters: normalizedFilters,
+  });
+};
+
+const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger = 0, onExitPanel }: SearchResultsProps) => {
   const [services, setServices] = useState<Service[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [draftFilters, setDraftFilters] = useState<SearchFilters>({});
-  const [isFilterOpen, setIsFilterOpen] = useState(initialFilterOpen);
+  const [jobFilters, setJobFilters] = useState<JobFilters>({});
+  const [draftJobFilters, setDraftJobFilters] = useState<JobFilters>({});
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hireModal, setHireModal] = useState<HireModal | null>(null);
+  const [notes, setNotes] = useState("");
+  const [submittingHire, setSubmittingHire] = useState(false);
+  const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [isApplyingJob, setIsApplyingJob] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const searchRequestRef = useRef(0);
+  const searchCacheRef = useRef<Map<string, { services?: Service[]; jobs?: Job[] }>>(new Map());
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const { requireAuth } = useRequireAuth();
+  // Owner detection requires a live session; `user` can persist without a token.
+  const currentUserId = isAuthenticated ? user?.id : undefined;
 
   const popularSearches = useMemo(
-    () => [
-      "Electrician",
-      "House Cleaning",
-      "Nanny / Childcare",
-      "Plumber",
-      "Painter",
-      "Carpenter",
-      "Gardening",
-      "Cook",
-      "Driver",
-      "Laundry",
-      "Security Guard",
-      "AC Repair",
-    ],
-    []
+    () =>
+      mode === "provider"
+        ? ["House Cleaning", "Nanny", "Driver", "Cook", "Plumber", "Gardening", "Security Guard", "Electrician"]
+        : ["Electrician", "House Cleaning", "Nanny / Childcare", "Plumber", "Painter", "Carpenter", "Gardening", "Cook", "Driver", "Laundry", "Security Guard", "AC Repair"],
+    [mode]
   );
 
-  const activeFilterCount = Object.values(filters).filter((value) => value !== undefined && value !== "").length;
+  const activeFilterCount = mode === "provider"
+    ? Object.values(jobFilters).filter((v) => v !== undefined && v !== "").length
+    : Object.values(filters).filter((v) => v !== undefined && v !== "").length;
   const hasSearchInput = Boolean(query.trim());
   const hasActiveFilters = activeFilterCount > 0;
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (filterTrigger > 0) {
+      if (mode === "provider") {
+        setDraftJobFilters(jobFilters);
+      } else {
+        setDraftFilters(filters);
+      }
+      setIsFilterOpen(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterTrigger]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -101,23 +164,130 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
       searchRequestRef.current = requestId;
 
       if (hasSearchInput || hasActiveFilters) {
-        fetchServices(query, filters, requestId);
+        if (mode === "provider") {
+          fetchJobs(query, jobFilters, requestId);
+        } else {
+          fetchServices(query, filters, requestId);
+        }
       } else {
+        clearLoadingTimer();
         setServices([]);
+        setJobs([]);
         setError(null);
         setIsLoading(false);
       }
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [query, filters, hasSearchInput, hasActiveFilters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, filters, jobFilters, hasSearchInput, hasActiveFilters, mode]);
+
+  useEffect(() => {
+    return () => {
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mode !== "employer" || !currentUserId) return;
+
+    const fetchRequestedServices = async () => {
+      try {
+        const response = await api.get("/bookings", { params: { role: "employer" }, skipAuthRedirect: true });
+        const bookings = Array.isArray(response.data.data)
+          ? response.data.data
+          : Array.isArray(response.data)
+          ? response.data
+          : [];
+        const inactive = new Set(["CANCELLED", "REJECTED"]);
+        setRequestedServiceIds(
+          new Set(
+            (bookings as ExistingBooking[])
+              .filter((booking) => booking.service?.id && !inactive.has(String(booking.status).toUpperCase()))
+              .map((booking) => booking.service?.id as string),
+          ),
+        );
+      } catch {
+        // Non-blocking: search results can still show and the API will validate duplicates.
+      }
+    };
+
+    fetchRequestedServices();
+  }, [mode, currentUserId]);
+
+  useEffect(() => {
+    if (mode !== "provider" || !currentUserId) return;
+
+    const fetchApplications = async () => {
+      try {
+        const applications = await jobsService.getMyApplications();
+        if (Array.isArray(applications)) {
+          setAppliedJobIds(new Set((applications as ApplicationSummary[]).map((application) => application.jobId)));
+        }
+      } catch {
+        // Non-blocking: the job cards still render and the API validates duplicate applications.
+      }
+    };
+
+    fetchApplications();
+  }, [mode, currentUserId]);
+
+  const fetchJobs = async (searchQuery: string, jf: JobFilters, requestId: number) => {
+    const cacheKey = buildSearchCacheKey("jobs", searchQuery, jf);
+    const cached = searchCacheRef.current.get(cacheKey)?.jobs;
+    if (cached) {
+      setJobs(cached);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    scheduleLoadingIndicator();
+    setError(null);
+
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set("searchTerm", searchQuery.trim());
+    if (jf.minBudget) params.set("minBudget", String(jf.minBudget));
+    if (jf.maxBudget) params.set("maxBudget", String(jf.maxBudget));
+    if (jf.location) params.set("location", jf.location);
+    params.set("limit", "12");
+
+    try {
+      const response = await api.get(`/jobs?${params.toString()}`);
+      if (requestId !== searchRequestRef.current) return;
+      const data: Job[] = Array.isArray(response.data.data)
+        ? response.data.data
+        : Array.isArray(response.data)
+        ? response.data
+        : [];
+      searchCacheRef.current.set(cacheKey, { jobs: data });
+      setJobs(data);
+    } catch {
+      if (requestId !== searchRequestRef.current) return;
+      setError("Something went wrong while fetching jobs.");
+      setJobs([]);
+    } finally {
+      if (requestId !== searchRequestRef.current) return;
+      clearLoadingTimer();
+      setIsLoading(false);
+    }
+  };
 
   const fetchServices = async (
     searchQuery: string,
     selectedFilters: SearchFilters,
     requestId: number
   ) => {
-    setIsLoading(true);
+    const cacheKey = buildSearchCacheKey("services", searchQuery, selectedFilters);
+    const cached = searchCacheRef.current.get(cacheKey)?.services;
+    if (cached) {
+      setServices(cached);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    scheduleLoadingIndicator();
     setError(null);
 
     const params = new URLSearchParams();
@@ -131,6 +301,7 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
     if (selectedFilters.minPrice) params.set("minPrice", String(selectedFilters.minPrice));
     if (selectedFilters.maxPrice) params.set("maxPrice", String(selectedFilters.maxPrice));
     if (selectedFilters.minRating) params.set("minRating", String(selectedFilters.minRating));
+    params.set("limit", "12");
 
     try {
       const response = await api.get(`/services?${params.toString()}`);
@@ -143,6 +314,7 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
         ? response.data.data
         : [];
       if (requestId !== searchRequestRef.current) return;
+      searchCacheRef.current.set(cacheKey, { services: data });
       setServices(data);
     } catch {
       if (requestId !== searchRequestRef.current) return;
@@ -150,113 +322,158 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
       setServices([]);
     } finally {
       if (requestId !== searchRequestRef.current) return;
+      clearLoadingTimer();
       setIsLoading(false);
     }
   };
 
-  const openFilters = () => {
-    setDraftFilters(filters);
-    setIsFilterOpen(true);
+  const clearLoadingTimer = () => {
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+  };
+
+  const scheduleLoadingIndicator = () => {
+    clearLoadingTimer();
+    loadingTimerRef.current = setTimeout(() => {
+      setIsLoading(true);
+    }, 180);
   };
 
   const applyFilters = () => {
-    setFilters(draftFilters);
+    if (mode === "provider") {
+      setJobFilters(draftJobFilters);
+    } else {
+      setFilters(draftFilters);
+    }
     setIsFilterOpen(false);
   };
 
   const clearFilters = () => {
-    setDraftFilters({});
-    setFilters({});
+    if (mode === "provider") {
+      setDraftJobFilters({});
+      setJobFilters({});
+    } else {
+      setDraftFilters({});
+      setFilters({});
+    }
     setIsFilterOpen(false);
+    // If there's also no search query, tell the parent it can dismiss the panel
+    if (!query.trim()) onExitPanel?.();
   };
 
-  const removeFilter = (key: keyof SearchFilters) => {
+  const openHireModal = (service: Service) => {
+    const providerName = `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || "Provider";
+
+    if (currentUserId && service.provider.id === currentUserId) {
+      toast.error("You can't book your own service.");
+      return;
+    }
+
+    if (requestedServiceIds.has(service.id)) return;
+
+    requireAuth(() => {
+      setHireModal({
+        serviceId: service.id,
+        providerName,
+        serviceTitle: service.title,
+      });
+    }, "hire");
+  };
+
+  const closeHireModal = () => {
+    setHireModal(null);
+    setNotes("");
+  };
+
+  const handleHireSubmit = async () => {
+    if (!hireModal) return;
+
+    setSubmittingHire(true);
+    try {
+      await api.post("/bookings", {
+        serviceId: hireModal.serviceId,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      });
+      toast.success(`Booking request sent to ${hireModal.providerName}!`);
+      setRequestedServiceIds((prev) => {
+        const next = new Set(prev);
+        next.add(hireModal.serviceId);
+        return next;
+      });
+      closeHireModal();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
+    } finally {
+      setSubmittingHire(false);
+    }
+  };
+
+  const handleExpressJob = async (jobId: string) => {
+    if (appliedJobIds.has(jobId) || isApplyingJob) return;
+
+    setIsApplyingJob(jobId);
+    try {
+      await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
+      setAppliedJobIds((prev) => new Set([...prev, jobId]));
+      toast.success("Interest sent! The employer will be notified.");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send interest."));
+    } finally {
+      setIsApplyingJob(null);
+    }
+  };
+
+  const removeServiceFilter = (key: keyof SearchFilters) => {
     setFilters((current) => ({ ...current, [key]: undefined }));
   };
 
-  const filterLabels = [
+  const removeJobFilter = (key: keyof JobFilters) => {
+    setJobFilters((current) => ({ ...current, [key]: undefined }));
+  };
+
+  const serviceFilterLabels = [
     filters.serviceType && {
       key: "serviceType" as const,
       label: SERVICE_TYPES.find((type) => type.value === filters.serviceType)?.label,
+      onRemove: () => removeServiceFilter("serviceType"),
     },
     filters.availability && {
       key: "availability" as const,
       label: AVAILABILITY_OPTIONS.find((option) => option.value === filters.availability)?.label,
+      onRemove: () => removeServiceFilter("availability"),
     },
-    filters.location && { key: "location" as const, label: filters.location },
-    filters.distanceKm && { key: "distanceKm" as const, label: `${filters.distanceKm} km` },
-    filters.minPrice && { key: "minPrice" as const, label: `From ${filters.minPrice.toLocaleString()} RWF` },
-    filters.maxPrice && { key: "maxPrice" as const, label: `Up to ${filters.maxPrice.toLocaleString()} RWF` },
-    filters.minRating && { key: "minRating" as const, label: `${filters.minRating}+ stars` },
-  ].filter(Boolean) as Array<{ key: keyof SearchFilters; label?: string }>;
+    filters.location && { key: "location" as const, label: filters.location, onRemove: () => removeServiceFilter("location") },
+    filters.distanceKm && { key: "distanceKm" as const, label: `${filters.distanceKm} km`, onRemove: () => removeServiceFilter("distanceKm") },
+    filters.minPrice && { key: "minPrice" as const, label: `From ${filters.minPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("minPrice") },
+    filters.maxPrice && { key: "maxPrice" as const, label: `Up to ${filters.maxPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("maxPrice") },
+    filters.minRating && { key: "minRating" as const, label: `${filters.minRating}+ stars`, onRemove: () => removeServiceFilter("minRating") },
+  ].filter(Boolean) as Array<{ key: string; label?: string; onRemove: () => void }>;
+
+  const jobFilterLabels = [
+    jobFilters.minBudget && { key: "minBudget", label: `From ${jobFilters.minBudget.toLocaleString()} RWF`, onRemove: () => removeJobFilter("minBudget") },
+    jobFilters.maxBudget && { key: "maxBudget", label: `Up to ${jobFilters.maxBudget.toLocaleString()} RWF`, onRemove: () => removeJobFilter("maxBudget") },
+    jobFilters.location && { key: "location", label: jobFilters.location, onRemove: () => removeJobFilter("location") },
+  ].filter(Boolean) as Array<{ key: string; label: string; onRemove: () => void }>;
+
+  const activeFilterLabels = mode === "provider" ? jobFilterLabels : serviceFilterLabels;
 
   const showDiscovery = !hasSearchInput && !hasActiveFilters;
   const resultLabel = hasSearchInput ? ` for "${query.trim()}"` : " for your filters";
+  const resultCount = mode === "provider" ? jobs.length : services.length;
+  const hasResults = resultCount > 0;
 
   return (
-    <div className="space-y-5 pb-4">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="h-9 w-9 rounded-full"
-          aria-label="Back to home"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="min-w-0">
-          <h1 className="text-[17px] font-bold leading-5 text-[#1B2431]">Find Home Services</h1>
-          <p className="mt-0.5 text-[12px] leading-4 text-[#687268]">Names, services, categories, and places.</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2.5">
-        <div className="relative min-w-0 flex-1">
-          <Icons.SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 fill-[#878787]" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search name, service, category..."
-            className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-white pl-11 pr-10 text-[14px] font-medium text-[#1B2431] shadow-sm outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:ring-2 focus:ring-[#145B10]/20"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#7A827A] hover:bg-gray-100"
-              aria-label="Clear search"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={openFilters}
-          className="relative flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#DDE3DD] bg-white px-4 shadow-sm transition active:scale-95 hover:border-[#145B10] hover:bg-[#F1F8F1]"
-          aria-label="Open filters"
-        >
-          <SlidersHorizontal className="h-[18px] w-[18px] text-[#145B10]" />
-          <span className="text-[13px] font-bold text-[#1B2431]">Filter</span>
-          {activeFilterCount > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#145B10] px-1 text-[11px] font-bold text-white">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {filterLabels.length > 0 && (
+    <div className="space-y-4 pb-4">
+      {activeFilterLabels.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {filterLabels.map((filter) => (
+          {activeFilterLabels.map((filter) => (
             <button
               key={filter.key}
               type="button"
-              onClick={() => removeFilter(filter.key)}
-              className="flex min-h-8 items-center gap-1 rounded-full bg-[#E8F5E9] px-3 text-[12px] font-semibold text-[#145B10]"
+              onClick={filter.onRemove}
+              className="flex min-h-8 items-center gap-1 rounded-full bg-[#E8F5E9] px-3 text-[12px] font-semibold text-brand"
             >
               {filter.label}
               <X className="h-3.5 w-3.5" />
@@ -267,8 +484,8 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
 
       {isLoading && (
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-6 text-sm text-[#687268]">
-          <Loader2 className="h-4 w-4 animate-spin text-[#145B10]" />
-          Finding matching services...
+          <Loader2 className="h-4 w-4 animate-spin text-brand" />
+          {mode === "provider" ? "Finding matching jobs..." : "Finding matching services..."}
         </div>
       )}
 
@@ -278,189 +495,320 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
         </div>
       )}
 
-      {!isLoading && !error && (hasSearchInput || hasActiveFilters) && services.length > 0 && (
+      {!isLoading && !error && (hasSearchInput || hasActiveFilters) && hasResults && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-[16px] font-bold text-[#1B2431]">Matching Services</h2>
+            <h2 className="text-[16px] font-bold text-ink">
+              {mode === "provider" ? "Matching Jobs" : "Matching Services"}
+            </h2>
             <p className="text-[12px] text-[#687268]">
-              {services.length} {services.length === 1 ? "match" : "matches"}{resultLabel}
+              {resultCount} {resultCount === 1 ? "match" : "matches"}{resultLabel}
             </p>
           </div>
-          <div className="grid gap-4">
-            {services.map((service) => (
-              <ServiceCard
-                key={service.id}
-                id={service.id}
-                image={getServiceCardImage(service)}
-                profileImage={service.provider.profilePicture}
-                name={`${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim()}
-                handle={getProviderHandle(service.provider)}
-                title={service.title}
-                experience={service.description || ""}
-                languages={Array.isArray(service.provider.languages) ? service.provider.languages.join(", ") : ""}
-                location={Array.isArray(service.serviceAreas) ? service.serviceAreas[0] || "" : ""}
-                price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
-                rating={service.reviews?.averageRating || 0}
-                reviews={service.reviews?.totalReviews || 0}
-                distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
-                available={service.isActive}
-                verified={service.provider.isVerified}
-                onClick={() => router.push(getServiceDetailPath(service))}
-                onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
-              />
-            ))}
-          </div>
+
+          {mode === "provider" ? (
+            <div className="space-y-3">
+              {jobs.map((job) => (
+                <JobPostCard
+                  key={job.id}
+                  job={{
+                    id: job.id,
+                    title: job.title,
+                    category: job.category?.name || "Other",
+                    description: job.description,
+                    location: job.address?.city || "Kigali",
+                    budgetMin: job.budgetMin,
+                    budgetMax: job.budgetMax,
+                    createdAt: job.createdAt,
+                    posterName: `${job.employer?.firstName || ""} ${job.employer?.lastName || ""}`.trim(),
+                    posterIsPrivate: !job.employer?.firstName,
+                    employerId: job.employer?.id || job.employerId,
+                  }}
+                  currentUserId={currentUserId}
+                  applied={appliedJobIds.has(job.id)}
+                  isApplying={isApplyingJob === job.id}
+                  onClick={() => router.push(`/jobs/${job.id}`)}
+                  onExpress={() => requireAuth(() => handleExpressJob(job.id), "apply", `/jobs/${job.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {services.map((service) => {
+                const card = mapServiceToProviderCard(service);
+
+                return (
+                  <ServiceCard
+                    key={service.id}
+                    {...card}
+                    hasRequested={requestedServiceIds.has(service.id)}
+                    isOwnService={Boolean(currentUserId && service.provider.id === currentUserId)}
+                    onClick={() => router.push(getServiceDetailPath(service))}
+                    onHireClick={() => openHireModal(service)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {!isLoading && !error && (hasSearchInput || hasActiveFilters) && services.length === 0 && (
+      {!isLoading && !error && (hasSearchInput || hasActiveFilters) && !hasResults && (
         <div className="rounded-2xl border border-dashed border-[#DDE3DD] bg-white px-5 py-7 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#F1F6F1]">
-            <Search className="h-5 w-5 text-[#145B10]" />
+            {mode === "provider" ? (
+              <Briefcase className="h-5 w-5 text-brand" />
+            ) : (
+              <Search className="h-5 w-5 text-brand" />
+            )}
           </div>
-          <h3 className="text-[15px] font-bold text-[#1B2431]">No services found</h3>
+          <h3 className="text-[15px] font-bold text-ink">
+            {mode === "provider" ? "No jobs found" : "No services found"}
+          </h3>
           <p className="mx-auto mt-1 max-w-[260px] text-[13px] leading-5 text-[#687268]">
-            Try a broader search, a different area, or fewer filters.
+            {mode === "provider"
+              ? "Try a different keyword or check back later for new postings."
+              : "Try a broader search, a different area, or fewer filters."}
           </p>
+
+          {/* Employers who can't find a match can post a job instead — the
+              right moment to capture intent. Hidden in provider (job-search) mode. */}
+          {mode !== "provider" && (
+            <div className="mt-5 rounded-xl border border-brand/20 bg-[#F1F8F1] p-4 text-center">
+              <p className="text-[13px] font-bold text-ink">
+                Can&apos;t find what you need?
+              </p>
+              <p className="mx-auto mt-1 max-w-[240px] text-[12px] leading-5 text-[#687268]">
+                Post a job and verified providers will come to you.
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  requireAuth(() => router.push("/post-job"), "post-job")
+                }
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[13px] font-bold text-white transition-colors hover:bg-[#0f4a0c]"
+              >
+                Post a Job
+                <span aria-hidden>→</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {showDiscovery && (
         <div className="space-y-3">
-          <h2 className="text-[16px] font-bold leading-5 text-[#1B2431]">Popular Searches</h2>
+          <h2 className="text-[16px] font-bold leading-5 text-ink">Popular Searches</h2>
           <div className="flex flex-wrap items-center gap-2">
             {popularSearches.map((search, index) => (
               <button
                 key={index}
                 type="button"
-                className="flex min-h-9 items-center gap-1 rounded-full border border-[#E1E8E1] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#1B2431] transition hover:border-[#145B10] hover:bg-[#F1F8F1] hover:text-[#145B10]"
-                onClick={() => setQuery(search)}
+                className="flex min-h-9 items-center rounded-full border border-[#E1E8E1] bg-white px-3 py-1.5 text-[13px] font-semibold text-ink transition hover:border-brand hover:bg-[#F1F8F1] hover:text-brand"
+                onClick={() => onQueryChange(search)}
               >
                 {search}
-                <ArrowLeft className="h-3.5 w-3.5 rotate-[145deg]" />
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0">
-          <div className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <div>
-                <h2 className="text-[17px] font-bold text-[#1B2431]">Filters</h2>
-                <p className="text-[12px] text-[#687268]">Choose what should appear in the cards.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(false)}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
-                aria-label="Close filters"
+      {hireModal && (
+        <>
+          <SheetOverlay zIndexClassName="z-[90]" onClick={closeHireModal} aria-hidden="true" />
+          <SheetPanel zIndexClassName="z-[91]" className="max-w-sm rounded-t-[28px]" onClose={closeHireModal}>
+            <SheetHeader
+              title={hireModal.providerName}
+              subtitle={hireModal.serviceTitle}
+              onClose={closeHireModal}
+              className="border-b-0 pb-2"
+              leading={
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
+                  Request
+                </span>
+              }
+            />
+
+            <SheetBody className="space-y-5 pt-2">
+              <FormField label="Message" hint="Optional">
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Describe what you need, preferred schedule, or any specific requirements..."
+                  rows={3}
+                  className={cn(appTextareaClass, "min-h-[96px]")}
+                />
+              </FormField>
+            </SheetBody>
+
+            <SheetFooter className="flex gap-3">
+              <AppButton
+                appVariant="secondary"
+                onClick={closeHireModal}
+                className="flex-1"
               >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+                Cancel
+              </AppButton>
+              <AppButton
+                onClick={handleHireSubmit}
+                disabled={submittingHire}
+                className="flex-1"
+              >
+                {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Request"}
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
+      )}
 
-            <div className="max-h-[70vh] space-y-5 overflow-y-auto px-5 py-5">
-              <FilterGroup title="Service type">
-                <SegmentedOptions
-                  options={SERVICE_TYPES}
-                  value={draftFilters.serviceType}
-                  onChange={(value) => setDraftFilters((current) => ({ ...current, serviceType: value as ServiceTypeFilter }))}
-                />
-              </FilterGroup>
+      {isFilterOpen && (
+        <>
+          <SheetOverlay zIndexClassName="z-[80]" onClick={() => setIsFilterOpen(false)} aria-hidden="true" />
+          <SheetPanel zIndexClassName="z-[81]" className="max-w-md sm:rounded-3xl" onClose={() => setIsFilterOpen(false)}>
+            <SheetHeader
+              title="Filters"
+              subtitle={mode === "provider" ? "Narrow down job results." : "Choose what should appear in the cards."}
+              onClose={() => setIsFilterOpen(false)}
+            />
 
-              <FilterGroup title="Availability">
-                <SegmentedOptions
-                  options={AVAILABILITY_OPTIONS}
-                  value={draftFilters.availability}
-                  onChange={(value) => setDraftFilters((current) => ({ ...current, availability: value as AvailabilityFilter }))}
-                />
-              </FilterGroup>
+            <SheetBody className="max-h-[70vh] space-y-5">
+              {mode === "provider" ? (
+                <>
+                  <FilterGroup title="Budget range (RWF)">
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumberInput
+                        label="Min"
+                        value={draftJobFilters.minBudget}
+                        onChange={(value) => setDraftJobFilters((c) => ({ ...c, minBudget: value }))}
+                      />
+                      <NumberInput
+                        label="Max"
+                        value={draftJobFilters.maxBudget}
+                        onChange={(value) => setDraftJobFilters((c) => ({ ...c, maxBudget: value }))}
+                      />
+                    </div>
+                  </FilterGroup>
 
-              <FilterGroup title="Area">
-                <div className="grid grid-cols-2 gap-2">
-                  {LOCATION_OPTIONS.map((location) => (
-                    <OptionButton
-                      key={location}
-                      label={location}
-                      selected={draftFilters.location === location}
-                      onClick={() => setDraftFilters((current) => ({
-                        ...current,
-                        location: current.location === location ? undefined : location,
-                      }))}
+                  <FilterGroup title="Area">
+                    <div className="grid grid-cols-2 gap-2">
+                      {LOCATION_OPTIONS.map((location) => (
+                        <OptionButton
+                          key={location}
+                          label={location}
+                          selected={draftJobFilters.location === location}
+                          onClick={() => setDraftJobFilters((c) => ({
+                            ...c,
+                            location: c.location === location ? undefined : location,
+                          }))}
+                        />
+                      ))}
+                    </div>
+                  </FilterGroup>
+                </>
+              ) : (
+                <>
+                  <FilterGroup title="Service type">
+                    <SegmentedOptions
+                      options={SERVICE_TYPES}
+                      value={draftFilters.serviceType}
+                      onChange={(value) => setDraftFilters((c) => ({ ...c, serviceType: value as ServiceTypeFilter }))}
                     />
-                  ))}
-                </div>
-              </FilterGroup>
+                  </FilterGroup>
 
-              <FilterGroup title="Distance">
-                <div className="grid grid-cols-4 gap-2">
-                  {DISTANCE_OPTIONS.map((distance) => (
-                    <OptionButton
-                      key={distance}
-                      label={`${distance} km`}
-                      selected={draftFilters.distanceKm === distance}
-                      onClick={() => setDraftFilters((current) => ({
-                        ...current,
-                        distanceKm: current.distanceKm === distance ? undefined : distance,
-                      }))}
+                  <FilterGroup title="Availability">
+                    <SegmentedOptions
+                      options={AVAILABILITY_OPTIONS}
+                      value={draftFilters.availability}
+                      onChange={(value) => setDraftFilters((c) => ({ ...c, availability: value as AvailabilityFilter }))}
                     />
-                  ))}
-                </div>
-              </FilterGroup>
+                  </FilterGroup>
 
-              <FilterGroup title="Price range">
-                <div className="grid grid-cols-2 gap-3">
-                  <NumberInput
-                    label="Min"
-                    value={draftFilters.minPrice}
-                    onChange={(value) => setDraftFilters((current) => ({ ...current, minPrice: value }))}
-                  />
-                  <NumberInput
-                    label="Max"
-                    value={draftFilters.maxPrice}
-                    onChange={(value) => setDraftFilters((current) => ({ ...current, maxPrice: value }))}
-                  />
-                </div>
-              </FilterGroup>
+                  <FilterGroup title="Area">
+                    <div className="grid grid-cols-2 gap-2">
+                      {LOCATION_OPTIONS.map((location) => (
+                        <OptionButton
+                          key={location}
+                          label={location}
+                          selected={draftFilters.location === location}
+                          onClick={() => setDraftFilters((c) => ({
+                            ...c,
+                            location: c.location === location ? undefined : location,
+                          }))}
+                        />
+                      ))}
+                    </div>
+                  </FilterGroup>
 
-              <FilterGroup title="Rating">
-                <div className="grid grid-cols-3 gap-2">
-                  {RATING_OPTIONS.map((rating) => (
-                    <OptionButton
-                      key={rating}
-                      label={`${rating}+`}
-                      selected={draftFilters.minRating === rating}
-                      onClick={() => setDraftFilters((current) => ({
-                        ...current,
-                        minRating: current.minRating === rating ? undefined : rating,
-                      }))}
-                    />
-                  ))}
-                </div>
-              </FilterGroup>
-            </div>
+                  <FilterGroup title="Distance">
+                    <div className="grid grid-cols-4 gap-2">
+                      {DISTANCE_OPTIONS.map((distance) => (
+                        <OptionButton
+                          key={distance}
+                          label={`${distance} km`}
+                          selected={draftFilters.distanceKm === distance}
+                          onClick={() => setDraftFilters((c) => ({
+                            ...c,
+                            distanceKm: c.distanceKm === distance ? undefined : distance,
+                          }))}
+                        />
+                      ))}
+                    </div>
+                  </FilterGroup>
 
-            <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4">
-              <button
+                  <FilterGroup title="Price range (RWF)">
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumberInput
+                        label="Min"
+                        value={draftFilters.minPrice}
+                        onChange={(value) => setDraftFilters((c) => ({ ...c, minPrice: value }))}
+                      />
+                      <NumberInput
+                        label="Max"
+                        value={draftFilters.maxPrice}
+                        onChange={(value) => setDraftFilters((c) => ({ ...c, maxPrice: value }))}
+                      />
+                    </div>
+                  </FilterGroup>
+
+                  <FilterGroup title="Rating">
+                    <div className="grid grid-cols-3 gap-2">
+                      {RATING_OPTIONS.map((rating) => (
+                        <OptionButton
+                          key={rating}
+                          label={`${rating}+`}
+                          selected={draftFilters.minRating === rating}
+                          onClick={() => setDraftFilters((c) => ({
+                            ...c,
+                            minRating: c.minRating === rating ? undefined : rating,
+                          }))}
+                        />
+                      ))}
+                    </div>
+                  </FilterGroup>
+                </>
+              )}
+            </SheetBody>
+
+            <SheetFooter className="flex gap-3 bg-gray-50">
+              <AppButton
                 type="button"
                 onClick={clearFilters}
-                className="h-12 flex-1 rounded-2xl border border-gray-200 bg-white text-[13px] font-bold text-[#1B2431]"
+                appVariant="secondary"
+                className="flex-1"
               >
                 Reset
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
                 onClick={applyFilters}
-                className="h-12 flex-1 rounded-2xl bg-[#145B10] text-[13px] font-bold text-white shadow-lg shadow-[#145B10]/20"
+                className="flex-1"
               >
                 Apply
-              </button>
-            </div>
-          </div>
-        </div>
+              </AppButton>
+            </SheetFooter>
+          </SheetPanel>
+        </>
       )}
     </div>
   );
@@ -468,7 +816,7 @@ const SearchResults = ({ query: initialQuery, onBack, initialFilterOpen = false 
 
 const FilterGroup = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="space-y-2">
-    <h3 className="text-[13px] font-bold text-[#1B2431]">{title}</h3>
+    <h3 className="text-[13px] font-bold text-ink">{title}</h3>
     {children}
   </div>
 );
@@ -508,8 +856,8 @@ const OptionButton = ({
     onClick={onClick}
     className={`flex min-h-10 items-center justify-center gap-1 rounded-2xl border px-3 text-[12px] font-bold transition ${
       selected
-        ? "border-[#145B10] bg-[#E8F5E9] text-[#145B10]"
-        : "border-gray-200 bg-white text-[#4B554B] hover:border-[#145B10]/50"
+        ? "border-brand bg-[#E8F5E9] text-brand"
+        : "border-gray-200 bg-white text-[#4B554B] hover:border-brand/50"
     }`}
   >
     {selected && <Check className="h-3.5 w-3.5" />}
@@ -533,7 +881,7 @@ const NumberInput = ({
       min={0}
       value={value || ""}
       onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
-      className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-[#1B2431] outline-none focus:border-[#145B10] focus:ring-2 focus:ring-[#145B10]/20"
+      className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
       placeholder="RWF"
     />
   </label>

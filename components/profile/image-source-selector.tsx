@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Camera, Image as ImageIcon, X } from "lucide-react";
+import { Camera, Image as ImageIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
               onSelectCamera();
               setTimeout(onClose, 100); // Small delay to ensure file input is triggered
             }}
-            className="w-full h-14 flex items-center justify-center gap-3 bg-[#145B10] hover:bg-[#0F4D0C] active:bg-[#0F4D0C] transition-colors"
+            className="w-full h-14 flex items-center justify-center gap-3 bg-brand hover:bg-brand-dark active:bg-brand-dark transition-colors"
           >
             <Camera className="w-5 h-5" />
             <span>Take Photo</span>
@@ -64,4 +64,3 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
 };
 
 export default ImageSourceSelector;
-

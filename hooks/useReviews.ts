@@ -3,19 +3,48 @@ import api from "@/lib/axios"
 
 export interface Review {
   id: string
-  rating: number
-  comment: string
+  bookingId?: string
+  authorId?: string
+  targetId?: string
+  rating?: number | null
+  wouldRehire?: "YES" | "MAYBE" | "NO" | null
+  comment?: string | null
+  reply?: string | null
+  repliedAt?: string | null
+  replyUpdatedAt?: string | null
   user: {
     id: string
     firstName: string
     lastName: string
     profilePicture?: string
   }
-  booking: {
+  author?: {
+    id: string
+    firstName: string
+    lastName: string
+    profilePicture?: string
+  }
+  target?: {
+    id: string
+    firstName: string
+    lastName: string
+    profilePicture?: string
+  }
+  booking?: {
     scheduledFor: string
     updatedAt: string
   }
 }
+
+const normalizeReview = (review: Review): Review => ({
+  ...review,
+  user: review.user || review.author || {
+    id: "",
+    firstName: "Previous",
+    lastName: "Employer",
+    profilePicture: "",
+  },
+})
 
 interface UseReviewsOptions {
   serviceId: string
@@ -36,27 +65,20 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
           ? response.data
           : response.data.data || []
 
-        const normalizedReviews = reviewsData.map((review: Review & { author?: Review["user"] }) => ({
-          ...review,
-          user: review.user || review.author || {
-            id: "",
-            firstName: "Previous",
-            lastName: "Employer",
-            profilePicture: "",
-          },
-        }))
+        const normalizedReviews = reviewsData.map(normalizeReview)
 
         const filteredReviews = filterByUserId
-          ? normalizedReviews.filter((review: Review) => review.user.id === filterByUserId)
+          ? normalizedReviews.filter((review: Review) => review.user?.id === filterByUserId)
           : normalizedReviews
 
         setReviews(filteredReviews)
         setTotalReviews(filteredReviews.length)
 
+        const ratedReviews = filteredReviews.filter((review: Review) => typeof review.rating === "number")
         const avgRating =
-          filteredReviews.length > 0
-            ? filteredReviews.reduce((sum: number, review: Review) => sum + review.rating, 0) /
-              filteredReviews.length
+          ratedReviews.length > 0
+            ? ratedReviews.reduce((sum: number, review: Review) => sum + (review.rating || 0), 0) /
+              ratedReviews.length
             : 0
         setAverageRating(avgRating)
       } catch (error: unknown) {
@@ -94,7 +116,7 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
         )
       } else {
         const response = await api.post(`/feedback`, payload)
-        setReviews((prev) => [...prev, response.data])
+        setReviews((prev) => [...prev, normalizeReview(response.data)])
       }
 
       return true
@@ -113,6 +135,21 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
     }
   }
 
+  const replyToReview = async (reviewId: string, reply: string) => {
+    try {
+      const response = await api.patch(`/feedback/${reviewId}/reply`, { reply })
+      const updated = response.data?.data || response.data
+      setReviews((prev) =>
+        prev.map((review) =>
+          review.id === reviewId ? normalizeReview({ ...review, ...updated }) : review
+        )
+      )
+      return true
+    } catch {
+      return false
+    }
+  }
+
   return {
     reviews,
     averageRating,
@@ -120,5 +157,6 @@ export function useReviews({ serviceId, filterByUserId }: UseReviewsOptions) {
     loading,
     submitReview,
     deleteReview,
+    replyToReview,
   }
 }

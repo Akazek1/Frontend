@@ -46,6 +46,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }))
 
+// Mock scrollIntoView
+window.HTMLElement.prototype.scrollIntoView = vi.fn()
+
 // Mock axios
 vi.mock("@/lib/axios", () => ({
   default: {

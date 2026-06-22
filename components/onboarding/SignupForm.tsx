@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
@@ -10,11 +11,25 @@ import { useOnboarding } from "@/context/onboarding-context"
 const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
 const OTP_LENGTH = 6
 
+const isAtLeast18 = (dob: string): boolean => {
+  const d = new Date(dob)
+  if (isNaN(d.getTime())) return false
+  const today = new Date()
+  const age = today.getFullYear() - d.getFullYear()
+  const m = today.getMonth() - d.getMonth()
+  return age - (m < 0 || (m === 0 && today.getDate() < d.getDate()) ? 1 : 0) >= 18
+}
+// Latest date that is still at least 18 years ago — caps the date picker
+const MAX_DOB = new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+  .toISOString()
+  .split("T")[0]
+
 export function SignupForm() {
   const {
     firstName, handleFirstNameChange,
     lastName, handleLastNameChange,
     email, handleEmailChange,
+    dateOfBirth, setDateOfBirth,
     phoneNumber, handlePhoneChange,
     termsAccepted, setTermsAccepted,
     verifiedUser,
@@ -26,6 +41,7 @@ export function SignupForm() {
   } = useOnboarding()
 
   const [emailError, setEmailError] = useState("")
+  const [dobError, setDobError] = useState("")
   const [phoneError, setPhoneError] = useState("")
   const [checking, setChecking] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
@@ -50,6 +66,14 @@ export function SignupForm() {
     if (!firstName.trim()) { return }
     if (email.trim() && !isValidEmail(email.trim())) {
       setEmailError("Please enter a valid email address")
+      return
+    }
+    if (!dateOfBirth) {
+      setDobError("Date of birth is required")
+      return
+    }
+    if (!isAtLeast18(dateOfBirth)) {
+      setDobError("You must be at least 18 years old to register")
       return
     }
     if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 9) { return }
@@ -82,7 +106,7 @@ export function SignupForm() {
       setChecking(false)
     }
 
-    const sent = await handleSendOtp()
+    const sent = await handleSendOtp("signup")
     if (sent) setOtpSent(true)
   }
 
@@ -94,7 +118,7 @@ export function SignupForm() {
   }, [otpSent, inputsRef])
 
   const signUpDisabled = isLoading || !firstName.trim() || !termsAccepted ||
-    phoneNumber.replace(/\D/g, "").length < 9
+    !dateOfBirth || phoneNumber.replace(/\D/g, "").length < 9
 
   // ── Complete-profile variant (already authenticated, just needs name/email) ──
   if (isCompleteProfile) {
@@ -102,7 +126,7 @@ export function SignupForm() {
       <div className="w-full h-full overflow-y-auto">
         <div className="px-4 sm:px-6 pt-10 pb-32 max-w-md mx-auto space-y-4">
           <div className="text-center mb-6">
-            <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-2">Complete your profile</h2>
+            <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Complete your profile</h2>
             <p className="text-sm text-gray-500">Just your name to finish setting up</p>
           </div>
 
@@ -115,7 +139,7 @@ export function SignupForm() {
               placeholder="Enter your first name"
               value={firstName}
               onChange={handleFirstNameChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
               autoFocus
             />
           </div>
@@ -129,7 +153,7 @@ export function SignupForm() {
               placeholder="Enter your last name"
               value={lastName}
               onChange={handleLastNameChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
 
@@ -143,7 +167,7 @@ export function SignupForm() {
               value={email}
               onChange={handleEmailInput}
               onBlur={handleEmailBlur}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10] ${emailError ? "border-red-400" : "border-gray-300"}`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${emailError ? "border-red-400" : "border-gray-300"}`}
             />
             {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
           </div>
@@ -153,7 +177,7 @@ export function SignupForm() {
               type="button"
               onClick={handleSaveBasicInfo}
               disabled={isLoading || !firstName.trim()}
-              className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+              className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
               {isLoading ? "Saving..." : "Save"}
             </button>
@@ -168,7 +192,7 @@ export function SignupForm() {
     <div className="w-full h-full overflow-y-auto">
       <div className="px-4 sm:px-6 pt-8 pb-32 max-w-md mx-auto space-y-4">
         <div className="text-center mb-4">
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#212121] mb-2">Create your account</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Create your account</h2>
           <p className="text-sm text-gray-500">Fill in your details to get started</p>
         </div>
 
@@ -182,7 +206,7 @@ export function SignupForm() {
             placeholder="Enter your first name"
             value={firstName}
             onChange={handleFirstNameChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
             disabled={otpSent}
             autoFocus
           />
@@ -198,7 +222,7 @@ export function SignupForm() {
             placeholder="Enter your last name"
             value={lastName}
             onChange={handleLastNameChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10]"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
             disabled={otpSent}
           />
         </div>
@@ -214,12 +238,41 @@ export function SignupForm() {
             value={email}
             onChange={handleEmailInput}
             onBlur={handleEmailBlur}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#145B10] focus:border-[#145B10] ${emailError ? "border-red-400" : "border-gray-300"}`}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${emailError ? "border-red-400" : "border-gray-300"}`}
             disabled={otpSent}
           />
           {emailError
             ? <p className="text-xs text-red-500 mt-1">{emailError}</p>
             : <p className="text-xs text-gray-400 mt-1">You can add this later in your profile</p>
+          }
+        </div>
+
+        {/* Date of birth */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Date of Birth <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="date"
+            value={dateOfBirth}
+            max={MAX_DOB}
+            onChange={(e) => {
+              setDateOfBirth(e.target.value)
+              if (dobError && isAtLeast18(e.target.value)) setDobError("")
+            }}
+            onBlur={() => {
+              if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
+                setDobError("You must be at least 18 years old to register")
+              } else {
+                setDobError("")
+              }
+            }}
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
+            disabled={otpSent}
+          />
+          {dobError
+            ? <p className="text-xs text-red-500 mt-1">{dobError}</p>
+            : <p className="text-xs text-gray-400 mt-1">You must be at least 18 years old.</p>
           }
         </div>
 
@@ -231,7 +284,7 @@ export function SignupForm() {
           <div className={`flex items-center border rounded-xl overflow-hidden w-full transition-all ${
             phoneError ? "border-red-400" :
             otpSent ? "border-gray-200 opacity-60" :
-            "border-gray-300 focus-within:border-[#145B10] focus-within:ring-2 focus-within:ring-[#145B10]/20"
+            "border-gray-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20"
           }`}>
             <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
               <Image height={40} width={40} src="https://flagcdn.com/w40/rw.png" alt="Rwanda" className="w-6 h-4 object-cover rounded-sm" />
@@ -251,9 +304,9 @@ export function SignupForm() {
           {phoneError === "exists" ? (
             <p className="text-xs text-red-500 mt-1.5">
               An account with this number already exists.{" "}
-              <a href="/onboarding?step=login" className="text-[#145B10] font-semibold underline underline-offset-2">
+              <Link href="/onboarding?step=login" className="text-brand font-semibold underline underline-offset-2">
                 Log in instead
-              </a>
+              </Link>
             </p>
           ) : phoneError ? (
             <p className="text-xs text-red-500 mt-1.5">{phoneError}</p>
@@ -270,7 +323,7 @@ export function SignupForm() {
               className="sr-only"
               disabled={otpSent}
             />
-            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${termsAccepted ? "bg-[#145B10] border-[#145B10]" : "bg-white border-gray-300"}`}>
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${termsAccepted ? "bg-brand border-brand" : "bg-white border-gray-300"}`}>
               {termsAccepted && (
                 <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -280,9 +333,9 @@ export function SignupForm() {
           </div>
           <span className="text-sm text-gray-500 leading-relaxed">
             I have read and agree to the{" "}
-            <a href="/terms" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms of Service</a>{" "}
+            <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms of Service</Link>{" "}
             and{" "}
-            <a href="/privacy" className="text-[#145B10] underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
+            <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
           </span>
         </label>
 
@@ -332,7 +385,7 @@ export function SignupForm() {
                       <div
                         key={i}
                         className={`w-11 h-12 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
-                          isActive ? "border-[#145B10] ring-2 ring-[#145B10]/20" : isFilled ? "border-[#145B10]/50" : "border-gray-200"
+                          isActive ? "border-brand ring-2 ring-brand/20" : isFilled ? "border-brand/50" : "border-gray-200"
                         }`}
                       >
                         {code[i] || ""}
@@ -345,7 +398,7 @@ export function SignupForm() {
                   {resendCooldown > 0 ? (
                     <p className="text-sm text-gray-400">Resend code in {resendCooldown}s</p>
                   ) : (
-                    <button type="button" onClick={handleResendOtp} className="text-sm text-[#145B10] font-medium underline underline-offset-2">
+                    <button type="button" onClick={handleResendOtp} className="text-sm text-brand font-medium underline underline-offset-2">
                       Resend code
                     </button>
                   )}
@@ -362,7 +415,7 @@ export function SignupForm() {
               type="button"
               onClick={handleSignUp}
               disabled={signUpDisabled || checking}
-              className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+              className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
               {checking ? "Checking..." : isLoading ? "Please wait..." : "Sign Up"}
             </button>
@@ -374,7 +427,7 @@ export function SignupForm() {
                 if (otp.length === OTP_LENGTH) handleVerifyOtp(otp)
               }}
               disabled={isLoading || code.join("").length < OTP_LENGTH}
-              className="w-full bg-[#1B5E20] text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#145B10] transition-colors"
+              className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
               {isLoading ? "Verifying..." : "Verify & Create Account"}
             </button>
@@ -382,7 +435,7 @@ export function SignupForm() {
           <button
             type="button"
             onClick={() => { if (otpSent) { setOtpSent(false); setCode(Array(OTP_LENGTH).fill("")) } else { handleBack() } }}
-            className="w-full bg-white text-[#1B5E20] border-2 border-[#1B5E20] py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
+            className="w-full bg-white text-brand-strong border-2 border-brand-strong py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
           >
             {otpSent ? "Change details" : "Back"}
           </button>

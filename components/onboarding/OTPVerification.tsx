@@ -17,10 +17,11 @@ export function OTPVerification() {
   } = useOnboarding()
 
   return (
-    <div className="relative w-full">
+    <div className="w-full">
       <button
+        type="button"
         onClick={handleBack}
-        className="absolute -top-60 sm:-top-80 left-0 p-2 text-[#1B5E20] font-semibold flex items-center gap-1"
+        className="mb-8 inline-flex items-center gap-1 p-2 -ml-2 text-brand-strong font-semibold"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -36,12 +37,12 @@ export function OTPVerification() {
         </svg>
         Back
       </button>
-      <div className="flex flex-col items-center gap-8 sm:gap-14 pt-12">
+      <div className="flex flex-col items-center gap-8 sm:gap-14">
         <span className="flex flex-col items-center gap-2">
-          <h2 className="font-bold text-2xl sm:text-3xl text-[#212121]">Enter Verification Code</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink">Enter Verification Code</h2>
           <p className="text-sm font-medium text-center text-gray-500 max-w-[300px]">
             We sent a {OTP_LENGTH}-digit code to{" "}
-            <span className="text-[#212121] font-semibold">+250 {phoneNumber}</span>
+            <span className="text-ink font-semibold">+250 {phoneNumber}</span>
           </p>
         </span>
 
@@ -84,7 +85,7 @@ export function OTPVerification() {
                 <div
                   key={index}
                   className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg font-medium border rounded-md ${
-                    isActive ? "border-[#145B10] border-2 ring-2 ring-[#145B10]/20" : "border-black"
+                    isActive ? "border-brand border-2 ring-2 ring-brand/20" : "border-black"
                   } ${isFilled ? "bg-white" : "bg-white"}`}
                 >
                   {code[index] || ""}
@@ -98,7 +99,7 @@ export function OTPVerification() {
           type="button"
           onClick={handleResendOtp}
           disabled={resendCooldown > 0}
-          className="text-sm font-medium text-[#145B10] disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="text-sm font-medium text-brand disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
         </button>

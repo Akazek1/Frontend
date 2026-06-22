@@ -72,7 +72,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
 
   const handleEditReview = (review: Review) => {
     setEditingReview(review)
-    setNewReview({ rating: review.rating, comment: review.comment })
+    setNewReview({ rating: review.rating || 0, comment: review.comment || "" })
     setIsModalOpen(true)
   }
 
@@ -94,19 +94,19 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-6 h-6 animate-spin text-[#145B10]" />
+        <Loader2 className="w-6 h-6 animate-spin text-brand" />
       </div>
     )
   }
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-[#1B2431]">Manage Your Reviews</h1>
+      <h1 className="text-2xl font-bold text-ink">Manage Your Reviews</h1>
       <div className="space-y-4">
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
             <Button
-              className="bg-[#145B10] text-white hover:bg-[#145B10]/90 rounded-[100px] text-sm"
+              className="bg-brand text-white hover:bg-brand/90 rounded-[100px] text-sm"
               onClick={() => {
                 setEditingReview(null)
                 setNewReview({ rating: 0, comment: "" })
@@ -159,7 +159,7 @@ const ReviewManagement: React.FC<ReviewManagementProps> = ({ serviceId }) => {
               </Button>
               <Button
                 type="submit"
-                className="bg-[#145B10] text-white hover:bg-[#145B10]/90"
+                className="bg-brand text-white hover:bg-brand/90"
                 onClick={handleSubmitReview}
                 disabled={submitting}
               >

@@ -1,13 +1,12 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import api from "@/lib/axios";
+import React, { useState, useRef } from "react";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Service } from "@/types";
+import { useServiceList } from "@/hooks/useServiceList";
+import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
 import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
-import { isEmployer } from "@/lib/roles";
 import { Icons } from "@/components/icons";
 import FilterModal, { FilterValues } from "@/components/search/filter-modal";
 
@@ -16,11 +15,10 @@ const ServicePage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const category = searchParams.get("category");
-    const [services, setServices] = useState<Service[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [filters, setFilters] = useState<FilterValues>({
         minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined,
@@ -32,42 +30,26 @@ const ServicePage = () => {
         minRating: searchParams.get("minRating") ? Number(searchParams.get("minRating")) : undefined,
     });
 
-    const fetchServices = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams();
-            if (category && category !== "all") params.append("category", category);
-            if (searchTerm) params.append("searchTerm", searchTerm);
-            if (filters.minPrice) params.append("minPrice", filters.minPrice.toString());
-            if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString());
-            if (filters.serviceType) params.append("serviceType", filters.serviceType);
-            if (filters.availability) params.append("available", filters.availability === "available" ? "true" : "false");
-            if (filters.location) params.append("location", filters.location);
-            if (filters.distanceKm) params.append("distanceKm", filters.distanceKm.toString());
-            if (filters.minRating) params.append("minRating", filters.minRating.toString());
+    const browseParams: BrowseServicesParams = {
+        ...(category && category !== "all" ? { category } : {}),
+        ...(searchTerm ? { searchTerm } : {}),
+        ...(filters.minPrice ? { minPrice: filters.minPrice } : {}),
+        ...(filters.maxPrice ? { maxPrice: filters.maxPrice } : {}),
+        ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
+        ...(filters.availability ? { available: filters.availability === "available" } : {}),
+        ...(filters.location ? { location: filters.location } : {}),
+        ...(filters.minRating ? { minRating: filters.minRating } : {}),
+    };
 
-            const response = await api.get(`/services?${params.toString()}`);
-            
-            if (response.status !== 200) {
-                throw new Error("Failed to fetch services");
-            }
-            const data: Service[] = await response.data.data;
-            setServices(data);
-        } catch {
-            setError("Something went wrong while fetching services.");
-            setServices([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [category, searchTerm, filters]);
-
-    useEffect(() => {
-        fetchServices();
-    }, [fetchServices]);
+    // Cached + stale-while-revalidate: revisiting this page shows the previous
+    // results instantly instead of a spinner. See hooks/useServiceList.
+    const { data: services = [], isLoading, error } = useServiceList(browseParams);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
+        const value = e.target.value;
+        setInputValue(value);
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => setSearchTerm(value), 350);
     };
 
     const handleApplyFilters = (newFilters: FilterValues) => {
@@ -85,7 +67,7 @@ const ServicePage = () => {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="bg-surface min-h-dvh space-y-6 p-6">
             {/* Header with Back Arrow */}
             <BackButtonHeader text={category || "Services"} backHref="/" />
 
@@ -95,8 +77,8 @@ const ServicePage = () => {
                     <input
                         type="text"
                         placeholder="Search name, service, category, area"
-                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-[#1B2431] outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-[#145B10] focus:bg-white focus:ring-2 focus:ring-[#145B10]/20"
-                        value={searchTerm}
+                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-ink outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
+                        value={inputValue}
                         onChange={handleSearchChange}
                     />
                 </div>
@@ -108,10 +90,15 @@ const ServicePage = () => {
                     <button
                         type="button"
                         onClick={() => setIsFilterModalOpen(true)}
-                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-[#145B10] px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#0F4D0C]"
+                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-brand px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
                     >
                         <Icons.FilerIcon className="w-4 h-4 fill-white" />
                         Filter
+                        {Object.values(filters).filter(Boolean).length > 0 && (
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-brand">
+                                {Object.values(filters).filter(Boolean).length}
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
@@ -119,7 +106,7 @@ const ServicePage = () => {
             {/* Loading State */}
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-8 h-8 border-4 border-[#145B10]/20 border-t-[#145B10] rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
                     <p className="mt-4 text-sm text-[#878787]">Finding services...</p>
                 </div>
             )}
@@ -127,7 +114,7 @@ const ServicePage = () => {
             {/* Error State */}
             {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-center text-sm">
-                    {error}
+                    Something went wrong while fetching services.
                 </div>
             )}
 
@@ -145,15 +132,15 @@ const ServicePage = () => {
                                     name={`${service.provider.firstName} ${service.provider.lastName}`}
                                     handle={getProviderHandle(service.provider)}
                                     title={service.title}
-                                    experience="5+ years"
-                                    languages={Array.isArray(service.worker?.languages) ? service.worker.languages.join(", ") : ""}
+                                    experience={service.provider.bio || ""}
+                                    languages={Array.isArray(service.provider.languages) ? service.provider.languages.join(", ") : ""}
                                     location={Array.isArray(service.serviceAreas) ? (service.serviceAreas[0] || "") : service.serviceAreas || ""}
                                     price={formatPrice(service.priceMin, service.priceMax, service.priceType)}
-                                    rating={service.reviews.averageRating || 0}
-                                    reviews={service.reviews.totalReviews || 0}
-                                    distance="2.5 miles"
-                                    available={true}
-                                    verified={isEmployer(service.provider.roles)} 
+                                    rating={service.reviews?.averageRating || 0}
+                                    reviews={service.reviews?.totalReviews || 0}
+                                    distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
+                                    available={service.isActive}
+                                    verified={service.provider.isVerified}
                                     onClick={() => router.push(getServiceDetailPath(service))}
                                     onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                                 />
@@ -164,7 +151,7 @@ const ServicePage = () => {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Icons.SearchIcon className="w-8 h-8 fill-gray-300" />
                             </div>
-                            <h3 className="text-base font-bold text-[#1B2431]">No results found</h3>
+                            <h3 className="text-base font-bold text-ink">No results found</h3>
                             <p className="text-sm text-[#878787] mt-1 max-w-[200px]">
                                 Try adjusting your search or filters to find what you&apos;re looking for.
                             </p>

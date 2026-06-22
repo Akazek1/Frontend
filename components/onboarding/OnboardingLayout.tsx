@@ -6,7 +6,8 @@ import AppIcon from "@/public/svg/app-icon.svg"
 import BubbleLoader from "@/components/loader/Bubble-Loader"
 import { useOnboarding } from "@/context/onboarding-context"
 import { useSearchParams } from "next/navigation"
-import { getAuthToken } from "@/lib/auth-utils"
+import { getAuthToken, getStoredAuthUser } from "@/lib/auth-utils"
+import type { AuthResponse } from "@/services/auth-service"
 
 interface OnboardingLayoutProps {
   children: React.ReactNode
@@ -27,11 +28,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
   useEffect(() => {
     const token = getAuthToken()
-    const storedUserRaw = typeof window !== "undefined" ? localStorage.getItem("user") : null
-    let storedUser: any = null
-    if (storedUserRaw && storedUserRaw !== "undefined" && storedUserRaw !== "null") {
-      try { storedUser = JSON.parse(storedUserRaw) } catch { /* ignore */ }
-    }
+    const storedUser = getStoredAuthUser<AuthResponse["data"]["user"]>()
     const profileIncomplete = !!token && (!storedUser?.firstName || !storedUser.firstName.trim())
 
     if (stepParam === "complete-profile" || profileIncomplete) {
@@ -44,13 +41,13 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     if (stepParam === "login") {
       setSelectedRoles(["EMPLOYER"]) // default role for login mode
       setShowSplash(false)
-      setCurrentStep(2) // skip role + name, go straight to phone
+      setCurrentStep(2) // LoginForm
       return
     }
 
     const timer = setTimeout(() => {
       setShowSplash(false)
-      setCurrentStep(0) // role selection
+      setCurrentStep(0) // RoleSelection
     }, 500)
 
     return () => clearTimeout(timer)
@@ -58,7 +55,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
 
   if (showSplash) {
     return (
-      <div className="relative h-full bg-gradient-to-l from-[#145B10] to-[#729D70] flex items-center justify-center">
+      <div className="relative h-full bg-gradient-to-l from-brand to-[#729D70] flex items-center justify-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 1 }}>
           <AppIcon />
         </motion.div>
@@ -86,7 +83,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
       {showProgress && (
         <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
           {/* Single active dot — shows on signup form only */}
-          <div className="h-2 w-6 sm:w-8 rounded-full bg-[#1B5E20]" />
+          <div className="h-2 w-6 sm:w-8 rounded-full bg-brand-strong" />
         </div>
       )}
     </div>

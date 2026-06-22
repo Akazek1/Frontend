@@ -4,9 +4,25 @@ import React, { useRef, useState } from "react"
 import { Upload, X } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
+import { getApiErrorMessage } from "@/lib/error-handler"
+import Image from "next/image"
+
+interface UploadedDocument {
+  id: string
+  type: string
+  url: string
+  [key: string]: unknown
+}
+
+interface UploadDocumentResponse {
+  data?: {
+    document?: UploadedDocument
+  }
+  document?: UploadedDocument
+}
 
 interface DocumentUploadStepProps {
-  onUploadSuccess: (document: any) => void
+  onUploadSuccess: (document: UploadedDocument) => void
   onCancel: () => void
   isLoading?: boolean
 }
@@ -72,18 +88,22 @@ export const DocumentUploadStep = ({
       const formData = new FormData()
       formData.append("file", selectedFile)
 
-      const response = await api.post("/documents/upload/government-id", formData, {
+      const response = await api.post<UploadDocumentResponse>("/documents/upload/government-id", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
         withCredentials: true,
       })
 
+      const payload = response.data?.data || response.data
+      if (!payload.document) {
+        throw new Error("No document returned from server")
+      }
       toast.success("ID received. Our team will verify within 24 hours.")
-      onUploadSuccess(response.data.document)
-    } catch (error: any) {
+      onUploadSuccess(payload.document)
+    } catch (error) {
       console.error("Upload error:", error)
-      toast.error(error.response?.data?.message || "Failed to upload document")
+      toast.error(getApiErrorMessage(error, "Failed to upload document"))
     } finally {
       setIsUploading(false)
     }
@@ -101,7 +121,7 @@ export const DocumentUploadStep = ({
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-2">
-          Upload Your ID
+          Upload National ID, Passport, or Driver&apos;s License
         </h1>
         <p className="text-base sm:text-lg text-gray-600">
           We need to verify your identity to connect you with employers
@@ -112,12 +132,12 @@ export const DocumentUploadStep = ({
         <div
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-[#145B10] transition-colors"
+          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-brand transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-[#F1FCEF] rounded-lg">
-              <Upload className="w-8 h-8 text-[#145B10]" />
+            <div className="p-4 bg-surface rounded-lg">
+              <Upload className="w-8 h-8 text-brand" />
             </div>
           </div>
           <p className="text-gray-900 font-semibold mb-1">
@@ -137,10 +157,12 @@ export const DocumentUploadStep = ({
       ) : (
         <div className="space-y-4">
           <div className="relative rounded-xl overflow-hidden bg-gray-100 h-80">
-            <img
+            <Image
               src={preview}
               alt="Preview"
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              className="object-cover"
             />
             <button
               onClick={handleRemoveFile}
@@ -166,7 +188,7 @@ export const DocumentUploadStep = ({
         <button
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || isLoading}
-          className="flex-1 px-6 py-3 bg-[#145B10] text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isUploading ? "Uploading..." : "Continue"}
         </button>
