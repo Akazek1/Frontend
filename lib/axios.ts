@@ -23,6 +23,38 @@ const api = axios.create({
   timeout: 30000,
 });
 
+// Persist a freshly-minted access token everywhere the app reads it, so the
+// next request (and middleware route-gating) sees the renewed session.
+function storeAccessToken(token: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("token", token);
+  // Match the refresh-session lifetime so middleware doesn't bounce a user
+  // whose access token is being silently renewed in the background.
+  document.cookie = `token=${token}; path=/; max-age=${90 * 24 * 60 * 60}; SameSite=Lax`;
+}
+
+// Silent refresh: exchange the HttpOnly refresh cookie for a new access token.
+// De-duplicated so a burst of parallel 401s triggers only one /auth/refresh.
+// Uses a bare axios call (not `api`) to avoid recursing through this interceptor.
+let refreshPromise: Promise<string | null> | null = null;
+function refreshAccessToken(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${baseURL}/auth/refresh`, {}, { withCredentials: true })
+      .then((res) => {
+        const token: string | null =
+          res.data?.data?.token ?? res.data?.token ?? null;
+        if (token) storeAccessToken(token);
+        return token;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 // Request interceptor for adding auth token
 api.interceptors.request.use(
   (config) => {
@@ -63,11 +95,21 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       const hadToken = !!getAuthToken();
 
+      // First, try to silently renew the session via the refresh cookie. This
+      // is what keeps users logged in across days without a new OTP, and turns
+      // the old "expired token → logged out" failure into a transparent retry.
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      }
+
+      // Refresh failed (no/expired/revoked refresh token) → end the session.
+      // Clear everything so we don't leave a stale half-logged-in shell that
+      // keeps firing protected calls.
       try {
         if (hadToken && typeof window !== "undefined") {
-          // Clear the whole session, not just the token. Leaving `user` behind
-          // produces a stale half-logged-in state where the UI still thinks it's
-          // authenticated and keeps firing protected calls that 401 again.
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           localStorage.removeItem("persist:root");
@@ -79,8 +121,8 @@ api.interceptors.response.use(
             window.location.href = "/";
           }
         }
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
+      } catch (cleanupError) {
+        return Promise.reject(cleanupError);
       }
     }
 

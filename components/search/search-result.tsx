@@ -5,6 +5,7 @@ import {
   Briefcase,
   Check,
   Loader2,
+  MapPin,
   Search,
   X,
 } from "lucide-react";
@@ -18,6 +19,12 @@ import {
   getServiceDetailPath,
   mapServiceToProviderCard,
 } from "@/lib/service-display";
+import { SectorPicker } from "@/components/ui/sector-picker";
+import {
+  getViewerLocation,
+  saveViewerLocation,
+  type ViewerLocation,
+} from "@/constants/rwanda-sectors";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
@@ -121,6 +128,8 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const [draftJobFilters, setDraftJobFilters] = useState<JobFilters>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [viewerLoc, setViewerLoc] = useState<ViewerLocation | null>(null);
+  const [showLocPicker, setShowLocPicker] = useState(false);
   const [hireModal, setHireModal] = useState<HireModal | null>(null);
   const [notes, setNotes] = useState("");
   const [submittingHire, setSubmittingHire] = useState(false);
@@ -194,6 +203,11 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     return () => {
       if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
     };
+  }, []);
+
+  // Read viewer location from localStorage once on mount.
+  useEffect(() => {
+    setViewerLoc(getViewerLocation());
   }, []);
 
   useEffect(() => {
@@ -302,7 +316,12 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     selectedFilters: SearchFilters,
     requestId: number
   ) => {
-    const cacheKey = buildSearchCacheKey("services", searchQuery, selectedFilters);
+    // Include viewer sector in cache key so a location change busts the cache.
+    const loc = getViewerLocation();
+    const cacheKey = buildSearchCacheKey("services", searchQuery, {
+      ...selectedFilters,
+      _viewerSector: loc?.sector,
+    });
     const cached = searchCacheRef.current.get(cacheKey)?.services;
     if (cached) {
       setServices(cached);
@@ -324,6 +343,10 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     if (selectedFilters.distanceKm) params.set("distanceKm", String(selectedFilters.distanceKm));
     if (selectedFilters.minPrice) params.set("minPrice", String(selectedFilters.minPrice));
     if (selectedFilters.maxPrice) params.set("maxPrice", String(selectedFilters.maxPrice));
+    if (loc) {
+      params.set("viewerLat", String(loc.lat));
+      params.set("viewerLng", String(loc.lng));
+    }
     params.set("limit", "12");
 
     try {
@@ -527,6 +550,43 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           ))}
         </div>
       )}
+
+      {/* Location anchor — always visible for employer searches so users know
+          what the distance on each card is measured from. */}
+      {mode !== "provider" && (
+        <div className="flex items-center gap-1.5 text-[12px] text-[#687268]">
+          <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-brand" />
+          <span>Near</span>
+          <button
+            type="button"
+            onClick={() => setShowLocPicker(true)}
+            className="font-semibold text-brand hover:underline underline-offset-2"
+          >
+            {viewerLoc
+              ? viewerLoc.cell
+                ? `${viewerLoc.cell}, ${viewerLoc.sector}`
+                : `${viewerLoc.sector}, ${viewerLoc.district}`
+              : "Set your location"}
+          </button>
+          {viewerLoc && (
+            <span className="text-[#bbb]">· distances shown on cards</span>
+          )}
+        </div>
+      )}
+
+      {/* Controlled sector picker — opens on demand from the location anchor */}
+      <SectorPicker
+        value={viewerLoc}
+        open={showLocPicker}
+        onOpenChange={setShowLocPicker}
+        onChange={(loc: ViewerLocation) => {
+          const next: ViewerLocation = loc;
+          saveViewerLocation(next);
+          setViewerLoc(next);
+          // Bust search cache so next search picks up new viewerLat/Lng
+          searchCacheRef.current.clear();
+        }}
+      />
 
       {isLoading && (
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-6 text-sm text-[#687268]">

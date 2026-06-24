@@ -31,7 +31,7 @@ interface ServiceCardProps {
   reviews?: number;
   jobsCompleted?: number;
   wouldHireAgain?: number;
-  distance: string;
+  distance?: string;
   available: boolean;
   verified?: boolean;
   tags?: string[];
@@ -226,12 +226,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <span className="text-[11px] font-semibold text-brand">New</span>
         )}
 
-        {/* Row 5: 📍 location · distance */}
+        {/* Row 5: 📍 location · distance (distance hidden when unknown) */}
         <div className="flex items-center gap-1 text-[11px] text-ink-muted">
           <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span className="truncate max-w-[90px]">{location || "Rwanda"}</span>
-          <span className="text-gray-300">·</span>
-          <span>{distance || "—"}</span>
+          <span className="truncate max-w-[140px]">{location || "Rwanda"}</span>
+          {distance && (
+            <>
+              <span className="text-gray-300">·</span>
+              <span>{distance}</span>
+            </>
+          )}
         </div>
 
         {/* Row 6: 💬 Speaks */}

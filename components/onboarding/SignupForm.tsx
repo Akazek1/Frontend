@@ -203,6 +203,8 @@ export function SignupForm() {
           </label>
           <Input
             type="text"
+            name="given-name"
+            autoComplete="given-name"
             placeholder="Enter your first name"
             value={firstName}
             onChange={handleFirstNameChange}
@@ -219,6 +221,8 @@ export function SignupForm() {
           </label>
           <Input
             type="text"
+            name="family-name"
+            autoComplete="family-name"
             placeholder="Enter your last name"
             value={lastName}
             onChange={handleLastNameChange}
@@ -234,6 +238,8 @@ export function SignupForm() {
           </label>
           <Input
             type="email"
+            name="email"
+            autoComplete="email"
             placeholder="your.email@example.com"
             value={email}
             onChange={handleEmailInput}
@@ -267,7 +273,7 @@ export function SignupForm() {
                 setDobError("")
               }
             }}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
+            className={`min-w-0 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
             disabled={otpSent}
           />
           {dobError
@@ -281,7 +287,7 @@ export function SignupForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className={`flex items-center border rounded-xl overflow-hidden w-full transition-all ${
+          <div className={`flex min-w-0 items-center border rounded-xl overflow-hidden w-full transition-all ${
             phoneError ? "border-red-400" :
             otpSent ? "border-gray-200 opacity-60" :
             "border-gray-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20"
@@ -292,11 +298,13 @@ export function SignupForm() {
             </div>
             <input
               type="tel"
+              name="phone"
+              autoComplete="tel-national"
               inputMode="numeric"
               placeholder="Phone number"
               value={phoneNumber}
               onChange={(e) => { setPhoneError(""); handlePhoneChange(e.target.value) }}
-              className="px-4 py-3 sm:py-4 w-full text-gray-900 font-semibold placeholder:text-gray-400 placeholder:font-normal border-none focus:outline-none focus:ring-0 shadow-none bg-transparent"
+              className="min-w-0 px-4 py-3 sm:py-4 w-full text-gray-900 font-semibold placeholder:text-gray-400 placeholder:font-normal border-none focus:outline-none focus:ring-0 shadow-none bg-transparent"
               maxLength={10}
               disabled={otpSent}
             />
@@ -356,7 +364,7 @@ export function SignupForm() {
 
                 {/* Hidden input that captures typing, visual boxes overlaid */}
                 <div
-                  className="relative flex gap-2 justify-center"
+                  className="relative flex w-full gap-1.5 sm:gap-2 justify-center"
                   onClick={() => inputsRef.current[0]?.focus()}
                 >
                   <input
@@ -384,7 +392,7 @@ export function SignupForm() {
                     return (
                       <div
                         key={i}
-                        className={`w-11 h-12 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
+                        className={`h-12 min-w-0 flex-1 max-w-11 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
                           isActive ? "border-brand ring-2 ring-brand/20" : isFilled ? "border-brand/50" : "border-gray-200"
                         }`}
                       >

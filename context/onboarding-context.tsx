@@ -13,6 +13,36 @@ import type { AuthResponse, UserRole } from "@/services/auth-service"
 
 const OTP_LENGTH = 6
 
+// Persisted across a Terms/Privacy detour so the "Create your account" form
+// (step 1) keeps the user's input when they navigate away and hit Back.
+const SIGNUP_PROGRESS_KEY = "onboarding_signup_progress"
+
+interface SignupProgress {
+  step: number
+  firstName: string
+  lastName: string
+  email: string
+  dateOfBirth: string
+  phoneNumber: string
+  termsAccepted: boolean
+  selectedRoles: ("EMPLOYER" | "WORKER")[]
+}
+
+export function loadSignupProgress(): SignupProgress | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = sessionStorage.getItem(SIGNUP_PROGRESS_KEY)
+    return raw ? (JSON.parse(raw) as SignupProgress) : null
+  } catch {
+    return null
+  }
+}
+
+export function clearSignupProgress() {
+  if (typeof window === "undefined") return
+  try { sessionStorage.removeItem(SIGNUP_PROGRESS_KEY) } catch { /* ignore */ }
+}
+
 type UserData = AuthResponse["data"]["user"] | null
 interface DocumentData {
   id: string
@@ -134,6 +164,22 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const id = setTimeout(() => setResendCooldown(prev => Math.max(0, prev - 1)), 1000)
     return () => clearTimeout(id)
   }, [resendCooldown])
+
+  // Persist the new-user "Create your account" step so opening Terms/Privacy and
+  // returning keeps the form filled. Cleared once the user moves past signup.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (currentStep === 1 && !verifiedUser) {
+      try {
+        sessionStorage.setItem(SIGNUP_PROGRESS_KEY, JSON.stringify({
+          step: currentStep, firstName, lastName, email, dateOfBirth,
+          phoneNumber, termsAccepted, selectedRoles,
+        }))
+      } catch { /* ignore quota/serialization errors */ }
+    } else if (currentStep !== -1) {
+      clearSignupProgress()
+    }
+  }, [currentStep, firstName, lastName, email, dateOfBirth, phoneNumber, termsAccepted, selectedRoles, verifiedUser])
 
   // Form input handlers
   const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,6 +312,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, [resendCooldown, handleSendOtp])
 
   const redirectHome = useCallback((isNew = false) => {
+    clearSignupProgress()
     document.cookie = "profileComplete=true; path=/; max-age=31536000"
     if (redirectUrl) {
       window.location.href = redirectUrl

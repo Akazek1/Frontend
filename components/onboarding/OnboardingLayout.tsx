@@ -4,7 +4,8 @@ import React, { useEffect } from "react"
 import { motion } from "framer-motion"
 import AppIcon from "@/public/svg/app-icon.svg"
 import BubbleLoader from "@/components/loader/Bubble-Loader"
-import { useOnboarding } from "@/context/onboarding-context"
+import LanguageSwitcher from "@/components/header/language-switcher"
+import { useOnboarding, loadSignupProgress } from "@/context/onboarding-context"
 import { useSearchParams } from "next/navigation"
 import { getAuthToken, getStoredAuthUser } from "@/lib/auth-utils"
 import type { AuthResponse } from "@/services/auth-service"
@@ -17,10 +18,15 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
   const {
     showSplash,
     setShowSplash,
-    currentStep,
     setCurrentStep,
     setVerifiedUser,
     setSelectedRoles,
+    setFirstName,
+    setLastName,
+    setEmail,
+    setDateOfBirth,
+    setPhoneNumber,
+    setTermsAccepted,
   } = useOnboarding()
 
   const searchParams = useSearchParams()
@@ -45,13 +51,29 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
       return
     }
 
+    // Returning from a Terms/Privacy detour mid-signup — restore the filled form.
+    const progress = loadSignupProgress()
+    if (progress) {
+      setFirstName(progress.firstName || "")
+      setLastName(progress.lastName || "")
+      setEmail(progress.email || "")
+      setDateOfBirth(progress.dateOfBirth || "")
+      setPhoneNumber(progress.phoneNumber || "")
+      setTermsAccepted(!!progress.termsAccepted)
+      setSelectedRoles(progress.selectedRoles?.length ? progress.selectedRoles : ["EMPLOYER"])
+      setShowSplash(false)
+      setCurrentStep(progress.step ?? 1)
+      return
+    }
+
     const timer = setTimeout(() => {
       setShowSplash(false)
       setCurrentStep(0) // RoleSelection
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser, setSelectedRoles])
+  }, [stepParam, setShowSplash, setCurrentStep, setVerifiedUser, setSelectedRoles,
+      setFirstName, setLastName, setEmail, setDateOfBirth, setPhoneNumber, setTermsAccepted])
 
   if (showSplash) {
     return (
@@ -71,21 +93,15 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     )
   }
 
-  // Progress dot only for signup form (step 1) — step 0 has its own rich layout
-  const showProgress = currentStep === 1
-
   return (
     <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
+      {/* Language picker — same chip as the home header, just this one icon. */}
+      <div className="absolute right-3 top-3 z-50">
+        <LanguageSwitcher />
+      </div>
       <div className="h-full">
         {children}
       </div>
-
-      {showProgress && (
-        <div className="absolute w-full bottom-0 flex justify-center space-x-2 pb-8 sm:pb-12">
-          {/* Single active dot — shows on signup form only */}
-          <div className="h-2 w-6 sm:w-8 rounded-full bg-brand-strong" />
-        </div>
-      )}
     </div>
   )
 }

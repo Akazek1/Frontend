@@ -51,6 +51,13 @@ export interface Service {
     trustScore?: number;
     createdAt?: string;
     availableForWork?: boolean;
+    addresses?: Array<{
+      city?: string | null;
+      district?: string | null;
+      sector?: string | null;
+      cell?: string | null;
+      isDefault?: boolean;
+    }>;
     agency?: {
       id: string;
       name: string;
@@ -87,6 +94,7 @@ export interface Service {
     jobsCompleted?: number;
   };
   serviceAreas: string[];
+  distanceKm?: number | null;
 }
 
 export interface AgencyPlacement {
@@ -132,7 +140,7 @@ export interface Provider {
   reviews: number;
   jobsCompleted?: number;
   wouldHireAgain?: number;
-  distance: string;
+  distance?: string;
   available: boolean;
   verified: boolean;
   type: string;

@@ -1,25 +1,14 @@
 "use client";
 import React from "react";
 import { useViewMode } from "@/context/view-mode-context";
-import { useAuth } from "@/hooks/useAuth";
 import { Briefcase, User } from "lucide-react";
 
 const ViewModeToggle: React.FC = () => {
   const { viewMode, toggleViewMode } = useViewMode();
-  const { isAuthenticated } = useAuth();
-
-  // For guests the toggle is a browse filter (intent), not an identity
-  // declaration — so it's labelled "Hire help" / "Find work" instead of
-  // "I'm an Employer" / "I'm a Provider".
-  const labels = isAuthenticated
-    ? {
-        employer: { title: "I'm an Employer", sub: "Hire for your needs" },
-        provider: { title: "I'm a Provider", sub: "Find jobs & earn" },
-      }
-    : {
-        employer: { title: "Hire help", sub: "Browse workers & services" },
-        provider: { title: "Find work", sub: "Browse jobs near you" },
-      };
+  const labels = {
+    employer: { title: "Hire help", sub: "Browse workers & services" },
+    provider: { title: "Find work", sub: "Browse jobs near you" },
+  };
 
   return (
     <div className="flex flex-row gap-3 w-full">
