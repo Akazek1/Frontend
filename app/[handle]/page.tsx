@@ -235,7 +235,6 @@ export default function HandleProfilePage() {
         location={formatAddressLocation(addr)}
         district={addr?.district || addr?.sector}
         sector={addr?.sector}
-        cell={addr?.cell}
         city={addr?.city}
         country={addr?.country}
         languages={profile.languages}
