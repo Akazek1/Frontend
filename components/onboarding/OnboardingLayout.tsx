@@ -94,12 +94,11 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
   }
 
   return (
-    <div className="relative h-full overflow-hidden bg-white max-w-md mx-auto">
-      {/* Language picker — same chip as the home header, just this one icon. */}
-      <div className="absolute right-3 top-3 z-50">
+    <div className="relative h-full max-w-md mx-auto overflow-hidden bg-white overscroll-x-none">
+      <div className="sticky top-0 z-50 flex justify-end bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <LanguageSwitcher />
       </div>
-      <div className="h-full">
+      <div className="h-[calc(100%-56px)] overflow-x-hidden overscroll-x-none">
         {children}
       </div>
     </div>
