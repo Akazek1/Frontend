@@ -58,7 +58,6 @@ const Header = () => {
   const locationDetail = useMemo(() => {
     if (!address) return null;
     return [
-      address.cell ? { label: "Cell", value: address.cell } : null,
       address.sector ? { label: "Sector", value: address.sector } : null,
       address.district ? { label: "District", value: address.district } : null,
       address.city ? { label: "City", value: address.city } : null,

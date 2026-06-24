@@ -521,7 +521,6 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
           city: nextLocation.city,
           district: nextLocation.district || undefined,
           sector: nextLocation.sector || undefined,
-          cell: nextLocation.cell || undefined,
           isDefault: true,
           ...(locationCoords ? { latitude: locationCoords.lat, longitude: locationCoords.lng } : {}),
         });
