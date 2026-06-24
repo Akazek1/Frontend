@@ -390,7 +390,7 @@ function ServiceDetailPage() {
     return (
         <div className="bg-surface min-h-screen w-full overflow-x-hidden pb-28">
             {/* Top bar */}
-            <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-2 pt-4">
+            <div className="sticky top-0 z-20 flex items-center justify-between bg-surface px-4 pb-2 pt-4">
                 <button
                     type="button"
                     onClick={() => router.back()}
@@ -563,22 +563,6 @@ function ServiceDetailPage() {
                         ) : null}
                     </div>
                 </section>
-
-                {/* Verification chip — shown only for genuinely verified providers */}
-                {isVerified ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <span
-                            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium"
-                            style={{
-                                backgroundColor: colors.backgroundTertiary,
-                                color: colors.primary,
-                            }}
-                        >
-                            <ShieldCheck className="h-4 w-4" style={{ color: colors.primary }} />
-                            {SERVICE_DETAIL_LABELS.verified}
-                        </span>
-                    </div>
-                ) : null}
 
                 {/* Agency backing section — only for agency-backed workers */}
                 {provider?.agency && (

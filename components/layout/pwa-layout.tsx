@@ -15,8 +15,57 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const mainRef = useRef<HTMLElement | null>(null);
   const [isNavigationHidden, setIsNavigationHidden] = useState(false);
+  // Scroll-restoration state: the app scrolls inside this persistent <main>, not
+  // the window, so the browser can't restore scroll for us. We remember each
+  // route's scroll offset and replay it on back/forward navigation.
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
+  const navTypeRef = useRef<"push" | "pop">("push");
   usePushNotifications();
   useSocketConnection();
+
+  // Browser back/forward fires popstate; Link clicks / router.push do not.
+  useEffect(() => {
+    const onPopState = () => { navTypeRef.current = "pop"; };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Continuously remember the current route's scroll offset.
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+    const save = () => { scrollPositionsRef.current.set(pathname, main.scrollTop); };
+    main.addEventListener("scroll", save, { passive: true });
+    return () => {
+      save();
+      main.removeEventListener("scroll", save);
+    };
+  }, [pathname]);
+
+  // On navigation: restore the saved offset when going back/forward, otherwise
+  // start a freshly-pushed route at the top.
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    if (navTypeRef.current === "pop") {
+      const saved = scrollPositionsRef.current.get(pathname) ?? 0;
+      let attempts = 0;
+      const restore = () => {
+        if (!mainRef.current) return;
+        mainRef.current.scrollTop = saved;
+        // Content (e.g. cached lists) may still be growing — retry until it sticks.
+        if (Math.abs(mainRef.current.scrollTop - saved) > 2 && attempts < 20) {
+          attempts += 1;
+          requestAnimationFrame(restore);
+        }
+      };
+      requestAnimationFrame(restore);
+    } else {
+      main.scrollTop = 0;
+    }
+    navTypeRef.current = "push";
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

@@ -1,29 +1,70 @@
 "use client";
-import { useState } from "react";
 import { RootState } from "@/store";
-import { Bell, Check, Globe, MapPin, User } from "lucide-react";
+import { Bell, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import LanguageSwitcher from "@/components/header/language-switcher";
 
 import { getProviderHandle } from "@/lib/service-display";
 import { NotificationItem, getNotificationHref, useNotifications } from "@/hooks/useNotifications";
 import { NotificationRow } from "@/components/notifications/notification-row";
+import api from "@/lib/axios";
+import { formatAddressLocation, type AddressDisplay } from "@/lib/location-display";
+import { useEffect, useMemo, useState } from "react";
 
-const languages = [
-  { code: "EN", name: "English", hint: "Default app language" },
-  { code: "RW", name: "Kinyarwanda", hint: "Simple local wording" },
-  { code: "FR", name: "French", hint: "Available soon" },
-  { code: "SW", name: "Swahili", hint: "Available soon" },
-];
+type HeaderAddress = AddressDisplay & {
+  isDefault?: boolean;
+};
 
 const Header = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [selectedLanguage, setSelectedLanguage] = useState("EN");
   const router = useRouter();
   const { items, unreadCount, refetch, markRead } = useNotifications({ limit: 5 });
+  const [address, setAddress] = useState<HeaderAddress | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setAddress(null);
+      return;
+    }
+
+    let cancelled = false;
+    async function loadAddress() {
+      try {
+        const response = await api.get("/users/profile");
+        const profile = response.data?.data || response.data || {};
+        const addresses = Array.isArray(profile.addresses) ? profile.addresses : [];
+        const next = addresses.find((addr: HeaderAddress) => addr.isDefault) || addresses[0] || null;
+        if (!cancelled) setAddress(next);
+      } catch {
+        if (!cancelled) setAddress(null);
+      }
+    }
+
+    void loadAddress();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const locationLabel = useMemo(() => {
+    if (!user) return "Kigali, Rwanda";
+    return formatAddressLocation(address, { includeCountry: true }) || "Set location";
+  }, [address, user]);
+
+  const locationDetail = useMemo(() => {
+    if (!address) return null;
+    return [
+      address.cell ? { label: "Cell", value: address.cell } : null,
+      address.sector ? { label: "Sector", value: address.sector } : null,
+      address.district ? { label: "District", value: address.district } : null,
+      address.city ? { label: "City", value: address.city } : null,
+      address.country ? { label: "Country", value: address.country } : null,
+    ].filter(Boolean) as Array<{ label: string; value: string }>;
+  }, [address]);
 
   const handleNotificationClick = async (n: NotificationItem) => {
     if (!n.readAt) await markRead(n.id);
@@ -44,62 +85,50 @@ const Header = () => {
       {/* Top row */}
       <div className="flex items-center justify-between">
 
-        {/* Location label — static display only */}
-        <div className="flex items-center gap-1.5 bg-white/70 border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
-          <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
-          <span className="text-[13px] font-semibold text-ink">Kigali, Rwanda</span>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex max-w-[190px] items-center gap-1.5 rounded-full border border-gray-200 bg-white/70 px-3 py-1.5 text-left shadow-sm transition hover:border-brand/40 hover:bg-white"
+              aria-label="View or change location"
+            >
+              <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
+              <span className="truncate text-[13px] font-semibold text-ink">{locationLabel}</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">
+            <div className="border-b border-gray-100 px-4 py-3">
+              <p className="text-[14px] font-bold text-ink">Your location</p>
+              <p className="mt-0.5 text-[12px] leading-5 text-ink-subtle">
+                Used to show nearby services and help clients find you.
+              </p>
+            </div>
+            <div className="space-y-2 px-4 py-3">
+              {locationDetail?.length ? (
+                locationDetail.map((item) => (
+                  <div key={item.label} className="flex items-center justify-between gap-3 text-[12px]">
+                    <span className="text-ink-subtle">{item.label}</span>
+                    <span className="min-w-0 truncate font-semibold text-ink">{item.value}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[12px] text-ink-subtle">No saved location yet.</p>
+              )}
+            </div>
+            <Link
+              href="/profile?section=location"
+              className="block border-t border-gray-100 px-4 py-3 text-center text-[12px] font-bold text-brand hover:bg-surface"
+            >
+              Change location
+            </Link>
+          </PopoverContent>
+        </Popover>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
 
-          {/* Language chip */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label="Change language"
-                className="flex items-center gap-1 bg-white/70 border border-gray-200 rounded-full px-2.5 py-1.5 shadow-sm"
-              >
-                <Globe className="w-3.5 h-3.5 text-brand" />
-                <span className="text-[12px] font-semibold text-ink">{selectedLanguage}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-3 shadow-xl">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[14px] font-bold text-ink">Choose language</p>
-                  <p className="text-[11px] text-ink-subtle">Preview only. Translation is not connected yet.</p>
-                </div>
-                <div className="space-y-1">
-                  {languages.map((language) => {
-                    const active = selectedLanguage === language.code;
-                    return (
-                      <button
-                        key={language.code}
-                        type="button"
-                        onClick={() => setSelectedLanguage(language.code)}
-                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                          active ? "bg-surface ring-1 ring-brand/20" : "hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold ${
-                          active ? "bg-brand text-white" : "bg-gray-100 text-ink"
-                        }`}>
-                          {language.code}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] font-semibold text-ink">{language.name}</span>
-                          <span className="block text-[11px] text-ink-subtle">{language.hint}</span>
-                        </span>
-                        {active && <Check className="h-4 w-4 text-brand" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          {/* Language chip — list driven by the admin "Languages" page */}
+          <LanguageSwitcher />
 
           {/* Bell */}
           <Popover onOpenChange={(open) => { if (open) refetch(); }}>

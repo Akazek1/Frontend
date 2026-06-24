@@ -96,6 +96,8 @@ export function LoginForm() {
           </div>
           <input
             type="tel"
+            name="phone"
+            autoComplete="tel-national"
             inputMode="numeric"
             placeholder="Phone number"
             value={phoneNumber}

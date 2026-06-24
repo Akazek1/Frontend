@@ -61,13 +61,13 @@ const baseJob: Job = {
 // ---------------------------------------------------------------------------
 
 describe("toBookingItem", () => {
-  it("pending booking received by provider → awaitingReview with From Employer label and acceptBooking action", () => {
+  it("pending booking received by provider → awaitingReview with From Employer label and acceptChat action", () => {
     const item = toBookingItem(baseBooking, "provider", "awaitingReview", "orange");
 
     expect(item.section).toBe("awaitingReview");
     expect(item.role).toBe("provider");
     expect(item.statusLabel).toBe("From Employer");
-    expect(item.primaryAction).toBe("acceptBooking");
+    expect(item.primaryAction).toBe("acceptChat");
     expect(item.secondaryAction).toBe("rejectBooking");
     expect(item.accent).toBe("orange");
     expect(item.title).toContain("Alice"); // shows the employer (other party)

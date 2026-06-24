@@ -80,7 +80,15 @@ const authService = {
   },
 
   // Logout user
-  logout: (): void => {
+  logout: async (): Promise<void> => {
+    // Revoke the refresh token server-side first — it lives in an HttpOnly
+    // cookie the browser can't clear, so without this the 90-day session would
+    // survive "logout". Best-effort: still clear local state if the call fails.
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // ignore — proceed to clear local state regardless
+    }
     localStorage.removeItem("token");
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   },

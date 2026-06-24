@@ -56,7 +56,7 @@ export default function BusinessRegisterPage() {
     <button
       type="button"
       onClick={() => setType(t)}
-      className={`relative flex flex-1 items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+      className={`relative flex min-w-0 flex-1 items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
         type === t ? "border-brand bg-brand text-white" : "border-gray-200 bg-white text-ink hover:border-brand"
       }`}
     >
@@ -64,7 +64,7 @@ export default function BusinessRegisterPage() {
       <div className={`rounded-lg p-2 ${type === t ? "bg-white/20" : "bg-surface"}`}>
         <Icon className={`h-5 w-5 ${type === t ? "text-white" : "text-brand"}`} />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-[14px] font-bold">{title}</p>
         <p className={`text-[11px] ${type === t ? "text-white/80" : "text-ink-muted"}`}>{sub}</p>
       </div>
@@ -88,7 +88,7 @@ export default function BusinessRegisterPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               {typeCard("SERVICE_COMPANY", "Service Company", "Offer services directly", Building2)}
               {typeCard("STAFFING_AGENCY", "Staffing Agency", "Place workers with families", Briefcase)}
             </div>
@@ -99,13 +99,13 @@ export default function BusinessRegisterPage() {
                 className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="min-w-0 flex-1">
                 <label className="mb-1.5 block text-[13px] font-semibold text-ink">Email (your login)</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" autoComplete="email"
                   className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
               </div>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <label className="mb-1.5 block text-[13px] font-semibold text-ink">Phone (optional)</label>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0788…"
                   className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />

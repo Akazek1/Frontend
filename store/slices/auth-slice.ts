@@ -102,12 +102,14 @@ export const verifyOtp = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
+  // Revoke the server-side refresh token (HttpOnly cookie) before clearing
+  // local state, so the session can't be silently refreshed afterwards.
+  await authService.logout();
   localStorage.removeItem("token");
   localStorage.removeItem("signupToken");
   localStorage.removeItem("user");
   document.cookie = "token=; path=/; max-age=0";
   document.cookie = "profileComplete=; path=/; max-age=0";
-  authService.logout();
 });
 
 export const getCurrentUser = createAsyncThunk(
@@ -160,7 +162,7 @@ const authSlice = createSlice({
         localStorage.setItem("token", action.payload.token);
         // The signup token has served its purpose — discard it
         localStorage.removeItem("signupToken");
-        document.cookie = `token=${action.payload.token}; path=/; max-age=31536000; SameSite=Lax`;
+        document.cookie = `token=${action.payload.token}; path=/; max-age=7776000; SameSite=Lax`;
         document.cookie = "profileComplete=true; path=/; max-age=31536000";
       }
     },
@@ -214,7 +216,7 @@ const authSlice = createSlice({
           if (typeof window !== "undefined") {
             localStorage.setItem("user", JSON.stringify(action.payload.user));
             localStorage.setItem("token", action.payload.token);
-            document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `token=${action.payload.token}; path=/; max-age=7776000; SameSite=Lax`;
             if (action.payload.user?.firstName) {
               document.cookie = "profileComplete=true; path=/; max-age=31536000";
             } else {

@@ -11,6 +11,15 @@ vi.mock("@/lib/axios", () => ({
   },
 }))
 
+vi.mock("@/utils/image-optimizer", () => ({
+  optimizeImage: vi.fn(async (file: File) => file),
+  validateImageFile: vi.fn((file: File) =>
+    file.type.startsWith("image/")
+      ? { valid: true }
+      : { valid: false, error: "Invalid file type. Only images are allowed." },
+  ),
+}))
+
 // Mock FileReader
 class MockFileReader {
   readAsDataURL = vi.fn()
@@ -48,12 +57,10 @@ describe("DocumentUploadStep Component", () => {
 
     fireEvent.change(input, { target: { files: [file] } })
 
-    // Simulate FileReader.onload
     await waitFor(() => {
-      if (capturedReader && capturedReader.onload) {
-        capturedReader.onload({ target: { result: "data:image/png;base64,dummy" } })
-      }
+      expect(capturedReader?.onload).toEqual(expect.any(Function))
     })
+    capturedReader.onload({ target: { result: "data:image/png;base64,dummy" } })
 
     expect(await screen.findByAltText(/Preview/i)).toBeInTheDocument()
     expect(screen.getByText(/test.png/i)).toBeInTheDocument()

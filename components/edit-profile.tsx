@@ -9,7 +9,6 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  ClipboardCheck,
   Eye,
   FileBadge,
   GraduationCap,
@@ -25,7 +24,7 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
@@ -56,6 +55,8 @@ import ProfileImageUploader from "@/components/profile/profile-img-uloader";
 import IdUploadDialog from "@/components/profile/id-upload-dialog";
 import APP_CONFIG from "@/constant/app.config";
 import { QUALITY_DEFS, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
+import { SectorPicker } from "@/components/ui/sector-picker";
+import { findSector, type ViewerLocation } from "@/constants/rwanda-sectors";
 
 type ProfileForm = {
   firstName: string;
@@ -72,8 +73,10 @@ type ProfileForm = {
   preferredWorkTime: string;
   topQualities: string[];
   city: string;
+  province: string;
   district: string;
   sector: string;
+  cell: string;
 };
 
 type Errors = Partial<Record<keyof ProfileForm | "form", string>>;
@@ -142,6 +145,29 @@ const getAge = (dateValue: string) => {
 const fullName = (form: ProfileForm) =>
   [form.firstName, form.lastName].filter(Boolean).join(" ").trim() || "Your profile";
 
+const getSectionFields = (section: EditSection): (keyof ProfileForm)[] => {
+  switch (section) {
+    case "identity":
+      return ["firstName", "lastName", "username", "email", "dateOfBirth", "gender"];
+    case "location":
+      return ["city", "district", "sector", "cell"];
+    case "languages":
+      return ["languages"];
+    case "work":
+      return ["bio", "educationLevel", "healthStatus", "preferredWorkTime", "topQualities"];
+    default:
+      return [];
+  }
+};
+
+const getSectionSnapshot = (source: ProfileForm, section: EditSection) =>
+  JSON.stringify(
+    getSectionFields(section).map((field) => {
+      const value = source[field];
+      return Array.isArray(value) ? [...value].sort() : value;
+    }),
+  );
+
 const inputClass =
   appInputClass;
 
@@ -195,10 +221,10 @@ const Field = ({
 export default function EditProfile({ idEditable = true }: { idEditable?: boolean }) {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const [activeSection, setActiveSection] = useState<EditSection>("overview");
-  const [form, setForm] = useState<ProfileForm>({
+  const initialForm: ProfileForm = {
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     username: user?.username || "",
@@ -213,13 +239,19 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     preferredWorkTime: user?.preferredWorkTime || "",
     topQualities: user?.topQualities || [],
     city: "",
+    province: "",
     district: "",
     sector: "",
-  });
+    cell: "",
+  };
+  const [activeSection, setActiveSection] = useState<EditSection>("overview");
+  const [form, setForm] = useState<ProfileForm>(initialForm);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [savedForm, setSavedForm] = useState<ProfileForm>(initialForm);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [initialLocation, setInitialLocation] = useState({ city: "", district: "", sector: "" });
+  const [initialLocation, setInitialLocation] = useState({ city: "", province: "", district: "", sector: "", cell: "" });
   // Identity-document status drives the "ID verified" trust badge + upload CTA.
   const [idStatus, setIdStatus] = useState<"NONE" | "PENDING_VERIFICATION" | "APPROVED" | "REJECTED">("NONE");
   const [showIdUpload, setShowIdUpload] = useState(false);
@@ -243,6 +275,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     if (user) void refreshIdStatus();
   }, [user, refreshIdStatus]);
 
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section === "location") setActiveSection("location");
+  }, [searchParams]);
+
   const canEdit = idEditable && !saving;
   const maxBirthDate = useMemo(getMaxBirthDate, []);
 
@@ -263,12 +300,18 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         const response = await api.get("/users/profile");
         const data = response.data?.data || response.data || {};
         if (cancelled) return;
+        const addr = data.addresses?.[0];
         const location = {
-          city: data.addresses?.[0]?.city || "",
-          district: data.addresses?.[0]?.district || "",
-          sector: data.addresses?.[0]?.sector || "",
+          city: addr?.city || "",
+          province: addr?.province || "",
+          district: addr?.district || "",
+          sector: addr?.sector || "",
+          cell: addr?.cell || "",
         };
-        setForm({
+        // Derive province from sector lookup if not stored in address yet
+        const known = findSector(location.sector, location.district);
+        if (known && !location.province) location.province = known.province;
+        const nextForm: ProfileForm = {
           firstName: data.firstName || "",
           lastName: data.lastName || "",
           username: data.username || "",
@@ -283,10 +326,15 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
           preferredWorkTime: data.preferredWorkTime || "",
           topQualities: Array.isArray(data.topQualities) ? data.topQualities : [],
           city: location.city,
+          province: location.province,
           district: location.district,
           sector: location.sector,
-        });
+          cell: location.cell,
+        };
+        setForm(nextForm);
+        setSavedForm(nextForm);
         setInitialLocation(location);
+        if (known) setLocationCoords({ lat: known.lat, lng: known.lng });
       } catch {
         toast.error("Failed to load profile");
       } finally {
@@ -304,6 +352,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     if (!form.username || typeof window === "undefined") return "";
     return `${window.location.origin}/${form.username}`;
   }, [form.username]);
+
+  const hasUnsavedChanges = useMemo(
+    () => getSectionSnapshot(form, activeSection) !== getSectionSnapshot(savedForm, activeSection),
+    [activeSection, form, savedForm],
+  );
 
   const profileCompletion = useMemo(() => {
     const checks = [
@@ -360,26 +413,30 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     const next: Errors = {};
     const age = form.dateOfBirth ? getAge(form.dateOfBirth) : null;
 
-    if (!form.firstName.trim()) next.firstName = "First name is required";
-    if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email.trim())) {
-      next.email = "Enter a valid email";
+    if (activeSection === "identity") {
+      if (!form.firstName.trim()) next.firstName = "First name is required";
+      if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email.trim())) {
+        next.email = "Enter a valid email";
+      }
+      if (form.dateOfBirth && Number.isNaN(new Date(form.dateOfBirth).getTime())) {
+        next.dateOfBirth = "Enter a valid date";
+      }
+      if (age !== null && age < LEGAL_WORKING_AGE) {
+        next.dateOfBirth = `You must be at least ${LEGAL_WORKING_AGE} to work in Rwanda`;
+      }
+      if (form.username && !/^[a-z0-9_-]{3,30}$/.test(form.username)) {
+        next.username = "Use 3-30 lowercase letters, numbers, underscores, or hyphens";
+      }
     }
-    if (!form.gender) next.gender = "Gender is required";
-    if (!form.dateOfBirth) next.dateOfBirth = "Date of birth is required";
-    if (form.dateOfBirth && Number.isNaN(new Date(form.dateOfBirth).getTime())) {
-      next.dateOfBirth = "Enter a valid date";
+
+    if (activeSection === "work" && form.bio.length > BIO_LIMIT) {
+      next.bio = `Keep your bio under ${BIO_LIMIT} characters`;
     }
-    if (age !== null && age < LEGAL_WORKING_AGE) {
-      next.dateOfBirth = `You must be at least ${LEGAL_WORKING_AGE} to work in Rwanda`;
-    }
-    if (form.languages.length === 0) next.languages = "Choose at least one language";
-    if (form.username && !/^[a-z0-9_-]{3,30}$/.test(form.username)) {
-      next.username = "Use 3-30 lowercase letters, numbers, underscores, or hyphens";
-    }
-    if (form.bio.length > BIO_LIMIT) next.bio = `Keep your bio under ${BIO_LIMIT} characters`;
-    if ((form.district.trim() || form.sector.trim()) && !form.city.trim()) {
+
+    if (activeSection === "location" && (form.district.trim() || form.sector.trim()) && !form.city.trim()) {
       next.city = "City is required when adding a location";
     }
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -387,6 +444,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!idEditable) return;
+    if (activeSection === "overview" || activeSection === "trust") return;
+    if (!hasUnsavedChanges) {
+      toast("No changes to save");
+      return;
+    }
     if (!validate()) {
       toast.error("Please fix the highlighted fields");
       return;
@@ -395,9 +457,10 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     setSaving(true);
     try {
       const username = form.username.trim() || undefined;
-      if (username && username !== user?.username) {
+      if (activeSection === "identity" && username && username !== user?.username) {
         const check = await api.get(`/users/username/${username}/check`);
-        if (!check.data?.available) {
+        const availability = check.data?.data || check.data;
+        if (!availability?.available) {
           setErrors((prev) => ({ ...prev, username: "Username is already taken" }));
           toast.error("Username is already taken");
           setSaving(false);
@@ -406,62 +469,86 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         }
       }
 
-      const payload = {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        username,
-        ...(form.email.trim() ? { email: form.email.trim() } : {}),
-        gender: form.gender,
-        dateOfBirth: new Date(form.dateOfBirth).toISOString(),
-        languages: form.languages,
-        bio: form.bio.trim(),
-        educationLevel: form.educationLevel || undefined,
-        healthStatus: form.healthStatus || undefined,
-        preferredWorkTime: form.preferredWorkTime || undefined,
-        topQualities: form.topQualities,
-      };
-
-      const response = await api.patch("/users/profile", payload);
-      const updated = response.data?.data || response.data;
-
       const nextLocation = {
         city: form.city.trim(),
+        province: form.province.trim(),
         district: form.district.trim(),
         sector: form.sector.trim(),
+        cell: form.cell.trim(),
       };
       const locationChanged =
         nextLocation.city !== initialLocation.city ||
         nextLocation.district !== initialLocation.district ||
-        nextLocation.sector !== initialLocation.sector;
+        nextLocation.sector !== initialLocation.sector ||
+        nextLocation.cell !== initialLocation.cell;
 
-      if (nextLocation.city && locationChanged) {
+      let updated: Record<string, unknown> | null = null;
+
+      if (activeSection === "location") {
+        if (!nextLocation.city && locationChanged) {
+          setErrors((prev) => ({ ...prev, city: "City is required when saving a location" }));
+          toast.error("City is required when saving a location");
+          setSaving(false);
+          return;
+        }
+      } else {
+        const payload =
+          activeSection === "identity"
+            ? {
+                firstName: form.firstName.trim(),
+                lastName: form.lastName.trim(),
+                username,
+                ...(form.email.trim() ? { email: form.email.trim() } : {}),
+                ...(form.gender ? { gender: form.gender } : {}),
+                ...(form.dateOfBirth ? { dateOfBirth: new Date(form.dateOfBirth).toISOString() } : {}),
+              }
+            : activeSection === "languages"
+              ? { languages: form.languages }
+              : {
+                  bio: form.bio.trim(),
+                  educationLevel: form.educationLevel || undefined,
+                  healthStatus: form.healthStatus || undefined,
+                  preferredWorkTime: form.preferredWorkTime || undefined,
+                  topQualities: form.topQualities,
+                };
+
+        const response = await api.patch("/users/profile", payload);
+        updated = response.data?.data || response.data;
+      }
+
+      if (activeSection === "location" && nextLocation.city && locationChanged) {
         await api.post("/users/addresses", {
           city: nextLocation.city,
           district: nextLocation.district || undefined,
           sector: nextLocation.sector || undefined,
+          cell: nextLocation.cell || undefined,
           isDefault: true,
+          ...(locationCoords ? { latitude: locationCoords.lat, longitude: locationCoords.lng } : {}),
         });
         setInitialLocation(nextLocation);
       }
 
-      dispatch(updateUser({
-        id: updated.id,
-        username: updated.username,
-        phoneNumber: updated.phoneNumber,
-        firstName: updated.firstName,
-        lastName: updated.lastName,
-        email: updated.email,
-        gender: updated.gender,
-        dateOfBirth: updated.dateOfBirth,
-        languages: updated.languages,
-        bio: updated.bio,
-        educationLevel: updated.educationLevel,
-        healthStatus: updated.healthStatus,
-        preferredWorkTime: updated.preferredWorkTime,
-        topQualities: updated.topQualities,
-        profilePicture: updated.profilePicture,
-      }));
+      if (updated) {
+        dispatch(updateUser({
+          id: updated.id as string,
+          username: updated.username as string,
+          phoneNumber: updated.phoneNumber as string,
+          firstName: updated.firstName as string,
+          lastName: updated.lastName as string,
+          email: updated.email as string,
+          gender: updated.gender as string,
+          dateOfBirth: updated.dateOfBirth as string,
+          languages: updated.languages as string[],
+          bio: updated.bio as string,
+          educationLevel: updated.educationLevel as string,
+          healthStatus: updated.healthStatus as string,
+          preferredWorkTime: updated.preferredWorkTime as string,
+          topQualities: updated.topQualities as string[],
+          profilePicture: updated.profilePicture as string,
+        }));
+      }
 
+      setSavedForm(form);
       toast.success("Profile updated");
       setActiveSection("overview");
     } catch (error: unknown) {
@@ -476,6 +563,18 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   };
 
   const openSection = (section: EditSection) => {
+    if (
+      section !== activeSection &&
+      activeSection !== "overview" &&
+      activeSection !== "trust" &&
+      hasUnsavedChanges &&
+      !window.confirm("Discard unsaved changes?")
+    ) {
+      return;
+    }
+    if (section !== activeSection && hasUnsavedChanges) {
+      setForm(savedForm);
+    }
     setErrors((prev) => ({ ...prev, form: undefined }));
     setActiveSection(section);
   };
@@ -610,7 +709,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   key: "trust" as EditSection,
                   icon: ShieldCheck,
                   title: "Verification & trust",
-                  subtitle: "Phone, ID, background, insurance",
+                  subtitle: "Phone and ID verification",
                   done: Boolean(form.phoneNumber),
                 },
               ].map((item) => {
@@ -740,15 +839,30 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         ) : null}
 
         {activeSection === "location" ? (
-          <SectionShell icon={MapPin} title="Location" description="Use the general area employers should use for matching.">
+          <SectionShell icon={MapPin} title="Location" description="Choose the area you're usually based in — clients near this area will find you first.">
             <Field label="City" error={errors.city}>
               <Input value={form.city} disabled={!canEdit} onChange={(event) => setField("city", event.target.value)} className={inputClass} placeholder="Kigali" />
             </Field>
-            <Field label="District">
-              <Input value={form.district} disabled={!canEdit} onChange={(event) => setField("district", event.target.value)} className={inputClass} placeholder="Kicukiro" />
-            </Field>
-            <Field label="Sector">
-              <Input value={form.sector} disabled={!canEdit} onChange={(event) => setField("sector", event.target.value)} className={inputClass} placeholder="Gatenga" />
+            <Field label="Base area">
+              <SectorPicker
+                value={
+                  form.sector && form.district
+                    ? ({ province: form.province, district: form.district, sector: form.sector, cell: form.cell || undefined, lat: locationCoords?.lat ?? 0, lng: locationCoords?.lng ?? 0 } satisfies ViewerLocation)
+                    : null
+                }
+                onChange={(loc: ViewerLocation) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    province: loc.province,
+                    district: loc.district,
+                    sector: loc.sector,
+                    cell: loc.cell || "",
+                    city: loc.district,
+                  }));
+                  setLocationCoords({ lat: loc.lat, lng: loc.lng });
+                }}
+                placeholder="Pick your sector"
+              />
             </Field>
           </SectionShell>
         ) : null}
@@ -878,8 +992,6 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     ? undefined
                     : () => setShowIdUpload(true),
               },
-              { icon: ClipboardCheck, label: "Background checked", action: "Verify", done: false },
-              { icon: ShieldCheck, label: "Insurance", action: "Add", done: false },
             ].map((item) => {
               const Icon = item.icon;
               const clickable = "onClick" in item && typeof item.onClick === "function";
@@ -914,7 +1026,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
           onUploaded={() => void refreshIdStatus()}
         />
 
-        {activeSection !== "overview" ? SaveBar : null}
+        {activeSection !== "overview" && activeSection !== "trust" && hasUnsavedChanges ? SaveBar : null}
       </form>
     </div>
   );

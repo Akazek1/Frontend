@@ -1,9 +1,22 @@
 import APP_CONFIG from "@/constant/app.config";
 import { Provider, Service } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { formatAddressLocation } from "@/lib/location-display";
 import { isEmployer } from "./roles";
 
+function formatDistance(km?: number | null): string {
+  if (km == null) return "";
+  if (km < 1) return "< 1 km";
+  if (km < 10) return `~${km.toFixed(1)} km`;
+  return `~${Math.round(km)} km`;
+}
+
 type ServiceProvider = Service["provider"] | undefined;
+
+function formatProviderLocation(provider: ServiceProvider, serviceAreas: string[]): string {
+  const address = provider?.addresses?.find((addr) => addr.isDefault) ?? provider?.addresses?.[0];
+  return formatAddressLocation(address) || serviceAreas[0] || address?.city || "";
+}
 
 export function getProviderName(provider: ServiceProvider) {
   return `${provider?.firstName || "Unknown"} ${provider?.lastName || "Provider"}`.trim();
@@ -78,13 +91,13 @@ export function mapServiceToProviderCard(service: Service): Provider {
       !isCompanyCard && Array.isArray(provider?.languages)
         ? provider!.languages!.join(", ")
         : "",
-    location: areas[0] || "",
+    location: isCompanyCard ? areas[0] || "" : formatProviderLocation(provider, areas),
     price: formatPrice(service.priceMin, service.priceMax, service.priceType),
     rating: service.reviews?.averageRating || 0,
     reviews: service.reviews?.totalReviews || 0,
     jobsCompleted: service.reviews?.jobsCompleted || 0,
     wouldHireAgain: service.reviews?.wouldHireAgain || 0,
-    distance: APP_CONFIG.serviceDetail.fallbackDistance,
+    distance: formatDistance(service.distanceKm),
     // Card shows "Available Today" only when the service is active AND (for
     // individuals) the worker hasn't turned off availability. Company cards are
     // available whenever active.

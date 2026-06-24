@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Upload,
   Pencil,
-  ShieldCheck,
   MapPin,
   MessageSquare,
   Calendar,
@@ -22,8 +21,11 @@ export interface UserProfileHeaderProps {
   isVerified?: boolean;
   governmentIdStatus?: string;
   availableToday?: boolean;
+  location?: string;
   city?: string;
   district?: string;
+  sector?: string;
+  cell?: string;
   country?: string;
   languages?: string[];
   memberSince?: string;
@@ -37,17 +39,17 @@ const formatMonth = (iso?: string) => {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 };
 
-const joinLocation = (city?: string, district?: string, country?: string) =>
-  [district, city, country].filter(Boolean).join(", ");
-
 export function UserProfileHeader({
   name,
   handle,
   profilePicture,
   isVerified,
   availableToday,
+  location: locationProp,
   city,
   district,
+  sector,
+  cell,
   country,
   languages = [],
   memberSince,
@@ -56,7 +58,7 @@ export function UserProfileHeader({
   const router = useRouter();
   // Single source of truth: the admin-approved `isVerified` flag.
   const verified = !!isVerified;
-  const location = joinLocation(city, district, country);
+  const location = locationProp || [district, sector, cell, city, country].filter(Boolean).join(", ");
   const memberSinceLabel = formatMonth(memberSince);
 
   const handleShare = async () => {
@@ -152,16 +154,6 @@ export function UserProfileHeader({
           </div>
         ) : null}
       </div>
-
-      {/* Verification pill — shown only for genuinely verified users */}
-      {verified ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EEF8EA] rounded-full text-xs font-medium text-brand">
-            <ShieldCheck className="w-4 h-4" />
-            Verified
-          </span>
-        </div>
-      ) : null}
     </section>
   );
 }

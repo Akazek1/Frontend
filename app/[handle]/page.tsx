@@ -17,12 +17,14 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { ReviewCard } from "@/components/ReviewCard";
 import type { Review } from "@/hooks/useReviews";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatAddressLocation } from "@/lib/location-display";
 
 type AddressLite = {
   street?: string;
   city?: string;
   district?: string;
   sector?: string;
+  cell?: string;
   country?: string;
 };
 
@@ -65,11 +67,6 @@ type HireItem = {
     title?: string;
     category?: { name?: string };
   };
-};
-
-const formatLocation = (addr?: AddressLite) => {
-  if (!addr) return undefined;
-  return [addr.district || addr.sector, addr.city, addr.country].filter(Boolean).join(", ");
 };
 
 const hireStatusClass = (status: string) => {
@@ -221,7 +218,7 @@ export default function HandleProfilePage() {
 
   const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || "User";
   const addr = profile.addresses?.[0];
-  const homeLocation = formatLocation(addr);
+  const homeLocation = formatAddressLocation(addr, { includeCountry: true });
   const availableToday = (profile.availability?.length || 0) > 0;
 
   const displayName = profile.firstName || name;
@@ -235,8 +232,11 @@ export default function HandleProfilePage() {
         isVerified={profile.isVerified}
         governmentIdStatus={profile.governmentIdStatus}
         availableToday={availableToday}
-        city={addr?.city}
+        location={formatAddressLocation(addr)}
         district={addr?.district || addr?.sector}
+        sector={addr?.sector}
+        cell={addr?.cell}
+        city={addr?.city}
         country={addr?.country}
         languages={profile.languages}
         memberSince={profile.createdAt}
