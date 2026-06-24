@@ -19,11 +19,6 @@ const isAtLeast18 = (dob: string): boolean => {
   const m = today.getMonth() - d.getMonth()
   return age - (m < 0 || (m === 0 && today.getDate() < d.getDate()) ? 1 : 0) >= 18
 }
-// Latest date that is still at least 18 years ago — caps the date picker
-const MAX_DOB = new Date(new Date().setFullYear(new Date().getFullYear() - 18))
-  .toISOString()
-  .split("T")[0]
-
 export function SignupForm() {
   const {
     firstName, handleFirstNameChange,
@@ -45,6 +40,16 @@ export function SignupForm() {
   const [phoneError, setPhoneError] = useState("")
   const [checking, setChecking] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
+  const handleDobChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 8)
+    const formatted = [
+      digits.slice(0, 4),
+      digits.slice(4, 6),
+      digits.slice(6, 8),
+    ].filter(Boolean).join("-")
+    setDateOfBirth(formatted)
+    if (dobError && isAtLeast18(formatted)) setDobError("")
+  }
 
   // complete-profile path: user is already authenticated
   const isCompleteProfile = !!verifiedUser?.id
@@ -123,8 +128,8 @@ export function SignupForm() {
   // ── Complete-profile variant (already authenticated, just needs name/email) ──
   if (isCompleteProfile) {
     return (
-      <div className="w-full h-full overflow-y-auto">
-        <div className="px-4 sm:px-6 pt-10 pb-32 max-w-md mx-auto space-y-4">
+      <div className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-x-none">
+        <div className="mx-auto w-full max-w-md min-w-0 px-4 sm:px-6 pt-6 pb-32 space-y-4">
           <div className="text-center mb-6">
             <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Complete your profile</h2>
             <p className="text-sm text-gray-500">Just your name to finish setting up</p>
@@ -189,8 +194,8 @@ export function SignupForm() {
 
   // ── New-user signup variant ──
   return (
-    <div className="w-full h-full overflow-y-auto">
-      <div className="px-4 sm:px-6 pt-8 pb-32 max-w-md mx-auto space-y-4">
+    <div className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-x-none">
+      <div className="mx-auto w-full max-w-md min-w-0 px-4 sm:px-6 pt-4 pb-32 space-y-4">
         <div className="text-center mb-4">
           <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Create your account</h2>
           <p className="text-sm text-gray-500">Fill in your details to get started</p>
@@ -259,13 +264,13 @@ export function SignupForm() {
             Date of Birth <span className="text-red-500">*</span>
           </label>
           <Input
-            type="date"
+            type="text"
+            inputMode="numeric"
+            autoComplete="bday"
+            placeholder="YYYY-MM-DD"
             value={dateOfBirth}
-            max={MAX_DOB}
-            onChange={(e) => {
-              setDateOfBirth(e.target.value)
-              if (dobError && isAtLeast18(e.target.value)) setDobError("")
-            }}
+            maxLength={10}
+            onChange={(e) => handleDobChange(e.target.value)}
             onBlur={() => {
               if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
                 setDobError("You must be at least 18 years old to register")
@@ -273,7 +278,7 @@ export function SignupForm() {
                 setDobError("")
               }
             }}
-            className={`min-w-0 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
+            className={`block h-14 min-w-0 w-full max-w-full appearance-none rounded-lg border px-4 py-3 text-[16px] leading-none focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
             disabled={otpSent}
           />
           {dobError
