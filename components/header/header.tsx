@@ -12,7 +12,7 @@ import { getProviderHandle } from "@/lib/service-display";
 import { NotificationItem, getNotificationHref, useNotifications } from "@/hooks/useNotifications";
 import { NotificationRow } from "@/components/notifications/notification-row";
 import api from "@/lib/axios";
-import { formatAddressLocation, type AddressDisplay } from "@/lib/location-display";
+import type { AddressDisplay } from "@/lib/location-display";
 import { useEffect, useMemo, useState } from "react";
 
 type HeaderAddress = AddressDisplay & {
@@ -52,7 +52,11 @@ const Header = () => {
 
   const locationLabel = useMemo(() => {
     if (!user) return "Kigali, Rwanda";
-    return formatAddressLocation(address, { includeCountry: true }) || "Set location";
+    const city = address?.city?.trim();
+    if (city) return city;
+    const district = address?.district?.trim();
+    if (district) return district;
+    return "Set location";
   }, [address, user]);
 
   const locationDetail = useMemo(() => {

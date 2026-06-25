@@ -8,6 +8,7 @@ body {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  min-height: 100dvh;
 }
 
 /* HTML: <div class="loader"></div> */

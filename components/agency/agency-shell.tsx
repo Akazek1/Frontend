@@ -9,6 +9,7 @@ import { AgencyNotificationBell } from "@/components/agency/agency-notification-
 import { AGENCY_NAV, type AgencyNavItem } from "@/constant/agency-nav";
 import { useAgency } from "@/context/agency-context";
 import { cn } from "@/lib/utils";
+import { AkazekLogo } from "@/components/brand/akazek-logo";
 
 function badgeCount(item: AgencyNavItem, counts: Record<string, number>): number {
   if (!item.badgeKey) return 0;
@@ -89,7 +90,7 @@ function SidebarContent({
     <div className="flex h-full flex-col bg-gradient-to-b from-[#0E3F0B] to-[#06250B] text-white">
       {/* Brand + org switcher */}
       <div className="px-5 pb-4 pt-6">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
             {org?.logoUrl ? (
               <Image src={org.logoUrl} alt={orgName} width={36} height={36} className="h-9 w-9 rounded-full object-cover" />
@@ -97,7 +98,7 @@ function SidebarContent({
               <span className="text-[15px] font-black">A</span>
             )}
           </div>
-          <span className="text-[20px] font-black tracking-tight">Akazek</span>
+          <AkazekLogo tone="light" markClassName="h-7 w-7" wordClassName="text-[20px]" />
         </div>
         <button className="mt-4 flex w-full items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-left transition-colors hover:bg-white/10">
           <span className="truncate text-[13px] font-semibold text-white/90">{orgName}</span>
@@ -199,7 +200,7 @@ export function AgencyShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="text-[16px] font-black text-brand lg:hidden">Akazek</span>
+          <AkazekLogo markClassName="h-6 w-6" wordClassName="text-[16px]" className="lg:hidden" />
           <div className="hidden lg:block" />
           <div className="flex items-center gap-3">
             <AgencyNotificationBell />

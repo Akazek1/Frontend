@@ -346,9 +346,9 @@ export function SignupForm() {
           </div>
           <span className="text-sm text-gray-500 leading-relaxed">
             I have read and agree to the{" "}
-            <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms of Service</Link>{" "}
+            <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>Terms of Service</Link>{" "}
             and{" "}
-            <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
+            <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>Privacy Policy</Link>
           </span>
         </label>
 

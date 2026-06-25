@@ -143,7 +143,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden">
+    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden pt-[env(safe-area-inset-top)]">
       {/* Main content area with scrolling */}
       <main
         ref={mainRef}
@@ -161,7 +161,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Fixed Navigation */}
       {!shouldHideNavigation && (
         <nav
-          className={`fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-[428px] border-t border-gray-200 bg-white shadow-lg transition-transform duration-300 ease-out ${
+          className={`fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-[428px] border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-lg transition-transform duration-300 ease-out ${
             isNavigationHidden ? "translate-y-full" : "translate-y-0"
           }`}
         >

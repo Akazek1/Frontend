@@ -10,10 +10,11 @@ import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
 import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 import { ProfilePictureStep } from "@/components/onboarding/ProfilePictureStep"
 import { AllSetStep } from "@/components/onboarding/AllSetStep"
+import { LocationStep } from "@/components/onboarding/LocationStep"
 import { useRouter } from "next/navigation"
 
-// Steps 3, 4, 5 and 6 manage their own full-screen layout
-const FULL_SCREEN_STEPS = [3, 4, 5, 6]
+// Steps 3-7 manage their own full-screen layout
+const FULL_SCREEN_STEPS = [3, 4, 5, 6, 7]
 
 function OnboardingContent() {
   const router = useRouter()
@@ -32,19 +33,21 @@ function OnboardingContent() {
       case 1: return <SignupForm />
       case 2: return <LoginForm />
       case 3:
-        // Profile picture comes first; advance to the ID step on continue.
+        // Profile picture comes first; advance to location step on continue.
         return <ProfilePictureStep onContinue={() => setCurrentStep(4)} />
       case 4:
+        // Location picker — optional, can skip.
+        return <LocationStep onContinue={() => setCurrentStep(5)} />
+      case 5:
         return (
           <DocumentUploadStep
             onUploadSuccess={handleDocumentUpload}
             onCancel={handleBack}
             isLoading={isLoading}
-            // Account already exists at this point — no "Back".
             showBack={false}
           />
         )
-      case 5:
+      case 6:
         return (
           <ServiceCategorySelector
             onContinue={handleCategoriesSelected}
@@ -52,7 +55,7 @@ function OnboardingContent() {
             isLoading={isLoading}
           />
         )
-      case 6:
+      case 7:
         return (
           <AllSetStep
             onAddService={() => router.push("/more/services/new")}
@@ -63,7 +66,7 @@ function OnboardingContent() {
     }
   }
 
-  // Steps 4 and 5: full-screen, manage their own layout
+  // Steps 3-7: full-screen, manage their own layout
   if (FULL_SCREEN_STEPS.includes(currentStep)) {
     return (
       <OnboardingLayout>

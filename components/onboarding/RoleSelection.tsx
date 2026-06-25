@@ -4,6 +4,8 @@ import Link from "next/link"
 import { Shield, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useOnboarding } from "@/context/onboarding-context"
+import LanguageSwitcher from "@/components/header/language-switcher"
+import { AkazekLogo } from "@/components/brand/akazek-logo"
 
 type Role = "EMPLOYER" | "WORKER"
 
@@ -24,25 +26,23 @@ export function RoleSelection() {
 
       {/* ── Hero header ── */}
       <div className="relative bg-gradient-to-br from-[#E6F4E0] via-[#EFF8EA] to-[#F7FCF5] overflow-hidden">
-        {/* Language pill */}
-        <div className="absolute top-4 right-4 z-10">
-          <button className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm border border-gray-200">
-            🌐 EN ▾
-          </button>
+        {/* Language picker */}
+        <div className="absolute top-3 right-4 z-10">
+          <LanguageSwitcher />
         </div>
 
         <div className="flex items-end justify-between pt-10 pl-5">
           {/* Title + tagline */}
           <div className="pb-5 pr-2">
             <p className="text-lg font-semibold text-gray-800">Welcome to</p>
-            <p className="text-[32px] font-black text-brand-strong leading-none">Akazek 🌿</p>
+            <AkazekLogo markClassName="h-9 w-9" wordClassName="text-[32px] text-brand-strong" />
             <p className="text-sm text-gray-500 mt-2 max-w-[170px] leading-snug">
               Your trusted connection for home services.
             </p>
           </div>
 
           {/* Hero illustration — swap src for real asset when available */}
-          <div className="w-[185px] h-[160px] shrink-0 relative overflow-hidden">
+          <div className="relative aspect-[185/160] w-[38vw] min-w-[118px] max-w-[185px] shrink-0 overflow-hidden">
             <svg viewBox="0 0 185 160" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
               {/* Window background */}
               <rect x="90" y="10" width="85" height="100" rx="8" fill="#D4EDDA" />

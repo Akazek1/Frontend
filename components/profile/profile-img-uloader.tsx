@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Verified } from "lucide-react";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
@@ -15,7 +16,10 @@ import {
   revokePreviewUrl, 
   validateImageFile 
 } from "@/utils/image-optimizer";
-import ImageCropperModal from "./image-cropper-modal";
+
+const ImageCropperModal = dynamic(() => import("./image-cropper-modal"), {
+  ssr: false,
+});
 
 type ProfileImageUploaderProps = {
     className?: string;

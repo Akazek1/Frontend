@@ -4,6 +4,17 @@ import { formatPrice } from "@/lib/utils";
 import { formatAddressLocation } from "@/lib/location-display";
 import { isEmployer } from "./roles";
 
+export function getOptimizedCloudinaryUrl(src?: string | null, width = 640) {
+  if (!src || !src.includes("res.cloudinary.com") || src.includes("/f_auto,")) {
+    return src || "";
+  }
+
+  return src.replace(
+    "/upload/",
+    `/upload/f_auto,q_auto,w_${width},c_limit/`,
+  );
+}
+
 function formatDistance(km?: number | null): string {
   if (km == null) return "";
   if (km < 1) return "< 1 km";
@@ -28,7 +39,7 @@ export function getServiceImages(service?: Partial<Service> | null) {
     service?.serviceImage,
   ].filter(Boolean) as string[];
 
-  return Array.from(new Set(images));
+  return Array.from(new Set(images)).map((src) => getOptimizedCloudinaryUrl(src));
 }
 
 export function getServiceCardImage(service?: Partial<Service> | null) {
@@ -39,7 +50,7 @@ export function getServiceCardImage(service?: Partial<Service> | null) {
     service?.company?.logoUrl ||
     "";
 
-  return serviceImages[0] || ownerPicture || "";
+  return getOptimizedCloudinaryUrl(serviceImages[0] || ownerPicture || "");
 }
 
 export function getProviderHandle(provider?: Service["provider"] | null) {
@@ -79,7 +90,7 @@ export function mapServiceToProviderCard(service: Service): Provider {
 
   return {
     id: service.id,
-    image: getServiceCardImage(service),
+    image: getOptimizedCloudinaryUrl(getServiceCardImage(service), 640),
     name: isCompanyCard
       ? company?.name || "Company"
       : `${provider?.firstName ?? "Unknown"} ${provider?.lastName ?? "Provider"}`.trim(),
@@ -110,9 +121,12 @@ export function mapServiceToProviderCard(service: Service): Provider {
     type: getBookingType(service),
     providerId: service.providerId ?? undefined,
     username: isCompanyCard ? undefined : provider?.username,
-    profileImage: isCompanyCard
-      ? company?.logoUrl || undefined
-      : provider?.profilePicture || provider?.profileImg,
+    profileImage: getOptimizedCloudinaryUrl(
+      isCompanyCard
+        ? company?.logoUrl || undefined
+        : provider?.profilePicture || provider?.profileImg,
+      320,
+    ),
     agency: !isCompanyCard ? provider?.agency ?? null : null,
   };
 }

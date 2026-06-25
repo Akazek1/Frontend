@@ -18,6 +18,7 @@ import api from "@/lib/axios";
 import { useAuth } from "@/hooks/useAuth";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { colors } from "@/constant/colors";
+import authService from "@/services/auth-service";
 
 type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -177,9 +178,12 @@ export default function CompanyServicesPage() {
     }
   }
 
-  function logout() {
+  async function logout() {
+    await authService.logout();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    document.cookie = "token=; path=/; max-age=0";
+    document.cookie = "profileComplete=; path=/; max-age=0";
     window.location.href = "/business/login";
   }
 

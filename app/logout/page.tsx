@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/store/slices/auth-slice";
 import type { AppDispatch } from "@/store";
 import { persistor } from "@/store";
-import authService from "@/services/auth-service";
 
 export default function LogoutPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -16,7 +15,6 @@ export default function LogoutPage() {
     const signOut = async () => {
       await dispatch(logout());
       await persistor.purge();
-      authService.logout();
       window.dispatchEvent(new StorageEvent("storage", { key: "token", newValue: null }));
       router.replace("/");
     };

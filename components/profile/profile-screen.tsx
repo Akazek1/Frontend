@@ -24,8 +24,8 @@ import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import ProfileImageUploader from "./profile-img-uloader";
 import { persistor } from "@/store";
-import authService from "@/services/auth-service";
 import { colors } from "@/constant/colors";
+import { AkazekLogo } from "@/components/brand/akazek-logo";
 import { useAuth } from "@/hooks/useAuth";
 
 type MenuItem = {
@@ -108,9 +108,8 @@ const ProfileScreen = () => {
   ];
 
   const handleLogout = async () => {
-    dispatch(logout());
+    await dispatch(logout());
     await persistor.purge();
-    authService.logout();
     window.dispatchEvent(new StorageEvent("storage", { key: "token", newValue: null }));
     router.replace("/");
   };
@@ -125,7 +124,7 @@ const ProfileScreen = () => {
       <div className="mb-3 flex items-center justify-between">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%]" style={{ color: colors.text }}>
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">
-            <Image src={"/images/hwa-green-icon.png"} width={18} height={18} alt="Akazek" />
+            <AkazekLogo variant="mark" markClassName="h-5 w-5" />
           </span>
           More
         </h1>
