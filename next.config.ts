@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import withSerwistInit from "@serwist/next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+// Points next-intl at our request config (cookie-based locale, no URL routing).
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -122,4 +126,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(withSerwist(nextConfig));
+export default withBundleAnalyzer(withSerwist(withNextIntl(nextConfig)));

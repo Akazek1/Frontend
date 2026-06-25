@@ -1,0 +1,61 @@
+{
+  "languageSwitcher": {
+    "ariaLabel": "Change language",
+    "title": "Choose language",
+    "subtitle": "Switch the app language. Translations are filled in per language."
+  },
+  "header": {
+    "subtitle": "Find jobs, earn and grow with Akazek.",
+    "profileAlt": "Profile",
+    "greeting": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening",
+      "night": "Good Night"
+    },
+    "location": {
+      "aria": "View or change location",
+      "title": "Your location",
+      "subtitle": "Used to show nearby services and help clients find you.",
+      "empty": "No saved location yet.",
+      "change": "Change location",
+      "set": "Set location",
+      "sector": "Sector",
+      "district": "District",
+      "city": "City",
+      "country": "Country"
+    },
+    "notifications": {
+      "aria": "Open notifications",
+      "title": "Notifications",
+      "newBadge": "{count} new",
+      "empty": "No notifications yet.",
+      "viewAll": "View all notifications"
+    }
+  },
+  "onboarding": {
+    "welcome": "Welcome to",
+    "tagline": "Your trusted connection for home services.",
+    "roleHeading": "What would you like to do today?",
+    "changeLater": "You can always change this later.",
+    "employer": {
+      "title": "Hire trusted workers",
+      "desc": "Find and hire reliable workers for your home and family.",
+      "badge": "Safe • Verified • Reliable"
+    },
+    "worker": {
+      "title": "I want to work",
+      "desc": "Offer your services, find jobs and earn income.",
+      "badge": "More jobs • More income"
+    },
+    "business": {
+      "title": "I represent a business",
+      "desc": "Register your agency or company and connect with more clients.",
+      "cta": "Register now"
+    },
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "secureNote": "Your information is secure and private",
+    "phoneNote": "Phone number verification required"
+  }
+}

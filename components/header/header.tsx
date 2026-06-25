@@ -4,6 +4,7 @@ import { Bell, MapPin, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import LanguageSwitcher from "@/components/header/language-switcher";
@@ -20,6 +21,7 @@ type HeaderAddress = AddressDisplay & {
 };
 
 const Header = () => {
+  const t = useTranslations("header");
   const { user } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
   const { items, unreadCount, refetch, markRead } = useNotifications({ limit: 5 });
@@ -56,18 +58,18 @@ const Header = () => {
     if (city) return city;
     const district = address?.district?.trim();
     if (district) return district;
-    return "Set location";
-  }, [address, user]);
+    return t("location.set");
+  }, [address, user, t]);
 
   const locationDetail = useMemo(() => {
     if (!address) return null;
     return [
-      address.sector ? { label: "Sector", value: address.sector } : null,
-      address.district ? { label: "District", value: address.district } : null,
-      address.city ? { label: "City", value: address.city } : null,
-      address.country ? { label: "Country", value: address.country } : null,
+      address.sector ? { label: t("location.sector"), value: address.sector } : null,
+      address.district ? { label: t("location.district"), value: address.district } : null,
+      address.city ? { label: t("location.city"), value: address.city } : null,
+      address.country ? { label: t("location.country"), value: address.country } : null,
     ].filter(Boolean) as Array<{ label: string; value: string }>;
-  }, [address]);
+  }, [address, t]);
 
   const handleNotificationClick = async (n: NotificationItem) => {
     if (!n.readAt) await markRead(n.id);
@@ -77,10 +79,10 @@ const Header = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    if (hour < 21) return "Good Evening";
-    return "Good Night";
+    if (hour < 12) return t("greeting.morning");
+    if (hour < 17) return t("greeting.afternoon");
+    if (hour < 21) return t("greeting.evening");
+    return t("greeting.night");
   };
 
   return (
@@ -93,7 +95,7 @@ const Header = () => {
             <button
               type="button"
               className="flex max-w-[190px] items-center gap-1.5 rounded-full border border-gray-200 bg-white/70 px-3 py-1.5 text-left shadow-sm transition hover:border-brand/40 hover:bg-white"
-              aria-label="View or change location"
+              aria-label={t("location.aria")}
             >
               <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
               <span className="truncate text-[13px] font-semibold text-ink">{locationLabel}</span>
@@ -101,9 +103,9 @@ const Header = () => {
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">
             <div className="border-b border-gray-100 px-4 py-3">
-              <p className="text-[14px] font-bold text-ink">Your location</p>
+              <p className="text-[14px] font-bold text-ink">{t("location.title")}</p>
               <p className="mt-0.5 text-[12px] leading-5 text-ink-subtle">
-                Used to show nearby services and help clients find you.
+                {t("location.subtitle")}
               </p>
             </div>
             <div className="space-y-2 px-4 py-3">
@@ -115,14 +117,14 @@ const Header = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-[12px] text-ink-subtle">No saved location yet.</p>
+                <p className="text-[12px] text-ink-subtle">{t("location.empty")}</p>
               )}
             </div>
             <Link
               href="/profile?section=location"
               className="block border-t border-gray-100 px-4 py-3 text-center text-[12px] font-bold text-brand hover:bg-surface"
             >
-              Change location
+              {t("location.change")}
             </Link>
           </PopoverContent>
         </Popover>
@@ -138,7 +140,7 @@ const Header = () => {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                aria-label="Open notifications"
+                aria-label={t("notifications.aria")}
                 className="relative bg-white/70 border border-gray-200 rounded-full p-2 shadow-sm"
               >
                 <Bell className="w-4 h-4 text-ink" />
@@ -152,15 +154,15 @@ const Header = () => {
             <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[320px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">
               <div className="border-b border-gray-100 px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[14px] font-bold text-ink">Notifications</p>
+                  <p className="text-[14px] font-bold text-ink">{t("notifications.title")}</p>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">{unreadCount} new</span>
+                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">{t("notifications.newBadge", { count: unreadCount })}</span>
                   )}
                 </div>
               </div>
               <div className="max-h-[320px] overflow-y-auto p-2">
                 {items.length === 0 ? (
-                  <p className="px-3 py-6 text-center text-[12px] text-ink-subtle">No notifications yet.</p>
+                  <p className="px-3 py-6 text-center text-[12px] text-ink-subtle">{t("notifications.empty")}</p>
                 ) : (
                   items.map((notification) => (
                     <NotificationRow
@@ -176,7 +178,7 @@ const Header = () => {
                 href="/more/notifications/history"
                 className="block w-full border-t border-gray-100 py-3 text-center text-[12px] font-bold text-brand hover:bg-surface"
               >
-                View all notifications
+                {t("notifications.viewAll")}
               </Link>
             </PopoverContent>
           </Popover>
@@ -186,7 +188,7 @@ const Header = () => {
             {user?.profilePicture ? (
               <Image
                 src={user.profilePicture}
-                alt="Profile"
+                alt={t("profileAlt")}
                 width={36}
                 height={36}
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-brand/30"
@@ -205,7 +207,7 @@ const Header = () => {
         <h1 className="text-[20px] font-bold text-ink leading-tight">
           {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
         </h1>
-        <p className="text-[13px] text-ink-subtle mt-0.5">Find jobs, earn and grow with Akazek.</p>
+        <p className="text-[13px] text-ink-subtle mt-0.5">{t("subtitle")}</p>
       </div>
     </div>
   );
