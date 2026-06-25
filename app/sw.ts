@@ -73,16 +73,10 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   precacheOptions: {
     cleanupOutdatedCaches: true,
-    navigateFallback: "/offline.html",
-    navigateFallbackDenylist: [
-      /^\/api\//,
-      /^\/_next\/image/,
-      /^\/admin/,
-    ],
   },
   disableDevLogs: true,
-  skipWaiting: false,
-  clientsClaim: false,
+  skipWaiting: true,
+  clientsClaim: true,
   runtimeCaching: [
     {
       // The Rwanda village dataset (~2.5 MB / ~270 KB gzip) is fetched on demand
