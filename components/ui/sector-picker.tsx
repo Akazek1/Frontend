@@ -11,7 +11,11 @@ import {
   districtsByProvince,
   sectorsByDistrict,
 } from "@/constants/rwanda-sectors";
-import type { RwandaVillage } from "@/constants/rwanda-villages";
+import {
+  reverseGeocode,
+  villagesByCellPcode,
+  type RwandaVillage,
+} from "@/constants/rwanda-villages";
 
 interface Props {
   value: ViewerLocation | null;
@@ -78,8 +82,8 @@ export function SectorPicker({
   useEffect(() => {
     if (step === "cell" && villagesMap === null && !loadingVillages) {
       setLoadingVillages(true);
-      import("@/constants/rwanda-villages").then((mod) => {
-        setVillagesMap(mod.villagesByCellPcode());
+      villagesByCellPcode().then((m) => {
+        setVillagesMap(m);
         setLoadingVillages(false);
       });
     }
@@ -92,8 +96,7 @@ export function SectorPicker({
   const ensureVillages = async () => {
     if (villagesMap) return villagesMap;
     setLoadingVillages(true);
-    const mod = await import("@/constants/rwanda-villages");
-    const m = mod.villagesByCellPcode();
+    const m = await villagesByCellPcode();
     setVillagesMap(m);
     setLoadingVillages(false);
     return m;
@@ -117,8 +120,7 @@ export function SectorPicker({
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        const mod = await import("@/constants/rwanda-villages");
-        const nearest = mod.reverseGeocode(latitude, longitude);
+        const nearest = await reverseGeocode(latitude, longitude);
         if (nearest) {
           commit(villageToLoc(nearest));
         } else {
@@ -153,8 +155,7 @@ export function SectorPicker({
       return;
     }
     setCoordStatus("loading");
-    const mod = await import("@/constants/rwanda-villages");
-    const nearest = mod.reverseGeocode(lat, lng);
+    const nearest = await reverseGeocode(lat, lng);
     if (nearest) {
       setCoordPreview(villageToLoc(nearest));
       setCoordStatus("found");
@@ -186,8 +187,7 @@ export function SectorPicker({
     } else {
       if (villagesMap === null) {
         setLoadingVillages(true);
-        import("@/constants/rwanda-villages").then((mod) => {
-          const m = mod.villagesByCellPcode();
+        villagesByCellPcode().then((m) => {
           setVillagesMap(m);
           setLoadingVillages(false);
           if ((m.get(c.pcode) ?? []).length > 0) setStep("village");

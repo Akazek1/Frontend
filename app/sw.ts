@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { Serwist } from "serwist";
+import { Serwist, CacheFirst, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
 import { firebaseConfig } from "@/lib/firebase-config";
 import { buildNotificationTargetUrl } from "@/lib/notification-routing";
@@ -83,6 +83,24 @@ const serwist = new Serwist({
   disableDevLogs: true,
   skipWaiting: false,
   clientsClaim: false,
+  runtimeCaching: [
+    {
+      // The Rwanda village dataset (~2.5 MB / ~270 KB gzip) is fetched on demand
+      // by the SectorPicker. Cache it across sessions so low-bandwidth users
+      // download it at most once. It's immutable, so cache-first is safe.
+      matcher: ({ url }: { url: URL }) => url.pathname === "/rwanda-villages.json",
+      handler: new CacheFirst({
+        cacheName: "rwanda-villages",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 1,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+  ],
 });
 
 serwist.addEventListeners();
