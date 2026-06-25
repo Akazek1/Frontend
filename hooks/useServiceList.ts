@@ -4,6 +4,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import servicesService, {
   type BrowseServicesParams,
 } from "@/services/services-service";
+import { queryPersistenceMaxAge } from "@/lib/query-persistence";
 
 /**
  * Cached marketplace browse list. Backed by React Query, so:
@@ -19,6 +20,7 @@ export function useServiceList(params: BrowseServicesParams = {}) {
   return useQuery({
     queryKey: ["services", "browse", params],
     queryFn: () => servicesService.browse(params),
+    gcTime: queryPersistenceMaxAge,
     placeholderData: keepPreviousData,
   });
 }

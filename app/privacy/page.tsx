@@ -1,5 +1,14 @@
 import LegalView from "@/components/legal/legal-view";
 import { PrivacyPolicyData } from "@/constant";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy - Akazek",
+  description: "Read how Akazek collects, uses, and protects personal information.",
+  alternates: {
+    canonical: "/privacy",
+  },
+};
 
 const PRIVACY_INTRO =
   "This Privacy Policy explains how Akazek collects, uses, and protects your personal information when you use our platform.";

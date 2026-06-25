@@ -563,9 +563,11 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
             className="font-semibold text-brand hover:underline underline-offset-2"
           >
             {viewerLoc
-              ? viewerLoc.cell
-                ? `${viewerLoc.cell}, ${viewerLoc.sector}`
-                : `${viewerLoc.sector}, ${viewerLoc.district}`
+              ? viewerLoc.village
+                ? `${viewerLoc.village}, ${viewerLoc.cell}`
+                : viewerLoc.cell
+                  ? `${viewerLoc.cell}, ${viewerLoc.sector}`
+                  : `${viewerLoc.sector}, ${viewerLoc.district}`
               : "Set your location"}
           </button>
           {viewerLoc && (

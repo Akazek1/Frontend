@@ -503,7 +503,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleDocumentUpload = useCallback((document: DocumentData) => {
     setUploadedDocument(document)
-    setCurrentStep(5) // categories step
+    setCurrentStep(6) // categories step (location is now step 4)
   }, [])
 
   const handleCategoriesSelected = useCallback(async (categories: string[]) => {
@@ -514,8 +514,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       toast.success("Welcome! You're all set.")
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
       localStorage.setItem("hasSeenTutorial", "true")
-      // Final step: offer to add their first service instead of bouncing home.
-      setCurrentStep(6)
+      setCurrentStep(7) // AllSet step (location is now step 4)
     } catch {
       toast.error("Failed to complete setup. Please try again.")
     }

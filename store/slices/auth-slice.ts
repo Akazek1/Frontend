@@ -231,13 +231,23 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      // Logout case
-      .addCase(logout.fulfilled, (state) => {
+      // Logout: clear local state immediately on dispatch so the UI responds
+      // right away; the fulfilled case just shows the toast after server cleanup.
+      .addCase(logout.pending, (state) => {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
         state.otpSent = false;
         state.phoneNumber = null;
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("signupToken");
+          localStorage.removeItem("user");
+          document.cookie = "token=; path=/; max-age=0";
+          document.cookie = "profileComplete=; path=/; max-age=0";
+        }
+      })
+      .addCase(logout.fulfilled, (_state) => {
         toast.success("Logged out successfully");
       })
 

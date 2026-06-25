@@ -317,7 +317,7 @@ Copy from `.env.example`. Here is what each variable does:
 | `CLOUDINARY_API_SECRET` | ✅ | Cloudinary API secret |
 | `INTOUCH_SMS_USERNAME` | ✅ | IntouchSMS account username (for OTP delivery in Rwanda) |
 | `INTOUCH_SMS_PASSWORD` | ✅ | IntouchSMS account password |
-| `INTOUCH_SMS_SENDER` | ✅ | Sender name shown on SMS (e.g. `HWA`) |
+| `INTOUCH_SMS_SENDER` | ✅ | Sender name shown on SMS (e.g. `AKAZEK`) |
 | `MAIL_FROM_NAME` | optional | Display name for emails |
 | `MAIL_FROM_ADDRESS` | optional | From email address |
 | `FRONTEND_URL` | optional | Used in email links. Set to `http://localhost:3000` in dev |

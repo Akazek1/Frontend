@@ -1,5 +1,5 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Urbanist } from "next/font/google";
 import "./globals.css";
 import Layout from "@/components/layout/pwa-layout";
@@ -11,6 +11,7 @@ import { ViewModeProvider } from "@/context/view-mode-context";
 import { AuthGateProvider } from "@/context/auth-gate-context";
 import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
 import { APP_CONFIG } from "@/constant/app.config";
+import { PwaLifecycle } from "@/components/pwa/pwa-lifecycle";
 
 // Load Geist fonts
 const geistSans = Geist({
@@ -31,8 +32,56 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_CONFIG.contact.website),
   title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
   description: APP_CONFIG.description,
+  manifest: "/manifest.webmanifest",
+  applicationName: APP_CONFIG.name,
+  openGraph: {
+    type: "website",
+    siteName: APP_CONFIG.name,
+    title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+    description: APP_CONFIG.description,
+    url: APP_CONFIG.contact.website,
+    images: [
+      {
+        url: "/icons/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: APP_CONFIG.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+    description: APP_CONFIG.description,
+    images: ["/icons/icon-512.png"],
+  },
+  appleWebApp: {
+    capable: true,
+    title: APP_CONFIG.name,
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: APP_CONFIG.brand.primaryColor,
 };
 
 export default function RootLayout({
@@ -51,6 +100,7 @@ export default function RootLayout({
                 <AuthGateProvider>
                   <Layout>
                     <Toaster position="top-center" />
+                    <PwaLifecycle />
                     {children}
                   </Layout>
                   <AuthGateSheet />

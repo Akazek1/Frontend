@@ -1,5 +1,8 @@
 import api from "@/lib/axios";
 import { getAuthToken } from "@/lib/auth-utils";
+import { unregisterFcmToken } from "@/services/fcm-token-service";
+import { clearPersistedQueryCache } from "@/lib/query-persistence";
+import { clearAppQueryClient } from "@/lib/query-client";
 
 // Define types for auth requests and responses
 export interface SendOtpRequest {
@@ -81,11 +84,26 @@ const authService = {
 
   // Logout user
   logout: async (): Promise<void> => {
+    try {
+      await unregisterFcmToken();
+    } catch {
+      // ignore — proceed to clear the session regardless
+    }
+
+    try {
+      // Purge persisted (on-disk) cache AND the in-memory query client, so a
+      // shared device doesn't leak the previous user's cached data after logout.
+      await clearPersistedQueryCache();
+      clearAppQueryClient();
+    } catch {
+      // ignore — proceed to clear the session regardless
+    }
+
     // Revoke the refresh token server-side first — it lives in an HttpOnly
     // cookie the browser can't clear, so without this the 90-day session would
     // survive "logout". Best-effort: still clear local state if the call fails.
     try {
-      await api.post("/auth/logout");
+      await api.post("/auth/logout", {}, { skipAuthRedirect: true });
     } catch {
       // ignore — proceed to clear local state regardless
     }

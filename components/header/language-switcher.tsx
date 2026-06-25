@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { queryPersistenceMaxAge } from "@/lib/query-persistence";
 
 interface ApiLanguage {
   code: string;
@@ -48,6 +49,7 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
     queryKey: ["active-languages"],
     queryFn: fetchActiveLanguages,
     staleTime: 5 * 60 * 1000,
+    gcTime: queryPersistenceMaxAge,
     placeholderData: FALLBACK,
   });
 

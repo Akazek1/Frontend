@@ -17,8 +17,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/hwa-green-icon.png",
-    badge: "/hwa-green-icon.png",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
     data: payload.data,
   };
 
