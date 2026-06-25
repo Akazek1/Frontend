@@ -1,6 +1,8 @@
 import type React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Urbanist } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 import Layout from "@/components/layout/pwa-layout";
 import { Toaster } from "react-hot-toast";
@@ -84,15 +86,18 @@ export const viewport: Viewport = {
   themeColor: APP_CONFIG.brand.primaryColor,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Locale comes from the cookie via i18n/request.ts (no URL routing).
+  const locale = await getLocale();
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
+    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className="antialiased">
+        <NextIntlClientProvider>
         <Providers>
           <QueryProvider>
             <ViewModeProvider>
@@ -109,6 +114,7 @@ export default function RootLayout({
             </ViewModeProvider>
           </QueryProvider>
         </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

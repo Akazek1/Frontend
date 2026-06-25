@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Shield, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
 import LanguageSwitcher from "@/components/header/language-switcher"
 import { AkazekLogo } from "@/components/brand/akazek-logo"
@@ -10,6 +11,7 @@ import { AkazekLogo } from "@/components/brand/akazek-logo"
 type Role = "EMPLOYER" | "WORKER"
 
 export function RoleSelection() {
+  const t = useTranslations("onboarding")
   const { selectedRoles, setSelectedRoles, setCurrentStep } = useOnboarding()
   const router = useRouter()
 
@@ -34,10 +36,10 @@ export function RoleSelection() {
         <div className="flex items-end justify-between pt-10 pl-5">
           {/* Title + tagline */}
           <div className="pb-5 pr-2">
-            <p className="text-lg font-semibold text-gray-800">Welcome to</p>
+            <p className="text-lg font-semibold text-gray-800">{t("welcome")}</p>
             <AkazekLogo markClassName="h-9 w-9" wordClassName="text-[32px] text-brand-strong" />
             <p className="text-sm text-gray-500 mt-2 max-w-[170px] leading-snug">
-              Your trusted connection for home services.
+              {t("tagline")}
             </p>
           </div>
 
@@ -86,10 +88,10 @@ export function RoleSelection() {
 
         {/* Section heading */}
         <div className="text-center py-2">
-          <h2 className="text-base font-bold text-gray-900">What would you like to do today?</h2>
+          <h2 className="text-base font-bold text-gray-900">{t("roleHeading")}</h2>
           <div className="flex items-center justify-center gap-2 mt-0.5">
             <span className="text-[10px] text-[#4CAF50]">🌿</span>
-            <p className="text-xs text-gray-400">You can always change this later.</p>
+            <p className="text-xs text-gray-400">{t("changeLater")}</p>
             <span className="text-[10px] text-[#4CAF50]">🌿</span>
           </div>
         </div>
@@ -112,7 +114,7 @@ export function RoleSelection() {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
-                <h3 className="font-bold text-gray-900 text-[15px]">Hire trusted workers</h3>
+                <h3 className="font-bold text-gray-900 text-[15px]">{t("employer.title")}</h3>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                   isEmployer ? "bg-[#2E7D32]" : "bg-[#E8F5E3]"
                 }`}>
@@ -121,13 +123,13 @@ export function RoleSelection() {
               </div>
 
               <p className="text-xs text-gray-500 leading-snug mb-2">
-                Find and hire reliable workers for your home and family.
+                {t("employer.desc")}
               </p>
 
               {/* Trust badge */}
               <div className="flex items-center gap-1">
                 <Shield className="w-3 h-3 text-[#2E7D32]" />
-                <span className="text-[10px] text-[#2E7D32] font-semibold">Safe • Verified • Reliable</span>
+                <span className="text-[10px] text-[#2E7D32] font-semibold">{t("employer.badge")}</span>
               </div>
             </div>
           </div>
@@ -151,7 +153,7 @@ export function RoleSelection() {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
-                <h3 className="font-bold text-gray-900 text-[15px]">I want to work</h3>
+                <h3 className="font-bold text-gray-900 text-[15px]">{t("worker.title")}</h3>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                   isWorker ? "bg-[#F59E0B]" : "bg-[#FEF3C7]"
                 }`}>
@@ -160,13 +162,13 @@ export function RoleSelection() {
               </div>
 
               <p className="text-xs text-gray-500 leading-snug mb-2">
-                Offer your services, find jobs and earn income.
+                {t("worker.desc")}
               </p>
 
               {/* Value prop */}
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-3 h-3 text-[#D97706]" />
-                <span className="text-[10px] text-[#D97706] font-semibold">More jobs • More income</span>
+                <span className="text-[10px] text-[#D97706] font-semibold">{t("worker.badge")}</span>
               </div>
             </div>
           </div>
@@ -182,28 +184,28 @@ export function RoleSelection() {
             <Building2 className="w-5 h-5 text-gray-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-800">I represent a business</p>
-            <p className="text-xs text-gray-500 leading-snug">Register your agency or company and connect with more clients.</p>
+            <p className="text-sm font-bold text-gray-800">{t("business.title")}</p>
+            <p className="text-xs text-gray-500 leading-snug">{t("business.desc")}</p>
           </div>
           <span className="text-xs font-bold text-[#2E7D32] shrink-0 whitespace-nowrap">
-            Register now ›
+            {t("business.cta")} ›
           </span>
         </button>
 
         {/* ── Login link ── */}
         <p className="text-center text-sm text-gray-500 pt-1">
-          Already have an account?{" "}
+          {t("haveAccount")}{" "}
           <Link href="/onboarding?step=login" className="text-brand-strong font-bold underline underline-offset-2">
-            Log in
+            {t("logIn")}
           </Link>
         </p>
 
         {/* ── Security note ── */}
         <div className="text-center space-y-0.5">
           <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
-            <Lock className="w-3 h-3" /> Your information is secure and private
+            <Lock className="w-3 h-3" /> {t("secureNote")}
           </p>
-          <p className="text-xs text-gray-400">Phone number verification required</p>
+          <p className="text-xs text-gray-400">{t("phoneNote")}</p>
         </div>
       </div>
 
