@@ -20,7 +20,9 @@ const withSerwist = withSerwistInit({
   cacheOnNavigation: false,
   disable: process.env.NODE_ENV === "development",
   globPublicPatterns: [
-    "brand/*.png",
+    // Only the offline page's icon — NOT all of brand/*.png, which would
+    // precache ~7 MB of logos onto every device on first load.
+    "brand/akazek-mark-dark-tight.png",
     "icons/*.png",
     "offline.html",
   ],
