@@ -85,6 +85,9 @@ interface ExistingBookingSummary {
     // Reviews authored by the current employer for this booking (backend filters
     // to the caller) — empty means the completed job is still unreviewed.
     reviews?: { id: string }[];
+    // Backend's authoritative flag (replaced the `reviews` array): true when the
+    // booking is completed and still needs a comment-bearing review.
+    reviewPending?: boolean;
 }
 
 function ServiceDetailPage() {
@@ -168,12 +171,19 @@ function ServiceDetailPage() {
                 // yet → lead with the review prompt (review-first re-hire).
                 const unreviewed = hasActive
                     ? undefined
-                    : mine.find(
-                          (booking) =>
+                    : mine.find((booking) => {
+                          // Prefer the backend's reviewPending flag (it replaced
+                          // `reviews`); fall back to the empty-reviews check.
+                          const reviewPending =
+                              typeof booking.reviewPending === "boolean"
+                                  ? booking.reviewPending
+                                  : (booking.reviews?.length ?? 0) === 0;
+                          return (
                               String(booking.status).toUpperCase() === "COMPLETED" &&
-                              (booking.reviews?.length ?? 0) === 0 &&
-                              booking.id,
-                      );
+                              reviewPending &&
+                              booking.id
+                          );
+                      });
                 setReviewBookingId(unreviewed?.id ?? null);
             } catch {
                 // silent

@@ -16,7 +16,19 @@ export interface VerifyOtpRequest {
   otp: string;
 }
 
-export type UserRole = "WORKER" | "EMPLOYER" | "ADMIN" | "SUB_ADMIN";
+// All account roles, matching the backend `UserRole` enum.
+// (WORKER is shown as "provider" in the UI — see ViewMode, a separate concept.)
+export type UserRole =
+  | "WORKER"
+  | "EMPLOYER"
+  | "COMPANY"
+  | "STAFFING_AGENCY"
+  | "ADMIN"
+  | "SUB_ADMIN";
+
+// The two roles a person can self-select during consumer onboarding.
+// Distinct from ViewMode ("provider" | "employer"), which is a UI lens, not an account role.
+export type OnboardingRole = Extract<UserRole, "WORKER" | "EMPLOYER">;
 
 export interface AuthResponse {
   data: {

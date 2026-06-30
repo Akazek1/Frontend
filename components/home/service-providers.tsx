@@ -48,6 +48,11 @@ interface BookingSummary {
   // to the caller). A review with no comment is "incomplete" — the rehire choice
   // was saved but the comment skipped, so it can still be finished.
   reviews?: { id: string; comment?: string | null; wouldRehire?: "YES" | "MAYBE" | "NO" | null }[];
+  // Backend's authoritative flag: true when the booking is completed and still
+  // has no comment-bearing review. It replaced the `reviews` array in the
+  // /bookings response, so relying on `reviews` alone made every completed
+  // booking show "Leave a review" forever.
+  reviewPending?: boolean;
 }
 
 type ReviewableEntry = {
@@ -115,8 +120,13 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
           if (!sid || !b.id || activeIds.has(sid) || reviewable.has(sid)) continue;
           if (String(b.status).toUpperCase() !== "COMPLETED") continue;
           const myReview = b.reviews?.[0];
-          const isComplete = Boolean(myReview?.comment && myReview.comment.trim());
-          if (isComplete) continue; // already fully reviewed
+          // Prefer the backend's reviewPending flag (it replaced `reviews`);
+          // fall back to the comment check for older API responses.
+          const reviewPending =
+            typeof b.reviewPending === "boolean"
+              ? b.reviewPending
+              : !(myReview?.comment && myReview.comment.trim());
+          if (!reviewPending) continue; // already reviewed (with a comment)
           reviewable.set(sid, {
             bookingId: b.id,
             wouldRehire: myReview?.wouldRehire ?? null,
