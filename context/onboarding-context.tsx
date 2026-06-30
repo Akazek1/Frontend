@@ -9,7 +9,7 @@ import { updateUser, setSession } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
 import { getSignupToken } from "@/lib/auth-utils"
 import { toast } from "react-hot-toast"
-import type { AuthResponse, UserRole } from "@/services/auth-service"
+import type { AuthResponse, UserRole, OnboardingRole } from "@/services/auth-service"
 
 const OTP_LENGTH = 6
 
@@ -25,7 +25,7 @@ interface SignupProgress {
   dateOfBirth: string
   phoneNumber: string
   termsAccepted: boolean
-  selectedRoles: ("EMPLOYER" | "WORKER")[]
+  selectedRoles: OnboardingRole[]
 }
 
 export function loadSignupProgress(): SignupProgress | null {
@@ -81,8 +81,8 @@ interface OnboardingContextType {
   setEmail: (email: string) => void
   dateOfBirth: string
   setDateOfBirth: (dob: string) => void
-  selectedRoles: ("EMPLOYER" | "WORKER")[]
-  setSelectedRoles: (roles: ("EMPLOYER" | "WORKER")[]) => void
+  selectedRoles: OnboardingRole[]
+  setSelectedRoles: (roles: OnboardingRole[]) => void
   selectedCategories: string[]
   setSelectedCategories: (categories: string[]) => void
 
@@ -132,7 +132,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState(-1)
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [selectedRoles, setSelectedRoles] = useState<("EMPLOYER" | "WORKER")[]>([])
+  const [selectedRoles, setSelectedRoles] = useState<OnboardingRole[]>([])
   const [isReturningUser, setIsReturningUser] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -326,7 +326,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [redirectUrl])
 
-  const completeRoleOnboarding = useCallback(async (roles: ("EMPLOYER" | "WORKER")[]) => {
+  const completeRoleOnboarding = useCallback(async (roles: OnboardingRole[]) => {
     await Promise.all(
       roles.map((role) =>
         api.patch("/users/complete-onboarding", { role }, { withCredentials: true })
@@ -394,7 +394,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       if (user.firstName && user.firstName.trim() !== "") {
-        const roles = ((user.roles || []) as ("EMPLOYER" | "WORKER")[])
+        const roles = ((user.roles || []) as OnboardingRole[])
         if (roles.includes("WORKER") && !user.workerOnboardingComplete) {
           setCurrentStep(3) // profile picture first
           return
