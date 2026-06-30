@@ -20,6 +20,12 @@ export const queryPersister: Persister = {
 };
 
 export function shouldPersistQuery(query: Query) {
+  // Only persist queries that have actually resolved. A pending query's
+  // dehydrated state can carry an in-flight Promise (React Query v5 streaming),
+  // which IndexedDB cannot structured-clone — that throws
+  // "#<Promise> could not be cloned" on persist.
+  if (query.state.status !== "success") return false;
+
   const [scope, area] = query.queryKey;
 
   return (
