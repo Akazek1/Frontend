@@ -82,6 +82,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Pin the scale so iOS Safari doesn't auto-zoom when an input is focused
+  // (e.g. the search box) and then stay zoomed-in on the rest of the app.
+  maximumScale: 1,
   viewportFit: "cover",
   themeColor: APP_CONFIG.brand.primaryColor,
 };
@@ -93,9 +96,6 @@ export default async function RootLayout({
   const locale = await getLocale();
   return (
     <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </head>
       <body className="antialiased">
         <NextIntlClientProvider>
         <Providers>
