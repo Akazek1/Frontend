@@ -73,14 +73,17 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   precacheOptions: {
     cleanupOutdatedCaches: true,
+    // Offline fallback for cold navigations with no network. Served from a
+    // real static file (public/offline.html) so it resolves on every host,
+    // including Vercel — an App Router route is NOT reliably servable at the
+    // precached "/offline.html" path.
     navigateFallback: "/offline.html",
-    navigateFallbackDenylist: [
-      /^\/api\//,
-      /^\/_next\/image/,
-      /^\/admin/,
-    ],
+    navigateFallbackDenylist: [/^\/api\//, /^\/_next\/image/],
   },
   disableDevLogs: true,
+  // Prompted update (not silent): the new SW waits until the user taps
+  // "Reload" in the PwaLifecycle toast, so active chat/booking/draft flows
+  // aren't reloaded out from under the user.
   skipWaiting: false,
   clientsClaim: false,
   runtimeCaching: [

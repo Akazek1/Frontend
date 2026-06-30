@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Check, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { queryPersistenceMaxAge } from "@/lib/query-persistence";
+import { LOCALE_COOKIE } from "@/i18n/config";
 
 interface ApiLanguage {
   code: string;
@@ -14,8 +17,6 @@ interface ApiLanguage {
   isDefault: boolean;
   sortOrder: number;
 }
-
-const STORAGE_KEY = "appLanguage";
 
 // Shown until the admin-managed list loads (and as a fallback if the request
 // fails). English is the built-in default language.
@@ -45,6 +46,13 @@ interface LanguageSwitcherProps {
  * one. Selection is remembered in localStorage.
  */
 export default function LanguageSwitcher({ className = "" }: LanguageSwitcherProps) {
+  const t = useTranslations("languageSwitcher");
+  const router = useRouter();
+  // Active locale resolved by next-intl from the cookie (lowercase, e.g. "rw").
+  // The admin list uses uppercase codes, so compare case-insensitively.
+  const locale = useLocale();
+  const [pending, setPending] = useState(false);
+
   const { data } = useQuery({
     queryKey: ["active-languages"],
     queryFn: fetchActiveLanguages,
@@ -54,25 +62,16 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
   });
 
   const languages = data && data.length ? data : FALLBACK;
-  const [selected, setSelected] = useState<string>("EN");
-
-  // Restore the saved choice once on mount.
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (saved) setSelected(saved);
-  }, []);
-
-  // If the saved/selected language is no longer active, fall back to the default.
-  useEffect(() => {
-    if (!languages.some((l) => l.code === selected)) {
-      const fallback = languages.find((l) => l.isDefault)?.code ?? languages[0]?.code ?? "EN";
-      setSelected(fallback);
-    }
-  }, [languages, selected]);
+  const selected = locale.toUpperCase();
 
   const choose = (code: string) => {
-    setSelected(code);
-    try { localStorage.setItem(STORAGE_KEY, code); } catch { /* ignore */ }
+    const next = code.toLowerCase();
+    if (next === locale) return;
+    // 1-year cookie; i18n/request.ts reads it to pick messages on the server.
+    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+    setPending(true);
+    // Re-render server components with the new locale, then refetch RSC payload.
+    router.refresh();
   };
 
   return (
@@ -80,7 +79,7 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="Change language"
+          aria-label={t("ariaLabel")}
           className={`flex items-center gap-1 bg-white/70 border border-gray-200 rounded-full px-2.5 py-1.5 shadow-sm ${className}`}
         >
           <Globe className="w-3.5 h-3.5 text-brand" />
@@ -90,8 +89,8 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
       <PopoverContent align="end" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-3 shadow-xl">
         <div className="space-y-3">
           <div>
-            <p className="text-[14px] font-bold text-ink">Choose language</p>
-            <p className="text-[11px] text-ink-subtle">Preview only. Translation is not connected yet.</p>
+            <p className="text-[14px] font-bold text-ink">{t("title")}</p>
+            <p className="text-[11px] text-ink-subtle">{t("subtitle")}</p>
           </div>
           <div className="space-y-1">
             {languages.map((language) => {
@@ -100,6 +99,7 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
                 <button
                   key={language.code}
                   type="button"
+                  disabled={pending}
                   onClick={() => choose(language.code)}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
                     active ? "bg-surface ring-1 ring-brand/20" : "hover:bg-gray-50"

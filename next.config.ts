@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import withSerwistInit from "@serwist/next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+// Points next-intl at our request config (cookie-based locale, no URL routing).
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -16,7 +20,9 @@ const withSerwist = withSerwistInit({
   cacheOnNavigation: false,
   disable: process.env.NODE_ENV === "development",
   globPublicPatterns: [
-    "brand/*.png",
+    // Only the offline page's icon — NOT all of brand/*.png, which would
+    // precache ~7 MB of logos onto every device on first load.
+    "brand/akazek-mark-dark-tight.png",
     "icons/*.png",
     "offline.html",
   ],
@@ -122,4 +128,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(withSerwist(nextConfig));
+export default withBundleAnalyzer(withSerwist(withNextIntl(nextConfig)));

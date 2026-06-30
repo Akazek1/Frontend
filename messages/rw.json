@@ -1,0 +1,61 @@
+{
+  "languageSwitcher": {
+    "ariaLabel": "Hindura ururimi",
+    "title": "Hitamo ururimi",
+    "subtitle": "Hindura ururimi rwa porogaramu. Ibisobanuro byuzuzwa kuri buri rurimi."
+  },
+  "header": {
+    "subtitle": "Shaka akazi, winjize amafaranga kandi utere imbere na Akazek.",
+    "profileAlt": "Umwirondoro",
+    "greeting": {
+      "morning": "Mwaramutse",
+      "afternoon": "Mwiriwe",
+      "evening": "Mwiriwe",
+      "night": "Muramuke"
+    },
+    "location": {
+      "aria": "Reba cyangwa uhindure aho uherereye",
+      "title": "Aho uherereye",
+      "subtitle": "Bikoreshwa mu kukwereka serivisi ziri hafi no gufasha abakiriya kukubona.",
+      "empty": "Nta hantu warabitse.",
+      "change": "Hindura aho uherereye",
+      "set": "Shyiraho aho uherereye",
+      "sector": "Umurenge",
+      "district": "Akarere",
+      "city": "Umujyi",
+      "country": "Igihugu"
+    },
+    "notifications": {
+      "aria": "Fungura amatangazo",
+      "title": "Amatangazo",
+      "newBadge": "{count} nshya",
+      "empty": "Nta matangazo arahari.",
+      "viewAll": "Reba amatangazo yose"
+    }
+  },
+  "onboarding": {
+    "welcome": "Murakaza neza kuri",
+    "tagline": "Uburyo bwizewe bwo kubona serivisi z'urugo.",
+    "roleHeading": "Wifuza gukora iki uyu munsi?",
+    "changeLater": "Ushobora guhindura ibi igihe icyo ari cyo cyose.",
+    "employer": {
+      "title": "Shaka abakozi bizewe",
+      "desc": "Shaka kandi uhe akazi abakozi bizewe ku rugo n'umuryango wawe.",
+      "badge": "Umutekano • Byemejwe • Byizewe"
+    },
+    "worker": {
+      "title": "Nshaka akazi",
+      "desc": "Tanga serivisi zawe, ushake akazi kandi winjize amafaranga.",
+      "badge": "Akazi kenshi • Amafaranga menshi"
+    },
+    "business": {
+      "title": "Mpagarariye ubucuruzi",
+      "desc": "Andikisha ikigo cyawe maze uhuze n'abakiriya benshi.",
+      "cta": "Iyandikishe nonaha"
+    },
+    "haveAccount": "Usanzwe ufite konti?",
+    "logIn": "Injira",
+    "secureNote": "Amakuru yawe arafite umutekano kandi ni ibanga",
+    "phoneNote": "Hakenewe kwemeza nimero ya telefoni"
+  }
+}
