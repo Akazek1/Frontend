@@ -5,9 +5,10 @@ import { test, expect } from "@playwright/test";
  * actually registers, that the manifest is installable, and that a cold launch
  * with no network falls back to the offline page instead of the browser error.
  *
- * NOTE: the offline-fallback test depends on `navigateFallback` resolving to a
- * PRECACHED document. If `/offline` is not in the precache manifest, that test
- * will (correctly) fail until the offline document is made precacheable.
+ * NOTE: the offline fallback is served via a `fallbacks` catch handler (only
+ * when the network fails), NOT an unconditional `navigateFallback` — otherwise
+ * the SW would serve the offline page for EVERY navigation, even online. The
+ * "online navigation shows the real app" test below guards exactly that.
  */
 
 test.describe("PWA runtime", () => {
@@ -28,6 +29,18 @@ test.describe("PWA runtime", () => {
       return reg.scope;
     });
     expect(scope).toContain("/");
+  });
+
+  test("serves the real app (not the offline page) when online", async ({ page }) => {
+    // Warm + take control of the SW, then navigate online. Regression guard:
+    // an unconditional navigateFallback would serve the offline page here.
+    await page.goto("/");
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.waitForTimeout(1500);
+    await page.reload();
+
+    await page.goto("/more", { waitUntil: "networkidle" });
+    await expect(page.getByText(/you'?re offline/i)).toHaveCount(0);
   });
 
   test("shows the offline fallback on a cold launch with no network", async ({
