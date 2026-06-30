@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { Serwist, CacheFirst, ExpirationPlugin } from "serwist";
+import { Serwist, CacheFirst, NetworkOnly, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
 import { firebaseConfig } from "@/lib/firebase-config";
 import { buildNotificationTargetUrl } from "@/lib/notification-routing";
@@ -73,12 +73,6 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   precacheOptions: {
     cleanupOutdatedCaches: true,
-    // Offline fallback for cold navigations with no network. Served from a
-    // real static file (public/offline.html) so it resolves on every host,
-    // including Vercel — an App Router route is NOT reliably servable at the
-    // precached "/offline.html" path.
-    navigateFallback: "/offline.html",
-    navigateFallbackDenylist: [/^\/api\//, /^\/_next\/image/],
   },
   disableDevLogs: true,
   // Prompted update (not silent): the new SW waits until the user taps
@@ -103,7 +97,27 @@ const serwist = new Serwist({
         ],
       }),
     },
+    {
+      // Page navigations always go to the network so users see fresh, real
+      // pages when online. When the network fails (offline), the `fallbacks`
+      // catch handler below serves /offline.html. We deliberately do NOT cache
+      // page responses — this is an offline shell, not full offline, and
+      // caching authenticated pages would risk stale/leaked data.
+      matcher: ({ request }: { request: Request }) => request.mode === "navigate",
+      handler: new NetworkOnly(),
+    },
   ],
+  // Served ONLY when a handler throws (i.e. the network is unavailable), not
+  // for every navigation — this is what makes online navigations work normally
+  // while still showing the offline page when truly offline.
+  fallbacks: {
+    entries: [
+      {
+        url: "/offline.html",
+        matcher: ({ request }: { request: Request }) => request.destination === "document",
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();
