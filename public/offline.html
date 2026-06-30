@@ -59,6 +59,22 @@
         font-size: 14px;
         line-height: 1.6;
       }
+
+      button {
+        margin-top: 22px;
+        border: 0;
+        background: #145b10;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 11px 22px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      button:active {
+        background: #0f4a0c;
+      }
     </style>
   </head>
   <body>
@@ -67,7 +83,34 @@
         <img src="/brand/akazek-mark-dark-tight.png" alt="Akazek" />
       </div>
       <h1>You're offline</h1>
-      <p>Check your connection and try again. Recently opened pages may still be available.</p>
+      <p>Check your connection and try again. We'll reload automatically once you're back online.</p>
+      <button id="retry" type="button">Try again</button>
     </main>
+    <script>
+      // This is a static dead-end page (an installed PWA has no reload/back
+      // button), so it must recover itself. Reload as soon as the server is
+      // actually reachable again — not just when the browser reports "online",
+      // which is unreliable on iOS.
+      var reloading = false;
+      function recover() {
+        if (reloading) return;
+        reloading = true;
+        location.reload();
+      }
+      async function check() {
+        try {
+          var r = await fetch("/manifest.webmanifest", { cache: "no-store" });
+          if (r && r.ok) recover();
+        } catch (e) {
+          /* still offline */
+        }
+      }
+      document.getElementById("retry").addEventListener("click", function () {
+        location.reload();
+      });
+      window.addEventListener("online", check);
+      setInterval(check, 4000);
+      check();
+    </script>
   </body>
 </html>
