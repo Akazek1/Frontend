@@ -28,7 +28,6 @@ const STORAGE_PREFIX = "hwa.addServiceForm.";
 const buildExistingService = (): Service => ({
   service: {} as Record<string, unknown>,
   id: "svc-edit",
-  title: "Existing service",
   description: "An existing description",
   priceMin: 2500,
   priceMax: 2500,
@@ -188,7 +187,6 @@ describe("useAddServiceForm — state machine", () => {
       useAddServiceForm({ service: buildExistingService() }),
     );
 
-    expect(result.current.form.title).toBe("Existing service");
     expect(result.current.form.chargedPer).toBe("weekly");
     expect(result.current.form.priceMode).toBe("fixed"); // min === max
     expect(result.current.form.priceMin).toBe("2500");

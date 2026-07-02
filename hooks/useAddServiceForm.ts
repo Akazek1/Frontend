@@ -22,8 +22,7 @@ export interface WizardFormState {
   chargedPer: ChargedPer;
   /** "Open to Negotiate" — employers can discuss the stated price. */
   negotiable: boolean;
-  /** Step 3: Details (both optional — title auto-derives from the category). */
-  title: string;
+  /** Step 3: Details (optional — a listing's name is always its category). */
   description: string;
   /** Image URLs already uploaded (edit mode rehydrate or after upload). */
   existingImageUrls: string[];
@@ -51,7 +50,6 @@ function emptyForm(): WizardFormState {
     priceMax: "",
     chargedPer: "daily",
     negotiable: false,
-    title: "",
     description: "",
     existingImageUrls: [],
     newImageFiles: [],
@@ -78,7 +76,6 @@ function rehydrateFromService(service: Service): WizardFormState {
     priceMax: priceMax ? String(priceMax) : "",
     chargedPer,
     negotiable: Boolean((service as { negotiable?: boolean }).negotiable),
-    title: service.title ?? "",
     description: service.description ?? "",
     existingImageUrls: existing.slice(0, MAX_IMAGES),
     newImageFiles: [],
@@ -108,7 +105,6 @@ function writeSession(key: string, state: WizardFormState) {
       priceMax: state.priceMax,
       chargedPer: state.chargedPer,
       negotiable: state.negotiable,
-      title: state.title,
       description: state.description,
       existingImageUrls: state.existingImageUrls,
     };
@@ -248,8 +244,6 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
       const priceMax =
         form.priceMode === "fixed" ? priceMin : Number(form.priceMax);
       const payload: CreateServicePayload = {
-        // Backend derives the title from the category name when omitted.
-        title: form.title.trim() || undefined,
         description: form.description.trim().slice(0, MAX_DESCRIPTION) || undefined,
         priceMin,
         priceMax,

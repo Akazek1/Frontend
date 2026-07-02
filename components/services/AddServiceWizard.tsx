@@ -8,6 +8,7 @@ import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import { useAuth } from "@/hooks/useAuth";
 import type { Service } from "@/types";
 import { getApiErrorMessage } from "@/lib/error-handler";
+import { getServiceDisplayName } from "@/lib/service-display";
 import { PageShell } from "@/components/ui/app-primitives";
 import { WizardHeader } from "@/components/services/wizard/wizard-ui";
 import {
@@ -224,7 +225,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
         {step === 3 && (
           <WizardStep3AddDetails
             form={form}
-            serviceName={selectedJobType?.jobType.name ?? service?.title ?? "Your service"}
+            serviceName={selectedJobType?.jobType.name ?? (service ? getServiceDisplayName(service) : "Your service")}
             serviceIcon={selectedJobType?.jobType.icon}
             groupingName={selectedJobType?.grouping.name}
             serviceArea={serviceArea}

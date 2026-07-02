@@ -67,7 +67,7 @@ interface BookingDetails {
   workerId: string;
   employerId: string;
   service: {
-    title: string;
+    category?: { name?: string };
   } | null;
   job?: {
     title: string;
@@ -603,7 +603,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const partner = user.id === booking.workerId ? booking.employer : booking.worker;
   const partnerName = partner ? `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim() : "Unknown Partner";
   const isWorker = user.id === booking.workerId;
-  const contextTitle = booking.service?.title || booking.job?.title || "Work request";
+  const contextTitle = booking.service?.category?.name || booking.job?.title || "Work request";
   // Role-aware label for the partner: a worker is described by the service they
   // provide (e.g. "Driver"); an employer is simply the "Employer" — never the
   // service title, which would wrongly imply they do that job.

@@ -5,6 +5,7 @@ import { AppButton } from "@/components/ui/app-primitives";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
 import { chargedPerUnit } from "@/components/services/wizard/WizardStep3AddDetails";
 import { fromBackendPriceFields } from "@/services/services-service";
+import { getServiceDisplayName } from "@/lib/service-display";
 import type { Service } from "@/types";
 
 interface WizardStep4ConfirmationProps {
@@ -56,7 +57,7 @@ export function WizardStep4Confirmation({
           <IconBadge icon={serviceIcon} />
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-bold text-ink">
-              {service.title}
+              {getServiceDisplayName(service)}
             </span>
             <span className="mt-0.5 block text-[13px] font-semibold text-brand">
               {priceText}

@@ -17,6 +17,7 @@ import jobsService, { Job } from "@/services/jobs-service";
 import { JobPostCard } from "@/components/job-post-card";
 import {
   getServiceDetailPath,
+  getServiceDisplayName,
   mapServiceToProviderCard,
 } from "@/lib/service-display";
 import { SectorPicker } from "@/components/ui/sector-picker";
@@ -88,6 +89,9 @@ interface ExistingBooking {
   // Reviews authored by the current employer for this booking (backend filters
   // to the caller) — empty on a completed booking means it's still unreviewed.
   reviews?: { id: string }[];
+  // Backend's authoritative flag (replaced the `reviews` array): true when the
+  // booking is completed and still needs a comment-bearing review.
+  reviewPending?: boolean;
 }
 
 interface ApplicationSummary {
@@ -234,12 +238,18 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         const reviewable = new Map<string, string>();
         for (const b of list) {
           const sid = b.service?.id;
+          // Prefer the backend's reviewPending flag (it replaced `reviews`);
+          // fall back to the empty-reviews check for older API responses.
+          const reviewPending =
+            typeof b.reviewPending === "boolean"
+              ? b.reviewPending
+              : (b.reviews?.length ?? 0) === 0;
           if (
             sid &&
             b.id &&
             !activeIds.has(sid) &&
             String(b.status).toUpperCase() === "COMPLETED" &&
-            (b.reviews?.length ?? 0) === 0
+            reviewPending
           ) {
             if (!reviewable.has(sid)) reviewable.set(sid, b.id);
           }
@@ -447,7 +457,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setHireModal({
         serviceId: service.id,
         providerName,
-        serviceTitle: service.title,
+        serviceTitle: getServiceDisplayName(service),
       });
     }, "hire");
   };
@@ -733,7 +743,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           reviewModal
             ? {
                 title: mapServiceToProviderCard(reviewModal.service).name,
-                subtitle: reviewModal.service.title,
+                subtitle: getServiceDisplayName(reviewModal.service),
               }
             : null
         }

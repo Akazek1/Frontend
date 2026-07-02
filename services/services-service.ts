@@ -8,14 +8,16 @@ export interface ServiceCategory {
   name: string;
   nameKn?: string;
   nameFr?: string;
+  /** Provider role noun for this type, e.g. "Cleaner" for "Cleaning". */
+  providerLabel?: string | null;
+  providerLabelKn?: string | null;
+  providerLabelFr?: string | null;
   icon?: string | null;
   description?: string | null;
   isActive?: boolean;
 }
 
 export interface CreateServicePayload {
-  /** Optional: backend derives the title from the category name when omitted. */
-  title?: string;
   description?: string;
   /** Fixed price = same min/max; range = distinct values. */
   priceMin: number;

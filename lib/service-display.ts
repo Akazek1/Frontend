@@ -33,6 +33,31 @@ export function getProviderName(provider: ServiceProvider) {
   return `${provider?.firstName || "Unknown"} ${provider?.lastName || "Provider"}`.trim();
 }
 
+/**
+ * A listing's display name is always its category name — there is no free-text
+ * title. `category` may arrive as the populated object or just its name string.
+ */
+export function getServiceDisplayName(service?: Partial<Service> | null): string {
+  const category = service?.category;
+  if (category && typeof category === "object") return category.name || "Service";
+  if (typeof category === "string" && category) return category;
+  return "Service";
+}
+
+/**
+ * The provider role noun for a listing's category, e.g. "Cleaner" for
+ * "Cleaning". Admin-set on the Category; falls back to the service name when
+ * no role label has been configured. Returns "" when the category is unknown.
+ */
+export function getProviderRole(service?: Partial<Service> | null): string {
+  const category = service?.category;
+  if (category && typeof category === "object") {
+    return category.providerLabel || category.name || "";
+  }
+  if (typeof category === "string" && category) return category;
+  return "";
+}
+
 export function getServiceImages(service?: Partial<Service> | null) {
   const images = [
     ...(Array.isArray(service?.serviceImages) ? service?.serviceImages || [] : []),
@@ -96,7 +121,7 @@ export function mapServiceToProviderCard(service: Service): Provider {
       : `${provider?.firstName ?? "Unknown"} ${provider?.lastName ?? "Provider"}`.trim(),
     // Company cards don't link to an individual profile.
     handle: isCompanyCard ? undefined : getProviderHandle(provider),
-    title: service.title,
+    title: getServiceDisplayName(service),
     experience: service.description || "",
     languages:
       !isCompanyCard && Array.isArray(provider?.languages)

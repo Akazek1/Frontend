@@ -33,7 +33,6 @@ export interface BookingRecord {
   price?: number | null;
   service?: {
     id?: string;
-    title?: string;
     serviceImage?: string | null;
     category?: { name?: string };
   } | null;

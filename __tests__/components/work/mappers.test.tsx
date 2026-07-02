@@ -18,7 +18,7 @@ const baseBooking: BookingRecord = {
   scheduledFor: "2026-06-05T08:00:00Z",
   createdAt: "2026-06-01T05:00:00Z",
   agreedPrice: 30000,
-  service: { id: "s1", title: "House Cleaning", category: { name: "House Cleaning" } },
+  service: { id: "s1", category: { name: "House Cleaning" } },
   employer: { id: "e1", firstName: "Alice", lastName: "Uwimana", username: "alice_u" },
   worker:   { id: "w1", firstName: "Diane", lastName: "Mukeshimana", username: "diane_m" },
 };

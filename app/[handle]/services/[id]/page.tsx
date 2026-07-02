@@ -39,6 +39,7 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import {
     getProviderHandle,
     getProviderName,
+    getServiceDisplayName,
     getServiceImages,
     profileImageFallback,
     serviceImageFallback,
@@ -85,6 +86,9 @@ interface ExistingBookingSummary {
     // Reviews authored by the current employer for this booking (backend filters
     // to the caller) — empty means the completed job is still unreviewed.
     reviews?: { id: string }[];
+    // Backend's authoritative flag (replaced the `reviews` array): true when the
+    // booking is completed and still needs a comment-bearing review.
+    reviewPending?: boolean;
 }
 
 function ServiceDetailPage() {
@@ -168,12 +172,19 @@ function ServiceDetailPage() {
                 // yet → lead with the review prompt (review-first re-hire).
                 const unreviewed = hasActive
                     ? undefined
-                    : mine.find(
-                          (booking) =>
+                    : mine.find((booking) => {
+                          // Prefer the backend's reviewPending flag (it replaced
+                          // `reviews`); fall back to the empty-reviews check.
+                          const reviewPending =
+                              typeof booking.reviewPending === "boolean"
+                                  ? booking.reviewPending
+                                  : (booking.reviews?.length ?? 0) === 0;
+                          return (
                               String(booking.status).toUpperCase() === "COMPLETED" &&
-                              (booking.reviews?.length ?? 0) === 0 &&
-                              booking.id,
-                      );
+                              reviewPending &&
+                              booking.id
+                          );
+                      });
                 setReviewBookingId(unreviewed?.id ?? null);
             } catch {
                 // silent
@@ -536,7 +547,7 @@ function ServiceDetailPage() {
                             className="pt-0.5 text-[15px] font-semibold"
                             style={{ color: colors.text }}
                         >
-                            {service.title}
+                            {getServiceDisplayName(service)}
                         </p>
                         {locationText ? (
                             <div
@@ -917,7 +928,7 @@ function ServiceDetailPage() {
 
             <ReviewPromptDialog
                 open={reviewOpen}
-                subject={{ title: providerName, subtitle: service?.title }}
+                subject={{ title: providerName, subtitle: service ? getServiceDisplayName(service) : undefined }}
                 rehireQuestion="Would you hire this person again?"
                 onOpenChange={setReviewOpen}
                 onSubmit={submitProviderReview}
@@ -1055,7 +1066,7 @@ function ServiceDetailPage() {
                             <div>
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Request to Hire</p>
                                 <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
-                                <p className="text-[13px] text-gray-400">{service.title}</p>
+                                <p className="text-[13px] text-gray-400">{getServiceDisplayName(service)}</p>
                             </div>
                             <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />

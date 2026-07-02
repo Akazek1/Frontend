@@ -64,7 +64,6 @@ type HireItem = {
     profilePicture?: string;
   };
   service?: {
-    title?: string;
     category?: { name?: string };
   };
 };
@@ -276,7 +275,7 @@ export default function HandleProfilePage() {
                   : "Worker";
                 const initials = workerName.charAt(0).toUpperCase();
                 const serviceLabel =
-                  hire.service?.title || hire.service?.category?.name || "Service";
+                  hire.service?.category?.name || "Service";
                 const dateLabel = hire.createdAt
                   ? new Date(hire.createdAt).toLocaleDateString("en-US", {
                       month: "short",

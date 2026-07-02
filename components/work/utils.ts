@@ -56,7 +56,7 @@ export const getBudgetText = (value?: number | null): string =>
   value ? `${value.toLocaleString()} RWF/day` : "Budget to agree";
 
 export const bookingTitle = (booking: BookingRecord): string =>
-  booking.service?.title || booking.job?.title || "Work request";
+  booking.service?.category?.name || booking.job?.title || "Work request";
 
 export const bookingCategory = (booking: BookingRecord): string =>
   booking.service?.category?.name || booking.job?.category?.name || "Work";
