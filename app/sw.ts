@@ -2,6 +2,7 @@
 
 import { Serwist, CacheFirst, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
+import { defaultCache } from "@serwist/next/worker";
 import { firebaseConfig } from "@/lib/firebase-config";
 import { buildNotificationTargetUrl } from "@/lib/notification-routing";
 
@@ -94,7 +95,27 @@ const serwist = new Serwist({
         ],
       }),
     },
+    // Next.js' default caching strategies: NetworkFirst for page navigations and
+    // RSC payloads (so previously-visited pages open offline), plus caching for
+    // static chunks, images, and fonts. Listed after the specific matcher above
+    // so that rule still wins for the village dataset.
+    ...defaultCache,
   ],
+  // When a page navigation misses the cache while offline (e.g. a route never
+  // visited before), serve the precached static offline page instead of the
+  // browser's error screen. offline.html is a self-contained static file
+  // (precached via globPublicPatterns in next.config.ts), so it renders offline
+  // without depending on the dynamic app shell.
+  fallbacks: {
+    entries: [
+      {
+        url: "/offline.html",
+        matcher({ request }) {
+          return request.destination === "document";
+        },
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();

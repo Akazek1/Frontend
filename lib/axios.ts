@@ -28,9 +28,9 @@ const api = axios.create({
 function storeAccessToken(token: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem("token", token);
-  // Match the refresh-session lifetime so middleware doesn't bounce a user
-  // whose access token is being silently renewed in the background.
-  document.cookie = `token=${token}; path=/; max-age=${90 * 24 * 60 * 60}; SameSite=Lax`;
+  // Match the access-token lifetime so middleware doesn't bounce a user whose
+  // token is still valid. The session lasts until explicit sign-out.
+  document.cookie = `token=${token}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
 }
 
 // Silent refresh: exchange the HttpOnly refresh cookie for a new access token.
