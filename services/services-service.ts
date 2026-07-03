@@ -36,6 +36,8 @@ export type UpdateServicePayload = Partial<CreateServicePayload>;
 
 export interface BrowseServicesParams {
   category?: string;
+  /** Grouping (ServiceCategory) name — returns services across all its types. */
+  grouping?: string;
   searchTerm?: string;
   minPrice?: number;
   maxPrice?: number;

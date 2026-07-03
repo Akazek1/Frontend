@@ -15,6 +15,7 @@ const ServicePage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const category = searchParams.get("category");
+    const grouping = searchParams.get("grouping");
     const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
     const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -31,6 +32,7 @@ const ServicePage = () => {
 
     const browseParams: BrowseServicesParams = {
         ...(category && category !== "all" ? { category } : {}),
+        ...(grouping ? { grouping } : {}),
         ...(searchTerm ? { searchTerm } : {}),
         ...(filters.minPrice ? { minPrice: filters.minPrice } : {}),
         ...(filters.maxPrice ? { maxPrice: filters.maxPrice } : {}),
@@ -67,7 +69,7 @@ const ServicePage = () => {
     return (
         <div className="bg-surface min-h-dvh space-y-6 p-6">
             {/* Header with Back Arrow */}
-            <BackButtonHeader text={category || "Services"} backHref="/" />
+            <BackButtonHeader text={grouping || category || "Services"} backHref="/" />
 
             <div className="rounded-3xl border border-[#DDEDDD] bg-white p-3 shadow-sm">
                 <div className="relative">

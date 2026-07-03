@@ -1,12 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import imageCompression from "browser-image-compression";
 import servicesService, {
   ChargedPer,
   CreateServicePayload,
   fromBackendPriceFields,
 } from "@/services/services-service";
 import type { Service } from "@/types";
+
+// Match the standalone ServiceImageUploader so every photo path compresses the
+// same way before upload — keeps requests well under the server's 5 MB limit.
+const COMPRESS_OPTIONS = {
+  maxSizeMB: 0.3,
+  maxWidthOrHeight: 1280,
+  useWebWorker: true,
+};
 
 export type PriceMode = "fixed" | "range";
 
@@ -165,14 +174,21 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     [],
   );
 
-  const addImageFiles = useCallback((files: File[]) => {
+  const addImageFiles = useCallback(async (files: File[]) => {
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    if (images.length === 0) return;
+    // Compress before storing (falling back to the original if it fails) so a
+    // full-size phone photo doesn't trip the server's "file too large" limit.
+    const compressed = await Promise.all(
+      images.map((f) => imageCompression(f, COMPRESS_OPTIONS).catch(() => f)),
+    );
     setForm((prev) => {
       const total = prev.existingImageUrls.length + prev.newImageFiles.length;
       const room = Math.max(0, MAX_IMAGES - total);
       if (room === 0) return prev;
       return {
         ...prev,
-        newImageFiles: [...prev.newImageFiles, ...files.slice(0, room)],
+        newImageFiles: [...prev.newImageFiles, ...compressed.slice(0, room)],
       };
     });
   }, []);

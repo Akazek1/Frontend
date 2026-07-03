@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import { ChevronRight, LayoutGrid, Loader2, Search } from "lucide-react";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
+import { localizedName } from "@/lib/taxonomy-i18n";
 
 export interface WizardGrouping {
   id: string;
@@ -40,6 +42,7 @@ export function WizardStep1ChooseCategory({
   onSelect,
   onViewAll,
 }: WizardStep1ChooseCategoryProps) {
+  const locale = useLocale();
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -83,7 +86,7 @@ export function WizardStep1ChooseCategory({
               <IconBadge icon={g.icon} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-bold text-ink">
-                  {g.name}
+                  {localizedName(g, locale)}
                 </span>
                 <span className="mt-0.5 block truncate text-[12.5px] text-ink-muted">
                   {summarize(g)}

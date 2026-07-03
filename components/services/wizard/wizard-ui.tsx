@@ -60,6 +60,12 @@ export function TaxonomyIcon({
   icon?: string | null;
   className?: string;
 }) {
+  // Admins can paste an image URL (e.g. an icons8 link) as the icon. Render it
+  // directly; otherwise fall back to a named lucide glyph, then a default.
+  if (icon && /^https?:\/\//i.test(icon)) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={icon} alt="" className={`${className} object-contain`} />;
+  }
   const Cmp = (icon && ICONS[icon]) || LayoutGrid;
   return <Cmp className={className} />;
 }
