@@ -16,12 +16,11 @@ export interface NavItem {
 export interface Service {
   service: Record<string, unknown>;
   id: string;
-  title: string;
   description: string;
   priceMin: number;
   priceMax: number;
   priceType: string;
-  category: { id: string; name: string; nameKn?: string; nameFr?: string; icon?: string } | string;
+  category: { id: string; name: string; nameKn?: string; nameFr?: string; providerLabel?: string | null; icon?: string } | string;
   serviceImage: string | null;
   serviceImages?: string[];
   isActive: boolean;

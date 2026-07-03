@@ -18,9 +18,9 @@ interface ServicePrerequisiteGateProps {
 
 /**
  * Shown before the Add-Service wizard when the provider is missing the trust
- * basics. A profile picture is required (clients hire a face); an ID is strongly
- * recommended. Reuses the same profile-image and ID upload flows used elsewhere
- * so behaviour and image compression stay consistent.
+ * basics. Both a profile picture and an ID/passport (uploaded, pending or
+ * approved) are required before listing. Reuses the same profile-image and ID
+ * upload flows used elsewhere so behaviour and image compression stay consistent.
  */
 export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequisiteGateProps) {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -114,7 +114,7 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
                   ? "Verified."
                   : idStatus === "REJECTED"
                     ? "Previous ID was rejected. Please re-upload."
-                    : "Recommended to build trust."}
+                    : "Required — add your ID or passport to list a service."}
             </p>
           </div>
           {loadingId ? (
@@ -136,12 +136,16 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
       </div>
 
       <div className="space-y-2">
-        <AppButton onClick={onContinue} disabled={!hasPhoto} className="w-full">
-          {hasPhoto ? "Continue to create service" : "Add a profile picture to continue"}
+        <AppButton onClick={onContinue} disabled={!hasPhoto || !hasId} className="w-full">
+          {!hasPhoto
+            ? "Add a profile picture to continue"
+            : !hasId
+              ? "Add your ID to continue"
+              : "Continue to create service"}
         </AppButton>
-        {!hasId && hasPhoto && (
+        {hasPhoto && !hasId && (
           <p className="text-center text-[11px] text-ink-subtle">
-            You can add your ID now or later from your profile.
+            A verified ID or passport is required to list a service.
           </p>
         )}
       </div>

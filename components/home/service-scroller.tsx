@@ -7,7 +7,7 @@ import SectionHeader from "../section-header";
 import { Icons } from "../icons";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
-import { getServiceDetailPath } from "@/lib/service-display";
+import { getServiceDetailPath, getServiceDisplayName } from "@/lib/service-display";
 import type { Service } from "@/types";
 
 interface DisplayService {
@@ -47,7 +47,7 @@ const PopulerService = () => {
       const mappedServices: DisplayService[] = data.map((service) => ({
         id: service.id,
         image: service.provider?.profileImg || service.provider?.profilePicture || service.company?.logoUrl || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
-        title: service.title,
+        title: getServiceDisplayName(service),
         href: getServiceDetailPath(service),
         type: "service",
       }));

@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import { ChevronRight, HelpCircle, Pencil, Search } from "lucide-react";
 import { AppButton } from "@/components/ui/app-primitives";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
+import { localizedName } from "@/lib/taxonomy-i18n";
 import type {
   WizardGrouping,
   WizardJobType,
@@ -33,6 +35,7 @@ export function WizardStep2ChooseService({
   onContinue,
   isValid,
 }: WizardStep2ChooseServiceProps) {
+  const locale = useLocale();
   const [search, setSearch] = useState("");
 
   const visible: WizardJobType[] = useMemo(() => {
@@ -50,7 +53,7 @@ export function WizardStep2ChooseService({
         <IconBadge icon={grouping.icon} />
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-bold text-ink">
-            {grouping.name}
+            {localizedName(grouping, locale)}
           </span>
           <span className="mt-0.5 block truncate text-[12.5px] text-ink-muted">
             {groupingSummary}
@@ -103,7 +106,7 @@ export function WizardStep2ChooseService({
               <IconBadge icon={jt.icon} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-bold text-ink">
-                  {jt.name}
+                  {localizedName(jt, locale)}
                 </span>
                 {jt.nameKn && (
                   <span className="mt-0.5 block text-[12.5px] text-ink-muted">

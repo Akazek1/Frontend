@@ -63,7 +63,7 @@ interface Booking {
   updatedAt?: string;
   service: {
     id: string;
-    title: string;
+    category?: { name?: string };
   };
   partner: {
     id: string;
@@ -312,7 +312,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
           const name = `${partner.firstName} ${partner.lastName}`.toLowerCase();
           return (
             name.includes(query) ||
-            booking.service?.title?.toLowerCase().includes(query) ||
+            booking.service?.category?.name?.toLowerCase().includes(query) ||
             booking.latestMessage?.content.toLowerCase().includes(query)
           );
         })
@@ -405,7 +405,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
                   <span className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="block truncate text-[12.5px] font-semibold text-brand">
-                      {booking.service?.title || "Booking"}
+                      {booking.service?.category?.name || "Booking"}
                     </span>
                     <span className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${status.pill}`}>
                       {status.label}

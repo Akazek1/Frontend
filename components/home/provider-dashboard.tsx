@@ -21,7 +21,7 @@ import {
 
 interface Booking {
   id: string;
-  service: { title: string; serviceImage: string };
+  service: { category?: { name?: string }; serviceImage: string };
   receiver: { firstName: string; lastName: string; profilePicture: string };
   status: string;
   scheduledFor: string;
@@ -178,14 +178,14 @@ const ProviderDashboard: React.FC = () => {
                 >
                   <Image
                     src={b.service?.serviceImage || "/default-service.svg"}
-                    alt={b.service?.title}
+                    alt={b.service?.category?.name || ""}
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
                     onError={(e) => { (e.target as HTMLImageElement).src = "/default-service.svg"; }}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-bold truncate capitalize" style={{ color: colors.text }}>{b.service?.title}</p>
+                    <p className="text-[12px] font-bold truncate capitalize" style={{ color: colors.text }}>{b.service?.category?.name}</p>
                     <p className="text-[11px] truncate" style={{ color: colors.textSecondary }}>
                       {b.receiver?.firstName} {b.receiver?.lastName}
                     </p>

@@ -23,12 +23,11 @@ interface Booking {
     id: string;
     service: {
         id: string;
-        title: string;
         description: string;
         price: number;
         providerId: string;
         workerId: string;
-        category: string;
+        category: { id?: string; name?: string };
         serviceType: string;
         serviceAreas: string[];
         serviceImage: string;
@@ -247,14 +246,14 @@ const BookingDetails: React.FC = () => {
                     <div className="relative h-48 w-full">
                         <Image
                             src={booking.service.serviceImage}
-                            alt={booking.service.title}
+                            alt={booking.service.category?.name || ""}
                             fill
                             className="object-cover"
                         />
                     </div>
                     <div className="p-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start mb-2 gap-2">
-                            <h2 className="text-lg capitalize font-bold text-primary">{booking.service.title}</h2>
+                            <h2 className="text-lg capitalize font-bold text-primary">{booking.service.category?.name}</h2>
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[booking.status]}`}>
                                 {booking.status}
                             </span>

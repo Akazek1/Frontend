@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 import { Provider, Service } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { isEmployer } from "@/lib/roles";
+import { getServiceDisplayName } from "@/lib/service-display";
 import {
     AppButton,
     AppSectionHeader,
@@ -91,7 +92,7 @@ const BookingSummary = () => {
                     handle: service.provider
                         ? `${service.provider.firstName.toLowerCase()}${service.provider.lastName.toLowerCase()}`
                         : undefined,
-                    title: service.title,
+                    title: getServiceDisplayName(service),
                     experience: service.description || "No experience provided",
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
                     location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
@@ -314,7 +315,7 @@ const BookingSummary = () => {
                                         <h2 className="text-base sm:text-lg font-semibold text-ink">
                                             {`${service.provider.firstName} ${service.provider.lastName}`}
                                         </h2>
-                                        <p className="text-sm font-bold text-ink">{service.title}</p>
+                                        <p className="text-sm font-bold text-ink">{getServiceDisplayName(service)}</p>
                                         <p className="text-sm text-ink-muted font-medium">
                                             {service.description || "No description provided"}
                                         </p>

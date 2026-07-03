@@ -39,6 +39,7 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import {
     getProviderHandle,
     getProviderName,
+    getServiceDisplayName,
     getServiceImages,
     profileImageFallback,
     serviceImageFallback,
@@ -546,7 +547,7 @@ function ServiceDetailPage() {
                             className="pt-0.5 text-[15px] font-semibold"
                             style={{ color: colors.text }}
                         >
-                            {service.title}
+                            {getServiceDisplayName(service)}
                         </p>
                         {locationText ? (
                             <div
@@ -927,7 +928,7 @@ function ServiceDetailPage() {
 
             <ReviewPromptDialog
                 open={reviewOpen}
-                subject={{ title: providerName, subtitle: service?.title }}
+                subject={{ title: providerName, subtitle: service ? getServiceDisplayName(service) : undefined }}
                 rehireQuestion="Would you hire this person again?"
                 onOpenChange={setReviewOpen}
                 onSubmit={submitProviderReview}
@@ -1065,7 +1066,7 @@ function ServiceDetailPage() {
                             <div>
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Request to Hire</p>
                                 <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
-                                <p className="text-[13px] text-gray-400">{service.title}</p>
+                                <p className="text-[13px] text-gray-400">{getServiceDisplayName(service)}</p>
                             </div>
                             <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />

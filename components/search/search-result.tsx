@@ -17,6 +17,7 @@ import jobsService, { Job } from "@/services/jobs-service";
 import { JobPostCard } from "@/components/job-post-card";
 import {
   getServiceDetailPath,
+  getServiceDisplayName,
   mapServiceToProviderCard,
 } from "@/lib/service-display";
 import { SectorPicker } from "@/components/ui/sector-picker";
@@ -456,7 +457,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setHireModal({
         serviceId: service.id,
         providerName,
-        serviceTitle: service.title,
+        serviceTitle: getServiceDisplayName(service),
       });
     }, "hire");
   };
@@ -742,7 +743,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           reviewModal
             ? {
                 title: mapServiceToProviderCard(reviewModal.service).name,
-                subtitle: reviewModal.service.title,
+                subtitle: getServiceDisplayName(reviewModal.service),
               }
             : null
         }

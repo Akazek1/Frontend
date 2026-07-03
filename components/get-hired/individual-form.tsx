@@ -32,7 +32,6 @@ import { isEmployer } from "@/lib/roles"
 // Service interface for services fetched from or sent to the backend
 interface Service {
   id: string
-  title: string
   description: string
   price?: number
   priceMin?: number | null
@@ -572,7 +571,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
         price: getPriceOptionFromService(service),
         scopeOfService: service.description || "",
         areaServed: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.areaServed || "",
-        title: service.title || "",
+        title: getCategoryName(service.category),
         serviceImage: service.serviceImage,
         serviceImages: service.serviceImages || [],
         workerId: service.workerId || "", // Include workerId in update data
@@ -872,7 +871,7 @@ const IndividualForm = ({ isWorker }: { isWorker: boolean }) => {
                       ? `${service?.provider?.firstName} ${service.provider?.lastName}`
                       : `Not Available`
                   }
-                  title={service.title}
+                  title={getCategoryName(service.category)}
                   experience={service.description || service.scopeOfService || "No experience provided"}
                   languages="English, Kinyarwanda"
                   location={service.areaServed || service.serviceAreas?.join(", ") || "No location provided"}

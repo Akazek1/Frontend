@@ -18,7 +18,7 @@ interface Booking {
   scheduledFor?: string | null;
   price?: number;
   agreedPrice?: number;
-  service?: { title: string; serviceImage?: string } | null;
+  service?: { category?: { name?: string }; serviceImage?: string } | null;
   job?: { title: string } | null;
   receiver?: { username?: string; firstName: string; lastName: string; profilePicture: string };
   employer?: { username?: string; firstName: string; lastName: string; profilePicture: string };
@@ -168,7 +168,7 @@ const ProviderBookings: React.FC = () => {
               const isPending = b.status === 'PENDING';
               const canMessage = ['PENDING','CONFIRMED','IN_PROGRESS','ACCEPTED'].includes(b.status);
               const isActing   = acting === b.id;
-              const title = b.service?.title || b.job?.title || 'Work request';
+              const title = b.service?.category?.name || b.job?.title || 'Work request';
               const image = b.service?.serviceImage || '/default-service.svg';
               const price = b.price ?? b.agreedPrice;
 

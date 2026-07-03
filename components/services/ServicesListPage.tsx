@@ -23,6 +23,7 @@ import {
   appStickyHeaderClass,
 } from "@/components/ui/app-primitives";
 import { getApiErrorMessage } from "@/lib/error-handler";
+import { getServiceDisplayName } from "@/lib/service-display";
 
 type SortableService = Service & {
   createdAt?: string;
@@ -175,7 +176,7 @@ export function ServicesListPage() {
 
       <DeactivateServiceDialog
         open={!!pendingToggle}
-        serviceTitle={pendingToggle?.title}
+        serviceTitle={pendingToggle ? getServiceDisplayName(pendingToggle) : undefined}
         isActive={pendingToggle?.isActive !== false}
         onCancel={() => setPendingToggle(null)}
         onConfirm={handleConfirmToggleActive}

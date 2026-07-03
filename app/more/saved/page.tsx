@@ -9,7 +9,7 @@ import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
 import { useBookmark } from "@/context/bookmark-context";
 import { formatPrice } from "@/lib/utils";
-import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath } from "@/lib/service-display";
+import { getBookingType, getProviderHandle, getServiceCardImage, getServiceDetailPath, getServiceDisplayName } from "@/lib/service-display";
 import { isEmployer } from "@/lib/roles";
 import { Bookmark, Search } from "lucide-react";
 import {
@@ -71,7 +71,7 @@ const BookmarksPage = () => {
                             profileImage={service?.provider?.profilePicture}
                             name={`${service?.provider?.firstName || "Unknown"} ${service?.provider?.lastName || "Provider"}`}
                             handle={getProviderHandle(service.provider)}
-                            title={service?.title || "Untitled Service"}
+                            title={getServiceDisplayName(service)}
                             experience="5+ years"
                             languages={Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "N/A"}
                             location={Array.isArray(service?.serviceAreas) ? service.serviceAreas.join(", ") : service?.serviceAreas || "N/A"}

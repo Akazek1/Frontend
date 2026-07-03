@@ -44,6 +44,8 @@ export const DocumentUploadStep = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [docType, setDocType] = useState<"GOVERNMENT_ID" | "PASSPORT" | "DRIVER_LICENSE">("GOVERNMENT_ID")
+  const [documentNumber, setDocumentNumber] = useState("")
 
   const handleFileSelect = async (file: File) => {
     // Validate (accepts common image types up to 10MB before optimization).
@@ -102,10 +104,18 @@ export const DocumentUploadStep = ({
       toast.error("Please select a file")
       return
     }
+    if (!documentNumber.trim()) {
+      toast.error("Please enter your ID / passport number")
+      return
+    }
 
     setIsUploading(true)
     try {
       const formData = new FormData()
+      // Text fields must be appended BEFORE the file so the server (Fastify
+      // streaming multipart) can read them off the file part's `fields`.
+      formData.append("type", docType)
+      formData.append("documentNumber", documentNumber.trim())
       formData.append("file", selectedFile)
 
       const response = await api.post<UploadDocumentResponse>("/documents/upload/government-id", formData, {
@@ -146,6 +156,31 @@ export const DocumentUploadStep = ({
         <p className="text-base sm:text-lg text-gray-600">
           We need to verify your identity to connect you with employers
         </p>
+      </div>
+
+      <div className="mb-6 space-y-4">
+        <div>
+          <label className="mb-1 block text-sm font-semibold text-gray-900">Document type</label>
+          <select
+            value={docType}
+            onChange={(e) => setDocType(e.target.value as typeof docType)}
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 focus:border-brand focus:outline-none"
+          >
+            <option value="GOVERNMENT_ID">National ID</option>
+            <option value="PASSPORT">Passport</option>
+            <option value="DRIVER_LICENSE">Driver&apos;s License</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-semibold text-gray-900">ID / Passport number</label>
+          <input
+            type="text"
+            value={documentNumber}
+            onChange={(e) => setDocumentNumber(e.target.value)}
+            placeholder="Enter the number on your document"
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 focus:border-brand focus:outline-none"
+          />
+        </div>
       </div>
 
       {!preview ? (
@@ -211,7 +246,7 @@ export const DocumentUploadStep = ({
         <button
           type="button"
           onClick={handleUpload}
-          disabled={!selectedFile || isUploading || isLoading}
+          disabled={!selectedFile || !documentNumber.trim() || isUploading || isLoading}
           className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isUploading ? "Uploading..." : "Continue"}

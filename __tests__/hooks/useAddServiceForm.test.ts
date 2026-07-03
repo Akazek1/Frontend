@@ -4,6 +4,11 @@ import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
 
+// Compression is a browser-only lib; in tests just pass the file straight through.
+vi.mock("browser-image-compression", () => ({
+  default: (file: File) => Promise.resolve(file),
+}));
+
 vi.mock("@/services/services-service", () => ({
   default: {
     create: vi.fn(),
@@ -28,7 +33,6 @@ const STORAGE_PREFIX = "hwa.addServiceForm.";
 const buildExistingService = (): Service => ({
   service: {} as Record<string, unknown>,
   id: "svc-edit",
-  title: "Existing service",
   description: "An existing description",
   priceMin: 2500,
   priceMax: 2500,
@@ -102,18 +106,20 @@ describe("useAddServiceForm — state machine", () => {
     expect(result.current.isStep3Valid).toBe(true);
   });
 
-  it("caps newImageFiles at maxImages and ignores extras", () => {
+  it("caps newImageFiles at maxImages and ignores extras", async () => {
     const { result } = renderHook(() => useAddServiceForm());
 
     const files = Array.from({ length: 9 }, (_, i) =>
       new File(["x"], `${i}.jpg`, { type: "image/jpeg" }),
     );
-    act(() => result.current.addImageFiles(files));
+    await act(async () => {
+      await result.current.addImageFiles(files);
+    });
 
     expect(result.current.totalImageCount).toBe(result.current.maxImages);
   });
 
-  it("removeImageAt deletes from the merged (existing + new) array by index", () => {
+  it("removeImageAt deletes from the merged (existing + new) array by index", async () => {
     const { result } = renderHook(() =>
       useAddServiceForm({ service: buildExistingService() }),
     );
@@ -123,7 +129,9 @@ describe("useAddServiceForm — state machine", () => {
 
     const f1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
     const f2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
-    act(() => result.current.addImageFiles([f1, f2]));
+    await act(async () => {
+      await result.current.addImageFiles([f1, f2]);
+    });
     expect(result.current.totalImageCount).toBe(3);
 
     // Remove the first (existing URL)
@@ -188,7 +196,6 @@ describe("useAddServiceForm — state machine", () => {
       useAddServiceForm({ service: buildExistingService() }),
     );
 
-    expect(result.current.form.title).toBe("Existing service");
     expect(result.current.form.chargedPer).toBe("weekly");
     expect(result.current.form.priceMode).toBe("fixed"); // min === max
     expect(result.current.form.priceMin).toBe("2500");
