@@ -7,8 +7,7 @@ import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
 import LanguageSwitcher from "@/components/header/language-switcher"
 import { AkazekLogo } from "@/components/brand/akazek-logo"
-
-type Role = "EMPLOYER" | "WORKER"
+import type { OnboardingRole } from "@/services/auth-service"
 
 export function RoleSelection() {
   const t = useTranslations("onboarding")
@@ -18,7 +17,7 @@ export function RoleSelection() {
   const isEmployer = selectedRoles.includes("EMPLOYER")
   const isWorker = selectedRoles.includes("WORKER")
 
-  const selectAndContinue = (role: Role) => {
+  const selectAndContinue = (role: OnboardingRole) => {
     setSelectedRoles([role])
     setCurrentStep(1)
   }
