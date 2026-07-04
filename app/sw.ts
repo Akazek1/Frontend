@@ -67,9 +67,14 @@ try {
       console.log("[sw] Received background message", payload);
     }
 
-    const notificationTitle = payload.notification?.title || "Akazek";
+    // Backend sends data-only messages (title/body inside `data`) so this is
+    // the ONLY place a notification is displayed — a `notification` payload
+    // would make the Firebase SDK show a duplicate. The fallback reads the old
+    // shape in case an outdated backend is still deployed.
+    const notificationTitle =
+      payload.data?.title || payload.notification?.title || "Akazek";
     const notificationOptions: NotificationOptions = {
-      body: payload.notification?.body || "",
+      body: payload.data?.body || payload.notification?.body || "",
       icon: notificationIcon,
       badge: notificationIcon,
       data: payload.data,

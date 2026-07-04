@@ -73,8 +73,10 @@ export const usePushNotifications = () => {
     getMessagingInstance().then((messaging) => {
       if (messaging) {
         unsubscribe = onMessage(messaging, (payload) => {
-          const title = payload.notification?.title || "Notification";
-          const body = payload.notification?.body || "";
+          // Data-only messages carry title/body in `data` (see backend
+          // sendPushNotification); fall back to the old `notification` shape.
+          const title = payload.data?.title || payload.notification?.title || "Notification";
+          const body = payload.data?.body || payload.notification?.body || "";
           const data = (payload.data || {}) as Record<string, unknown>;
           // Route to the SAME place tapping the notification in the in-app list
           // would (e.g. a hire request → /work?tab=requests, not the empty
