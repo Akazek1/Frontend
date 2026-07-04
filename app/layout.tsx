@@ -73,8 +73,11 @@ export const metadata: Metadata = {
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
+      // Exactly ONE apple-touch-icon: listing several makes iOS fetch each
+      // candidate in turn (visible icon flicker in the share sheet) and lets
+      // whichever loads last win — which is how a stale duplicate ends up as
+      // the home-screen icon.
       { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
