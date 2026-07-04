@@ -1,7 +1,20 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import withSerwistInit from "@serwist/next";
 import createNextIntlPlugin from "next-intl/plugin";
+
+// Precache entry for a file under public/, with a content-hash revision so it
+// only re-downloads when the file actually changes.
+function publicPrecacheEntry(file: string) {
+  const contents = fs.readFileSync(path.join(__dirname, "public", file));
+  return {
+    url: `/${file}`,
+    revision: crypto.createHash("md5").update(contents).digest("hex"),
+  };
+}
 
 // Points next-intl at our request config (cookie-based locale, no URL routing).
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
@@ -19,15 +32,24 @@ const withSerwist = withSerwistInit({
   reloadOnOnline: false,
   cacheOnNavigation: false,
   disable: process.env.NODE_ENV === "development",
-  // Precache the rendered /offline app route (the SW's navigation fallback), so
-  // offline users hitting an unvisited page keep the normal layout + bottom nav
-  // instead of a bare error screen. Random revision re-fetches it every deploy.
-  additionalPrecacheEntries: [{ url: "/offline", revision: crypto.randomUUID() }],
-  globPublicPatterns: [
-    // Only the offline page's icon — NOT all of brand/*.png, which would
-    // precache ~7 MB of logos onto every device on first load.
-    "brand/akazek-mark-dark-tight.png",
-    "icons/*.png",
+  // NOTE: providing `additionalPrecacheEntries` DISABLES @serwist/next's
+  // `globPublicPatterns` public-folder precache entirely (it's a `??` fallback,
+  // not a merge — see @serwist/next dist/index.mjs), so every public file we
+  // want offline must be listed here explicitly.
+  additionalPrecacheEntries: [
+    // The offline page's logo — only this file, NOT all of brand/*.png, which
+    // would precache ~7 MB of logos onto every device on first load.
+    publicPrecacheEntry("brand/akazek-mark-dark-tight.png"),
+    // App icons (manifest + apple-touch), so installs render offline too.
+    ...fs
+      .readdirSync(path.join(__dirname, "public/icons"))
+      .filter((f) => f.endsWith(".png"))
+      .map((f) => publicPrecacheEntry(`icons/${f}`)),
+    // The rendered /offline app route (the SW's navigation fallback), so
+    // offline users hitting an unvisited page keep the normal layout + bottom
+    // nav instead of a bare error screen. Random revision re-fetches it every
+    // deploy (it's a server-rendered route, so there's no file to hash).
+    { url: "/offline", revision: crypto.randomUUID() },
   ],
   exclude: [
     /\.map$/,
