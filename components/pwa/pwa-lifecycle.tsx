@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { Download, RefreshCw, Share2, X } from "lucide-react";
+import { Download, Share2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -35,6 +34,13 @@ export function PwaLifecycle() {
   useEffect(() => {
     if (process.env.NODE_ENV === "development" || !("serviceWorker" in navigator)) return;
 
+    // Silent update strategy — no "reload?" popup:
+    //  - A new SW found DURING the session just installs and waits; the user
+    //    is never interrupted (the old SW keeps serving its own matching
+    //    cached assets, so a stale session stays fully functional).
+    //  - A SW already waiting AT LAUNCH is activated right away (SKIP_WAITING
+    //    + one reload). The page has barely rendered, so this is invisible —
+    //    it's the update-on-restart model native apps use.
     let refreshing = false;
 
     const onControllerChange = () => {
@@ -43,56 +49,17 @@ export function PwaLifecycle() {
       window.location.reload();
     };
 
-    const showUpdateToast = (registration: ServiceWorkerRegistration) => {
-      toast(
-        (t) => (
-          <div className="flex max-w-[320px] items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-[#111827]">Update available</p>
-              <p className="text-xs text-[#4B5563]">Reload when you are ready.</p>
-            </div>
-            <Button
-              size="sm"
-              className="h-8 gap-1 bg-[#145B10] px-2 text-xs hover:bg-[#0f4a0c]"
-              onClick={() => {
-                toast.dismiss(t.id);
-                registration.waiting?.postMessage({ type: "SKIP_WAITING" });
-              }}
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Reload
-            </Button>
-          </div>
-        ),
-        { duration: Infinity },
-      );
-    };
-
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
         if (registration.waiting && navigator.serviceWorker.controller) {
-          showUpdateToast(registration);
+          // Only reload for THIS launch-time activation, never for workers
+          // that finish installing mid-session (they wait for next launch).
+          navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
         }
-
-        registration.addEventListener("updatefound", () => {
-          const worker = registration.installing;
-          if (!worker) return;
-
-          worker.addEventListener("statechange", () => {
-            if (
-              worker.state === "installed" &&
-              navigator.serviceWorker.controller &&
-              registration.waiting
-            ) {
-              showUpdateToast(registration);
-            }
-          });
-        });
       })
       .catch(() => undefined);
-
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
     return () => {
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
