@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { Serwist, CacheFirst, ExpirationPlugin } from "serwist";
+import { Serwist, CacheFirst, NetworkFirst, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
 import { defaultCache } from "@serwist/next/worker";
 import { firebaseConfig } from "@/lib/firebase-config";
@@ -111,10 +111,32 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // Next.js' default caching strategies: NetworkFirst for page navigations and
-    // RSC payloads (so previously-visited pages open offline), plus caching for
-    // static chunks, images, and fonts. Listed after the specific matcher above
-    // so that rule still wins for the village dataset.
+    {
+      // Page navigations must be an EXPLICIT registered route: @serwist/next's
+      // defaultCache has no navigate matcher and cacheOnNavigation is false, so
+      // without this the SW would register no navigation handler at all —
+      // meaning nothing gets cached AND an offline navigation never reaches the
+      // `fallbacks` catch handler below (it fails with a raw network error).
+      // NetworkFirst gives: fresh pages online, previously-visited pages served
+      // from cache offline, and — on an offline miss — a throw that triggers the
+      // /offline fallback. The "pages" cache is cleared on logout
+      // (lib/pwa-caches.ts SENSITIVE_SW_CACHES) so a shared device can't read
+      // the previous user's authenticated pages.
+      matcher: ({ request }: { request: Request }) => request.mode === "navigate",
+      handler: new NetworkFirst({
+        cacheName: "pages",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 64,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+    // Next.js' default caching strategies for sub-resources: static chunks,
+    // images, fonts, RSC/data payloads. Listed last so the specific matchers
+    // above win for the village dataset and page navigations.
     ...defaultCache,
   ],
   // When a page navigation misses the cache while offline (e.g. a route never
