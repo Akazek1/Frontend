@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 
-import { Serwist, CacheFirst, NetworkOnly, ExpirationPlugin } from "serwist";
+import { Serwist, CacheFirst, NetworkFirst, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
+import { defaultCache } from "@serwist/next/worker";
 import { firebaseConfig } from "@/lib/firebase-config";
 import { buildNotificationTargetUrl } from "@/lib/notification-routing";
 
@@ -45,29 +46,41 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js",
-);
+// Firebase compat scripts are self-hosted (public/firebase/*, pinned to the same
+// version as the npm `firebase` SDK) instead of pulled from gstatic.com. Two
+// reasons: no third-party network call at SW startup, and — critically for
+// low-bandwidth/blocked networks — a failed fetch here can no longer abort the
+// whole SW install. The entire FCM setup is wrapped so that if it throws, the
+// SW still installs and Serwist's offline caching (the app shell) keeps working:
+// the user never loses the app, they only lose background push.
+try {
+  importScripts(
+    "/firebase/firebase-app-compat.js",
+    "/firebase/firebase-messaging-compat.js",
+  );
 
-self.firebase?.initializeApp(firebaseConfig);
-const messaging = self.firebase?.messaging();
+  self.firebase?.initializeApp(firebaseConfig);
+  const messaging = self.firebase?.messaging();
 
-messaging?.onBackgroundMessage((payload) => {
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[sw] Received background message", payload);
-  }
+  messaging?.onBackgroundMessage((payload) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[sw] Received background message", payload);
+    }
 
-  const notificationTitle = payload.notification?.title || "Akazek";
-  const notificationOptions: NotificationOptions = {
-    body: payload.notification?.body || "",
-    icon: notificationIcon,
-    badge: notificationIcon,
-    data: payload.data,
-  };
+    const notificationTitle = payload.notification?.title || "Akazek";
+    const notificationOptions: NotificationOptions = {
+      body: payload.notification?.body || "",
+      icon: notificationIcon,
+      badge: notificationIcon,
+      data: payload.data,
+    };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+} catch (err) {
+  // Push is best-effort; offline caching must survive a Firebase load failure.
+  console.error("[sw] FCM background setup failed; push disabled", err);
+}
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -75,11 +88,12 @@ const serwist = new Serwist({
     cleanupOutdatedCaches: true,
   },
   disableDevLogs: true,
-  // Prompted update (not silent): the new SW waits until the user taps
-  // "Reload" in the PwaLifecycle toast, so active chat/booking/draft flows
-  // aren't reloaded out from under the user.
+  // Updates must NOT auto-activate: the new worker waits until the user taps
+  // "Reload" in the update toast (which posts SKIP_WAITING). With `true`, the
+  // waiting worker would activate on install, fire `controllerchange`, and
+  // hard-reload the page mid-session (e.g. while filling a booking form).
   skipWaiting: false,
-  clientsClaim: false,
+  clientsClaim: true,
   runtimeCaching: [
     {
       // The Rwanda village dataset (~2.5 MB / ~270 KB gzip) is fetched on demand
@@ -98,23 +112,45 @@ const serwist = new Serwist({
       }),
     },
     {
-      // Page navigations always go to the network so users see fresh, real
-      // pages when online. When the network fails (offline), the `fallbacks`
-      // catch handler below serves /offline.html. We deliberately do NOT cache
-      // page responses — this is an offline shell, not full offline, and
-      // caching authenticated pages would risk stale/leaked data.
+      // Page navigations must be an EXPLICIT registered route: @serwist/next's
+      // defaultCache has no navigate matcher and cacheOnNavigation is false, so
+      // without this the SW would register no navigation handler at all —
+      // meaning nothing gets cached AND an offline navigation never reaches the
+      // `fallbacks` catch handler below (it fails with a raw network error).
+      // NetworkFirst gives: fresh pages online, previously-visited pages served
+      // from cache offline, and — on an offline miss — a throw that triggers the
+      // /offline fallback. The "pages" cache is cleared on logout
+      // (lib/pwa-caches.ts SENSITIVE_SW_CACHES) so a shared device can't read
+      // the previous user's authenticated pages.
       matcher: ({ request }: { request: Request }) => request.mode === "navigate",
-      handler: new NetworkOnly(),
+      handler: new NetworkFirst({
+        cacheName: "pages",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 64,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
     },
+    // Next.js' default caching strategies for sub-resources: static chunks,
+    // images, fonts, RSC/data payloads. Listed last so the specific matchers
+    // above win for the village dataset and page navigations.
+    ...defaultCache,
   ],
-  // Served ONLY when a handler throws (i.e. the network is unavailable), not
-  // for every navigation — this is what makes online navigations work normally
-  // while still showing the offline page when truly offline.
+  // When a page navigation misses the cache while offline (e.g. a route never
+  // visited before), serve the precached /offline page instead of the
+  // browser's error screen. It's a real app route (precached together with its
+  // chunks via additionalPrecacheEntries in next.config.ts), so the user keeps
+  // the normal layout and bottom nav and can jump to any cached page.
   fallbacks: {
     entries: [
       {
-        url: "/offline.html",
-        matcher: ({ request }: { request: Request }) => request.destination === "document",
+        url: "/offline",
+        matcher({ request }) {
+          return request.destination === "document";
+        },
       },
     ],
   },

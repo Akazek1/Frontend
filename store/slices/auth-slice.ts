@@ -162,7 +162,7 @@ const authSlice = createSlice({
         localStorage.setItem("token", action.payload.token);
         // The signup token has served its purpose — discard it
         localStorage.removeItem("signupToken");
-        document.cookie = `token=${action.payload.token}; path=/; max-age=7776000; SameSite=Lax`;
+        document.cookie = `token=${action.payload.token}; path=/; max-age=31536000; SameSite=Lax`;
         document.cookie = "profileComplete=true; path=/; max-age=31536000";
       }
     },
@@ -216,7 +216,7 @@ const authSlice = createSlice({
           if (typeof window !== "undefined") {
             localStorage.setItem("user", JSON.stringify(action.payload.user));
             localStorage.setItem("token", action.payload.token);
-            document.cookie = `token=${action.payload.token}; path=/; max-age=7776000; SameSite=Lax`;
+            document.cookie = `token=${action.payload.token}; path=/; max-age=31536000; SameSite=Lax`;
             if (action.payload.user?.firstName) {
               document.cookie = "profileComplete=true; path=/; max-age=31536000";
             } else {

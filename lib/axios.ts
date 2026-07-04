@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAuthToken } from "@/lib/auth-utils";
+import { clearSensitiveSwCaches } from "@/lib/pwa-caches";
 
 // Per-request opt-out for the global 401 handling below. Set on "enhancement"
 // calls — optional, authenticated helper requests fired from otherwise-public
@@ -28,9 +29,9 @@ const api = axios.create({
 function storeAccessToken(token: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem("token", token);
-  // Match the refresh-session lifetime so middleware doesn't bounce a user
-  // whose access token is being silently renewed in the background.
-  document.cookie = `token=${token}; path=/; max-age=${90 * 24 * 60 * 60}; SameSite=Lax`;
+  // Match the access-token lifetime so middleware doesn't bounce a user whose
+  // token is still valid. The session lasts until explicit sign-out.
+  document.cookie = `token=${token}; path=/; max-age=${365 * 24 * 60 * 60}; SameSite=Lax`;
 }
 
 // Silent refresh: exchange the HttpOnly refresh cookie for a new access token.
@@ -115,6 +116,17 @@ api.interceptors.response.use(
           localStorage.removeItem("persist:root");
           document.cookie =
             "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          // The session is over: drop SW-cached pages/API responses so the
+          // previous user's data can't be read offline on a shared device.
+          await clearSensitiveSwCaches().catch(() => undefined);
+          // Also drop the FCM token binding (same as explicit logout), so the
+          // previous user stops receiving push on this shared device. Dynamic
+          // import avoids a static cycle (fcm-token-service imports this file).
+          // Best-effort: deleteToken() clears it locally even if the (now
+          // unauthenticated) server call fails.
+          await import("@/services/fcm-token-service")
+            .then((m) => m.unregisterFcmToken())
+            .catch(() => undefined);
           // Don't redirect if already on the onboarding page — let the
           // onboarding context handle auth errors in its own catch blocks.
           if (!window.location.pathname.startsWith("/onboarding")) {
