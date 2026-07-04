@@ -19,12 +19,15 @@ const withSerwist = withSerwistInit({
   reloadOnOnline: false,
   cacheOnNavigation: false,
   disable: process.env.NODE_ENV === "development",
+  // Precache the rendered /offline app route (the SW's navigation fallback), so
+  // offline users hitting an unvisited page keep the normal layout + bottom nav
+  // instead of a bare error screen. Random revision re-fetches it every deploy.
+  additionalPrecacheEntries: [{ url: "/offline", revision: crypto.randomUUID() }],
   globPublicPatterns: [
     // Only the offline page's icon — NOT all of brand/*.png, which would
     // precache ~7 MB of logos onto every device on first load.
     "brand/akazek-mark-dark-tight.png",
     "icons/*.png",
-    "offline.html",
   ],
   exclude: [
     /\.map$/,
