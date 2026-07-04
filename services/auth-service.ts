@@ -3,6 +3,7 @@ import { getAuthToken } from "@/lib/auth-utils";
 import { unregisterFcmToken } from "@/services/fcm-token-service";
 import { clearPersistedQueryCache } from "@/lib/query-persistence";
 import { clearAppQueryClient } from "@/lib/query-client";
+import { clearSensitiveSwCaches } from "@/lib/pwa-caches";
 
 // Define types for auth requests and responses
 export interface SendOtpRequest {
@@ -107,6 +108,9 @@ const authService = {
       // shared device doesn't leak the previous user's cached data after logout.
       await clearPersistedQueryCache();
       clearAppQueryClient();
+      // Same reason for the service-worker caches: cached pages and API
+      // responses would otherwise remain readable offline after logout.
+      await clearSensitiveSwCaches();
     } catch {
       // ignore — proceed to clear the session regardless
     }

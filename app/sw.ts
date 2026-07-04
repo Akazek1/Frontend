@@ -46,29 +46,41 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-importScripts(
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
-  "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js",
-);
+// Firebase compat scripts are self-hosted (public/firebase/*, pinned to the same
+// version as the npm `firebase` SDK) instead of pulled from gstatic.com. Two
+// reasons: no third-party network call at SW startup, and — critically for
+// low-bandwidth/blocked networks — a failed fetch here can no longer abort the
+// whole SW install. The entire FCM setup is wrapped so that if it throws, the
+// SW still installs and Serwist's offline caching (the app shell) keeps working:
+// the user never loses the app, they only lose background push.
+try {
+  importScripts(
+    "/firebase/firebase-app-compat.js",
+    "/firebase/firebase-messaging-compat.js",
+  );
 
-self.firebase?.initializeApp(firebaseConfig);
-const messaging = self.firebase?.messaging();
+  self.firebase?.initializeApp(firebaseConfig);
+  const messaging = self.firebase?.messaging();
 
-messaging?.onBackgroundMessage((payload) => {
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[sw] Received background message", payload);
-  }
+  messaging?.onBackgroundMessage((payload) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[sw] Received background message", payload);
+    }
 
-  const notificationTitle = payload.notification?.title || "Akazek";
-  const notificationOptions: NotificationOptions = {
-    body: payload.notification?.body || "",
-    icon: notificationIcon,
-    badge: notificationIcon,
-    data: payload.data,
-  };
+    const notificationTitle = payload.notification?.title || "Akazek";
+    const notificationOptions: NotificationOptions = {
+      body: payload.notification?.body || "",
+      icon: notificationIcon,
+      badge: notificationIcon,
+      data: payload.data,
+    };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+} catch (err) {
+  // Push is best-effort; offline caching must survive a Firebase load failure.
+  console.error("[sw] FCM background setup failed; push disabled", err);
+}
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -76,7 +88,11 @@ const serwist = new Serwist({
     cleanupOutdatedCaches: true,
   },
   disableDevLogs: true,
-  skipWaiting: true,
+  // Updates must NOT auto-activate: the new worker waits until the user taps
+  // "Reload" in the update toast (which posts SKIP_WAITING). With `true`, the
+  // waiting worker would activate on install, fire `controllerchange`, and
+  // hard-reload the page mid-session (e.g. while filling a booking form).
+  skipWaiting: false,
   clientsClaim: true,
   runtimeCaching: [
     {
@@ -102,14 +118,14 @@ const serwist = new Serwist({
     ...defaultCache,
   ],
   // When a page navigation misses the cache while offline (e.g. a route never
-  // visited before), serve the precached static offline page instead of the
-  // browser's error screen. offline.html is a self-contained static file
-  // (precached via globPublicPatterns in next.config.ts), so it renders offline
-  // without depending on the dynamic app shell.
+  // visited before), serve the precached /offline page instead of the
+  // browser's error screen. It's a real app route (precached together with its
+  // chunks via additionalPrecacheEntries in next.config.ts), so the user keeps
+  // the normal layout and bottom nav and can jump to any cached page.
   fallbacks: {
     entries: [
       {
-        url: "/offline.html",
+        url: "/offline",
         matcher({ request }) {
           return request.destination === "document";
         },
