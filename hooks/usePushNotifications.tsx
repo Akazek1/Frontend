@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 import { getMessagingInstance } from "@/lib/firebase";
 import { onMessage } from "firebase/messaging";
 import { useAuth } from "./useAuth";
 import toast from "react-hot-toast";
 import { registerFcmToken } from "@/services/fcm-token-service";
+import { getNotificationHref, type NotificationItem } from "./useNotifications";
+import api from "@/lib/axios";
 
 export const usePushNotifications = () => {
   const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const requestPermission = useCallback(async () => {
     try {
@@ -70,7 +75,48 @@ export const usePushNotifications = () => {
         unsubscribe = onMessage(messaging, (payload) => {
           const title = payload.notification?.title || "Notification";
           const body = payload.notification?.body || "";
-          toast.success(`${title}: ${body}`, { duration: 5000 });
+          const data = (payload.data || {}) as Record<string, unknown>;
+          // Route to the SAME place tapping the notification in the in-app list
+          // would (e.g. a hire request → /work?tab=requests, not the empty
+          // inbox), by reusing the canonical resolver.
+          const href = getNotificationHref({ metadata: data } as NotificationItem);
+          const notificationId =
+            typeof data.notificationId === "string" ? data.notificationId : null;
+
+          toast.custom(
+            (t) => (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  if (notificationId) {
+                    api
+                      .patch(`/users/notifications/${notificationId}/read`)
+                      .catch(() => undefined);
+                  }
+                  if (href) router.push(href);
+                }}
+                className="pointer-events-auto flex w-[min(92vw,380px)] cursor-pointer items-start gap-3 rounded-xl border border-[#E1EBDD] bg-white p-3 shadow-[0_10px_28px_rgba(0,0,0,0.14)]"
+              >
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E8F7E5] text-brand">
+                  <Bell className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-semibold text-ink">{title}</p>
+                  {body && (
+                    <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-[#4B5563]">
+                      {body}
+                    </p>
+                  )}
+                  {href && (
+                    <p className="mt-1 text-[12px] font-semibold text-brand">Tap to open</p>
+                  )}
+                </div>
+              </div>
+            ),
+            { duration: 6000 },
+          );
         });
       }
     });

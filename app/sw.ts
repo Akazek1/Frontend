@@ -1,8 +1,7 @@
 /// <reference lib="webworker" />
 
-import { Serwist, CacheFirst, ExpirationPlugin } from "serwist";
+import { Serwist, CacheFirst, NetworkOnly, ExpirationPlugin } from "serwist";
 import type { PrecacheEntry } from "serwist";
-import { defaultCache } from "@serwist/next/worker";
 import { firebaseConfig } from "@/lib/firebase-config";
 import { buildNotificationTargetUrl } from "@/lib/notification-routing";
 
@@ -51,8 +50,8 @@ self.addEventListener("notificationclick", (event) => {
 // reasons: no third-party network call at SW startup, and — critically for
 // low-bandwidth/blocked networks — a failed fetch here can no longer abort the
 // whole SW install. The entire FCM setup is wrapped so that if it throws, the
-// SW still installs and Serwist's offline caching (the app shell) keeps working:
-// the user never loses the app, they only lose background push.
+// SW still installs and Serwist's offline caching keeps working: the user never
+// loses the app, they only lose background push.
 try {
   importScripts(
     "/firebase/firebase-app-compat.js",
@@ -88,12 +87,11 @@ const serwist = new Serwist({
     cleanupOutdatedCaches: true,
   },
   disableDevLogs: true,
-  // Updates must NOT auto-activate: the new worker waits until the user taps
-  // "Reload" in the update toast (which posts SKIP_WAITING). With `true`, the
-  // waiting worker would activate on install, fire `controllerchange`, and
-  // hard-reload the page mid-session (e.g. while filling a booking form).
+  // Prompted update (not silent): the new SW waits until the user taps
+  // "Reload" in the PwaLifecycle toast, so active chat/booking/draft flows
+  // aren't reloaded out from under the user.
   skipWaiting: false,
-  clientsClaim: true,
+  clientsClaim: false,
   runtimeCaching: [
     {
       // The Rwanda village dataset (~2.5 MB / ~270 KB gzip) is fetched on demand
@@ -111,24 +109,24 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // Next.js' default caching strategies: NetworkFirst for page navigations and
-    // RSC payloads (so previously-visited pages open offline), plus caching for
-    // static chunks, images, and fonts. Listed after the specific matcher above
-    // so that rule still wins for the village dataset.
-    ...defaultCache,
+    {
+      // Page navigations always go to the network so users see fresh, real
+      // pages when online. When the network fails (offline), the `fallbacks`
+      // catch handler below serves /offline.html. We deliberately do NOT cache
+      // page responses — this is an offline shell, not full offline, and
+      // caching authenticated pages would risk stale/leaked data.
+      matcher: ({ request }: { request: Request }) => request.mode === "navigate",
+      handler: new NetworkOnly(),
+    },
   ],
-  // When a page navigation misses the cache while offline (e.g. a route never
-  // visited before), serve the precached /offline page instead of the
-  // browser's error screen. It's a real app route (precached together with its
-  // chunks via additionalPrecacheEntries in next.config.ts), so the user keeps
-  // the normal layout and bottom nav and can jump to any cached page.
+  // Served ONLY when a handler throws (i.e. the network is unavailable), not
+  // for every navigation — this is what makes online navigations work normally
+  // while still showing the offline page when truly offline.
   fallbacks: {
     entries: [
       {
-        url: "/offline",
-        matcher({ request }) {
-          return request.destination === "document";
-        },
+        url: "/offline.html",
+        matcher: ({ request }: { request: Request }) => request.destination === "document",
       },
     ],
   },

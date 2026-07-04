@@ -30,6 +30,10 @@ import {
 } from "@/components/ui/app-primitives";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
+import { registerFcmToken, unregisterFcmToken } from "@/services/fcm-token-service";
+
+type DevicePermission = "unsupported" | "default" | "granted" | "denied";
+const DEVICE_PUSH_KEY = "akazek-device-push";
 
 interface NotificationPreferences {
   bookingInquiries: boolean;
@@ -155,6 +159,72 @@ const NotificationsPreferences = () => {
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [savingKey, setSavingKey] = useState<PreferenceKey | null>(null);
 
+  // OS-level push permission for THIS device — distinct from the per-category
+  // preferences above (which only decide whether the server bothers sending).
+  // Without OS permission + a registered token, nothing can ever arrive.
+  const [devicePermission, setDevicePermission] = useState<DevicePermission>("default");
+  const [deviceOptedOut, setDeviceOptedOut] = useState(false);
+  const [deviceBusy, setDeviceBusy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setDevicePermission("unsupported");
+      return;
+    }
+    setDevicePermission(Notification.permission as DevicePermission);
+    setDeviceOptedOut(localStorage.getItem(DEVICE_PUSH_KEY) === "off");
+  }, []);
+
+  const deviceEnabled = devicePermission === "granted" && !deviceOptedOut;
+
+  const handleDeviceToggle = async (next: boolean) => {
+    if (devicePermission === "unsupported") {
+      toast.error("Open the installed Akazek app (Add to Home Screen) to enable notifications.");
+      return;
+    }
+    setDeviceBusy(true);
+    try {
+      if (next) {
+        // Request permission FIRST, synchronously within this tap — iOS requires
+        // requestPermission() to run inside the user gesture.
+        let permission = Notification.permission as DevicePermission;
+        if (permission === "default") {
+          permission = (await Notification.requestPermission()) as DevicePermission;
+          setDevicePermission(permission);
+        }
+        if (permission === "denied") {
+          toast.error("Notifications are blocked. Enable them in your device settings.");
+          return;
+        }
+        if (permission !== "granted") return;
+        localStorage.setItem(DEVICE_PUSH_KEY, "on");
+        setDeviceOptedOut(false);
+        const token = await registerFcmToken();
+        toast[token ? "success" : "error"](
+          token
+            ? "Notifications enabled on this device"
+            : "Couldn't finish enabling notifications. Please try again.",
+        );
+      } else {
+        localStorage.setItem(DEVICE_PUSH_KEY, "off");
+        setDeviceOptedOut(true);
+        await unregisterFcmToken();
+        toast.success("Notifications turned off on this device");
+      }
+    } finally {
+      setDeviceBusy(false);
+    }
+  };
+
+  const deviceDescription =
+    devicePermission === "unsupported"
+      ? "Open the installed app (Add to Home Screen) to turn on notifications."
+      : devicePermission === "denied"
+        ? "Blocked — allow notifications for Akazek in your device settings."
+        : deviceEnabled
+          ? "You'll get booking, message, and review alerts on this phone."
+          : "Turn on to get booking, message, and review alerts on this phone.";
+
   // Cached: revisiting the settings page renders the saved toggles instantly.
   const { data: savedPreferences, isLoading } = useQuery({
     queryKey: PREFERENCES_KEY,
@@ -227,6 +297,31 @@ const NotificationsPreferences = () => {
           <ChevronRight className="h-5 w-5 text-brand" />
         </Link>
 
+        <Card variant="list" className="rounded-2xl">
+          <div className="flex min-h-[76px] items-center gap-3 px-4 py-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-brand">
+              <Smartphone className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold leading-5 text-ink">
+                Notifications on this device
+              </p>
+              <p className="mt-0.5 text-[13px] leading-5 text-[#6B7280]">{deviceDescription}</p>
+            </div>
+            <Switch
+              checked={deviceEnabled}
+              disabled={
+                deviceBusy ||
+                devicePermission === "unsupported" ||
+                devicePermission === "denied"
+              }
+              onCheckedChange={handleDeviceToggle}
+              aria-label="Toggle notifications on this device"
+              className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-[#D1D5DB]"
+            />
+          </div>
+        </Card>
+
         <div className={cn(appContentClass, "gap-5")}>
           {preferenceGroups.map((group) => {
             const GroupIcon = group.icon;
@@ -288,6 +383,15 @@ const NotificationsPreferences = () => {
           <div className="grid grid-cols-3 gap-3">
             {channels.map((channel) => {
               const ChannelIcon = channel.icon;
+              // The Push card reflects the live device state instead of a
+              // hardcoded "On"; Email/SMS stay as their static placeholders.
+              const isPush = channel.title === "Push";
+              const status = isPush ? (deviceEnabled ? "On" : "Off") : channel.status;
+              const statusClassName = isPush
+                ? deviceEnabled
+                  ? "bg-emerald-50 text-brand"
+                  : "bg-gray-100 text-[#6B7280]"
+                : channel.statusClassName;
 
               return (
                 <Card
@@ -313,10 +417,10 @@ const NotificationsPreferences = () => {
                     <span
                       className={cn(
                         "w-fit rounded-full px-2.5 py-1 text-[12px] font-bold",
-                        channel.statusClassName,
+                        statusClassName,
                       )}
                     >
-                      {channel.status}
+                      {status}
                     </span>
                   </div>
                 </Card>

@@ -19,17 +19,17 @@ const withSerwist = withSerwistInit({
   reloadOnOnline: false,
   cacheOnNavigation: false,
   disable: process.env.NODE_ENV === "development",
-  // Precache the rendered /offline page (the SW's navigation fallback). It is
-  // a real app route, so offline users keep the normal layout and bottom nav.
-  // The random revision re-fetches it on every deploy.
-  additionalPrecacheEntries: [{ url: "/offline", revision: crypto.randomUUID() }],
   globPublicPatterns: [
-    "brand/*.png",
+    // Only the offline page's icon — NOT all of brand/*.png, which would
+    // precache ~7 MB of logos onto every device on first load.
+    "brand/akazek-mark-dark-tight.png",
     "icons/*.png",
+    "offline.html",
   ],
   exclude: [
     /\.map$/,
     /^manifest.*\.js$/,
+    /firebase-messaging-sw\.js$/,
     /sw\.js$/,
     /sw\.js\.map$/,
     ({ asset }: { asset: { name: string } }) => {
