@@ -5,8 +5,21 @@ import api from "@/lib/axios";
 import { getMessagingInstance } from "@/lib/firebase";
 import { getAppServiceWorkerRegistration } from "@/lib/service-worker-registration";
 
+// Per-device push opt-out, set by the "Notifications on this device" toggle in
+// /more/notifications. Checked here, at the single place tokens are minted, so
+// no auto-registration path (e.g. the silent re-register on login in
+// usePushNotifications) can undo the user's choice on the next app launch.
+export const DEVICE_PUSH_KEY = "akazek-device-push";
+
+export function isDevicePushOptedOut() {
+  return (
+    typeof window !== "undefined" && localStorage.getItem(DEVICE_PUSH_KEY) === "off"
+  );
+}
+
 export async function registerFcmToken() {
   if (typeof window === "undefined" || !("Notification" in window)) return null;
+  if (isDevicePushOptedOut()) return null;
 
   const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
   if (!vapidKey) return null;
