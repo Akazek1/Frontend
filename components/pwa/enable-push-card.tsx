@@ -15,10 +15,12 @@ import {
 // a reflexive "Don't Allow" can only be undone deep in the phone's settings.
 // So we never fire it cold — this card asks first, in our own UI, and only a
 // tap on "Turn on" (a fresh user gesture, as iOS requires) triggers the real
-// prompt. Dismissing the card is free: it just snoozes and we may ask again
-// later, with the OS prompt still unspent.
+// prompt. Dismissing the card is free: it snoozes on an escalating schedule
+// (1 day after the first dismissal, then 2, 3, … capped at 7 days) — gentle
+// early on, and never more than weekly for someone who keeps saying no.
 const SNOOZE_KEY = "akazek-push-ask-snoozed-until";
-const SNOOZE_DAYS = 7;
+const DISMISS_COUNT_KEY = "akazek-push-ask-dismissals";
+const MAX_SNOOZE_DAYS = 7;
 // The install card (PwaLifecycle) appears after 3 interactions; waiting for a
 // few more keeps the two from stacking on top of each other.
 const MIN_INTERACTIONS = 6;
@@ -55,9 +57,12 @@ export function EnablePushCard() {
   }, [isAuthenticated, user?.id]);
 
   const snooze = () => {
+    const dismissals = Number(localStorage.getItem(DISMISS_COUNT_KEY) || 0) + 1;
+    const days = Math.min(dismissals, MAX_SNOOZE_DAYS);
+    localStorage.setItem(DISMISS_COUNT_KEY, String(dismissals));
     localStorage.setItem(
       SNOOZE_KEY,
-      String(Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000),
+      String(Date.now() + days * 24 * 60 * 60 * 1000),
     );
     setVisible(false);
   };
