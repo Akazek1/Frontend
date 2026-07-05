@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Send, ShieldCheck, XCircle } from "lu
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
+import { goBackOr } from "@/lib/navigation";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
 import { AgencyInquiry, INQUIRY_STATUS, inquiryPersonName } from "@/constant/agency-inquiries";
@@ -62,7 +63,7 @@ export default function InquiryDetailPage() {
   if (error || !inquiry) {
     return (
       <div className="p-4">
-        <button onClick={() => router.back()} className="mb-4 flex items-center gap-2 text-sm font-medium text-ink">
+        <button onClick={() => goBackOr(router, "/inquiries")} className="mb-4 flex items-center gap-2 text-sm font-medium text-ink">
           <ArrowLeft className="h-5 w-5" /> Back
         </button>
         <p className="text-sm text-ink-muted">{error || "Inquiry not found"}</p>
@@ -132,7 +133,7 @@ export default function InquiryDetailPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-[428px] flex-col bg-surface">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3">
-        <button onClick={() => router.back()} aria-label="Back"><ArrowLeft className="h-5 w-5 text-ink" /></button>
+        <button onClick={() => goBackOr(router, "/inquiries")} aria-label="Back"><ArrowLeft className="h-5 w-5 text-ink" /></button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-bold text-ink">{inquiry.agency?.name ?? "Agency"}</p>
           <p className="text-[11px] text-ink-muted">{st.label}</p>

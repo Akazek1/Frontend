@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { goBackOr } from "@/lib/navigation";
 import {
     ArrowLeft,
     Bookmark,
@@ -385,7 +386,7 @@ function ServiceDetailPage() {
             <div className="min-h-screen p-4" style={{ backgroundColor: colors.background }}>
                 <button
                     type="button"
-                    onClick={() => router.back()}
+                    onClick={() => goBackOr(router, "/")}
                     className="flex items-center gap-2 text-sm font-medium"
                     style={{ color: colors.text }}
                 >
@@ -404,7 +405,7 @@ function ServiceDetailPage() {
             <div className="sticky top-0 z-20 flex items-center justify-between bg-surface px-4 pb-2 pt-4">
                 <button
                     type="button"
-                    onClick={() => router.back()}
+                    onClick={() => goBackOr(router, "/")}
                     aria-label="Go back"
                     className="-ml-1 p-1"
                 >

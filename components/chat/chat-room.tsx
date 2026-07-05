@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import api from "@/lib/axios";
+import { goBackOr } from "@/lib/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
@@ -631,7 +632,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     <div className="bg-surface relative isolate flex h-screen flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
-        <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
+        <button onClick={() => goBackOr(router, "/conversations")} className="p-1 hover:bg-gray-100 rounded-full">
           <ArrowLeft className="h-6 w-6 text-gray-700" />
         </button>
 
