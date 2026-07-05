@@ -27,7 +27,7 @@ const Navigation = () => {
   const protectedRoutes = ["/work", "/conversations", "/more"];
 
   return (
-    <nav className="w-full bg-white shadow-md border-t p-2">
+    <nav className="w-full bg-white p-2">
       <div className="flex justify-around items-center">
         {navItems?.map((item) => {
           const IconComponent = item.icon ? Icons[item.icon] : null;

@@ -151,7 +151,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden pt-[env(safe-area-inset-top)]">
+    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-dvh overflow-hidden pt-[env(safe-area-inset-top)]">
       {/* Main content area with scrolling */}
       <main
         ref={mainRef}
