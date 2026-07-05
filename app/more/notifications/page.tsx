@@ -30,10 +30,13 @@ import {
 } from "@/components/ui/app-primitives";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
-import { registerFcmToken, unregisterFcmToken } from "@/services/fcm-token-service";
+import {
+  DEVICE_PUSH_KEY,
+  registerFcmToken,
+  unregisterFcmToken,
+} from "@/services/fcm-token-service";
 
 type DevicePermission = "unsupported" | "default" | "granted" | "denied";
-const DEVICE_PUSH_KEY = "akazek-device-push";
 
 interface NotificationPreferences {
   bookingInquiries: boolean;

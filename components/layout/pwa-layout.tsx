@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
+import { EnablePushCard } from "@/components/pwa/enable-push-card";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSocketConnection } from "@/hooks/useSocketConnection";
 import { useSelector } from "react-redux";
@@ -157,6 +158,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       >
         {children}
       </main>
+
+      <EnablePushCard />
 
       {/* Fixed Navigation */}
       {!shouldHideNavigation && (

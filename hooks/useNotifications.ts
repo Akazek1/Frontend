@@ -6,6 +6,7 @@ import { RootState } from "@/store";
 import api from "@/lib/axios";
 import { initializeSocket } from "@/lib/socket";
 import { getAuthToken } from "@/lib/auth-utils";
+import { resolveNotificationHref } from "@/lib/notification-routing";
 
 export interface NotificationItem {
   id: string;
@@ -35,30 +36,11 @@ export function getNotificationType(notification: NotificationItem): string | un
   return typeof type === "string" ? type : undefined;
 }
 
+// Routing lives in lib/notification-routing.ts (shared with the service
+// worker's notificationclick handler) so pushed notifications and their
+// in-app twins always open the same page.
 export function getNotificationHref(notification: NotificationItem): string | null {
-  const meta = parseNotificationMetadata(notification.metadata);
-
-  const href = meta.href ? String(meta.href) : "";
-  if (href.startsWith("/")) return href;
-
-  const type = typeof meta.type === "string" ? meta.type : "";
-  const reviewId = meta.reviewId ? String(meta.reviewId) : "";
-  const serviceId = meta.serviceId ? String(meta.serviceId) : "";
-  const providerUsername = meta.providerUsername ? String(meta.providerUsername).replace(/^@/, "") : "";
-  const bookingId = meta.bookingId ? String(meta.bookingId) : "";
-  const jobId = meta.jobId ? String(meta.jobId) : "";
-
-  if ((type === "NEW_REVIEW" || type === "REVIEW_REPLY") && serviceId && providerUsername) {
-    const params = reviewId ? `?reviewId=${encodeURIComponent(reviewId)}` : "";
-    return `/${encodeURIComponent(providerUsername)}/services/${encodeURIComponent(serviceId)}${params}#reviews`;
-  }
-  // A hire request has no chat room yet — the provider reviews it (employer +
-  // note) and accepts to chat from the Work "requests" view. Routing to the
-  // booking's inbox here would drop them into an empty, locked room.
-  if (type === "HIRE_REQUEST") return "/work?tab=requests";
-  if (bookingId) return `/conversations/inbox/${encodeURIComponent(bookingId)}`;
-  if (jobId) return `/jobs/${encodeURIComponent(jobId)}`;
-  return null;
+  return resolveNotificationHref(parseNotificationMetadata(notification.metadata));
 }
 
 interface UseNotificationsOptions {
