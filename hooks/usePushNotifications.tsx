@@ -36,33 +36,11 @@ export const usePushNotifications = () => {
     registerFcmToken().catch(() => undefined);
   }, [isAuthenticated, user?.id]);
 
-  // Ask only after the authenticated user has had some activity in this tab.
-  // This avoids the cold-login permission prompt while still keeping push
-  // available for users who are clearly engaging with the app.
-  useEffect(() => {
-    if (!isAuthenticated || !user || typeof window === "undefined") return;
-    if (!("Notification" in window) || Notification.permission !== "default") return;
-
-    let interactionCount = 0;
-    let requested = false;
-
-    const onInteraction = () => {
-      interactionCount += 1;
-      if (requested || interactionCount < 2) return;
-      requested = true;
-      requestPermission();
-      window.removeEventListener("click", onInteraction);
-      window.removeEventListener("keydown", onInteraction);
-    };
-
-    window.addEventListener("click", onInteraction, { passive: true });
-    window.addEventListener("keydown", onInteraction);
-
-    return () => {
-      window.removeEventListener("click", onInteraction);
-      window.removeEventListener("keydown", onInteraction);
-    };
-  }, [isAuthenticated, user?.id, requestPermission]); // user?.id prevents re-run on unrelated user object updates
+  // NOTE: we deliberately never fire the OS permission prompt automatically.
+  // It's a one-shot — a reflexive "Don't Allow" is only reversible deep in the
+  // phone's settings. The soft-ask card (components/pwa/enable-push-card.tsx)
+  // asks in our own UI first and only spends the real prompt on users who
+  // already said yes; the settings page toggle is the manual path.
 
   // Set up foreground message listener once per session
   useEffect(() => {
