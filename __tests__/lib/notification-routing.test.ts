@@ -65,6 +65,16 @@ describe("buildNotificationTargetUrl", () => {
     ).toBe("/diane/services/s1?reviewId=r1#reviews");
   });
 
+  it("routes cancelled bookings to the Work done list, not the dead chat", () => {
+    expect(
+      buildNotificationTargetUrl({
+        type: "BOOKING_CANCELLED",
+        bookingId: "b1",
+        notificationId: "n1",
+      }),
+    ).toBe("/work?tab=done&notificationId=n1");
+  });
+
   it("routes verification revocation to the profile", () => {
     expect(buildNotificationTargetUrl({ type: "VERIFICATION_REVOKED" })).toBe(
       "/profile",
