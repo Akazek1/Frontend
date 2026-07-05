@@ -10,7 +10,6 @@ import {
   MessageSquare,
   ShieldX,
   LogOut,
-  Sparkles,
   User,
   Bookmark,
   Lock,
@@ -135,10 +134,7 @@ const ProfileScreen = () => {
           <ProfileImageUploader />
         </div>
         <Separator className="my-2" style={{ backgroundColor: colors.backgroundTertiary }} />
-        <div className="flex items-start gap-2 rounded-md p-2" style={{ backgroundColor: colors.backgroundSecondary }}>
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: colors.backgroundTertiary, color: colors.primaryHover }}>
-            <Sparkles className="h-3 w-3" />
-          </span>
+        <div className="rounded-md p-2" style={{ backgroundColor: colors.backgroundSecondary }}>
           <div>
             <p className="text-[11px] font-semibold leading-3" style={{ color: colors.text }}>
               Keep your profile current

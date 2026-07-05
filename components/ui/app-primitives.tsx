@@ -401,7 +401,12 @@ const sheetPanelSideClass: Record<SheetPanelSide, string> = {
   bottom:
     "bottom-0 left-0 right-0 mx-auto max-w-[428px] rounded-t-3xl animate-in slide-in-from-bottom duration-200",
   right:
-    "bottom-0 right-0 top-0 w-[88%] max-w-[380px] rounded-l-2xl animate-in slide-in-from-right duration-200",
+    // `right-0` would anchor to the real browser viewport edge, not the
+    // centered 428px phone-frame column — on a wide desktop window that puts
+    // the panel far past where the app's visible content actually ends.
+    // This computes the phone-frame's own right edge: 0 once the viewport is
+    // narrower than 428px (frame fills the screen, same as `right-0` there).
+    "bottom-0 top-0 w-[88%] max-w-[380px] rounded-l-2xl animate-in slide-in-from-right duration-200 right-[max(0px,calc(50vw-214px))]",
   center:
     "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-[428px] -translate-x-1/2 -translate-y-1/2 rounded-3xl",
 };
