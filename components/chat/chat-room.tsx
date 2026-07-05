@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import api from "@/lib/axios";
+import { goBackOr } from "@/lib/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
@@ -1305,18 +1306,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     <div className="bg-surface relative isolate flex h-full flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
-        <button
-          onClick={() => {
-            // Opening a chat straight from a push notification lands here with
-            // no prior history entry — router.back() would then do nothing.
-            if (window.history.length > 1) {
-              router.back();
-            } else {
-              router.push("/conversations");
-            }
-          }}
-          className="p-1 hover:bg-gray-100 rounded-full"
-        >
+        <button onClick={() => goBackOr(router, "/conversations")} className="p-1 hover:bg-gray-100 rounded-full">
           <ArrowLeft className="h-6 w-6 text-gray-700" />
         </button>
 
