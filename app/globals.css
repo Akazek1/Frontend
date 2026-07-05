@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: black;
+  background-color: #F1FCEF;
   font-family: Arial, Helvetica, sans-serif;
   padding: 0;
   margin: 0;
@@ -111,6 +111,19 @@ body {
 
 .font-urbanist {
   font-family: "Urbanist", sans-serif;
+}
+
+/* Buttons, nav, and card chrome shouldn't show a text-selection highlight on
+   long-press/click-drag like a native app. Message text, inputs, and
+   textareas are intentionally excluded so users can still select/copy text. */
+button,
+a,
+nav,
+[role="button"],
+[role="tab"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 

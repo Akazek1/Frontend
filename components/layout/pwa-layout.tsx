@@ -115,6 +115,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       if (Math.abs(delta) < 6) return;
 
+      const atBottom = main.scrollHeight - (nextScrollTop + main.clientHeight) < 24;
+      if (atBottom) {
+        setIsNavigationHidden(false);
+        lastScrollTop = nextScrollTop;
+        return;
+      }
+
       const stickySearch = main.querySelector("[data-home-sticky-search]") as HTMLElement | null;
       const stickyCategories = main.querySelector("[data-home-sticky-categories]") as HTMLElement | null;
       const hideStart = stickyCategories

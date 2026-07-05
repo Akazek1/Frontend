@@ -138,6 +138,12 @@ function clearSession(key: string) {
 export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
   const { service, persistKey = service?.id ?? "new" } = options;
   const seededRef = useRef(false);
+  // The category the rehydrated draft was originally written for. New-service
+  // attempts all share the "new" sessionStorage key, so an abandoned draft for
+  // one category (e.g. Laundry) would otherwise silently pre-fill the
+  // description/price when the user picks a *different* category (e.g. Make
+  // Up) next. We only carry those fields over if the category still matches.
+  const draftCategoryIdRef = useRef<string | null>(null);
 
   const [form, setForm] = useState<WizardFormState>(() => {
     if (service) return rehydrateFromService(service);
@@ -153,6 +159,7 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
 
     const saved = readSession(persistKey);
     if (!saved) return;
+    draftCategoryIdRef.current = saved.categoryId ?? null;
     setForm((prev) => ({
       ...prev,
       ...saved,
@@ -169,7 +176,22 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
 
   const setField = useCallback(
     <K extends keyof WizardFormState>(key: K, value: WizardFormState[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
+      setForm((prev) => {
+        const next = { ...prev, [key]: value };
+        // Switching to a category the rehydrated draft wasn't written for —
+        // drop the carried-over description so it doesn't look copied from a
+        // different service. Only fires once, right after the category
+        // actually changes away from the draft's original one.
+        if (
+          key === "categoryId" &&
+          draftCategoryIdRef.current &&
+          value !== draftCategoryIdRef.current
+        ) {
+          draftCategoryIdRef.current = null;
+          next.description = "";
+        }
+        return next;
+      });
     },
     [],
   );

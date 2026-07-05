@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Smile } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import api from "@/lib/axios";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -27,16 +26,6 @@ import type { Review } from "@/hooks/useReviews";
 const SYSTEM_MESSAGE_MARKERS = ["✅", "❌", "🏁"];
 const isSystemMessage = (content: string) =>
   SYSTEM_MESSAGE_MARKERS.some((marker) => content.startsWith(marker));
-
-// Curated set of common chat emojis — keeps the picker lightweight (no extra
-// dependency) while covering everyday reactions for work conversations.
-const QUICK_EMOJIS = [
-  "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😉", "😎", "🤔",
-  "🙂", "🙃", "😅", "😇", "🥰", "😋", "😜", "🤗", "🤩", "🥳",
-  "👍", "👎", "👏", "🙏", "🙌", "💪", "👌", "✌️", "🤝", "👋",
-  "❤️", "🔥", "✨", "🎉", "💯", "✅", "❌", "⭐", "💰", "📍",
-  "😢", "😭", "😡", "😤", "😱", "😴", "🤧", "🤒", "😬", "🤷",
-];
 
 interface Message {
   id: string;
@@ -110,7 +99,6 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [isBookingReviewsOpen, setIsBookingReviewsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
   const reviewAutoPromptedRef = useRef(false);
@@ -570,29 +558,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     }
   };
 
-  // Insert an emoji at the current caret position (or append) and keep the
-  // textarea focused so typing can continue seamlessly.
-  const insertEmoji = (emoji: string) => {
-    const el = inputRef.current;
-    if (!el) {
-      setNewMessage((prev) => prev + emoji);
-      return;
-    }
-    const start = el.selectionStart ?? newMessage.length;
-    const end = el.selectionEnd ?? newMessage.length;
-    const next = newMessage.slice(0, start) + emoji + newMessage.slice(end);
-    setNewMessage(next);
-    // Restore caret just after the inserted emoji on the next tick.
-    requestAnimationFrame(() => {
-      el.focus();
-      const caret = start + emoji.length;
-      el.setSelectionRange(caret, caret);
-    });
-  };
-
   if (isLoading) {
     return (
-      <div className="bg-surface flex h-screen items-center justify-center">
+      <div className="bg-surface flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
@@ -628,7 +596,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     messages.length - nudgeDismissBaseline >= PENDING_NUDGE_MESSAGE_THRESHOLD;
 
   return (
-    <div className="bg-surface relative isolate flex h-screen flex-col overflow-hidden">
+    <div className="bg-surface relative isolate flex h-full flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
         <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
@@ -812,7 +780,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Messages Area */}
-      <main className="flex-1 overflow-y-auto space-y-4 px-4 pt-4 pb-28">
+      <main className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
           <p className="text-[11px] font-semibold text-ink">Booking Details</p>
           <p className="mt-1 text-[10px] text-ink-subtle">
@@ -922,39 +890,6 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {/* Input Area */}
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
         <div className="flex items-end gap-2">
-          <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={isReadOnly}
-                aria-label="Add emoji"
-                className="h-11 w-11 flex-shrink-0 rounded-full text-ink-subtle hover:bg-gray-100 hover:text-brand"
-              >
-                <Smile className="h-5 w-5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              side="top"
-              className="w-[280px] p-2"
-              onOpenAutoFocus={(e) => e.preventDefault()}
-            >
-              <div className="grid grid-cols-8 gap-0.5">
-                {QUICK_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => insertEmoji(emoji)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-lg hover:bg-gray-100 active:scale-90"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
           <Textarea
             ref={inputRef}
             placeholder={isReadOnly ? "This conversation is read-only" : "Type a message..."}

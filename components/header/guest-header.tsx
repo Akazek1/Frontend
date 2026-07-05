@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import LanguageSwitcher from "@/components/header/language-switcher";
 
 /**
  * Header shown to logged-out guests on the home screen.
@@ -14,10 +14,7 @@ const GuestHeader: React.FC = () => {
     <div className="flex flex-col gap-2.5">
       {/* Top row: location + auth actions */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 bg-white/70 border border-gray-200 rounded-full px-3 py-1.5 shadow-sm">
-          <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
-          <span className="text-[13px] font-semibold text-ink">Kigali, Rwanda</span>
-        </div>
+        <LanguageSwitcher />
 
         <div className="flex items-center gap-2">
           <Link

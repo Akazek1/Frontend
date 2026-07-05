@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useServices } from "@/hooks/useServices";
 import type { Service } from "@/types";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { getServiceDisplayName } from "@/lib/service-display";
@@ -36,6 +37,18 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   const router = useRouter();
   const { user } = useAuth();
   const isEdit = !!service;
+  const { services: myServices } = useServices();
+
+  // Job type IDs the user already has a listing for — excluded from Step 2 so
+  // they can't accidentally create an exact duplicate. Not applicable in edit
+  // mode (the wizard starts at step 3, skipping category selection).
+  const ownedServiceIds = useMemo(() => {
+    if (isEdit) return new Set<string>();
+    const ids = myServices
+      .map((s) => (typeof s.category === "string" ? s.category : s.category?.id))
+      .filter((id): id is string => Boolean(id));
+    return new Set(ids);
+  }, [myServices, isEdit]);
 
   const {
     form,
@@ -219,6 +232,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
             isAllMode={form.groupingId === ALL_ID}
             onContinue={() => isStep2Valid && setStep(3)}
             isValid={isStep2Valid}
+            ownedServiceIds={ownedServiceIds}
           />
         )}
 

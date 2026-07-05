@@ -26,14 +26,17 @@ const Header = () => {
   const router = useRouter();
   const { items, unreadCount, refetch, markRead } = useNotifications({ limit: 5 });
   const [address, setAddress] = useState<HeaderAddress | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setAddress(null);
+      setIsLoadingAddress(false);
       return;
     }
 
     let cancelled = false;
+    setIsLoadingAddress(true);
     async function loadAddress() {
       try {
         const response = await api.get("/users/profile");
@@ -43,6 +46,8 @@ const Header = () => {
         if (!cancelled) setAddress(next);
       } catch {
         if (!cancelled) setAddress(null);
+      } finally {
+        if (!cancelled) setIsLoadingAddress(false);
       }
     }
 
@@ -58,8 +63,11 @@ const Header = () => {
     if (city) return city;
     const district = address?.district?.trim();
     if (district) return district;
+    // Still fetching the profile — avoid flashing "Set location" before we
+    // know whether the user actually has one.
+    if (isLoadingAddress) return "";
     return t("location.set");
-  }, [address, user, t]);
+  }, [address, user, isLoadingAddress, t]);
 
   const locationDetail = useMemo(() => {
     if (!address) return null;
@@ -98,7 +106,11 @@ const Header = () => {
               aria-label={t("location.aria")}
             >
               <MapPin className="w-3.5 h-3.5 text-brand flex-shrink-0" />
-              <span className="truncate text-[13px] font-semibold text-ink">{locationLabel}</span>
+              {isLoadingAddress ? (
+                <span className="h-3 w-16 animate-pulse rounded-full bg-gray-200" />
+              ) : (
+                <span className="truncate text-[13px] font-semibold text-ink">{locationLabel}</span>
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[calc(100vw-24px)] max-w-[300px] rounded-2xl border-gray-100 bg-white p-0 shadow-xl">

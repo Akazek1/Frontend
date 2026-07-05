@@ -8,11 +8,13 @@ import {
   MessageSquare,
   Calendar,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { useShareLink } from "@/hooks/useShareLink";
+import { useLightbox } from "@/hooks/useLightbox";
 
 export interface UserProfileHeaderProps {
   name: string;
@@ -20,7 +22,6 @@ export interface UserProfileHeaderProps {
   profilePicture?: string;
   isVerified?: boolean;
   governmentIdStatus?: string;
-  availableToday?: boolean;
   location?: string;
   city?: string;
   district?: string;
@@ -44,7 +45,6 @@ export function UserProfileHeader({
   handle,
   profilePicture,
   isVerified,
-  availableToday,
   location: locationProp,
   city,
   district,
@@ -56,19 +56,12 @@ export function UserProfileHeader({
   isOwner = false,
 }: UserProfileHeaderProps) {
   const router = useRouter();
+  const shareLink = useShareLink();
+  const { lightbox, open: openLightbox, close: closeLightbox, prev: lightboxPrev, next: lightboxNext, select: selectLightboxIndex } = useLightbox();
   // Single source of truth: the admin-approved `isVerified` flag.
   const verified = !!isVerified;
   const location = locationProp || [district, sector, cell, city, country].filter(Boolean).join(", ");
   const memberSinceLabel = formatMonth(memberSince);
-
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied!");
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
 
   return (
     <section className="px-4 pt-4 pb-2">
@@ -85,7 +78,7 @@ export function UserProfileHeader({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleShare}
+            onClick={() => shareLink(window.location.href, name)}
             className="p-2 rounded-full hover:bg-gray-100"
             aria-label="Share profile"
           >
@@ -106,17 +99,20 @@ export function UserProfileHeader({
 
       {/* Identity row */}
       <div className="flex items-start gap-5">
-        <div className="relative w-28 h-28 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-          <Image
-            src={profilePicture || "/default-profile.svg"}
-            alt={name}
-            fill
-            className="object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/default-profile.svg";
-            }}
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => profilePicture && openLightbox([profilePicture], 0)}
+          aria-label={`View ${name}'s photo`}
+          disabled={!profilePicture}
+          className="relative w-28 h-28 rounded-full overflow-hidden bg-gray-100 flex-shrink-0"
+        >
+          <Avatar className="h-28 w-28">
+            <AvatarImage src={profilePicture} alt={name} className="object-cover" />
+            <AvatarFallback className="bg-gray-100 text-2xl font-bold text-ink">
+              {name?.[0]?.toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+        </button>
 
         <div className="flex-1 min-w-0 pt-1">
           <div className="flex items-center gap-1.5">
@@ -124,14 +120,16 @@ export function UserProfileHeader({
             {verified ? <VerifiedBadge size={20} /> : null}
           </div>
           <p className="text-sm text-gray-500 mb-2">{handle.startsWith("@") ? handle : `@${handle}`}</p>
-
-          {availableToday !== undefined ? (
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[13px] font-semibold text-white ${availableToday ? "bg-brand/85" : "bg-red-600/85"}`}>
-              {availableToday ? "Available Today" : "Unavailable"}
-            </span>
-          ) : null}
         </div>
       </div>
+
+      <ImageLightbox
+        lightbox={lightbox}
+        onClose={closeLightbox}
+        onPrev={lightboxPrev}
+        onNext={lightboxNext}
+        onSelect={selectLightboxIndex}
+      />
 
       {/* Meta rows */}
       <div className="mt-4 space-y-2.5 text-sm text-ink">
