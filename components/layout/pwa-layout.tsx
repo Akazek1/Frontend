@@ -115,6 +115,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       if (Math.abs(delta) < 6) return;
 
+      const atBottom = main.scrollHeight - (nextScrollTop + main.clientHeight) < 24;
+      if (atBottom) {
+        setIsNavigationHidden(false);
+        lastScrollTop = nextScrollTop;
+        return;
+      }
+
       const stickySearch = main.querySelector("[data-home-sticky-search]") as HTMLElement | null;
       const stickyCategories = main.querySelector("[data-home-sticky-categories]") as HTMLElement | null;
       const hideStart = stickyCategories
@@ -144,7 +151,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-screen overflow-hidden pt-[env(safe-area-inset-top)]">
+    <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-dvh overflow-hidden pt-[env(safe-area-inset-top)]">
       {/* Main content area with scrolling */}
       <main
         ref={mainRef}

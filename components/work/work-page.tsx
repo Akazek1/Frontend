@@ -700,7 +700,7 @@ function WorkFilterChips({
   onChange: (filter: WorkFilter) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="flex gap-1.5">
       {(Object.keys(FILTER_LABELS) as WorkFilter[]).map((key) => {
         const active = filter === key;
         const muted = counts[key] === 0;
@@ -710,7 +710,7 @@ function WorkFilterChips({
             type="button"
             onClick={() => onChange(key)}
             className={cn(
-              "flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-bold transition-colors",
+              "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[12px] font-bold transition-colors",
               active
                 ? "border-[#C17A5D] bg-white text-[#C17A5D]"
                 : "border-gray-200 bg-white text-ink",
@@ -1367,7 +1367,7 @@ export function JobPostsPage() {
             Post Job
           </Link>
         </header>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-1.5">
           {(["all", "open", "filled", "closed"] as const).map((key) => {
             const active = filter === key;
             return (
@@ -1376,7 +1376,7 @@ export function JobPostsPage() {
                 type="button"
                 onClick={() => setFilter(key)}
                 className={cn(
-                  "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[12px] font-bold capitalize transition-colors",
+                  "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[12px] font-bold capitalize transition-colors",
                   active
                     ? "border-brand bg-brand text-white"
                     : "border-gray-200 bg-white text-ink",

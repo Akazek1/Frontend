@@ -35,7 +35,7 @@ const Scroller = <T,>({
 
     return (
         <div
-            className={`overflow-x-auto overflow-y-hidden w-full ${className}`}
+            className={`overflow-x-auto overflow-y-hidden w-full pb-2.5 ${className}`}
             style={{
                 scrollbarWidth: "thin",
                 scrollbarColor: "#145B10 transparent",

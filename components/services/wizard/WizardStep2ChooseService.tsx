@@ -22,6 +22,8 @@ interface WizardStep2ChooseServiceProps {
   isAllMode: boolean;
   onContinue: () => void;
   isValid: boolean;
+  /** Job type IDs the user already has an active listing for — hidden here to avoid duplicates. */
+  ownedServiceIds?: Set<string>;
 }
 
 export function WizardStep2ChooseService({
@@ -34,17 +36,21 @@ export function WizardStep2ChooseService({
   isAllMode,
   onContinue,
   isValid,
+  ownedServiceIds,
 }: WizardStep2ChooseServiceProps) {
   const locale = useLocale();
   const [search, setSearch] = useState("");
 
   const visible: WizardJobType[] = useMemo(() => {
+    const available = ownedServiceIds?.size
+      ? grouping.jobTypes.filter((jt) => !ownedServiceIds.has(jt.id))
+      : grouping.jobTypes;
     const q = search.trim().toLowerCase();
-    if (!q) return grouping.jobTypes;
-    return grouping.jobTypes.filter((jt) =>
+    if (!q) return available;
+    return available.filter((jt) =>
       `${jt.name} ${jt.nameKn ?? ""}`.toLowerCase().includes(q),
     );
-  }, [grouping.jobTypes, search]);
+  }, [grouping.jobTypes, search, ownedServiceIds]);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -127,7 +133,9 @@ export function WizardStep2ChooseService({
 
         {visible.length === 0 && (
           <p className="py-8 text-center text-[13px] text-ink-muted">
-            No services match your search.
+            {search.trim()
+              ? "No services match your search."
+              : "You already offer every service in this category."}
           </p>
         )}
       </div>
