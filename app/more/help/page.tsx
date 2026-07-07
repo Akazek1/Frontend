@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { Check, ChevronDown, Mail, Phone, Send, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Mail, Phone, Send } from "lucide-react";
 import Link from "next/link";
 import {
   AppButton,
@@ -237,8 +237,7 @@ const HelpAndSupport = () => {
 
       {/* Tips Section */}
       <Card className="space-y-4 border-[#BFD8FF] bg-[#EEF6FF]">
-        <h3 className="flex items-center gap-2 text-base font-bold text-blue-900">
-          <Sparkles className="h-4 w-4" />
+        <h3 className="text-base font-bold text-blue-900">
           Pro Tips
         </h3>
         <ul className="space-y-2 text-sm text-blue-900">

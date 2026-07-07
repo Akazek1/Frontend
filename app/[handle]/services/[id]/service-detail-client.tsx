@@ -271,8 +271,6 @@ export function ServiceDetailClient() {
         return areas[0] || "";
     }, [service]);
 
-    const messageHref = "/conversations";
-
     // Owner-only UI (e.g. "Edit Service") must require a genuine session — not
     // just a stale persisted `user`. `user` is hydrated from localStorage
     // independently of the token, so a logged-out visitor can still carry a
@@ -1009,22 +1007,10 @@ export function ServiceDetailClient() {
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => requireAuth(() => router.push(messageHref), "message")}
-                            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
-                            style={{
-                                border: `1.5px solid ${colors.primary}`,
-                                color: colors.primary,
-                            }}
-                        >
-                            <MessageCircle className="h-5 w-5" />
-                            {SERVICE_DETAIL_LABELS.message}
-                        </button>
                         {needsReview ? (
                             <button
                                 onClick={() => requireAuth(() => setReviewOpen(true), "review")}
-                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white"
+                                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white"
                                 style={{ backgroundColor: "#C2630B" }}
                             >
                                 <Star className="h-5 w-5 fill-white stroke-white" />
@@ -1034,7 +1020,7 @@ export function ServiceDetailClient() {
                             <button
                                 onClick={() => requireAuth(openHireModal, "hire")}
                                 disabled={submitting || hasRequested}
-                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
                                 style={{ backgroundColor: hasRequested ? "#9CA3AF" : colors.primary }}
                             >
                                 {submitting ? (

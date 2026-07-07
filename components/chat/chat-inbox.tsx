@@ -362,13 +362,6 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
               (booking.status === BOOKING_STATUS.COMPLETED
                 ? "Job completed. Conversation is read-only."
                 : "Booking closed. Conversation is read-only.");
-            const goToProfile = (e: React.MouseEvent) => {
-              if (partner.username) {
-                e.stopPropagation();
-                router.push(`/${partner.username.replace(/^@/, "")}`);
-              }
-            };
-
             return (
               <button
                 key={booking.bookingId}
@@ -379,8 +372,8 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                 {/* Status accent bar */}
                 <span className={`absolute left-0 top-0 h-full w-1.5 ${status.bar}`} />
 
-                <span className="relative flex-shrink-0" onClick={goToProfile}>
-                  <Avatar className="h-12 w-12 cursor-pointer transition-opacity hover:opacity-80">
+                <span className="relative flex-shrink-0">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage src={partner.profilePicture || ""} className="object-cover" />
                     <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
                       {initials}
@@ -392,10 +385,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-1">
-                      <span
-                        onClick={goToProfile}
-                        className="block truncate text-[15px] font-bold text-ink hover:text-brand"
-                      >
+                      <span className="block truncate text-[15px] font-bold text-ink">
                         {displayName}
                       </span>
                       {partner.isVerified ? <VerifiedBadge size={14} /> : null}

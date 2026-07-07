@@ -21,7 +21,6 @@ import {
   Phone,
   Save,
   ShieldCheck,
-  Sparkles,
   User,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -656,21 +655,14 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             </section>
 
             <section className={appCardClass}>
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
-                  <Sparkles className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-black text-ink">Profile completeness</p>
-                    <p className="text-[13px] font-black text-ink">{profileCompletion}%</p>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#E5E9E3]">
-                    <div className="h-full rounded-full bg-brand" style={{ width: `${profileCompletion}%` }} />
-                  </div>
-                  <p className="mt-2 text-[11px] leading-4 text-[#53604F]">{profileCompletionMessage}</p>
-                </div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-[13px] font-black text-ink">Profile completeness</p>
+                <p className="text-[13px] font-black text-ink">{profileCompletion}%</p>
               </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#E5E9E3]">
+                <div className="h-full rounded-full bg-brand" style={{ width: `${profileCompletion}%` }} />
+              </div>
+              <p className="mt-2 text-[11px] leading-4 text-[#53604F]">{profileCompletionMessage}</p>
             </section>
 
             <section className="space-y-3">
