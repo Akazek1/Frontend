@@ -77,7 +77,11 @@ export const metadata: Metadata = {
       // candidate in turn (visible icon flicker in the share sheet) and lets
       // whichever loads last win — which is how a stale duplicate ends up as
       // the home-screen icon.
-      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      // 1024x1024 (not 180x180): iOS upscaling an already-small pre-shrunk
+      // icon produces a soft/glowy look on the home screen — the same
+      // master size native App Store icons are provided at, so iOS can
+      // downscale to whatever exact density it needs instead.
+      { url: "/apple-icon.png", sizes: "1024x1024", type: "image/png" },
     ],
   },
 };
