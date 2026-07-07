@@ -82,12 +82,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const isGuest = !isAuthenticated;
   const displayProviderName = isGuest ? redactName(name) : name;
 
-  const handleProfileClick = (e: React.MouseEvent) => {
-    if (!handle) return;
-    e.stopPropagation();
-    router.push(`/${handle.replace(/^@/, "")}`);
-  };
-
   const handleBookmarkClick = (e: React.MouseEvent) => {
     if (isLoading) return;
     e.stopPropagation();
@@ -149,17 +143,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Row 1: name + verified | bookmark */}
         <div className="flex items-start justify-between gap-1">
-          <button
-            type="button"
-            onClick={handleProfileClick}
-            className="flex items-center gap-1 min-w-0 text-left hover:underline"
-            aria-label={handle ? `View ${name || "provider"}'s profile` : undefined}
-          >
+          <div className="flex items-center gap-1 min-w-0">
             <span className="text-[13px] font-bold text-ink truncate">
               {displayProviderName || "Unknown Provider"}
             </span>
             {verified && <VerifiedBadge size={16} />}
-          </button>
+          </div>
           <button
             onClick={handleBookmarkClick}
             disabled={isLoading || isOwnService}
@@ -187,13 +176,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Row 2: handle — subtle, tight to name */}
         {handle && (
-          <button
-            type="button"
-            onClick={handleProfileClick}
-            className="text-[11px] text-[#9E9E9E] font-normal -mt-1 leading-none text-left hover:text-brand hover:underline"
-          >
+          <span className="text-[11px] text-[#9E9E9E] font-normal -mt-1 leading-none">
             {handle}
-          </button>
+          </span>
         )}
 
         {/* Row 3: service title */}

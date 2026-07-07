@@ -150,6 +150,7 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     return emptyForm();
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingImages, setIsAddingImages] = useState(false);
 
   // Rehydrate from sessionStorage on first client paint. Only do this when we
   // don't already have server-provided data (edit-mode pre-fill wins).
@@ -199,20 +200,27 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
   const addImageFiles = useCallback(async (files: File[]) => {
     const images = files.filter((f) => f.type.startsWith("image/"));
     if (images.length === 0) return;
-    // Compress before storing (falling back to the original if it fails) so a
-    // full-size phone photo doesn't trip the server's "file too large" limit.
-    const compressed = await Promise.all(
-      images.map((f) => imageCompression(f, COMPRESS_OPTIONS).catch(() => f)),
-    );
-    setForm((prev) => {
-      const total = prev.existingImageUrls.length + prev.newImageFiles.length;
-      const room = Math.max(0, MAX_IMAGES - total);
-      if (room === 0) return prev;
-      return {
-        ...prev,
-        newImageFiles: [...prev.newImageFiles, ...compressed.slice(0, room)],
-      };
-    });
+    setIsAddingImages(true);
+    try {
+      // Compress before storing (falling back to the original if it fails) so a
+      // full-size phone photo doesn't trip the server's "file too large" limit.
+      // This is the CPU-bound step that makes a photo take a moment to appear —
+      // isAddingImages lets the UI show a spinner instead of looking stuck.
+      const compressed = await Promise.all(
+        images.map((f) => imageCompression(f, COMPRESS_OPTIONS).catch(() => f)),
+      );
+      setForm((prev) => {
+        const total = prev.existingImageUrls.length + prev.newImageFiles.length;
+        const room = Math.max(0, MAX_IMAGES - total);
+        if (room === 0) return prev;
+        return {
+          ...prev,
+          newImageFiles: [...prev.newImageFiles, ...compressed.slice(0, room)],
+        };
+      });
+    } finally {
+      setIsAddingImages(false);
+    }
   }, []);
 
   const removeImageAt = useCallback((index: number) => {
@@ -324,6 +332,7 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     isStep3Valid,
     submit,
     isSubmitting,
+    isAddingImages,
     reset,
     maxImages: MAX_IMAGES,
     maxDescription: MAX_DESCRIPTION,

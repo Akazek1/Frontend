@@ -35,6 +35,7 @@ interface WizardStep3AddDetailsProps {
     value: WizardFormState[K],
   ) => void;
   onAddImages: (files: File[]) => void;
+  isAddingImages?: boolean;
   onRemoveImageAt: (index: number) => void;
   onReorderImages: (from: number, to: number) => void;
   onChangeService?: () => void;
@@ -125,6 +126,7 @@ export function WizardStep3AddDetails({
   maxDescription,
   onSetField,
   onAddImages,
+  isAddingImages = false,
   onRemoveImageAt,
   onReorderImages,
   onChangeService,
@@ -327,7 +329,13 @@ export function WizardStep3AddDetails({
               </div>
             );
           })}
-          {totalImageCount < maxImages && (
+          {isAddingImages && (
+            <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#C9D8C5] bg-white text-ink-muted">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="text-[11px] font-semibold">Processing…</span>
+            </div>
+          )}
+          {totalImageCount < maxImages && !isAddingImages && (
             <label className="flex h-[88px] w-[88px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#C9D8C5] bg-white text-ink-muted transition-colors hover:border-brand hover:text-brand">
               <Plus className="h-5 w-5" />
               <span className="text-[11px] font-semibold">Add more</span>

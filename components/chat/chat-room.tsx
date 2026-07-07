@@ -24,7 +24,10 @@ import type { Review } from "@/hooks/useReviews";
 // messages with a real senderId but a distinctive leading emoji marker. We use
 // the marker to render them as centred system notices instead of chat bubbles.
 const SYSTEM_MESSAGE_MARKERS = ["✅", "❌", "🏁"];
-const isSystemMessage = (content: string) =>
+// Guards against a non-string content (a malformed/legacy row, or a socket
+// payload that skipped validation) crashing the whole message list render.
+const isSystemMessage = (content: unknown) =>
+  typeof content === "string" &&
   SYSTEM_MESSAGE_MARKERS.some((marker) => content.startsWith(marker));
 
 interface Message {

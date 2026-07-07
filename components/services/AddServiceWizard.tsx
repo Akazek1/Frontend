@@ -61,6 +61,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
     isStep3Valid,
     submit,
     isSubmitting,
+    isAddingImages,
     reset,
     maxImages,
     maxDescription,
@@ -248,6 +249,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
             maxDescription={maxDescription}
             onSetField={setField}
             onAddImages={addImageFiles}
+            isAddingImages={isAddingImages}
             onRemoveImageAt={removeImageAt}
             onReorderImages={reorderImages}
             onChangeService={isEdit ? undefined : () => setStep(2)}

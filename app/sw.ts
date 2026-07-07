@@ -22,6 +22,12 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 const notificationIcon = "/icons/icon-192.png";
+// Android's notification "badge" (status bar + shade icon) is rendered as a
+// silhouette from the image's alpha channel — a full-color opaque icon like
+// notificationIcon has no transparency for Android to mask, so it falls back
+// to a blank white box. This is a dedicated white-on-transparent glyph sized
+// for that slot.
+const notificationBadge = "/icons/badge-96.png";
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
@@ -76,7 +82,7 @@ try {
     const notificationOptions: NotificationOptions = {
       body: payload.data?.body || payload.notification?.body || "",
       icon: notificationIcon,
-      badge: notificationIcon,
+      badge: notificationBadge,
       data: payload.data,
     };
 

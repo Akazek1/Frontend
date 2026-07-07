@@ -21,6 +21,17 @@ interface AuthState {
   error: string | null;
   otpSent: boolean;
   phoneNumber: string | null;
+  // Bumped on every local updateUser() (e.g. a profile picture upload).
+  // getCurrentUser() is a slow session-validation GET fired once per page
+  // load — on a cold-starting backend it can take many seconds, long enough
+  // for the user to upload a new photo before it resolves. Without this
+  // guard, the stale response (fetched before the upload) would silently
+  // overwrite the fresh local data when it finally lands.
+  userUpdateVersion: number;
+  // Snapshot of userUpdateVersion taken when the in-flight getCurrentUser()
+  // request started; compared against the current version in `fulfilled` to
+  // detect whether a newer local update superseded it.
+  pendingFetchVersion: number | null;
 }
 
 // Helper function to safely parse localStorage
@@ -71,6 +82,8 @@ const initialState: AuthState = {
   error: null,
   otpSent: false,
   phoneNumber: null,
+  userUpdateVersion: 0,
+  pendingFetchVersion: null,
 };
 
 // Async thunks
@@ -138,6 +151,7 @@ const authSlice = createSlice({
       state.phoneNumber = action.payload;
     },
     updateUser(state, action: PayloadAction<Partial<AuthState["user"]>>) {
+      state.userUpdateVersion += 1;
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
       } else {
@@ -254,11 +268,18 @@ const authSlice = createSlice({
       // Get current user cases
       .addCase(getCurrentUser.pending, (state) => {
         state.isLoading = true;
+        state.pendingFetchVersion = state.userUpdateVersion;
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
         state.isAuthenticated = true;
+        // A profile update (e.g. a photo upload) landed while this
+        // session-validation request was in flight — its response reflects
+        // the user as of BEFORE that update, so applying it now would revert
+        // the newer local change. Session validity itself still stands.
+        if (state.userUpdateVersion === state.pendingFetchVersion) {
+          state.user = action.payload;
+        }
         if (typeof document !== "undefined" && action.payload?.firstName) {
           document.cookie = "profileComplete=true; path=/; max-age=31536000";
         }

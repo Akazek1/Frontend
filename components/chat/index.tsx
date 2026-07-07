@@ -24,7 +24,7 @@ const Chat = () => {
   };
 
   return (
-    <PageShell padded={false}>
+    <PageShell padded={false} fixedHeight>
       {/* Sticky header area */}
       <div className={`${appStickyHeaderClass} space-y-4`}>
         <ChatHeader />
@@ -36,7 +36,7 @@ const Chat = () => {
       </div>
 
       {/* Scrollable chat inbox */}
-      <div className={`${appContentClass} flex-1 overflow-y-auto px-4 pb-24 pt-4`}>
+      <div className={`${appContentClass} flex-1 overflow-y-auto px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4`}>
         <ChatInbox searchQuery={searchQuery} onCounts={setCounts} />
       </div>
     </PageShell>

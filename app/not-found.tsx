@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Home, Briefcase, HelpCircle, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Home, Briefcase, HelpCircle, ArrowRight } from "lucide-react";
 import { colors } from "@/constant/colors";
 import { Button } from "@/components/ui/button";
 
@@ -40,9 +40,6 @@ export default function NotFound() {
       {/* "Important Info" / Quick Guide Section - More compact */}
       <div className="w-full max-w-md bg-white rounded-2xl p-5 text-left shadow-[0_4px_15px_rgba(20,91,16,0.04)] border" style={{ borderColor: colors.border }}>
         <div className="flex items-center gap-2 mb-4">
-          <span className="flex h-5 w-5 items-center justify-center rounded-md" style={{ backgroundColor: colors.backgroundTertiary, color: colors.primary }}>
-            <Sparkles className="h-3 w-3" />
-          </span>
           <h2 className="text-[10px] font-black uppercase tracking-[0.15em]" style={{ color: colors.textMuted }}>
             Quick Guide
           </h2>
