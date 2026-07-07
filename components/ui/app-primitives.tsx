@@ -113,16 +113,6 @@ type PageShellProps = React.HTMLAttributes<HTMLElement> & {
   children: React.ReactNode;
   padded?: boolean;
   bottomNav?: boolean;
-  /**
-   * Constrains the shell to exactly the viewport height (instead of just a
-   * minimum) and clips overflow, so a flex-1 + overflow-y-auto child inside
-   * it actually gets a bounded height to scroll within. Without this,
-   * min-h-dvh lets the shell grow past the viewport to fit its content —
-   * the child's own "internal scroll" never gets a height to overflow
-   * against, so it just renders at its natural (unbounded) size instead,
-   * which can end up misaligned with the fixed bottom nav.
-   */
-  fixedHeight?: boolean;
 };
 
 export function PageShell({
@@ -130,16 +120,14 @@ export function PageShell({
   className,
   padded = true,
   bottomNav = true,
-  fixedHeight = false,
   ...props
 }: PageShellProps) {
   return (
     <main
       className={cn(
-        "bg-surface mx-auto flex w-full max-w-[428px] flex-col",
-        fixedHeight ? "h-dvh overflow-hidden" : "min-h-dvh",
+        "bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col",
         padded && "px-4 pt-6",
-        !fixedHeight && (bottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-6"),
+        bottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-6",
         className,
       )}
       {...props}

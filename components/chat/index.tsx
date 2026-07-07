@@ -24,7 +24,7 @@ const Chat = () => {
   };
 
   return (
-    <PageShell padded={false} fixedHeight>
+    <PageShell padded={false}>
       {/* Sticky header area */}
       <div className={`${appStickyHeaderClass} space-y-4`}>
         <ChatHeader />
@@ -35,8 +35,12 @@ const Chat = () => {
         <ChatTabs counts={counts} />
       </div>
 
-      {/* Scrollable chat inbox */}
-      <div className={`${appContentClass} flex-1 overflow-y-auto px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4`}>
+      {/* Chat inbox — flows normally within PageShell; the single outer
+          pwa-layout <main> (overflow-y-auto) is the only scroll container,
+          same as every other list page (e.g. Work). No nested flex-1/
+          overflow-y-auto wrapper here — that fought with the outer scroll
+          and caused cards to visually clip before reaching the nav bar. */}
+      <div className={`${appContentClass} px-4 pt-4`}>
         <ChatInbox searchQuery={searchQuery} onCounts={setCounts} />
       </div>
     </PageShell>
