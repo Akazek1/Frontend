@@ -35,7 +35,10 @@ const urbanist = Urbanist({
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_CONFIG.contact.website),
-  title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+  // Just the app name: iOS shows the document title in the share-sheet /
+  // Add-to-Home-Screen flow, and the tagline read as part of the app's name
+  // there. The tagline still travels with shared links via og/twitter titles.
+  title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   manifest: "/manifest.webmanifest",
   applicationName: APP_CONFIG.name,
@@ -68,6 +71,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
+      // Theme-adaptive tab icon: an SVG with a prefers-color-scheme media
+      // query inside (green mark on light themes, white on dark). Browsers
+      // that support SVG favicons (Chrome/Firefox/Edge) prefer it; Safari
+      // ignores it and falls back to the PNG/ICO entries.
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/icon.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
