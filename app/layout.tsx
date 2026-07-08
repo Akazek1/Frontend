@@ -35,7 +35,10 @@ const urbanist = Urbanist({
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_CONFIG.contact.website),
-  title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+  // Just the app name: iOS shows the document title in the share-sheet /
+  // Add-to-Home-Screen flow, and the tagline read as part of the app's name
+  // there. The tagline still travels with shared links via og/twitter titles.
+  title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   manifest: "/manifest.webmanifest",
   applicationName: APP_CONFIG.name,
