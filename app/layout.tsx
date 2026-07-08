@@ -33,8 +33,19 @@ const urbanist = Urbanist({
   display: "swap",
 });
 
+// Absolute-URL base for og:image and friends. APP_CONFIG.contact.website
+// (akazek.rw) is NOT live — hardcoding it made every og:image point at a dead
+// domain, which is why shared links never showed an image. Prefer an explicit
+// override, then Vercel's production domain (becomes the custom domain
+// automatically once one is attached), then the config value as last resort.
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : APP_CONFIG.contact.website);
+
 export const metadata: Metadata = {
-  metadataBase: new URL(APP_CONFIG.contact.website),
+  metadataBase: new URL(siteUrl),
   // Just the app name: iOS shows the document title in the share-sheet /
   // Add-to-Home-Screen flow, and the tagline read as part of the app's name
   // there. The tagline still travels with shared links via og/twitter titles.
@@ -47,21 +58,21 @@ export const metadata: Metadata = {
     siteName: APP_CONFIG.name,
     title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
     description: APP_CONFIG.description,
-    url: APP_CONFIG.contact.website,
+    url: "/", // absolutized via metadataBase — not the dead APP_CONFIG domain
     images: [
       {
-        url: "/icons/icon-512.png",
-        width: 512,
-        height: 512,
-        alt: APP_CONFIG.name,
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
       },
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
     description: APP_CONFIG.description,
-    images: ["/icons/icon-512.png"],
+    images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
