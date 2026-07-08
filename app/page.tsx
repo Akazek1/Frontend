@@ -17,6 +17,17 @@ export const metadata: Metadata = {
     title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
     description: APP_CONFIG.description,
     url: "/",
+    // Must be repeated here: a page-level openGraph object REPLACES the root
+    // layout's wholesale (no deep merge), so without this the homepage — the
+    // link people actually share — had no og:image at all.
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+      },
+    ],
   },
 };
 
