@@ -128,9 +128,19 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
     const partnerId = user?.id === booking?.workerId ? booking?.employerId : booking?.workerId;
 
+    // A reconnect (network blip, app resume) shouldn't mark messages read on
+    // its own — only do it while this chat screen is actually the thing the
+    // user is looking at. Otherwise a background/backgrounded reconnect flips
+    // the sender's ticks to "read" before the recipient ever saw the message.
+    const markReadIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        socket.emit("readMessages", bookingId);
+      }
+    };
+
     const onConnect = () => {
       socket.emit("joinBooking", bookingId);
-      socket.emit("readMessages", bookingId);
+      markReadIfVisible();
 
       if (partnerId) {
         socket.emit("checkPresence", partnerId, (res: { isOnline: boolean }) => {
@@ -139,8 +149,15 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       }
     };
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && socket.connected) {
+        socket.emit("readMessages", bookingId);
+      }
+    };
+
     socket.on("connect", onConnect);
     if (socket.connected) onConnect();
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     const handleUserOnline = (userId: string) => {
       if (userId === partnerId) setPartnerOnline(true);
@@ -204,7 +221,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
       if (
         message.senderId !== user?.id &&
-        !readReceiptSentForRef.current.has(message.id)
+        !readReceiptSentForRef.current.has(message.id) &&
+        document.visibilityState === "visible"
       ) {
         readReceiptSentForRef.current.add(message.id);
         socket.emit("readMessages", bookingId);
@@ -275,6 +293,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       socket.off("taskUpdated", handleTaskUpdated);
       socket.off("taskDeleted", handleTaskDeleted);
       socket.off("connect", onConnect);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [bookingId, token, user?.id, booking?.workerId, booking?.employerId]);
 
@@ -602,7 +621,18 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     <div className="bg-surface relative isolate flex h-full flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
-        <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
+        <button
+          onClick={() => {
+            // Opening a chat straight from a push notification lands here with
+            // no prior history entry — router.back() would then do nothing.
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push("/conversations");
+            }
+          }}
+          className="p-1 hover:bg-gray-100 rounded-full"
+        >
           <ArrowLeft className="h-6 w-6 text-gray-700" />
         </button>
 

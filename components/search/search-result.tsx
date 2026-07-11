@@ -757,7 +757,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {hireModal && (
         <>
           <SheetOverlay zIndexClassName="z-[90]" onClick={closeHireModal} aria-hidden="true" />
-          <SheetPanel zIndexClassName="z-[91]" className="max-w-sm rounded-t-[28px]" onClose={closeHireModal}>
+          <SheetPanel side="floating" zIndexClassName="z-[91]" className="max-w-sm" onClose={closeHireModal}>
             <SheetHeader
               title={hireModal.providerName}
               subtitle={hireModal.serviceTitle}
@@ -773,6 +773,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
             <SheetBody className="space-y-5 pt-2">
               <FormField label="Message" hint="Optional">
                 <textarea
+                  autoFocus
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Describe what you need, preferred schedule, or any specific requirements..."
@@ -782,7 +783,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               </FormField>
             </SheetBody>
 
-            <SheetFooter className="flex gap-3">
+            <SheetFooter className="flex gap-3 border-t-0 pb-6 pt-0">
               <AppButton
                 appVariant="secondary"
                 onClick={closeHireModal}

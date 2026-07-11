@@ -313,7 +313,7 @@ export function SheetOverlay({
   );
 }
 
-type SheetPanelSide = "bottom" | "right" | "center";
+type SheetPanelSide = "bottom" | "right" | "center" | "floating";
 
 const SHEET_FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -350,7 +350,14 @@ function useSheetDialog(
           )
         : [];
 
-    (focusable()[0] ?? node)?.focus();
+    // Respect an element that already grabbed focus on mount (e.g. a
+    // textarea with `autoFocus`) instead of yanking focus to the first
+    // focusable item (often a close button) and burying the keyboard.
+    const alreadyFocusedInside =
+      node && document.activeElement && node.contains(document.activeElement) && document.activeElement !== node;
+    if (!alreadyFocusedInside) {
+      (focusable()[0] ?? node)?.focus();
+    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -409,6 +416,12 @@ const sheetPanelSideClass: Record<SheetPanelSide, string> = {
     "bottom-0 top-0 w-[88%] max-w-[380px] rounded-l-2xl animate-in slide-in-from-right duration-200 right-[max(0px,calc(50vw-214px))]",
   center:
     "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-[428px] -translate-x-1/2 -translate-y-1/2 rounded-3xl",
+  // A bottom sheet that doesn't touch the screen edges — floats with a gutter
+  // on all sides, matching the "Contact Agency" inquiry card design. Left/right
+  // offsets are computed relative to the centered 428px phone-frame's own
+  // edges (same trick as the `right` variant), not the raw viewport.
+  floating:
+    "bottom-[calc(2rem+env(safe-area-inset-bottom))] left-[calc(max(0px,calc(50vw-214px))+1rem)] right-[calc(max(0px,calc(50vw-214px))+1rem)] rounded-[28px] animate-in slide-in-from-bottom duration-200",
 };
 
 export function SheetPanel({

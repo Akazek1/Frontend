@@ -131,6 +131,16 @@ const getMaxBirthDate = () => {
   return date.toISOString().slice(0, 10);
 };
 
+// Native <input type="date"> renders its visible text using the device's OS
+// locale (e.g. iOS often shows "Jul 7, 2003"), which we can't override via
+// CSS/JS. Rwanda reads dates as dd/mm/yyyy, so format it ourselves.
+const formatDateDMY = (value: string) => {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return "";
+  return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+};
+
 const getAge = (dateValue: string) => {
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return null;
@@ -778,7 +788,24 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
             <Field label="Date of birth" error={errors.dateOfBirth} hint={`Workers must be at least ${LEGAL_WORKING_AGE} years old.`}>
               <div className="relative">
-                <Input type="date" value={form.dateOfBirth} max={maxBirthDate} disabled={!canEdit} onChange={(event) => setField("dateOfBirth", event.target.value)} className={`${inputClass} pr-10`} />
+                {/* The native picker stays fully interactive (tapping opens the OS
+                    date picker) but is invisible — its own text render is what
+                    overflows the screen on iOS and always follows device locale.
+                    The visible label below is our own dd/mm/yyyy formatting. */}
+                <input
+                  type="date"
+                  value={form.dateOfBirth}
+                  max={maxBirthDate}
+                  disabled={!canEdit}
+                  onChange={(event) => setField("dateOfBirth", event.target.value)}
+                  aria-label="Date of birth"
+                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                />
+                <div className={`${inputClass} pr-10 flex items-center pointer-events-none overflow-hidden`}>
+                  <span className={form.dateOfBirth ? "" : "text-muted-foreground"}>
+                    {form.dateOfBirth ? formatDateDMY(form.dateOfBirth) : "DD/MM/YYYY"}
+                  </span>
+                </div>
                 <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#53604F]" />
               </div>
             </Field>
