@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -14,7 +14,8 @@ import toast from "react-hot-toast";
 import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE } from "@/constant";
 import { TaskDrawer, Task } from "./task-drawer";
 import { MessageActionsPopover } from "./message-actions-popover";
-import { useLongPress } from "@/hooks/useLongPress";
+import { LinkifiedText } from "./linkified-text";
+import { useMessageGestures } from "@/hooks/useMessageGestures";
 import {
   ReviewPromptDialog,
   type ReviewPromptPayload,
@@ -92,6 +93,10 @@ interface MessageMutationAck {
 // other person replies.
 const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
+// Drag distance (px) at which the slide-to-reply hint reaches full opacity;
+// matches the hook's swipe-to-reply trigger distance.
+const SWIPE_TRIGGER_HINT = 56;
+
 interface BookingDetails {
   id: string;
   status: string;
@@ -123,7 +128,7 @@ interface BookingDetails {
 }
 
 // A standalone component (not inlined in messages.map) because it calls
-// useLongPress — hooks can't be called from inside a loop callback.
+// useMessageGestures — hooks can't be called from inside a loop callback.
 function MessageBubble({
   msg,
   isMe,
@@ -170,12 +175,13 @@ function MessageBubble({
     return acc;
   }, {});
 
-  const longPress = useLongPress(
-    () => {
-      if (!isReadOnly && !isDeleted) onOpenFull();
-    },
-    { onDoubleTap: () => { if (!isReadOnly && !isDeleted) onOpenReact(); } },
-  );
+  const gestureEnabled = !isReadOnly && !isDeleted;
+  const { dragX, isDragging, handlers } = useMessageGestures({
+    enabled: gestureEnabled,
+    onLongPress: onOpenFull,
+    onDoubleTap: onOpenReact,
+    onSwipeReply: onReply,
+  });
 
   // A tombstone: no menu, no reactions, no reply affordance.
   if (isDeleted) {
@@ -197,12 +203,29 @@ function MessageBubble({
     <div
       id={`msg-${msg.id}`}
       className={cn(
-        "flex rounded-2xl transition-colors duration-500",
+        "group relative flex items-center gap-1 rounded-2xl transition-colors duration-500",
         isMe ? "justify-end" : "justify-start",
         isHighlighted && "bg-brand/10",
       )}
     >
-      <div className="max-w-[85%] space-y-1">
+      {/* Desktop hover actions (hover-capable pointers only): react + reply. */}
+      {isMe && gestureEnabled && (
+        <HoverActions onReact={onOpenReact} onReply={onReply} />
+      )}
+
+      {/* Slide-to-reply hint, revealed as the bubble is dragged right. */}
+      <Reply
+        className="pointer-events-none absolute left-1 top-1/2 h-4 w-4 -translate-y-1/2 text-brand"
+        style={{ opacity: Math.min(dragX / SWIPE_TRIGGER_HINT, 1) }}
+      />
+
+      <div
+        className="max-w-[85%] space-y-1"
+        style={{
+          transform: dragX ? `translateX(${dragX}px)` : undefined,
+          transition: isDragging ? "none" : "transform 150ms ease-out",
+        }}
+      >
         {msg.replyTo && (
           <button
             type="button"
@@ -235,7 +258,9 @@ function MessageBubble({
           onDelete={onDelete}
         >
           <div
-            {...longPress}
+            {...handlers}
+            // Right-click / two-finger trackpad opens the full menu on desktop.
+            onContextMenu={(e) => { e.preventDefault(); if (gestureEnabled) onOpenFull(); }}
             className={cn(
               "rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
               isMe
@@ -243,7 +268,7 @@ function MessageBubble({
                 : "bg-white text-ink border border-gray-100 rounded-bl-none",
             )}
           >
-            <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+            <LinkifiedText text={msg.content} isMe={isMe} />
           </div>
         </MessageActionsPopover>
 
@@ -290,6 +315,36 @@ function MessageBubble({
           )}
         </div>
       </div>
+
+      {!isMe && gestureEnabled && (
+        <HoverActions onReact={onOpenReact} onReply={onReply} />
+      )}
+    </div>
+  );
+}
+
+// Desktop-only quick actions revealed on hover: react (opens the emoji row)
+// and reply. Hidden on touch devices, which use double-tap / long-press /
+// swipe instead.
+function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () => void }) {
+  return (
+    <div className="hidden shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 [@media(hover:hover)]:flex">
+      <button
+        type="button"
+        onClick={onReact}
+        aria-label="React"
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+      >
+        <SmilePlus className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onReply}
+        aria-label="Reply"
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+      >
+        <Reply className="h-4 w-4" />
+      </button>
     </div>
   );
 }
