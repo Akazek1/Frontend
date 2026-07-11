@@ -11,7 +11,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE } from "@/constant";
+import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE, QUICK_TAP_EMOJI, SKIN_TONE_STORAGE_KEY, applySkinTone } from "@/constant";
+import { haptic } from "@/lib/haptics";
 import { TaskDrawer, Task } from "./task-drawer";
 import { MessageActionsPopover } from "./message-actions-popover";
 import { LinkifiedText } from "./linkified-text";
@@ -138,11 +139,14 @@ function MessageBubble({
   isActionsOpen,
   showActionsFull,
   canModify,
+  skinTone,
+  onChangeSkinTone,
   onOpenReact,
   onOpenFull,
   onCloseActions,
   onReply,
   onReact,
+  onQuickReact,
   onCopy,
   onEdit,
   onDelete,
@@ -156,11 +160,14 @@ function MessageBubble({
   isActionsOpen: boolean;
   showActionsFull: boolean;
   canModify: boolean;
+  skinTone: string;
+  onChangeSkinTone: (tone: string) => void;
   onOpenReact: () => void;
   onOpenFull: () => void;
   onCloseActions: () => void;
   onReply: () => void;
   onReact: (emoji: string) => void;
+  onQuickReact: () => void;
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -179,7 +186,7 @@ function MessageBubble({
   const { dragX, isDragging, handlers } = useMessageGestures({
     enabled: gestureEnabled,
     onLongPress: onOpenFull,
-    onDoubleTap: onOpenReact,
+    onDoubleTap: onQuickReact,
     onSwipeReply: onReply,
   });
 
@@ -251,6 +258,8 @@ function MessageBubble({
           showActions={showActionsFull}
           canModify={canModify}
           myReaction={myReaction}
+          skinTone={skinTone}
+          onChangeSkinTone={onChangeSkinTone}
           onReact={onReact}
           onReply={onReply}
           onCopy={onCopy}
@@ -382,6 +391,17 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [actionsShowFull, setActionsShowFull] = useState(true);
   // Briefly highlighted after scrolling to a quoted message.
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  // Chosen emoji skin tone ("" = default). Loaded from localStorage after mount
+  // to avoid an SSR/hydration mismatch.
+  const [skinTone, setSkinTone] = useState("");
+  useEffect(() => {
+    const saved = localStorage.getItem(SKIN_TONE_STORAGE_KEY);
+    if (saved) setSkinTone(saved);
+  }, []);
+  const handleChangeSkinTone = (tone: string) => {
+    setSkinTone(tone);
+    localStorage.setItem(SKIN_TONE_STORAGE_KEY, tone);
+  };
 
   const isCompleted = booking?.status === BOOKING_STATUS.COMPLETED;
   const isCancelled = booking?.status === BOOKING_STATUS.CANCELLED;
@@ -653,7 +673,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       senderId: user.id,
       bookingId,
       createdAt: new Date().toISOString(),
-      isDelivered: partnerOnline,
+      // Start as "sent" (single gray), never optimistically "delivered" —
+      // partnerOnline is only this client's cached presence guess and can be
+      // stale. The real isDelivered comes back on the server ack (true only if
+      // the recipient's socket actually received it) or a later messagesDelivered
+      // event, so the double-gray tick reflects genuine device receipt.
+      isDelivered: false,
       isRead: false,
       status: 'sending',
       sender: {
@@ -763,6 +788,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const handleToggleReaction = async (messageId: string, emoji: string) => {
     if (!user || isReadOnly) return;
     setActiveMessageActionsId(null);
+    haptic();
 
     const target = messages.find((m) => m.id === messageId);
     const prevReactions = target?.reactions ?? [];
@@ -1397,6 +1423,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               isActionsOpen={activeMessageActionsId === msg.id}
               showActionsFull={actionsShowFull}
               canModify={canModifyMessage(msg)}
+              skinTone={skinTone}
+              onChangeSkinTone={handleChangeSkinTone}
               onOpenReact={() => { setActionsShowFull(false); setActiveMessageActionsId(msg.id); }}
               onOpenFull={() => { setActionsShowFull(true); setActiveMessageActionsId(msg.id); }}
               onCloseActions={() => setActiveMessageActionsId(null)}
@@ -1407,6 +1435,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                 inputRef.current?.focus();
               }}
               onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
+              onQuickReact={() => handleToggleReaction(msg.id, applySkinTone(QUICK_TAP_EMOJI, skinTone))}
               onCopy={() => handleCopyMessage(msg.content)}
               onEdit={() => handleStartEdit(msg)}
               onDelete={() => handleDeleteMessage(msg.id)}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { haptic } from "@/lib/haptics";
 
 interface UseMessageGesturesOptions {
   enabled?: boolean;
@@ -59,6 +60,7 @@ export function useMessageGestures({
       timerRef.current = setTimeout(() => {
         timerRef.current = null;
         longFiredRef.current = true;
+        haptic(); // the "one beat" when the menu opens (Android; no-op on iOS)
         onLongPress();
       }, LONG_PRESS_MS);
     },
@@ -93,7 +95,10 @@ export function useMessageGestures({
       const reached = dragRef.current >= SWIPE_TRIGGER_PX;
       swipingRef.current = false;
       setDrag(0);
-      if (reached) onSwipeReply?.();
+      if (reached) {
+        haptic();
+        onSwipeReply?.();
+      }
       return;
     }
 
