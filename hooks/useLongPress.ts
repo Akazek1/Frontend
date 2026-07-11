@@ -5,23 +5,27 @@ import { useCallback, useRef } from "react";
 interface UseLongPressOptions {
   threshold?: number;
   onClick?: () => void;
+  onDoubleTap?: () => void;
 }
 
 const MOVE_CANCEL_THRESHOLD_PX = 10;
+const DOUBLE_TAP_MS = 300;
 
 /**
  * Returns mouse/touch handlers for a "long-press to open a context menu"
- * gesture, with a plain tap falling through to `onClick`. Cancels the
- * pending long-press if the pointer drags past a small threshold, so it
- * doesn't fire on every scroll-start touch inside a scrollable chat list.
+ * gesture, with a plain tap falling through to `onClick` and an optional
+ * `onDoubleTap` (two quick taps). Cancels the pending long-press if the
+ * pointer drags past a small threshold, so it doesn't fire on every
+ * scroll-start touch inside a scrollable chat list.
  */
 export function useLongPress(
   onLongPress: () => void,
-  { threshold = 450, onClick }: UseLongPressOptions = {},
+  { threshold = 450, onClick, onDoubleTap }: UseLongPressOptions = {},
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const firedRef = useRef(false);
+  const lastTapRef = useRef(0);
 
   const clear = useCallback(() => {
     if (timerRef.current) {
@@ -59,10 +63,18 @@ export function useLongPress(
   const end = useCallback(() => {
     const wasPending = timerRef.current !== null;
     clear();
+    // Only a short press (long-press timer hadn't fired) counts as a tap.
     if (wasPending && !firedRef.current) {
-      onClick?.();
+      const now = Date.now();
+      if (onDoubleTap && now - lastTapRef.current < DOUBLE_TAP_MS) {
+        lastTapRef.current = 0; // consume, so a third tap starts fresh
+        onDoubleTap();
+      } else {
+        lastTapRef.current = now;
+        onClick?.();
+      }
     }
-  }, [clear, onClick]);
+  }, [clear, onClick, onDoubleTap]);
 
   return {
     onMouseDown: (e: React.MouseEvent) => start(e.clientX, e.clientY),
