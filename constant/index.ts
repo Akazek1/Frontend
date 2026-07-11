@@ -33,6 +33,11 @@ export const PENDING_NUDGE_MESSAGE_THRESHOLD = 6;
 export const PENDING_REMINDER_MESSAGE =
   "Hi, can you accept the offer here so we can start? Thanks!";
 
+// Long-press a chat bubble to react. Kept in sync by hand with the backend's
+// allow-list (HWA_Backend/src/modules/bookings/dto/create-booking.dto.ts
+// QUICK_REACTION_EMOJIS) — there's no shared package between the two repos.
+export const QUICK_REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
 export const PrivacyPolicyData = [
   {
     id: 1,

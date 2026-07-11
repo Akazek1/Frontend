@@ -13,12 +13,15 @@ import { initializeSocket, getSocket } from "@/lib/socket";
 import toast from "react-hot-toast";
 import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE } from "@/constant";
 import { TaskDrawer, Task } from "./task-drawer";
+import { MessageActionsPopover } from "./message-actions-popover";
+import { useLongPress } from "@/hooks/useLongPress";
 import {
   ReviewPromptDialog,
   type ReviewPromptPayload,
 } from "@/components/reviews/review-prompt-dialog";
 import { BookingReviewsDialog } from "@/components/reviews/booking-reviews-dialog";
 import type { Review } from "@/hooks/useReviews";
+import { cn } from "@/lib/utils";
 
 // Status announcements (accept / cancel / complete) are persisted as regular
 // messages with a real senderId but a distinctive leading emoji marker. We use
@@ -30,6 +33,19 @@ const isSystemMessage = (content: unknown) =>
   typeof content === "string" &&
   SYSTEM_MESSAGE_MARKERS.some((marker) => content.startsWith(marker));
 
+interface MessageSenderSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface MessageReaction {
+  id: string;
+  emoji: string;
+  userId: string;
+  user: MessageSenderSummary;
+}
+
 interface Message {
   id: string;
   content: string;
@@ -39,16 +55,26 @@ interface Message {
   isDelivered: boolean;
   isRead: boolean;
   status?: 'sending' | 'sent' | 'error';
-  sender: {
+  sender: MessageSenderSummary;
+  replyTo?: {
     id: string;
-    firstName: string;
-    lastName: string;
-  };
+    content: string;
+    senderId: string;
+    sender: MessageSenderSummary;
+  } | null;
+  reactions?: MessageReaction[];
 }
 
 interface SendMessageAck {
   success?: boolean;
   message?: Message;
+  error?: string;
+}
+
+interface ReactionAck {
+  success?: boolean;
+  messageId?: string;
+  reactions?: MessageReaction[];
   error?: string;
 }
 
@@ -82,6 +108,136 @@ interface BookingDetails {
   reviews?: Review[];
 }
 
+// A standalone component (not inlined in messages.map) because it calls
+// useLongPress — hooks can't be called from inside a loop callback.
+function MessageBubble({
+  msg,
+  isMe,
+  currentUserId,
+  isReadOnly,
+  isHighlighted,
+  isActionsOpen,
+  onOpenActionsChange,
+  onReply,
+  onReact,
+  onQuoteClick,
+}: {
+  msg: Message;
+  isMe: boolean;
+  currentUserId: string;
+  isReadOnly: boolean;
+  isHighlighted: boolean;
+  isActionsOpen: boolean;
+  onOpenActionsChange: (open: boolean) => void;
+  onReply: () => void;
+  onReact: (emoji: string) => void;
+  onQuoteClick: (id: string) => void;
+}) {
+  const status = msg.status;
+  const reactions = msg.reactions ?? [];
+  const myReaction = reactions.find((r) => r.userId === currentUserId)?.emoji ?? null;
+  const reactionGroups = reactions.reduce<Record<string, MessageReaction[]>>((acc, r) => {
+    (acc[r.emoji] ??= []).push(r);
+    return acc;
+  }, {});
+
+  const longPress = useLongPress(() => {
+    if (!isReadOnly) onOpenActionsChange(true);
+  });
+
+  return (
+    <div
+      id={`msg-${msg.id}`}
+      className={cn(
+        "flex rounded-2xl transition-colors duration-500",
+        isMe ? "justify-end" : "justify-start",
+        isHighlighted && "bg-brand/10",
+      )}
+    >
+      <div className="max-w-[85%] space-y-1">
+        {msg.replyTo && (
+          <button
+            type="button"
+            onClick={() => onQuoteClick(msg.replyTo!.id)}
+            className={cn(
+              "flex w-full flex-col items-start rounded-lg border-l-2 border-brand/40 bg-black/[0.03] px-2 py-1 text-left text-[11px]",
+              isMe && "ml-auto",
+            )}
+          >
+            <span className="font-semibold text-brand">
+              {msg.replyTo.senderId === currentUserId ? "You" : msg.replyTo.sender.firstName}
+            </span>
+            <span className="line-clamp-1 text-ink-subtle">{msg.replyTo.content}</span>
+          </button>
+        )}
+
+        <MessageActionsPopover
+          open={isActionsOpen}
+          onOpenChange={onOpenActionsChange}
+          align={isMe ? "end" : "start"}
+          myReaction={myReaction}
+          onReact={onReact}
+          onReply={onReply}
+        >
+          <div
+            {...longPress}
+            className={cn(
+              "select-none rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
+              isMe
+                ? "bg-brand text-white rounded-br-none"
+                : "bg-white text-ink border border-gray-100 rounded-bl-none",
+            )}
+          >
+            <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+          </div>
+        </MessageActionsPopover>
+
+        {Object.keys(reactionGroups).length > 0 && (
+          <div className={`flex flex-wrap gap-1 ${isMe ? "justify-end" : "justify-start"}`}>
+            {Object.entries(reactionGroups).map(([emoji, group]) => {
+              const mine = group.some((r) => r.userId === currentUserId);
+              return (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => onReact(emoji)}
+                  className={cn(
+                    "flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px]",
+                    mine ? "border-brand/40 bg-brand/10" : "border-gray-100 bg-white",
+                  )}
+                >
+                  <span>{emoji}</span>
+                  {group.length > 1 && <span className="text-gray-500">{group.length}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className={`flex items-center gap-1 text-[9px] font-medium text-gray-400 ${isMe ? "justify-end" : "justify-start"}`}>
+          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+          {isMe && (
+            status === 'sending' ? (
+              <Clock className="h-3 w-3 text-gray-400 ml-1" />
+            ) : status === 'error' ? (
+              <AlertCircle className="h-3.5 w-3.5 text-red-500 ml-1" />
+            ) : (
+              msg.isRead ? (
+                 <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" />
+              ) : msg.isDelivered ? (
+                 <CheckCheck className="h-3.5 w-3.5 text-gray-400 ml-1" />
+              ) : (
+                 <Check className="h-3.5 w-3.5 text-gray-400 ml-1" />
+              )
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -105,6 +261,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
   const reviewAutoPromptedRef = useRef(false);
+  // Message being quoted in the composer, if any.
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
+  // Which bubble's long-press reaction/reply popover is currently open.
+  const [activeMessageActionsId, setActiveMessageActionsId] = useState<string | null>(null);
+  // Briefly highlighted after scrolling to a quoted message.
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   const isCompleted = booking?.status === BOOKING_STATUS.COMPLETED;
   const isCancelled = booking?.status === BOOKING_STATUS.CANCELLED;
@@ -112,6 +274,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    document.getElementById(`msg-${messageId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedMessageId(messageId);
+    setTimeout(() => setHighlightedMessageId((current) => (current === messageId ? null : current)), 1200);
   };
 
   // Fetch booking data independently — only re-runs if bookingId changes
@@ -249,6 +417,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       }
     };
 
+    const handleMessageReactionUpdated = (data: { bookingId: string; messageId: string; reactions: MessageReaction[] }) => {
+      if (data.bookingId !== bookingId) return;
+      setMessages((prev) =>
+        prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m)),
+      );
+    };
+
     const handleBookingStatusUpdated = (data: { bookingId: string; status: string }) => {
       if (data.bookingId !== bookingId) return;
       setBooking((prev) => prev ? { ...prev, status: data.status, updatedAt: new Date().toISOString() } : prev);
@@ -272,6 +447,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     socket.on("newMessage", handleNewMessage);
     socket.on("messagesRead", handleMessagesRead);
     socket.on("messagesDelivered", handleMessagesDelivered);
+    socket.on("messageReactionUpdated", handleMessageReactionUpdated);
     socket.on("bookingStatusUpdated", handleBookingStatusUpdated);
     socket.on("userOnline", handleUserOnline);
     socket.on("userOffline", handleUserOffline);
@@ -285,6 +461,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       socket.off("newMessage", handleNewMessage);
       socket.off("messagesRead", handleMessagesRead);
       socket.off("messagesDelivered", handleMessagesDelivered);
+      socket.off("messageReactionUpdated", handleMessageReactionUpdated);
       socket.off("bookingStatusUpdated", handleBookingStatusUpdated);
       socket.off("userOnline", handleUserOnline);
       socket.off("userOffline", handleUserOffline);
@@ -342,7 +519,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     if (!messageContent || isSending || !user || isReadOnly) return;
 
     const tempId = `temp-${Date.now()}`;
-    
+    // Canned reminders (handleRemindPartner) bypass the composer entirely —
+    // don't attach whatever reply context happens to be open for those.
+    const replyingTo = !isOverride ? replyTarget : null;
+
     const optimisticMessage: Message = {
       id: tempId,
       content: messageContent,
@@ -357,12 +537,23 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         firstName: user.firstName || "You",
         lastName: user.lastName || "",
       },
+      replyTo: replyingTo
+        ? {
+            id: replyingTo.id,
+            content: replyingTo.content,
+            senderId: replyingTo.senderId,
+            sender: replyingTo.sender,
+          }
+        : null,
     };
 
     setMessages((prev) => [...prev, optimisticMessage]);
-    if (!isOverride) setNewMessage("");
+    if (!isOverride) {
+      setNewMessage("");
+      setReplyTarget(null);
+    }
     setIsSubmitting(true);
-    
+
     try {
       const socket = getSocket();
       let serverMessage: Message | null = null;
@@ -371,7 +562,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           const response = await new Promise<SendMessageAck>((resolve, reject) => {
              const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-             socket.emit("sendMessage", { bookingId, message: { content: messageContent } }, (ack: SendMessageAck) => {
+             socket.emit("sendMessage", { bookingId, message: { content: messageContent, replyToId: replyingTo?.id } }, (ack: SendMessageAck) => {
                clearTimeout(timeout);
                resolve(ack);
              });
@@ -388,6 +579,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       if (!serverMessage) {
         const response = await api.post(`/bookings/${bookingId}/messages`, {
           content: messageContent,
+          replyToId: replyingTo?.id,
         });
         if (response.data?.data) {
           serverMessage = response.data.data;
@@ -422,6 +614,82 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   const handleRemindPartner = () => {
     handleSendMessage(PENDING_REMINDER_MESSAGE);
+  };
+
+  // Same three-way toggle as the backend: no reaction from this user -> add;
+  // same emoji already -> remove; different emoji already -> replace it.
+  const computeOptimisticReactions = (current: MessageReaction[], emoji: string): MessageReaction[] => {
+    if (!user) return current;
+    const mine = current.find((r) => r.userId === user.id);
+    if (mine?.emoji === emoji) {
+      return current.filter((r) => r.userId !== user.id);
+    }
+    const withoutMine = current.filter((r) => r.userId !== user.id);
+    return [
+      ...withoutMine,
+      {
+        id: mine?.id ?? `temp-reaction-${Date.now()}`,
+        emoji,
+        userId: user.id,
+        user: { id: user.id, firstName: user.firstName || "You", lastName: user.lastName || "" },
+      },
+    ];
+  };
+
+  const handleToggleReaction = async (messageId: string, emoji: string) => {
+    if (!user || isReadOnly) return;
+    setActiveMessageActionsId(null);
+
+    const target = messages.find((m) => m.id === messageId);
+    const prevReactions = target?.reactions ?? [];
+    const optimisticReactions = computeOptimisticReactions(prevReactions, emoji);
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, reactions: optimisticReactions } : m)),
+    );
+
+    const revert = () => {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, reactions: prevReactions } : m)),
+      );
+      toast.error("Couldn't update reaction");
+    };
+
+    try {
+      const socket = getSocket();
+      let ack: ReactionAck | null = null;
+
+      if (socket && socket.connected) {
+        try {
+          ack = await new Promise<ReactionAck>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
+            socket.emit("reactToMessage", { messageId, emoji }, (response: ReactionAck) => {
+              clearTimeout(timeout);
+              resolve(response);
+            });
+          });
+        } catch {
+          console.warn("Socket reaction failed, falling back to REST");
+        }
+      }
+
+      if (!ack?.success) {
+        const response = await api.post(`/bookings/${bookingId}/messages/${messageId}/reactions`, { emoji });
+        ack = response.data?.data ? { success: true, ...response.data.data } : null;
+      }
+
+      if (ack?.success && ack.reactions) {
+        const confirmedReactions = ack.reactions;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, reactions: confirmedReactions } : m)),
+        );
+      } else {
+        revert();
+      }
+    } catch (error) {
+      console.error("Reaction toggle error:", error);
+      revert();
+    }
   };
 
   const handleApproveRequest = async () => {
@@ -835,39 +1103,25 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           }
 
           const isMe = msg.senderId === user.id;
-          const status = msg.status;
 
           return (
-            <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-              <div className="max-w-[85%] space-y-1">
-                <div className={`rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm ${
-                  isMe 
-                    ? "bg-brand text-white rounded-br-none" 
-                    : "bg-white text-ink border border-gray-100 rounded-bl-none"
-                }`}>
-                  <span className="whitespace-pre-wrap break-words">{msg.content}</span>
-                </div>
-                <div className={`flex items-center gap-1 text-[9px] font-medium text-gray-400 ${isMe ? "justify-end" : "justify-start"}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  
-                  {isMe && (
-                    status === 'sending' ? (
-                      <Clock className="h-3 w-3 text-gray-400 ml-1" />
-                    ) : status === 'error' ? (
-                      <AlertCircle className="h-3.5 w-3.5 text-red-500 ml-1" />
-                    ) : (
-                      msg.isRead ? (
-                         <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" />
-                      ) : msg.isDelivered ? (
-                         <CheckCheck className="h-3.5 w-3.5 text-gray-400 ml-1" />
-                      ) : (
-                         <Check className="h-3.5 w-3.5 text-gray-400 ml-1" />
-                      )
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
+            <MessageBubble
+              key={msg.id}
+              msg={msg}
+              isMe={isMe}
+              currentUserId={user.id}
+              isReadOnly={isReadOnly}
+              isHighlighted={highlightedMessageId === msg.id}
+              isActionsOpen={activeMessageActionsId === msg.id}
+              onOpenActionsChange={(open) => setActiveMessageActionsId(open ? msg.id : null)}
+              onReply={() => {
+                setActiveMessageActionsId(null);
+                setReplyTarget(msg);
+                inputRef.current?.focus();
+              }}
+              onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
+              onQuoteClick={scrollToMessage}
+            />
           );
         })}
         {showPendingNudge && (
@@ -922,6 +1176,24 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
       {/* Input Area */}
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
+        {replyTarget && (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-brand/40 bg-gray-50 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-brand">
+                {replyTarget.senderId === user?.id ? "You" : replyTarget.sender.firstName}
+              </p>
+              <p className="line-clamp-1 text-[12px] text-ink-subtle">{replyTarget.content}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTarget(null)}
+              className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Cancel reply"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
           <Textarea
             ref={inputRef}
