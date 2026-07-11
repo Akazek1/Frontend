@@ -13,7 +13,13 @@ import {
   EmptyState,
   PageShell,
 } from "@/components/ui/app-primitives";
-import { NotificationItem, getNotificationHref } from "@/hooks/useNotifications";
+import {
+  NotificationItem,
+  getNotificationHref,
+  groupNotifications,
+  parseNotificationMetadata,
+  type GroupedNotification,
+} from "@/hooks/useNotifications";
 import {
   NotificationFilter,
   NotificationRow,
@@ -77,16 +83,21 @@ const NotificationHistoryPage = () => {
     }
   }, [page]);
 
-  const handleClick = async (n: NotificationItem) => {
-    if (!n.readAt) {
-      try {
-        await api.patch(`/users/notifications/${n.id}/read`);
-        setItems((prev) =>
-          prev.map((x) => (x.id === n.id ? { ...x, status: "READ", readAt: new Date().toISOString() } : x)),
-        );
-      } catch (err) {
-        console.error(err);
-      }
+  const handleClick = async (n: GroupedNotification) => {
+    const now = new Date().toISOString();
+    if (n.groupBookingId) {
+      // A collapsed conversation row: mark the whole thread read.
+      setItems((prev) =>
+        prev.map((x) =>
+          parseNotificationMetadata(x.metadata).bookingId === n.groupBookingId && !x.readAt
+            ? { ...x, status: "READ", readAt: now }
+            : x,
+        ),
+      );
+      api.patch(`/users/notifications/read-by-booking/${n.groupBookingId}`).catch((err) => console.error(err));
+    } else if (!n.readAt) {
+      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, status: "READ", readAt: now } : x)));
+      api.patch(`/users/notifications/${n.id}/read`).catch((err) => console.error(err));
     }
     const href = getNotificationHref(n);
     if (href) router.push(href);
@@ -110,7 +121,10 @@ const NotificationHistoryPage = () => {
     () => filterNotifications(items, activeFilter),
     [activeFilter, items],
   );
-  const groupedItems = useMemo(() => groupNotificationsByDate(filteredItems), [filteredItems]);
+  // Collapse same-conversation message notifications into one row (like the
+  // bell), then bucket by date.
+  const conversationGrouped = useMemo(() => groupNotifications(filteredItems), [filteredItems]);
+  const groupedItems = useMemo(() => groupNotificationsByDate(conversationGrouped), [conversationGrouped]);
   const allLoadedNotificationsRead = items.length === 0 || items.every((n) => !!n.readAt || n.status === "READ");
 
   return (
@@ -185,11 +199,13 @@ const NotificationHistoryPage = () => {
             <section key={group.title} className="space-y-2">
               <h2 className="px-1 text-[15px] font-bold text-ink-muted">{group.title}</h2>
               <Card variant="list" className="overflow-hidden rounded-xl">
-                {group.items.map((notification) => (
+                {(group.items as GroupedNotification[]).map((notification) => (
                   <NotificationRow
                     key={notification.id}
                     notification={notification}
-                    onClick={handleClick}
+                    count={notification.groupCount}
+                    unread={notification.groupUnread > 0}
+                    onClick={() => handleClick(notification)}
                   />
                 ))}
               </Card>
