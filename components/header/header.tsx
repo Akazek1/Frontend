@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import LanguageSwitcher from "@/components/header/language-switcher";
 
 import { getProviderHandle } from "@/lib/service-display";
-import { NotificationItem, getNotificationHref, useNotifications } from "@/hooks/useNotifications";
+import { getNotificationHref, groupNotifications, useNotifications, type GroupedNotification } from "@/hooks/useNotifications";
 import { NotificationRow } from "@/components/notifications/notification-row";
 import api from "@/lib/axios";
 import type { AddressDisplay } from "@/lib/location-display";
@@ -24,7 +24,7 @@ const Header = () => {
   const t = useTranslations("header");
   const { user } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
-  const { items, unreadCount, refetch, markRead } = useNotifications({ limit: 5 });
+  const { items, unreadCount, refetch, markRead, markBookingRead } = useNotifications({ limit: 5 });
   const [address, setAddress] = useState<HeaderAddress | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
 
@@ -79,8 +79,13 @@ const Header = () => {
     ].filter(Boolean) as Array<{ label: string; value: string }>;
   }, [address, t]);
 
-  const handleNotificationClick = async (n: NotificationItem) => {
-    if (!n.readAt) await markRead(n.id);
+  const handleGroupedClick = async (n: GroupedNotification) => {
+    // A collapsed conversation row: dismiss the whole thread's notifications.
+    if (n.groupBookingId) {
+      markBookingRead(n.groupBookingId);
+    } else if (!n.readAt) {
+      await markRead(n.id);
+    }
     const href = getNotificationHref(n);
     if (href) router.push(href);
   };
@@ -176,11 +181,13 @@ const Header = () => {
                 {items.length === 0 ? (
                   <p className="px-3 py-6 text-center text-[12px] text-ink-subtle">{t("notifications.empty")}</p>
                 ) : (
-                  items.map((notification) => (
+                  groupNotifications(items).map((notification) => (
                     <NotificationRow
                       key={notification.id}
                       notification={notification}
-                      onClick={handleNotificationClick}
+                      count={notification.groupCount}
+                      unread={notification.groupUnread > 0}
+                      onClick={() => handleGroupedClick(notification)}
                       variant="compact"
                     />
                   ))

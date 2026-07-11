@@ -150,6 +150,7 @@ function MessageBubble({
   onCopy,
   onEdit,
   onDelete,
+  onRetry,
   onQuoteClick,
 }: {
   msg: Message;
@@ -171,6 +172,7 @@ function MessageBubble({
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onRetry: () => void;
   onQuoteClick: (id: string) => void;
 }) {
   const status = msg.status;
@@ -182,7 +184,9 @@ function MessageBubble({
     return acc;
   }, {});
 
-  const gestureEnabled = !isReadOnly && !isDeleted;
+  // Only fully-sent messages get the action menu / reactions — a still-sending
+  // or failed bubble shouldn't be react/reply/edit-able.
+  const gestureEnabled = !isReadOnly && !isDeleted && msg.status !== "sending" && msg.status !== "error";
   const { dragX, isDragging, handlers } = useMessageGestures({
     enabled: gestureEnabled,
     onLongPress: onOpenFull,
@@ -311,7 +315,10 @@ function MessageBubble({
             status === 'sending' ? (
               <Clock className="h-3 w-3 text-gray-400 ml-1" />
             ) : status === 'error' ? (
-              <AlertCircle className="h-3.5 w-3.5 text-red-500 ml-1" />
+              <button type="button" onClick={onRetry} className="ml-1 flex items-center gap-0.5 text-red-500 hover:text-red-600">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span className="text-[9px] font-semibold underline">Tap to retry</span>
+              </button>
             ) : (
               msg.isRead ? (
                  <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" />
@@ -423,6 +430,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     reviewAutoPromptedRef.current = false;
     setNudgeDismissBaseline(0);
     fetchBookingDetails();
+    // Opening the conversation dismisses ALL of its message notifications at
+    // once (not just the single one that was tapped), so the bell stops
+    // showing N-1 stale unread entries after you read the thread.
+    api.patch(`/users/notifications/read-by-booking/${bookingId}`).catch(() => {});
   }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -763,6 +774,52 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
   const handleRemindPartner = () => {
     handleSendMessage(PENDING_REMINDER_MESSAGE);
+  };
+
+  // Re-send a message that failed, reusing its existing bubble (no retyping).
+  // Same socket-then-REST path as the initial send.
+  const handleRetry = async (msg: Message) => {
+    if (isReadOnly || msg.status !== "error") return;
+    const tempId = msg.id;
+    const content = msg.content;
+    const replyToId = msg.replyTo?.id;
+
+    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "sending" } : m)));
+
+    try {
+      const socket = getSocket();
+      let serverMessage: Message | null = null;
+
+      if (socket && socket.connected) {
+        try {
+          const response = await new Promise<SendMessageAck>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
+            socket.emit("sendMessage", { bookingId, message: { content, replyToId } }, (ack: SendMessageAck) => {
+              clearTimeout(timeout);
+              resolve(ack);
+            });
+          });
+          if (response?.success && response.message) serverMessage = response.message;
+        } catch {
+          console.warn("Socket retry failed, falling back to REST");
+        }
+      }
+
+      if (!serverMessage) {
+        const response = await api.post(`/bookings/${bookingId}/messages`, { content, replyToId });
+        if (response.data?.data) serverMessage = response.data.data;
+      }
+
+      if (serverMessage) {
+        const confirmed = serverMessage;
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...confirmed, status: "sent" as const } : m)));
+      } else {
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
+      }
+    } catch {
+      toast.error("Still couldn't send. Check your connection.");
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
+    }
   };
 
   // Same three-way toggle as the backend: no reaction from this user -> add;
@@ -1439,6 +1496,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               onCopy={() => handleCopyMessage(msg.content)}
               onEdit={() => handleStartEdit(msg)}
               onDelete={() => handleDeleteMessage(msg.id)}
+              onRetry={() => handleRetry(msg)}
               onQuoteClick={scrollToMessage}
             />
           );
