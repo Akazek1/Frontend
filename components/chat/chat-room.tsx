@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -22,6 +22,7 @@ import {
 import { BookingReviewsDialog } from "@/components/reviews/booking-reviews-dialog";
 import type { Review } from "@/hooks/useReviews";
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/error-handler";
 
 // Status announcements (accept / cancel / complete) are persisted as regular
 // messages with a real senderId but a distinctive leading emoji marker. We use
@@ -55,6 +56,8 @@ interface Message {
   isDelivered: boolean;
   isRead: boolean;
   status?: 'sending' | 'sent' | 'error';
+  editedAt?: string | null;
+  deletedAt?: string | null;
   sender: MessageSenderSummary;
   replyTo?: {
     id: string;
@@ -77,6 +80,17 @@ interface ReactionAck {
   reactions?: MessageReaction[];
   error?: string;
 }
+
+interface MessageMutationAck {
+  success?: boolean;
+  message?: Message;
+  error?: string;
+}
+
+// Must match the backend's MESSAGE_EDIT_WINDOW_MS (bookings.service.ts): a
+// message can be edited/unsent only within this window and only until the
+// other person replies.
+const MESSAGE_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 interface BookingDetails {
   id: string;
@@ -117,9 +131,16 @@ function MessageBubble({
   isReadOnly,
   isHighlighted,
   isActionsOpen,
-  onOpenActionsChange,
+  showActionsFull,
+  canModify,
+  onOpenReact,
+  onOpenFull,
+  onCloseActions,
   onReply,
   onReact,
+  onCopy,
+  onEdit,
+  onDelete,
   onQuoteClick,
 }: {
   msg: Message;
@@ -128,12 +149,20 @@ function MessageBubble({
   isReadOnly: boolean;
   isHighlighted: boolean;
   isActionsOpen: boolean;
-  onOpenActionsChange: (open: boolean) => void;
+  showActionsFull: boolean;
+  canModify: boolean;
+  onOpenReact: () => void;
+  onOpenFull: () => void;
+  onCloseActions: () => void;
   onReply: () => void;
   onReact: (emoji: string) => void;
+  onCopy: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   onQuoteClick: (id: string) => void;
 }) {
   const status = msg.status;
+  const isDeleted = Boolean(msg.deletedAt);
   const reactions = msg.reactions ?? [];
   const myReaction = reactions.find((r) => r.userId === currentUserId)?.emoji ?? null;
   const reactionGroups = reactions.reduce<Record<string, MessageReaction[]>>((acc, r) => {
@@ -141,9 +170,28 @@ function MessageBubble({
     return acc;
   }, {});
 
-  const longPress = useLongPress(() => {
-    if (!isReadOnly) onOpenActionsChange(true);
-  });
+  const longPress = useLongPress(
+    () => {
+      if (!isReadOnly && !isDeleted) onOpenFull();
+    },
+    { onDoubleTap: () => { if (!isReadOnly && !isDeleted) onOpenReact(); } },
+  );
+
+  // A tombstone: no menu, no reactions, no reply affordance.
+  if (isDeleted) {
+    return (
+      <div id={`msg-${msg.id}`} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
+        <div className="max-w-[85%]">
+          <div className={cn(
+            "rounded-2xl px-4 py-2 text-[13px] italic shadow-sm",
+            isMe ? "bg-brand/40 text-white rounded-br-none" : "bg-gray-50 text-gray-400 border border-gray-100 rounded-bl-none",
+          )}>
+            This message was deleted
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -167,22 +215,29 @@ function MessageBubble({
             <span className="font-semibold text-brand">
               {msg.replyTo.senderId === currentUserId ? "You" : msg.replyTo.sender.firstName}
             </span>
-            <span className="line-clamp-1 text-ink-subtle">{msg.replyTo.content}</span>
+            <span className="line-clamp-1 text-ink-subtle">
+              {msg.replyTo.content || "Deleted message"}
+            </span>
           </button>
         )}
 
         <MessageActionsPopover
           open={isActionsOpen}
-          onOpenChange={onOpenActionsChange}
+          onOpenChange={(open) => { if (!open) onCloseActions(); }}
           align={isMe ? "end" : "start"}
+          showActions={showActionsFull}
+          canModify={canModify}
           myReaction={myReaction}
           onReact={onReact}
           onReply={onReply}
+          onCopy={onCopy}
+          onEdit={onEdit}
+          onDelete={onDelete}
         >
           <div
             {...longPress}
             className={cn(
-              "select-none rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
+              "rounded-2xl px-4 py-2 text-[13px] leading-relaxed shadow-sm",
               isMe
                 ? "bg-brand text-white rounded-br-none"
                 : "bg-white text-ink border border-gray-100 rounded-bl-none",
@@ -216,6 +271,7 @@ function MessageBubble({
 
         <div className={`flex items-center gap-1 text-[9px] font-medium text-gray-400 ${isMe ? "justify-end" : "justify-start"}`}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {msg.editedAt && <span className="italic">edited</span>}
 
           {isMe && (
             status === 'sending' ? (
@@ -263,8 +319,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const reviewAutoPromptedRef = useRef(false);
   // Message being quoted in the composer, if any.
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
-  // Which bubble's long-press reaction/reply popover is currently open.
+  // Message being edited in the composer, if any.
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  // Which bubble's popover is open, and whether it shows the full action row
+  // (long-press) or just the reaction emojis (double-tap).
   const [activeMessageActionsId, setActiveMessageActionsId] = useState<string | null>(null);
+  const [actionsShowFull, setActionsShowFull] = useState(true);
   // Briefly highlighted after scrolling to a quoted message.
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
@@ -424,6 +484,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       );
     };
 
+    const handleMessageUpdated = (updated: Message) => {
+      if (updated.bookingId !== bookingId) return;
+      setMessages((prev) =>
+        prev.map((m) => (m.id === updated.id ? { ...updated, status: "sent" } : m)),
+      );
+    };
+
     const handleBookingStatusUpdated = (data: { bookingId: string; status: string }) => {
       if (data.bookingId !== bookingId) return;
       setBooking((prev) => prev ? { ...prev, status: data.status, updatedAt: new Date().toISOString() } : prev);
@@ -448,6 +515,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     socket.on("messagesRead", handleMessagesRead);
     socket.on("messagesDelivered", handleMessagesDelivered);
     socket.on("messageReactionUpdated", handleMessageReactionUpdated);
+    socket.on("messageUpdated", handleMessageUpdated);
     socket.on("bookingStatusUpdated", handleBookingStatusUpdated);
     socket.on("userOnline", handleUserOnline);
     socket.on("userOffline", handleUserOffline);
@@ -462,6 +530,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       socket.off("messagesRead", handleMessagesRead);
       socket.off("messagesDelivered", handleMessagesDelivered);
       socket.off("messageReactionUpdated", handleMessageReactionUpdated);
+      socket.off("messageUpdated", handleMessageUpdated);
       socket.off("bookingStatusUpdated", handleBookingStatusUpdated);
       socket.off("userOnline", handleUserOnline);
       socket.off("userOffline", handleUserOffline);
@@ -692,6 +761,145 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     }
   };
 
+  const handleCopyMessage = async (content: string) => {
+    setActiveMessageActionsId(null);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = content;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      toast.success("Copied");
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
+
+  // Enter edit mode: the composer becomes an editor pre-filled with the
+  // message text (mutually exclusive with replying).
+  const handleStartEdit = (msg: Message) => {
+    setActiveMessageActionsId(null);
+    setReplyTarget(null);
+    setEditingMessage(msg);
+    setNewMessage(msg.content);
+    inputRef.current?.focus();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+    setNewMessage("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMessage) return;
+    const messageId = editingMessage.id;
+    const content = newMessage.trim();
+    if (!content) return;
+    if (content === editingMessage.content) {
+      handleCancelEdit();
+      return;
+    }
+
+    const prev = editingMessage;
+    // Optimistic: show the new text + an "edited" marker immediately.
+    setMessages((cur) =>
+      cur.map((m) => (m.id === messageId ? { ...m, content, editedAt: new Date().toISOString() } : m)),
+    );
+    setEditingMessage(null);
+    setNewMessage("");
+    setIsSubmitting(true);
+
+    const revert = (msg: string) => {
+      setMessages((cur) => cur.map((m) => (m.id === messageId ? { ...m, content: prev.content, editedAt: prev.editedAt ?? null } : m)));
+      toast.error(msg);
+    };
+
+    try {
+      const socket = getSocket();
+      let ack: MessageMutationAck | null = null;
+      if (socket && socket.connected) {
+        try {
+          ack = await new Promise<MessageMutationAck>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
+            socket.emit("editMessage", { messageId, content }, (r: MessageMutationAck) => {
+              clearTimeout(timeout);
+              resolve(r);
+            });
+          });
+        } catch {
+          console.warn("Socket edit failed, falling back to REST");
+        }
+      }
+      if (!ack?.success) {
+        const response = await api.patch(`/bookings/${bookingId}/messages/${messageId}`, { content });
+        ack = response.data?.data ? { success: true, message: response.data.data } : null;
+      }
+      if (ack?.success && ack.message) {
+        const confirmed = ack.message;
+        setMessages((cur) => cur.map((m) => (m.id === messageId ? { ...confirmed, status: "sent" } : m)));
+      } else {
+        revert(ack?.error || "Couldn't edit message");
+      }
+    } catch (err) {
+      revert(getApiErrorMessage(err, "Couldn't edit message"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    setActiveMessageActionsId(null);
+    const prev = messages.find((m) => m.id === messageId);
+    if (!prev) return;
+
+    // Optimistic tombstone.
+    setMessages((cur) =>
+      cur.map((m) => (m.id === messageId ? { ...m, content: "", deletedAt: new Date().toISOString(), reactions: [] } : m)),
+    );
+
+    const revert = (msg: string) => {
+      setMessages((cur) => cur.map((m) => (m.id === messageId ? prev : m)));
+      toast.error(msg);
+    };
+
+    try {
+      const socket = getSocket();
+      let ack: MessageMutationAck | null = null;
+      if (socket && socket.connected) {
+        try {
+          ack = await new Promise<MessageMutationAck>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
+            socket.emit("deleteMessage", { messageId }, (r: MessageMutationAck) => {
+              clearTimeout(timeout);
+              resolve(r);
+            });
+          });
+        } catch {
+          console.warn("Socket delete failed, falling back to REST");
+        }
+      }
+      if (!ack?.success) {
+        const response = await api.delete(`/bookings/${bookingId}/messages/${messageId}`);
+        ack = response.data?.data ? { success: true, message: response.data.data } : null;
+      }
+      if (ack?.success && ack.message) {
+        const confirmed = ack.message;
+        setMessages((cur) => cur.map((m) => (m.id === messageId ? { ...confirmed, status: "sent" } : m)));
+      } else {
+        revert(ack?.error || "Couldn't unsend message");
+      }
+    } catch (err) {
+      revert(getApiErrorMessage(err, "Couldn't unsend message"));
+    }
+  };
+
   const handleApproveRequest = async () => {
     if (!booking || isUpdatingStatus) return;
 
@@ -841,7 +1049,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (editingMessage) {
+        handleSaveEdit();
+      } else {
+        handleSendMessage();
+      }
       // The textarea is never disabled mid-send, so it keeps focus; this just
       // guards against any edge re-render dropping it so the user can keep typing.
       inputRef.current?.focus();
@@ -872,6 +1084,21 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     : "Would you hire this person again?";
   const isPending = booking.status === BOOKING_STATUS.PENDING;
   const isApproved = booking.status !== BOOKING_STATUS.PENDING && booking.status !== BOOKING_STATUS.CANCELLED;
+  // Timestamp of the partner's most recent message — a message of mine stops
+  // being editable once the partner has sent anything newer (mirrors the
+  // backend's assertMessageMutable rule).
+  const lastPartnerMessageAt = messages.reduce((latest, m) => {
+    if (m.senderId === user.id) return latest;
+    const t = new Date(m.createdAt).getTime();
+    return t > latest ? t : latest;
+  }, 0);
+  const canModifyMessage = (msg: Message) =>
+    msg.senderId === user.id &&
+    !msg.deletedAt &&
+    msg.status !== "sending" &&
+    msg.status !== "error" &&
+    Date.now() - new Date(msg.createdAt).getTime() < MESSAGE_EDIT_WINDOW_MS &&
+    lastPartnerMessageAt <= new Date(msg.createdAt).getTime();
   const incompleteTaskCount = tasks.filter((t) => !t.isCompleted && !t.isCanceled).length;
   const hasTaskTab = tasks.length > 0 || isApproved;
   const bookingReviews = (booking.reviews || []).map(normalizeReviewForBooking);
@@ -1113,13 +1340,21 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               isReadOnly={isReadOnly}
               isHighlighted={highlightedMessageId === msg.id}
               isActionsOpen={activeMessageActionsId === msg.id}
-              onOpenActionsChange={(open) => setActiveMessageActionsId(open ? msg.id : null)}
+              showActionsFull={actionsShowFull}
+              canModify={canModifyMessage(msg)}
+              onOpenReact={() => { setActionsShowFull(false); setActiveMessageActionsId(msg.id); }}
+              onOpenFull={() => { setActionsShowFull(true); setActiveMessageActionsId(msg.id); }}
+              onCloseActions={() => setActiveMessageActionsId(null)}
               onReply={() => {
                 setActiveMessageActionsId(null);
+                setEditingMessage(null);
                 setReplyTarget(msg);
                 inputRef.current?.focus();
               }}
               onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
+              onCopy={() => handleCopyMessage(msg.content)}
+              onEdit={() => handleStartEdit(msg)}
+              onDelete={() => handleDeleteMessage(msg.id)}
               onQuoteClick={scrollToMessage}
             />
           );
@@ -1176,7 +1411,23 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
       {/* Input Area */}
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
-        {replyTarget && (
+        {editingMessage ? (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-amber-400 bg-amber-50 px-3 py-2">
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-amber-600">Editing message</p>
+              <p className="line-clamp-1 text-[12px] text-ink-subtle">{editingMessage.content}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Cancel edit"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : replyTarget && (
           <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-brand/40 bg-gray-50 px-3 py-2">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-brand">
@@ -1197,7 +1448,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="flex items-end gap-2">
           <Textarea
             ref={inputRef}
-            placeholder={isReadOnly ? "This conversation is read-only" : "Type a message..."}
+            placeholder={isReadOnly ? "This conversation is read-only" : editingMessage ? "Edit your message..." : "Type a message..."}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -1206,12 +1457,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-brand/20 scrollbar-hide"
           />
           <Button
-            onClick={() => handleSendMessage()}
+            onClick={() => editingMessage ? handleSaveEdit() : handleSendMessage()}
             size="icon"
             disabled={!newMessage.trim() || isSending || isReadOnly}
             className="h-11 w-11 flex-shrink-0 rounded-full bg-brand text-white hover:bg-brand-dark"
           >
-            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : editingMessage ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </footer>

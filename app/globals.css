@@ -118,17 +118,23 @@ body {
   font-family: "Urbanist", sans-serif;
 }
 
-/* Buttons, nav, and card chrome shouldn't show a text-selection highlight on
-   long-press/click-drag like a native app. Message text, inputs, and
-   textareas are intentionally excluded so users can still select/copy text. */
-button,
-a,
-nav,
-[role="button"],
-[role="tab"] {
+/* Native-app feel: nothing highlights on long-press/drag, and iOS never shows
+   its "Copy / Share" text callout. This is what lets a long-press on a chat
+   bubble open our own actions menu instead of the OS text selection. Real text
+   entry (inputs / textareas / contenteditable) is re-enabled below so typing,
+   caret placement, and paste still work. */
+body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 
