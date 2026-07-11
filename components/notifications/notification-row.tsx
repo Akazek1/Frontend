@@ -139,15 +139,21 @@ interface NotificationRowProps {
   notification: NotificationItem;
   onClick?: (notification: NotificationItem) => void;
   variant?: "compact" | "history";
+  // For a collapsed conversation row: how many notifications it represents, and
+  // whether the group has any unread (overrides the single-item read state).
+  count?: number;
+  unread?: boolean;
 }
 
 export function NotificationRow({
   notification,
   onClick,
   variant = "history",
+  count = 1,
+  unread,
 }: NotificationRowProps) {
   const { Icon, tone } = getNotificationPresentation(notification);
-  const isUnread = !notification.readAt && notification.status !== "READ";
+  const isUnread = unread ?? (!notification.readAt && notification.status !== "READ");
   const styles = toneClasses[tone];
   const isCompact = variant === "compact";
 
@@ -177,12 +183,17 @@ export function NotificationRow({
         <span className="flex items-start justify-between gap-3">
           <span
             className={cn(
-              "min-w-0 flex-1 text-ink",
+              "flex min-w-0 flex-1 items-center gap-1.5 text-ink",
               isCompact ? "text-[13px]" : "text-[15px]",
               isUnread ? "font-bold" : "font-semibold",
             )}
           >
-            {notification.title}
+            <span className="truncate">{notification.title}</span>
+            {count > 1 && (
+              <span className="flex-shrink-0 rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold text-brand">
+                {count}
+              </span>
+            )}
           </span>
           <span
             className={cn(

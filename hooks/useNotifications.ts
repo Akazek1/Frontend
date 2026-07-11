@@ -43,6 +43,47 @@ export function getNotificationHref(notification: NotificationItem): string | nu
   return resolveNotificationHref(parseNotificationMetadata(notification.metadata));
 }
 
+// A notification, or several message-notifications from the same conversation
+// collapsed into one row so 30 messages from one person don't show as 30
+// separate entries.
+export interface GroupedNotification extends NotificationItem {
+  groupCount: number;
+  groupIds: string[];
+  groupBookingId?: string;
+  groupUnread: number;
+}
+
+export function groupNotifications(items: NotificationItem[]): GroupedNotification[] {
+  const result: GroupedNotification[] = [];
+  const byBooking = new Map<string, GroupedNotification>();
+  for (const n of items) {
+    const meta = parseNotificationMetadata(n.metadata);
+    const bookingId = typeof meta.bookingId === "string" ? meta.bookingId : undefined;
+    const isMessage = meta.type === "NEW_MESSAGE";
+    const unread = !n.readAt && n.status !== "READ" ? 1 : 0;
+
+    // Only NEW_MESSAGE notifications collapse; other types stay individual.
+    const existing = isMessage && bookingId ? byBooking.get(bookingId) : undefined;
+    if (existing) {
+      existing.groupCount += 1;
+      existing.groupIds.push(n.id);
+      existing.groupUnread += unread;
+      continue; // items are newest-first, so the first one stays as the display
+    }
+
+    const grouped: GroupedNotification = {
+      ...n,
+      groupCount: 1,
+      groupIds: [n.id],
+      groupBookingId: bookingId,
+      groupUnread: unread,
+    };
+    result.push(grouped);
+    if (isMessage && bookingId) byBooking.set(bookingId, grouped);
+  }
+  return result;
+}
+
 interface UseNotificationsOptions {
   limit?: number;
   page?: number;
@@ -91,9 +132,24 @@ export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOption
       setTotal((t) => t + 1);
     };
 
+    // When a conversation is opened elsewhere, its notifications are marked
+    // read server-side; reflect that here so the bell badge drops live.
+    const handleNotificationsRead = (data: { bookingId: string }) => {
+      const now = new Date().toISOString();
+      setItems((prev) =>
+        prev.map((n) =>
+          parseNotificationMetadata(n.metadata).bookingId === data.bookingId && !n.readAt
+            ? { ...n, status: "READ", readAt: now }
+            : n,
+        ),
+      );
+    };
+
     socket.on("newNotification", handleNewNotification);
+    socket.on("notificationsRead", handleNotificationsRead);
     return () => {
       socket.off("newNotification", handleNewNotification);
+      socket.off("notificationsRead", handleNotificationsRead);
     };
   }, [effectiveIsAuthenticated, effectiveToken, user?.id, limit]);
 
@@ -120,7 +176,25 @@ export function useNotifications({ limit = 5, page = 1 }: UseNotificationsOption
     }
   }, []);
 
-  return { items, total, unreadCount, loading, refetch: fetchNotifications, markRead, markAllRead };
+  // Marks every notification for a conversation read at once — used when a
+  // grouped message row is opened.
+  const markBookingRead = useCallback(async (bookingId: string) => {
+    const now = new Date().toISOString();
+    setItems((prev) =>
+      prev.map((n) =>
+        parseNotificationMetadata(n.metadata).bookingId === bookingId && !n.readAt
+          ? { ...n, status: "READ", readAt: now }
+          : n,
+      ),
+    );
+    try {
+      await api.patch(`/users/notifications/read-by-booking/${bookingId}`);
+    } catch (err) {
+      console.error("Error marking conversation notifications read:", err);
+    }
+  }, []);
+
+  return { items, total, unreadCount, loading, refetch: fetchNotifications, markRead, markAllRead, markBookingRead };
 }
 
 export function formatRelativeTime(iso: string): string {

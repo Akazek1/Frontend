@@ -21,6 +21,24 @@ declare const self: ServiceWorkerGlobalScope & {
   };
 };
 
+// Backend base URL, inlined at build time (NEXT_PUBLIC_* vars are available in
+// the SW bundle). Used to report delivery receipts.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+// Tell the backend a chat push actually reached this device, so the sender's
+// tick can flip to "delivered" even with the app closed. Authed by the
+// unguessable notificationId in the push (no JWT in the SW). Best-effort;
+// `keepalive` lets it finish even if the SW is torn down after this.
+function reportDelivered(notificationId: string): Promise<void> {
+  if (!API_BASE) return Promise.resolve();
+  return fetch(`${API_BASE}/notifications/${encodeURIComponent(notificationId)}/delivered`, {
+    method: "POST",
+    keepalive: true,
+  })
+    .then(() => undefined)
+    .catch(() => undefined);
+}
+
 const notificationIcon = "/icons/icon-192.png";
 // Android's notification "badge" (status bar + shade icon) is rendered as a
 // silhouette from the image's alpha channel — a full-color opaque icon like
@@ -77,16 +95,31 @@ try {
     // the ONLY place a notification is displayed — a `notification` payload
     // would make the Firebase SDK show a duplicate. The fallback reads the old
     // shape in case an outdated backend is still deployed.
+    const data = payload.data;
     const notificationTitle =
-      payload.data?.title || payload.notification?.title || "Akazek";
-    const notificationOptions: NotificationOptions = {
-      body: payload.data?.body || payload.notification?.body || "",
+      data?.title || payload.notification?.title || "Akazek";
+    // Collapse notifications from the same conversation into one OS entry
+    // instead of stacking one per message: reuse a per-booking `tag` so a new
+    // message replaces the previous, and `renotify` so it still alerts.
+    // Falls back to the unique notificationId (no collapsing) for other types.
+    const tag = data?.bookingId ? `booking-${data.bookingId}` : data?.notificationId;
+    const notificationOptions: NotificationOptions & { renotify?: boolean } = {
+      body: data?.body || payload.notification?.body || "",
       icon: notificationIcon,
       badge: notificationBadge,
-      data: payload.data,
+      data,
+      ...(tag ? { tag, renotify: true } : {}),
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    const tasks: Promise<unknown>[] = [
+      self.registration.showNotification(notificationTitle, notificationOptions),
+    ];
+    // A push that reached the device IS a real delivery receipt (unlike a
+    // successful FCM send, which only means Firebase accepted it).
+    if (data?.type === "NEW_MESSAGE" && data?.notificationId) {
+      tasks.push(reportDelivered(data.notificationId));
+    }
+    return Promise.all(tasks);
   });
 } catch (err) {
   // Push is best-effort; offline caching must survive a Firebase load failure.

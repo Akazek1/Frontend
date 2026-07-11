@@ -38,6 +38,23 @@ export const PENDING_REMINDER_MESSAGE =
 // QUICK_REACTION_EMOJIS) — there's no shared package between the two repos.
 export const QUICK_REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
+// The emoji double-tapping a bubble reacts with (skin tone applied per user).
+export const QUICK_TAP_EMOJI = "👍";
+
+// Fitzpatrick skin-tone modifiers ("" = default yellow). The web can't read the
+// OS emoji-tone preference, so users pick their own; it's remembered per device.
+export const SKIN_TONES = ["", "🏻", "🏼", "🏽", "🏾", "🏿"];
+export const SKIN_TONE_STORAGE_KEY = "hwa.emojiSkinTone";
+
+// Only some emojis have skin-tone variants; the rest are returned unchanged.
+const TONE_SUPPORTING = new Set(["👍", "🙏"]);
+export function applySkinTone(emoji: string, tone: string): string {
+  return tone && TONE_SUPPORTING.has(emoji) ? emoji + tone : emoji;
+}
+export function supportsSkinTone(emoji: string): boolean {
+  return TONE_SUPPORTING.has(emoji);
+}
+
 export const PrivacyPolicyData = [
   {
     id: 1,

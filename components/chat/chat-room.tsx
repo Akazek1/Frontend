@@ -11,7 +11,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
 import toast from "react-hot-toast";
-import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE } from "@/constant";
+import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE, QUICK_TAP_EMOJI, SKIN_TONE_STORAGE_KEY, applySkinTone } from "@/constant";
+import { haptic } from "@/lib/haptics";
 import { TaskDrawer, Task } from "./task-drawer";
 import { MessageActionsPopover } from "./message-actions-popover";
 import { LinkifiedText } from "./linkified-text";
@@ -138,14 +139,18 @@ function MessageBubble({
   isActionsOpen,
   showActionsFull,
   canModify,
+  skinTone,
+  onChangeSkinTone,
   onOpenReact,
   onOpenFull,
   onCloseActions,
   onReply,
   onReact,
+  onQuickReact,
   onCopy,
   onEdit,
   onDelete,
+  onRetry,
   onQuoteClick,
 }: {
   msg: Message;
@@ -156,14 +161,18 @@ function MessageBubble({
   isActionsOpen: boolean;
   showActionsFull: boolean;
   canModify: boolean;
+  skinTone: string;
+  onChangeSkinTone: (tone: string) => void;
   onOpenReact: () => void;
   onOpenFull: () => void;
   onCloseActions: () => void;
   onReply: () => void;
   onReact: (emoji: string) => void;
+  onQuickReact: () => void;
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onRetry: () => void;
   onQuoteClick: (id: string) => void;
 }) {
   const status = msg.status;
@@ -175,11 +184,13 @@ function MessageBubble({
     return acc;
   }, {});
 
-  const gestureEnabled = !isReadOnly && !isDeleted;
+  // Only fully-sent messages get the action menu / reactions — a still-sending
+  // or failed bubble shouldn't be react/reply/edit-able.
+  const gestureEnabled = !isReadOnly && !isDeleted && msg.status !== "sending" && msg.status !== "error";
   const { dragX, isDragging, handlers } = useMessageGestures({
     enabled: gestureEnabled,
     onLongPress: onOpenFull,
-    onDoubleTap: onOpenReact,
+    onDoubleTap: onQuickReact,
     onSwipeReply: onReply,
   });
 
@@ -251,6 +262,8 @@ function MessageBubble({
           showActions={showActionsFull}
           canModify={canModify}
           myReaction={myReaction}
+          skinTone={skinTone}
+          onChangeSkinTone={onChangeSkinTone}
           onReact={onReact}
           onReply={onReply}
           onCopy={onCopy}
@@ -302,7 +315,10 @@ function MessageBubble({
             status === 'sending' ? (
               <Clock className="h-3 w-3 text-gray-400 ml-1" />
             ) : status === 'error' ? (
-              <AlertCircle className="h-3.5 w-3.5 text-red-500 ml-1" />
+              <button type="button" onClick={onRetry} className="ml-1 flex items-center gap-0.5 text-red-500 hover:text-red-600">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span className="text-[9px] font-semibold underline">Tap to retry</span>
+              </button>
             ) : (
               msg.isRead ? (
                  <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1] ml-1" />
@@ -382,6 +398,17 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [actionsShowFull, setActionsShowFull] = useState(true);
   // Briefly highlighted after scrolling to a quoted message.
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  // Chosen emoji skin tone ("" = default). Loaded from localStorage after mount
+  // to avoid an SSR/hydration mismatch.
+  const [skinTone, setSkinTone] = useState("");
+  useEffect(() => {
+    const saved = localStorage.getItem(SKIN_TONE_STORAGE_KEY);
+    if (saved) setSkinTone(saved);
+  }, []);
+  const handleChangeSkinTone = (tone: string) => {
+    setSkinTone(tone);
+    localStorage.setItem(SKIN_TONE_STORAGE_KEY, tone);
+  };
 
   const isCompleted = booking?.status === BOOKING_STATUS.COMPLETED;
   const isCancelled = booking?.status === BOOKING_STATUS.CANCELLED;
@@ -403,6 +430,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     reviewAutoPromptedRef.current = false;
     setNudgeDismissBaseline(0);
     fetchBookingDetails();
+    // Opening the conversation dismisses ALL of its message notifications at
+    // once (not just the single one that was tapped), so the bell stops
+    // showing N-1 stale unread entries after you read the thread.
+    api.patch(`/users/notifications/read-by-booking/${bookingId}`).catch(() => {});
   }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -653,7 +684,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       senderId: user.id,
       bookingId,
       createdAt: new Date().toISOString(),
-      isDelivered: partnerOnline,
+      // Start as "sent" (single gray), never optimistically "delivered" —
+      // partnerOnline is only this client's cached presence guess and can be
+      // stale. The real isDelivered comes back on the server ack (true only if
+      // the recipient's socket actually received it) or a later messagesDelivered
+      // event, so the double-gray tick reflects genuine device receipt.
+      isDelivered: false,
       isRead: false,
       status: 'sending',
       sender: {
@@ -740,6 +776,52 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     handleSendMessage(PENDING_REMINDER_MESSAGE);
   };
 
+  // Re-send a message that failed, reusing its existing bubble (no retyping).
+  // Same socket-then-REST path as the initial send.
+  const handleRetry = async (msg: Message) => {
+    if (isReadOnly || msg.status !== "error") return;
+    const tempId = msg.id;
+    const content = msg.content;
+    const replyToId = msg.replyTo?.id;
+
+    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "sending" } : m)));
+
+    try {
+      const socket = getSocket();
+      let serverMessage: Message | null = null;
+
+      if (socket && socket.connected) {
+        try {
+          const response = await new Promise<SendMessageAck>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
+            socket.emit("sendMessage", { bookingId, message: { content, replyToId } }, (ack: SendMessageAck) => {
+              clearTimeout(timeout);
+              resolve(ack);
+            });
+          });
+          if (response?.success && response.message) serverMessage = response.message;
+        } catch {
+          console.warn("Socket retry failed, falling back to REST");
+        }
+      }
+
+      if (!serverMessage) {
+        const response = await api.post(`/bookings/${bookingId}/messages`, { content, replyToId });
+        if (response.data?.data) serverMessage = response.data.data;
+      }
+
+      if (serverMessage) {
+        const confirmed = serverMessage;
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...confirmed, status: "sent" as const } : m)));
+      } else {
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
+      }
+    } catch {
+      toast.error("Still couldn't send. Check your connection.");
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
+    }
+  };
+
   // Same three-way toggle as the backend: no reaction from this user -> add;
   // same emoji already -> remove; different emoji already -> replace it.
   const computeOptimisticReactions = (current: MessageReaction[], emoji: string): MessageReaction[] => {
@@ -763,6 +845,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const handleToggleReaction = async (messageId: string, emoji: string) => {
     if (!user || isReadOnly) return;
     setActiveMessageActionsId(null);
+    haptic();
 
     const target = messages.find((m) => m.id === messageId);
     const prevReactions = target?.reactions ?? [];
@@ -1397,6 +1480,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               isActionsOpen={activeMessageActionsId === msg.id}
               showActionsFull={actionsShowFull}
               canModify={canModifyMessage(msg)}
+              skinTone={skinTone}
+              onChangeSkinTone={handleChangeSkinTone}
               onOpenReact={() => { setActionsShowFull(false); setActiveMessageActionsId(msg.id); }}
               onOpenFull={() => { setActionsShowFull(true); setActiveMessageActionsId(msg.id); }}
               onCloseActions={() => setActiveMessageActionsId(null)}
@@ -1407,9 +1492,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                 inputRef.current?.focus();
               }}
               onReact={(emoji) => handleToggleReaction(msg.id, emoji)}
+              onQuickReact={() => handleToggleReaction(msg.id, applySkinTone(QUICK_TAP_EMOJI, skinTone))}
               onCopy={() => handleCopyMessage(msg.content)}
               onEdit={() => handleStartEdit(msg)}
               onDelete={() => handleDeleteMessage(msg.id)}
+              onRetry={() => handleRetry(msg)}
               onQuoteClick={scrollToMessage}
             />
           );
