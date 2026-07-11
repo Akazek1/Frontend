@@ -28,91 +28,91 @@ const HelpAndSupport = () => {
       id: 1,
       question: "How do I create an account?",
       answer:
-        "Download the Akazek app or visit our website. Tap 'Register' and enter your phone number. You'll receive an OTP (one-time password) via SMS. Enter the OTP, then complete your profile with your name, email, and photo. That's it! You're ready to start.",
+        "Open Akazek and enter your phone number. You'll receive a 6-digit code by SMS — enter it to verify, then add your name and date of birth to finish onboarding. Email is optional and can be added later from your profile. There's no password to set or remember.",
     },
     {
       id: 2,
       question: "How do I hire a service worker?",
       answer:
-        "Browse services in the 'Home' section, filter by category and location, and tap on a service. Review the worker's profile, completed jobs, would-hire-again feedback, and availability. Tap 'Book Now', select your preferred date and time, enter your address, and confirm payment. The worker will receive your booking request.",
+        "On the Home tab, make sure 'Hire help' is selected at the top, then browse or search for a service and filter by category and location. Open a worker's service to review their profile, completed jobs, and would-hire-again feedback, then tap 'Request to Hire', add a short note about what you need, and send it. The worker gets your request and can accept it from their side.",
     },
     {
       id: 3,
-      question: "How do I list my services as a worker?",
+      question: "What's the difference between 'Request to Hire' and 'Contact Agency'?",
       answer:
-        "Go to 'Profile' → 'My Services'. Use 'Add New Service Card' to add the service title, description, category, price, service area, and photo. Preview the card, then save it when it looks right.",
+        "Most workers can be hired directly with 'Request to Hire'. Some workers are placed by a staffing agency instead — their service shows 'Contact Agency' rather than a direct request. Tap it, describe what you need, and the agency will review your note and reach out to discuss placing a worker with you.",
     },
     {
       id: 4,
-      question: "How is my payment processed?",
+      question: "How do I list my services as a worker?",
       answer:
-        "Payments are secured through our payment processor. When you book a service, you provide payment information which is encrypted and processed securely. Funds are held until the service is completed. Workers receive payment after the booking is marked as completed. We recommend reviewing invoices in your transaction history.",
+        "Switch to 'Find work' mode at the top of the Home tab, then go to More → My Services and tap 'Add Service'. Fill in the category, description, price, service area, and a photo, then save — it'll appear on your profile for employers to find.",
     },
     {
       id: 5,
-      question: "How do I cancel or reschedule a booking?",
+      question: "How is payment handled?",
       answer:
-        "Open your booking in 'Bookings' section, tap the booking, and select 'Cancel' or contact the worker directly through messages. We recommend canceling at least 24 hours in advance to avoid fees. For rescheduling, it's best to cancel and create a new booking with your preferred date and time.",
+        "Akazek doesn't process payment in the app — hiring requests and messaging are free to use. Agree on price and scope with the worker in chat before the job starts, and pay them directly once it's done.",
     },
     {
       id: 6,
-      question: "How does worker verification work?",
+      question: "How do I cancel a booking?",
       answer:
-        "Workers must verify their identity by uploading a government-issued ID (national ID, passport, or driver's license). Our team reviews the documents to confirm identity. Once verified, workers receive a 'Verified' badge on their profile, helping employers trust their service.",
+        "Open your conversation with the worker for that job — you'll find a 'Cancel Job' option in the task panel there. If the request is still pending, you can also accept or decline it straight from the Work tab. There's no reschedule option yet, so if you need a different date, cancel and send a new request.",
     },
     {
       id: 7,
-      question: "What happens if a worker doesn't show up?",
+      question: "How does worker verification work?",
       answer:
-        "If a worker misses the appointment, immediately contact them through the app. If they don't respond, contact our support team at support@akazek.rw with details. We can help resolve the issue, offer a refund, or connect you with another worker. Repeated no-shows by workers may result in account suspension.",
+        "Workers can upload a government-issued ID from their profile for review. Once our team approves it, a 'Verified' badge appears on their profile and service listings, so employers can hire with more confidence.",
     },
     {
       id: 8,
-      question: "How do I leave a review?",
+      question: "What happens if a worker doesn't show up?",
       answer:
-        "After a booking is completed, you'll be prompted to share whether you would hire or work with the person again, plus an optional comment about professionalism, punctuality, and quality of work. Reviews help build trust in the community and help other users make informed decisions.",
+        "Message them directly in the app first. If they don't respond, go to More → Report an Issue, describe what happened, and our team will review it and follow up.",
     },
     {
       id: 9,
-      question: "Can I report unsafe or inappropriate behavior?",
+      question: "How do I leave a review?",
       answer:
-        "Yes. Go to 'Profile' → 'Report Issue'. Describe the incident, include details (date, time, booking ID), and add any relevant messages or photos. Our safety team will review and take appropriate action. Your report helps keep the Akazek community safe.",
+        "After a booking is marked complete, you'll be asked whether you'd hire (or work with) that person again — Yes, Maybe, or No — plus an optional comment. That would-hire-again feedback is what shows on a profile; there's no separate star rating.",
     },
     {
       id: 10,
-      question: "How do I switch between Employer and Worker modes?",
+      question: "Can I report unsafe or inappropriate behavior?",
       answer:
-        "You can be both an employer and a worker! A toggle at the top of the Home page lets you switch views. As an Employer, you see available services. As a Worker (Provider), you see job opportunities. Both roles share the same account.",
+        "Yes. Go to More → Report an Issue (also reachable from a booking's task panel), choose a category, and describe what happened. Our safety team reviews every report.",
     },
     {
       id: 11,
-      question: "What payment methods are accepted?",
+      question: "How do I switch between Employer and Worker modes?",
       answer:
-        "Akazek accepts mobile money (MTN Mobile Money, Airtel Money) and bank transfers. All payments are securely processed. Your payment information is encrypted and never shared with workers.",
+        "At the top of the Home tab there are two buttons — 'Hire help' and 'Find work'. Tap between them any time; both roles live on the same account, so there's no need for a second sign-up.",
     },
     {
       id: 12,
       question: "How do I edit or delete a service listing?",
       answer:
-        "Go to 'Profile' → 'My Services'. Find your card in 'Your Services', tap the pencil icon to edit or the trash icon to delete. Changes take effect immediately.",
+        "Go to More → My Services, find the listing you want to change, and tap the pencil icon to edit or the trash icon to delete. Changes apply right away.",
     },
     {
       id: 13,
-      question: "What if I forget my password?",
+      question: "What if I can't sign in / forget my password?",
       answer:
-        "Akazek uses phone-based login (OTP), not traditional passwords. If you change your phone number, you'll need to register a new account with the new number. For account recovery issues, contact support@akazek.rw.",
+        "Akazek doesn't use passwords — you always sign in with your phone number and a fresh SMS code. If you've changed your phone number, contact support@akazek.rw; registering with a new number on its own would create a separate account.",
     },
     {
       id: 14,
       question: "Is my personal information safe?",
       answer:
-        "Yes. Akazek uses industry-standard encryption to protect your data. We never sell your information. Payment details are processed by secure third-party providers. See our Privacy Policy for full details on how we protect your data.",
+        "Yes. We use industry-standard encryption to protect your data and never sell it. Documents like your ID are only used for verification. See our Privacy Policy for full details.",
     },
     {
       id: 15,
       question: "How do I delete my account?",
       answer:
-        "Contact support@akazek.rw with your account details. We'll process your deletion request within 30 days. Note that deleting your account is permanent and cannot be undone. All your services, bookings, and reviews will be removed.",
+        "There's no in-app delete option yet — email support@akazek.rw with your account details and we'll process the deletion within 30 days. This is permanent: your services, bookings, and reviews will all be removed.",
     },
   ];
 

@@ -900,6 +900,7 @@ export function ServiceDetailClient() {
                             Send a short note to the agency. They&apos;ll review your request and reach out to discuss before placing a worker with you.
                         </p>
                         <textarea
+                            autoFocus
                             value={inquiryNote}
                             onChange={(e) => setInquiryNote(e.target.value)}
                             rows={4}

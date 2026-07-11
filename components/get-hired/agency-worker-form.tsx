@@ -9,6 +9,16 @@ import { MultiSelectLanguage } from "../multi-language-select"
 import toast from "react-hot-toast"
 import { Label } from "../ui/label"
 
+// Native <input type="date"> renders its visible text using the device's OS
+// locale (e.g. iOS often shows "Jul 7, 2003"), which we can't override via
+// CSS/JS. Rwanda reads dates as dd/mm/yyyy, so format it ourselves.
+const formatDateDMY = (value: string) => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    if (!year || !month || !day) return "";
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+};
+
 // Define interfaces
 interface AgencyWorker {
     id?: string;
@@ -250,13 +260,25 @@ const AgencyWorkerManagement: React.FC = () => {
                 </div>
                 <div className="space-y-0.5 w-full">
                     <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Date of Birth()</Label>
-                    <Input
-                        id="dateOfBirth"
-                        type="date"
-                        value={agencyWorker.dateOfBirth}
-                        onChange={(e) => setAgencyWorker((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                        className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
-                    />
+                    {/* Native picker stays interactive (opacity-0, tap opens the OS
+                        date picker) but its own text render — which overflows on
+                        iOS and always follows device locale — is hidden. The
+                        visible label is our own dd/mm/yyyy formatting. */}
+                    <div className="relative">
+                        <input
+                            id="dateOfBirth"
+                            type="date"
+                            value={agencyWorker.dateOfBirth}
+                            onChange={(e) => setAgencyWorker((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+                            aria-label="Worker's date of birth"
+                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        />
+                        <div className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border pointer-events-none overflow-hidden">
+                            <span className={agencyWorker.dateOfBirth ? "" : "text-secondary-foreground/50"}>
+                                {agencyWorker.dateOfBirth ? formatDateDMY(agencyWorker.dateOfBirth) : "DD/MM/YYYY"}
+                            </span>
+                        </div>
+                    </div>
                     <span className="text-[10px] text-secondary-foreground/50">Must be older than 18</span>
                 </div>
                 <div className="space-y-0.5 w-full">

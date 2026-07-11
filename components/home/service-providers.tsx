@@ -285,7 +285,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             onClick={() => { setHireModal(null); setNotes(""); }}
             aria-hidden="true"
           />
-          <SheetPanel className="max-w-sm rounded-t-[28px]" onClose={() => { setHireModal(null); setNotes(""); }}>
+          <SheetPanel side="floating" className="max-w-sm" onClose={() => { setHireModal(null); setNotes(""); }}>
             <SheetHeader
               title={hireModal.providerName}
               subtitle={hireModal.serviceTitle}
@@ -301,6 +301,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             <SheetBody className="space-y-5 pt-2">
               <FormField label="Message" hint="Optional">
                 <textarea
+                  autoFocus
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Describe what you need, preferred schedule, or any specific requirements…"
@@ -310,7 +311,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
               </FormField>
             </SheetBody>
 
-            <SheetFooter className="flex gap-3">
+            <SheetFooter className="flex gap-3 border-t-0 pb-6 pt-0">
               <AppButton
                 appVariant="secondary"
                 onClick={() => { setHireModal(null); setNotes(""); }}
