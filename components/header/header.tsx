@@ -224,7 +224,7 @@ const Header = () => {
       {/* Greeting */}
       <div>
         <h1 className="text-[20px] font-bold text-ink leading-tight">
-          {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋
+          {getGreeting()}{user?.firstName ? `, ${user.firstName}` : ""} 👋🏾
         </h1>
         <p className="text-[13px] text-ink-subtle mt-0.5">{t("subtitle")}</p>
       </div>
