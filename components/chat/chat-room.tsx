@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus, ArrowDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -384,10 +384,18 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const [isReviewPromptOpen, setIsReviewPromptOpen] = useState(false);
   const [isBookingReviewsOpen, setIsBookingReviewsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
   const reviewAutoPromptedRef = useRef(false);
+  // Chat auto-scroll: only follow new messages when the reader is already at
+  // the bottom; otherwise show a "new messages" jump pill instead of yanking
+  // them down mid-read.
+  const isNearBottomRef = useRef(true);
+  const didInitialScrollRef = useRef(false);
+  const prevMsgCountRef = useRef(0);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   // Message being quoted in the composer, if any.
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   // Message being edited in the composer, if any.
@@ -414,8 +422,20 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const isCancelled = booking?.status === BOOKING_STATUS.CANCELLED;
   const isReadOnly = isCompleted || isCancelled;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+    isNearBottomRef.current = true;
+    setShowJumpToLatest(false);
+  };
+
+  // Track whether the reader is at/near the bottom, so incoming messages know
+  // whether to auto-follow or just surface the jump pill.
+  const handleMessagesScroll = () => {
+    const main = mainRef.current;
+    if (!main) return;
+    const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 120;
+    isNearBottomRef.current = nearBottom;
+    if (nearBottom) setShowJumpToLatest(false);
   };
 
   const scrollToMessage = (messageId: string) => {
@@ -428,6 +448,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   useEffect(() => {
     readReceiptSentForRef.current.clear();
     reviewAutoPromptedRef.current = false;
+    // New conversation → start fresh: jump to its bottom once, no stale pill.
+    didInitialScrollRef.current = false;
+    prevMsgCountRef.current = 0;
+    isNearBottomRef.current = true;
+    setShowJumpToLatest(false);
     setNudgeDismissBaseline(0);
     fetchBookingDetails();
     // Opening the conversation dismisses ALL of its message notifications at
@@ -630,8 +655,30 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   }, [bookingId, token, user?.id, booking?.workerId, booking?.employerId]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const prevCount = prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+
+    // First render with messages: land at the bottom instantly.
+    if (!didInitialScrollRef.current && messages.length > 0) {
+      didInitialScrollRef.current = true;
+      scrollToBottom("auto");
+      return;
+    }
+
+    // Only react to genuinely NEW messages (not edits/reactions, which don't
+    // change the count).
+    if (messages.length <= prevCount) return;
+
+    const last = messages[messages.length - 1];
+    const isMine = last?.senderId === user?.id;
+    if (isMine || isNearBottomRef.current) {
+      // My own send, or I'm already at the bottom → follow it down.
+      scrollToBottom();
+    } else {
+      // I'm reading older messages → don't yank me; surface a jump pill.
+      setShowJumpToLatest(true);
+    }
+  }, [messages, user?.id]);
 
   // When a booking is completed, prompt BOTH parties to review — regardless of
   // who marked it complete. Fires once per open; the persistent "Leave Review"
@@ -1446,7 +1493,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Messages Area */}
-      <main className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-28">
+      <main ref={mainRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
           <p className="text-[11px] font-semibold text-ink">Booking Details</p>
           <p className="mt-1 text-[10px] text-ink-subtle">
@@ -1550,6 +1597,19 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         )}
         <div ref={messagesEndRef} />
       </main>
+
+      {/* "New messages" pill — appears when a message arrives while you're
+          reading older ones, instead of yanking you to the bottom. */}
+      {showJumpToLatest && (
+        <button
+          type="button"
+          onClick={() => scrollToBottom()}
+          className="absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2"
+        >
+          New messages
+          <ArrowDown className="h-3.5 w-3.5" />
+        </button>
+      )}
 
       {/* Input Area */}
       <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
