@@ -38,6 +38,14 @@ export function useMessageGestures({
   const longFiredRef = useRef(false);
   const swipingRef = useRef(false);
   const lastTapRef = useRef(0);
+  // A touch fires touchstart/touchend AND then synthesized "ghost" mouse
+  // events (~300ms later). Without this guard, a single tap runs finish()
+  // twice, and the second run looks like a double-tap → a single tap would
+  // wrongly react. So we ignore mouse events that closely follow a touch.
+  const lastTouchRef = useRef(0);
+  const SUPPRESS_MOUSE_AFTER_TOUCH_MS = 700;
+  const isGhostMouse = () => Date.now() - lastTouchRef.current < SUPPRESS_MOUSE_AFTER_TOUCH_MS;
+  const markTouch = () => { lastTouchRef.current = Date.now(); };
 
   const setDrag = useCallback((v: number) => {
     dragRef.current = v;
@@ -124,19 +132,21 @@ export function useMessageGestures({
     dragX,
     isDragging: dragX > 0,
     handlers: {
-      onMouseDown: (e: React.MouseEvent) => begin(e.clientX, e.clientY),
-      onMouseMove: (e: React.MouseEvent) => move(e.clientX, e.clientY, false),
-      onMouseUp: finish,
-      onMouseLeave: cancel,
+      onMouseDown: (e: React.MouseEvent) => { if (isGhostMouse()) return; begin(e.clientX, e.clientY); },
+      onMouseMove: (e: React.MouseEvent) => { if (isGhostMouse()) return; move(e.clientX, e.clientY, false); },
+      onMouseUp: () => { if (isGhostMouse()) return; finish(); },
+      onMouseLeave: () => { if (isGhostMouse()) return; cancel(); },
       onTouchStart: (e: React.TouchEvent) => {
+        markTouch();
         const t = e.touches[0];
         if (t) begin(t.clientX, t.clientY);
       },
       onTouchMove: (e: React.TouchEvent) => {
+        markTouch();
         const t = e.touches[0];
         if (t) move(t.clientX, t.clientY, true);
       },
-      onTouchEnd: finish,
+      onTouchEnd: () => { markTouch(); finish(); },
       onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     },
   };
