@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
 import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
@@ -35,6 +36,8 @@ export function SignupForm() {
     handleBack,
   } = useOnboarding()
 
+  const t = useTranslations("signup")
+
   const [emailError, setEmailError] = useState("")
   const [dobError, setDobError] = useState("")
   const [phoneError, setPhoneError] = useState("")
@@ -56,7 +59,7 @@ export function SignupForm() {
 
   const handleEmailBlur = () => {
     if (email.trim() && !isValidEmail(email.trim())) {
-      setEmailError("Please enter a valid email address")
+      setEmailError(t("errors.invalidEmail"))
     } else {
       setEmailError("")
     }
@@ -70,15 +73,15 @@ export function SignupForm() {
   const handleSignUp = async () => {
     if (!firstName.trim()) { return }
     if (email.trim() && !isValidEmail(email.trim())) {
-      setEmailError("Please enter a valid email address")
+      setEmailError(t("errors.invalidEmail"))
       return
     }
     if (!dateOfBirth) {
-      setDobError("Date of birth is required")
+      setDobError(t("errors.dobRequired"))
       return
     }
     if (!isAtLeast18(dateOfBirth)) {
-      setDobError("You must be at least 18 years old to register")
+      setDobError(t("errors.dobUnder18"))
       return
     }
     if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 9) { return }
@@ -103,7 +106,7 @@ export function SignupForm() {
     } catch {
       // In dev mode, allow continuing if the check endpoint is unavailable
       if (process.env.NODE_ENV !== "development") {
-        setPhoneError("Could not verify number. Please try again.")
+        setPhoneError(t("errors.phoneCheckFailed"))
         setChecking(false)
         return
       }
@@ -131,17 +134,17 @@ export function SignupForm() {
       <div className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-x-none">
         <div className="mx-auto w-full max-w-md min-w-0 px-4 sm:px-6 pt-6 pb-32 space-y-4">
           <div className="text-center mb-6">
-            <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Complete your profile</h2>
-            <p className="text-sm text-gray-500">Just your name to finish setting up</p>
+            <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">{t("completeTitle")}</h2>
+            <p className="text-sm text-gray-500">{t("completeSubtitle")}</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              First Name <span className="text-red-500">*</span>
+              {t("firstName")} <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              placeholder="Enter your first name"
+              placeholder={t("firstNamePlaceholder")}
               value={firstName}
               onChange={handleFirstNameChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
@@ -151,11 +154,11 @@ export function SignupForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Last Name <span className="text-gray-400 font-normal">(Optional)</span>
+              {t("lastName")} <span className="text-gray-400 font-normal">{t("optional")}</span>
             </label>
             <Input
               type="text"
-              placeholder="Enter your last name"
+              placeholder={t("lastNamePlaceholder")}
               value={lastName}
               onChange={handleLastNameChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
@@ -164,7 +167,7 @@ export function SignupForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Email <span className="text-gray-400 font-normal">(Optional)</span>
+              {t("email")} <span className="text-gray-400 font-normal">{t("optional")}</span>
             </label>
             <Input
               type="email"
@@ -184,7 +187,7 @@ export function SignupForm() {
               disabled={isLoading || !firstName.trim()}
               className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? t("saving") : t("save")}
             </button>
           </div>
         </div>
@@ -197,20 +200,20 @@ export function SignupForm() {
     <div className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-x-none">
       <div className="mx-auto w-full max-w-md min-w-0 px-4 sm:px-6 pt-4 pb-32 space-y-4">
         <div className="text-center mb-4">
-          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">Create your account</h2>
-          <p className="text-sm text-gray-500">Fill in your details to get started</p>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-2">{t("title")}</h2>
+          <p className="text-sm text-gray-500">{t("subtitle")}</p>
         </div>
 
         {/* First name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            First Name <span className="text-red-500">*</span>
+            {t("firstName")} <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
             name="given-name"
             autoComplete="given-name"
-            placeholder="Enter your first name"
+            placeholder={t("firstNamePlaceholder")}
             value={firstName}
             onChange={handleFirstNameChange}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
@@ -222,13 +225,13 @@ export function SignupForm() {
         {/* Last name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Last Name <span className="text-gray-400 font-normal">(Optional)</span>
+            {t("lastName")} <span className="text-gray-400 font-normal">{t("optional")}</span>
           </label>
           <Input
             type="text"
             name="family-name"
             autoComplete="family-name"
-            placeholder="Enter your last name"
+            placeholder={t("lastNamePlaceholder")}
             value={lastName}
             onChange={handleLastNameChange}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
@@ -239,7 +242,7 @@ export function SignupForm() {
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Email <span className="text-gray-400 font-normal">(Optional)</span>
+            {t("email")} <span className="text-gray-400 font-normal">{t("optional")}</span>
           </label>
           <Input
             type="email"
@@ -254,14 +257,14 @@ export function SignupForm() {
           />
           {emailError
             ? <p className="text-xs text-red-500 mt-1">{emailError}</p>
-            : <p className="text-xs text-gray-400 mt-1">You can add this later in your profile</p>
+            : <p className="text-xs text-gray-400 mt-1">{t("emailHint")}</p>
           }
         </div>
 
         {/* Date of birth */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Date of Birth <span className="text-red-500">*</span>
+            {t("dob")} <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
@@ -273,7 +276,7 @@ export function SignupForm() {
             onChange={(e) => handleDobChange(e.target.value)}
             onBlur={() => {
               if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
-                setDobError("You must be at least 18 years old to register")
+                setDobError(t("errors.dobUnder18"))
               } else {
                 setDobError("")
               }
@@ -283,14 +286,14 @@ export function SignupForm() {
           />
           {dobError
             ? <p className="text-xs text-red-500 mt-1">{dobError}</p>
-            : <p className="text-xs text-gray-400 mt-1">You must be at least 18 years old.</p>
+            : <p className="text-xs text-gray-400 mt-1">{t("dobHint")}</p>
           }
         </div>
 
         {/* Phone */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Phone Number <span className="text-red-500">*</span>
+            {t("phone")} <span className="text-red-500">*</span>
           </label>
           <div className={`flex min-w-0 items-center border rounded-xl overflow-hidden w-full transition-all ${
             phoneError ? "border-red-400" :
@@ -306,7 +309,7 @@ export function SignupForm() {
               name="phone"
               autoComplete="tel-national"
               inputMode="numeric"
-              placeholder="Phone number"
+              placeholder={t("phonePlaceholder")}
               value={phoneNumber}
               onChange={(e) => { setPhoneError(""); handlePhoneChange(e.target.value) }}
               className="min-w-0 px-4 py-3 sm:py-4 w-full text-gray-900 font-semibold placeholder:text-gray-400 placeholder:font-normal border-none focus:outline-none focus:ring-0 shadow-none bg-transparent"
@@ -316,9 +319,9 @@ export function SignupForm() {
           </div>
           {phoneError === "exists" ? (
             <p className="text-xs text-red-500 mt-1.5">
-              An account with this number already exists.{" "}
+              {t("phoneExists")}{" "}
               <Link href="/onboarding?step=login" className="text-brand font-semibold underline underline-offset-2">
-                Log in instead
+                {t("logInInstead")}
               </Link>
             </p>
           ) : phoneError ? (
@@ -345,10 +348,14 @@ export function SignupForm() {
             </div>
           </div>
           <span className="text-sm text-gray-500 leading-relaxed">
-            I have read and agree to the{" "}
-            <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>Terms of Service</Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>Privacy Policy</Link>
+            {t.rich("agree", {
+              terms: (chunks) => (
+                <Link href="/terms" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>{chunks}</Link>
+              ),
+              privacy: (chunks) => (
+                <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => { e.stopPropagation(); sessionStorage.setItem("_onb_terms_nav", "1") }}>{chunks}</Link>
+              ),
+            })}
           </span>
         </label>
 
@@ -364,7 +371,10 @@ export function SignupForm() {
             >
               <div className="pt-4 border-t border-gray-100 space-y-4">
                 <p className="text-sm text-gray-600 text-center">
-                  We sent a code to <span className="font-semibold text-gray-900">+250 {phoneNumber}</span>
+                  {t.rich("otpSentTo", {
+                    phone: phoneNumber,
+                    b: (chunks) => <span className="font-semibold text-gray-900">{chunks}</span>,
+                  })}
                 </p>
 
                 {/* Hidden input that captures typing, visual boxes overlaid */}
@@ -389,7 +399,7 @@ export function SignupForm() {
                     onFocus={(e) => e.target.scrollIntoView({ behavior: "smooth", block: "center" })}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     style={{ fontSize: "16px" }}
-                    aria-label="Verification code"
+                    aria-label={t("otpAriaLabel")}
                   />
                   {Array.from({ length: OTP_LENGTH }).map((_, i) => {
                     const isFilled = !!code[i]
@@ -409,10 +419,10 @@ export function SignupForm() {
 
                 <div className="text-center">
                   {resendCooldown > 0 ? (
-                    <p className="text-sm text-gray-400">Resend code in {resendCooldown}s</p>
+                    <p className="text-sm text-gray-400">{t("resendIn", { seconds: resendCooldown })}</p>
                   ) : (
                     <button type="button" onClick={handleResendOtp} className="text-sm text-brand font-medium underline underline-offset-2">
-                      Resend code
+                      {t("resend")}
                     </button>
                   )}
                 </div>
@@ -430,7 +440,7 @@ export function SignupForm() {
               disabled={signUpDisabled || checking}
               className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
-              {checking ? "Checking..." : isLoading ? "Please wait..." : "Sign Up"}
+              {checking ? t("checking") : isLoading ? t("pleaseWait") : t("signUp")}
             </button>
           ) : (
             <button
@@ -442,7 +452,7 @@ export function SignupForm() {
               disabled={isLoading || code.join("").length < OTP_LENGTH}
               className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
             >
-              {isLoading ? "Verifying..." : "Verify & Create Account"}
+              {isLoading ? t("verifying") : t("verifyCreate")}
             </button>
           )}
           <button
@@ -450,7 +460,7 @@ export function SignupForm() {
             onClick={() => { if (otpSent) { setOtpSent(false); setCode(Array(OTP_LENGTH).fill("")) } else { handleBack() } }}
             className="w-full bg-white text-brand-strong border-2 border-brand-strong py-4 sm:py-5 rounded-[100px] font-bold hover:bg-gray-50 transition-colors"
           >
-            {otpSent ? "Change details" : "Back"}
+            {otpSent ? t("changeDetails") : t("back")}
           </button>
         </div>
       </div>

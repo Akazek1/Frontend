@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useLocale } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Card, PageShell, appContentClass } from "@/components/ui/app-primitives";
 import api from "@/lib/axios";
@@ -35,13 +36,19 @@ interface LegalViewProps {
  * back to the bundled constants so the page is never broken or empty.
  */
 export default function LegalView({ type, heading, fallbackIntro, fallbackSections }: LegalViewProps) {
+  const locale = useLocale();
   const [doc, setDoc] = useState<ManagedLegalDoc | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get(`/legal/${type}`, { skipAuthRedirect: true });
+        // Server returns the active locale's document, falling back to English,
+        // then null — at which point we render the bundled default content.
+        const res = await api.get(`/legal/${type}`, {
+          params: { locale },
+          skipAuthRedirect: true,
+        });
         const data = res.data?.data || res.data;
         if (!cancelled && data && Array.isArray(data.sections) && data.sections.length > 0) {
           setDoc(data);
@@ -53,7 +60,7 @@ export default function LegalView({ type, heading, fallbackIntro, fallbackSectio
     return () => {
       cancelled = true;
     };
-  }, [type]);
+  }, [type, locale]);
 
   const intro = doc?.intro ?? fallbackIntro;
   const sections = doc?.sections ?? fallbackSections;
