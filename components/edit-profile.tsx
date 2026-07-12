@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import api from "@/lib/axios";
@@ -151,8 +152,8 @@ const getAge = (dateValue: string) => {
   return age;
 };
 
-const fullName = (form: ProfileForm) =>
-  [form.firstName, form.lastName].filter(Boolean).join(" ").trim() || "Your profile";
+const fullName = (form: ProfileForm, fallback: string) =>
+  [form.firstName, form.lastName].filter(Boolean).join(" ").trim() || fallback;
 
 const getSectionFields = (section: EditSection): (keyof ProfileForm)[] => {
   switch (section) {
@@ -228,6 +229,7 @@ const Field = ({
 );
 
 export default function EditProfile({ idEditable = true }: { idEditable?: boolean }) {
+  const t = useTranslations("editProfile");
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -294,7 +296,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
   useEffect(() => {
     if (!user) {
-      toast.error("Please log in to edit your profile");
+      toast.error(t("pleaseLogIn"));
       router.push("/onboarding");
     }
   }, [router, user]);
@@ -345,7 +347,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         setInitialLocation(location);
         if (known) setLocationCoords({ lat: known.lat, lng: known.lng });
       } catch {
-        toast.error("Failed to load profile");
+        toast.error(t("failedLoadProfile"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -385,10 +387,10 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   }, [form]);
 
   const profileCompletionMessage = useMemo(() => {
-    if (profileCompletion === 100) return "Your profile is complete and ready for employers.";
-    if (profileCompletion >= 85) return "Almost there. Complete a few more sections.";
-    return "Add more details to help employers decide faster.";
-  }, [profileCompletion]);
+    if (profileCompletion === 100) return t("profileComplete");
+    if (profileCompletion >= 85) return t("almostThere");
+    return t("addMoreDetails");
+  }, [profileCompletion, t]);
 
   const setField = useCallback(<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -407,7 +409,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   const toggleQuality = (quality: QualityKey) => {
     const selected = form.topQualities.includes(quality);
     if (!selected && form.topQualities.length >= 3) {
-      toast.error("Choose up to 3 qualities");
+      toast.error(t("chooseUpTo3"));
       return;
     }
     setField(
@@ -423,27 +425,27 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     const age = form.dateOfBirth ? getAge(form.dateOfBirth) : null;
 
     if (activeSection === "identity") {
-      if (!form.firstName.trim()) next.firstName = "First name is required";
+      if (!form.firstName.trim()) next.firstName = t("firstNameRequired");
       if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email.trim())) {
-        next.email = "Enter a valid email";
+        next.email = t("enterValidEmail");
       }
       if (form.dateOfBirth && Number.isNaN(new Date(form.dateOfBirth).getTime())) {
-        next.dateOfBirth = "Enter a valid date";
+        next.dateOfBirth = t("enterValidDate");
       }
       if (age !== null && age < LEGAL_WORKING_AGE) {
-        next.dateOfBirth = `You must be at least ${LEGAL_WORKING_AGE} to work in Rwanda`;
+        next.dateOfBirth = t("minAgeError", { age: LEGAL_WORKING_AGE });
       }
       if (form.username && !/^[a-z0-9_-]{3,30}$/.test(form.username)) {
-        next.username = "Use 3-30 lowercase letters, numbers, underscores, or hyphens";
+        next.username = t("usernameFormat");
       }
     }
 
     if (activeSection === "work" && form.bio.length > BIO_LIMIT) {
-      next.bio = `Keep your bio under ${BIO_LIMIT} characters`;
+      next.bio = t("bioTooLong", { limit: BIO_LIMIT });
     }
 
     if (activeSection === "location" && (form.district.trim() || form.sector.trim()) && !form.city.trim()) {
-      next.city = "City is required when adding a location";
+      next.city = t("cityRequiredLocation");
     }
 
     setErrors(next);
@@ -455,11 +457,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
     if (!idEditable) return;
     if (activeSection === "overview" || activeSection === "trust") return;
     if (!hasUnsavedChanges) {
-      toast("No changes to save");
+      toast(t("noChangesToSave"));
       return;
     }
     if (!validate()) {
-      toast.error("Please fix the highlighted fields");
+      toast.error(t("fixHighlightedFields"));
       return;
     }
 
@@ -470,8 +472,8 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         const check = await api.get(`/users/username/${username}/check`);
         const availability = check.data?.data || check.data;
         if (!availability?.available) {
-          setErrors((prev) => ({ ...prev, username: "Username is already taken" }));
-          toast.error("Username is already taken");
+          setErrors((prev) => ({ ...prev, username: t("usernameTaken") }));
+          toast.error(t("usernameTaken"));
           setSaving(false);
           setActiveSection("identity");
           return;
@@ -495,8 +497,8 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
       if (activeSection === "location") {
         if (!nextLocation.city && locationChanged) {
-          setErrors((prev) => ({ ...prev, city: "City is required when saving a location" }));
-          toast.error("City is required when saving a location");
+          setErrors((prev) => ({ ...prev, city: t("cityRequiredSaving") }));
+          toast.error(t("cityRequiredSaving"));
           setSaving(false);
           return;
         }
@@ -557,12 +559,12 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
       }
 
       setSavedForm(form);
-      toast.success("Profile updated");
+      toast.success(t("profileUpdated"));
       setActiveSection("overview");
     } catch (error: unknown) {
       const message =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update profile";
+        t("failedUpdateProfile");
       setErrors((prev) => ({ ...prev, form: message }));
       toast.error(message);
     } finally {
@@ -576,7 +578,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
       activeSection !== "overview" &&
       activeSection !== "trust" &&
       hasUnsavedChanges &&
-      !window.confirm("Discard unsaved changes?")
+      !window.confirm(t("discardChanges"))
     ) {
       return;
     }
@@ -588,21 +590,21 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
   };
 
   const sectionTitle = {
-    overview: idEditable ? "Edit Profile" : "Profile Preview",
-    identity: "Identity",
-    location: "Location",
-    languages: "Languages",
-    work: "About your work",
-    trust: "Verification & trust",
+    overview: idEditable ? t("editProfileTitle") : t("profilePreviewTitle"),
+    identity: t("identityTitle"),
+    location: t("locationTitle"),
+    languages: t("languagesTitle"),
+    work: t("workTitle"),
+    trust: t("trustTitle"),
   }[activeSection];
 
   const sectionDescription = {
-    overview: "Keep your details accurate and build trust.",
+    overview: t("overviewDescription"),
     identity: "",
-    location: "Set the areas where you are available for work.",
-    languages: "Choose all languages you can comfortably use.",
-    work: "Tell employers what makes you reliable and professional.",
-    trust: "Complete checks that help employers hire with confidence.",
+    location: t("locationDescription"),
+    languages: t("languagesDescription"),
+    work: t("workDescription"),
+    trust: t("trustDescription"),
   }[activeSection];
 
   if (loading) {
@@ -630,7 +632,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         className={cn(appPrimaryButtonClass, "w-full")}
       >
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-        Save changes
+        {t("saveChanges")}
       </Button>
     </div>
   ) : null;
@@ -655,18 +657,18 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   <div className="mx-auto mb-3 flex h-28 w-28 items-center justify-center rounded-full bg-[#EEF8EA]">
                     <User className="h-12 w-12 text-brand" />
                   </div>
-                  <h2 className="text-[21px] font-black leading-7 text-ink">{fullName(form)}</h2>
+                  <h2 className="text-[21px] font-black leading-7 text-ink">{fullName(form, t("yourProfileFallback"))}</h2>
                 </>
               )}
               <p className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-black text-brand">
                 <ShieldCheck className="h-4 w-4" />
-                Verified phone
+                {t("verifiedPhone")}
               </p>
             </section>
 
             <section className={appCardClass}>
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-[13px] font-black text-ink">Profile completeness</p>
+                <p className="text-[13px] font-black text-ink">{t("profileCompleteness")}</p>
                 <p className="text-[13px] font-black text-ink">{profileCompletion}%</p>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-[#E5E9E3]">
@@ -676,41 +678,41 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-[17px] font-black text-ink">Complete your profile</h2>
+              <h2 className="text-[17px] font-black text-ink">{t("completeYourProfile")}</h2>
               {[
                 {
                   key: "identity" as EditSection,
                   icon: IdCard,
-                  title: "Identity",
-                  subtitle: "Name, date of birth, contact",
+                  title: t("identityTitle"),
+                  subtitle: t("identitySubtitle"),
                   done: Boolean(form.firstName && form.gender && form.dateOfBirth),
                 },
                 {
                   key: "location" as EditSection,
                   icon: MapPin,
-                  title: "Location",
-                  subtitle: "Where you are based",
+                  title: t("locationTitle"),
+                  subtitle: t("locationSubtitle"),
                   done: Boolean(form.city),
                 },
                 {
                   key: "languages" as EditSection,
                   icon: Languages,
-                  title: "Languages",
-                  subtitle: "Languages you can speak",
+                  title: t("languagesTitle"),
+                  subtitle: t("languagesSubtitle"),
                   done: form.languages.length > 0,
                 },
                 {
                   key: "work" as EditSection,
                   icon: BookOpen,
-                  title: "About your work",
-                  subtitle: "Bio, experience, availability, skills",
+                  title: t("workTitle"),
+                  subtitle: t("workSubtitle"),
                   done: Boolean(form.bio || form.educationLevel || form.preferredWorkTime || form.topQualities.length),
                 },
                 {
                   key: "trust" as EditSection,
                   icon: ShieldCheck,
-                  title: "Verification & trust",
-                  subtitle: "Phone and ID verification",
+                  title: t("trustTitle"),
+                  subtitle: t("trustSubtitle"),
                   done: Boolean(form.phoneNumber),
                 },
               ].map((item) => {
@@ -738,9 +740,9 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
             <section className={appCardClass}>
               <h2 className="mb-3 flex items-center gap-2 text-[14px] font-black text-ink">
                 <ShieldCheck className="h-4 w-4 text-brand" />
-                Why this matters
+                {t("whyThisMatters")}
               </h2>
-              {["Build trust with employers", "Increase your chances of being hired", "Help employers find the right match", "Stand out with a complete profile"].map((item) => (
+              {[t("benefit1"), t("benefit2"), t("benefit3"), t("benefit4")].map((item) => (
                 <p key={item} className="mt-3 flex items-center gap-2 text-[12px] font-medium text-[#374033]">
                   <CheckCircle2 className="h-4 w-4 text-brand" />
                   {item}
@@ -755,24 +757,24 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                 className={cn(appPrimaryButtonClass, "w-full")}
               >
                 <Eye className="h-4 w-4" />
-                Preview profile
+                {t("previewProfile")}
               </Button>
             ) : null}
           </>
         ) : null}
 
         {activeSection === "identity" ? (
-          <SectionShell icon={User} title="Identity" description="Email is optional. Your phone remains the main account contact.">
+          <SectionShell icon={User} title={t("identityTitle")} description={t("identityDescription")}>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="First name" error={errors.firstName}>
-                <Input value={form.firstName} disabled={!canEdit} onChange={(event) => setField("firstName", event.target.value)} className={inputClass} placeholder="First name" />
+              <Field label={t("firstName")} error={errors.firstName}>
+                <Input value={form.firstName} disabled={!canEdit} onChange={(event) => setField("firstName", event.target.value)} className={inputClass} placeholder={t("firstName")} />
               </Field>
-              <Field label="Last name">
-                <Input value={form.lastName} disabled={!canEdit} onChange={(event) => setField("lastName", event.target.value)} className={inputClass} placeholder="Last name" />
+              <Field label={t("lastName")}>
+                <Input value={form.lastName} disabled={!canEdit} onChange={(event) => setField("lastName", event.target.value)} className={inputClass} placeholder={t("lastName")} />
               </Field>
             </div>
 
-            <Field label="Username" error={errors.username} hint={profileUrl ? `Profile link: ${profileUrl}` : undefined}>
+            <Field label={t("username")} error={errors.username} hint={profileUrl ? t("profileLink", { url: profileUrl }) : undefined}>
               <div className="relative">
                 <AtSign className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
                 <Input
@@ -780,13 +782,13 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   disabled={!canEdit}
                   onChange={(event) => setField("username", event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                   className={`${inputClass} pl-9`}
-                  placeholder="your-name"
+                  placeholder={t("yourNamePlaceholder")}
                   maxLength={30}
                 />
               </div>
             </Field>
 
-            <Field label="Date of birth" error={errors.dateOfBirth} hint={`Workers must be at least ${LEGAL_WORKING_AGE} years old.`}>
+            <Field label={t("dateOfBirth")} error={errors.dateOfBirth} hint={t("minAgeHint", { age: LEGAL_WORKING_AGE })}>
               <div className="relative">
                 {/* The native picker stays fully interactive (tapping opens the OS
                     date picker) but is invisible — its own text render is what
@@ -798,19 +800,19 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   max={maxBirthDate}
                   disabled={!canEdit}
                   onChange={(event) => setField("dateOfBirth", event.target.value)}
-                  aria-label="Date of birth"
+                  aria-label={t("dobAriaLabel")}
                   className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
                 />
                 <div className={`${inputClass} pr-10 flex items-center pointer-events-none overflow-hidden`}>
                   <span className={form.dateOfBirth ? "" : "text-muted-foreground"}>
-                    {form.dateOfBirth ? formatDateDMY(form.dateOfBirth) : "DD/MM/YYYY"}
+                    {form.dateOfBirth ? formatDateDMY(form.dateOfBirth) : t("dobPlaceholder")}
                   </span>
                 </div>
                 <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#53604F]" />
               </div>
             </Field>
 
-            <Field label="Gender" error={errors.gender}>
+            <Field label={t("gender")} error={errors.gender}>
               <div className="grid grid-cols-3 gap-2">
                 {APP_CONFIG.profile.genders.map((gender) => {
                   const active = form.gender === gender.value;
@@ -832,7 +834,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               </div>
             </Field>
 
-            <Field label="Phone number">
+            <Field label={t("phoneNumber")}>
               <div className="flex h-12 overflow-hidden rounded-xl border border-[#E1EBDD] bg-[#F4F7F2] shadow-sm">
                 <span className="flex items-center gap-2 border-r border-[#E1EBDD] bg-white px-3 text-[13px] font-black text-ink">+250</span>
                 <div className="relative min-w-0 flex-1">
@@ -842,26 +844,26 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               </div>
             </Field>
 
-            <Field label="Email (optional)" error={errors.email}>
+            <Field label={t("emailOptional")} error={errors.email}>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7668]" />
-                <Input type="email" value={form.email} disabled={!canEdit} onChange={(event) => setField("email", event.target.value)} className={`${inputClass} pl-9`} placeholder="you@example.com" />
+                <Input type="email" value={form.email} disabled={!canEdit} onChange={(event) => setField("email", event.target.value)} className={`${inputClass} pl-9`} placeholder={t("emailPlaceholder")} />
               </div>
             </Field>
 
             <div className="rounded-lg bg-[#EEF8EA] p-4 text-[12px] font-medium leading-5 text-[#374033]">
               <Lock className="mb-2 h-4 w-4 text-brand" />
-              Your contact information is private and only shared after a booking is confirmed.
+              {t("contactPrivacyNote")}
             </div>
           </SectionShell>
         ) : null}
 
         {activeSection === "location" ? (
-          <SectionShell icon={MapPin} title="Location" description="Choose the area you're usually based in — clients near this area will find you first.">
-            <Field label="City" error={errors.city}>
-              <Input value={form.city} disabled={!canEdit} onChange={(event) => setField("city", event.target.value)} className={inputClass} placeholder="Kigali" />
+          <SectionShell icon={MapPin} title={t("locationTitle")} description={t("locationDescriptionFull")}>
+            <Field label={t("city")} error={errors.city}>
+              <Input value={form.city} disabled={!canEdit} onChange={(event) => setField("city", event.target.value)} className={inputClass} placeholder={t("cityPlaceholder")} />
             </Field>
-            <Field label="Base area">
+            <Field label={t("baseArea")}>
               <SectorPicker
                 value={
                   form.sector && form.district
@@ -879,14 +881,14 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                   }));
                   setLocationCoords({ lat: loc.lat, lng: loc.lng });
                 }}
-                placeholder="Pick your sector"
+                placeholder={t("pickSector")}
               />
             </Field>
           </SectionShell>
         ) : null}
 
         {activeSection === "languages" ? (
-          <SectionShell icon={Languages} title="Languages" description="Choose every language you can comfortably use with clients.">
+          <SectionShell icon={Languages} title={t("languagesTitle")} description={t("languagesDescriptionFull")}>
             <div className="grid grid-cols-1 gap-2">
               {APP_CONFIG.profile.languages.map((language) => {
                 const active = form.languages.includes(language);
@@ -912,18 +914,18 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
         {activeSection === "work" ? (
           <>
-            <SectionShell icon={BookOpen} title="About your work" description="Keep it practical, specific, and easy for employers to scan.">
-              <Field label="Bio" error={errors.bio} hint={`${form.bio.length}/${BIO_LIMIT}`}>
+            <SectionShell icon={BookOpen} title={t("workTitle")} description={t("workSectionDescription")}>
+              <Field label={t("bio")} error={errors.bio} hint={`${form.bio.length}/${BIO_LIMIT}`}>
                 <Textarea
                   value={form.bio}
                   disabled={!canEdit}
                   onChange={(event) => setField("bio", event.target.value.slice(0, BIO_LIMIT))}
                   className={appTextareaClass}
-                  placeholder="Briefly describe your experience, what you do best, and what employers should know about you."
+                  placeholder={t("bioPlaceholder")}
                 />
               </Field>
 
-              <Field label="Top qualities (select up to 3)">
+              <Field label={t("topQualities")}>
                 <div className="grid grid-cols-2 gap-2">
                   {QUALITY_KEYS.map((quality) => {
                     const def = QUALITY_DEFS[quality];
@@ -948,11 +950,11 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               </Field>
             </SectionShell>
 
-            <SectionShell icon={BriefcaseBusiness} title="Work details" description="These remain optional, but help with better matching.">
-              <Field label="Education">
+            <SectionShell icon={BriefcaseBusiness} title={t("workDetails")} description={t("workDetailsDescription")}>
+              <Field label={t("education")}>
                 <Select value={form.educationLevel} onValueChange={(value) => setField("educationLevel", value)} disabled={!canEdit}>
                   <SelectTrigger className={selectClass}>
-                    <SelectValue placeholder="Select education level" />
+                    <SelectValue placeholder={t("selectEducationLevel")} />
                   </SelectTrigger>
                   <SelectContent>
                     {EDUCATION_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -960,23 +962,23 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                 </Select>
                 <p className="mt-1 flex items-center gap-1.5 text-[11px] leading-4 text-[#6B7668]">
                   <GraduationCap className="h-3.5 w-3.5" />
-                  Self-reported. No school document is required.
+                  {t("selfReportedNote")}
                 </p>
               </Field>
-              <Field label="Health / work capacity">
+              <Field label={t("healthWorkCapacity")}>
                 <Select value={form.healthStatus} onValueChange={(value) => setField("healthStatus", value)} disabled={!canEdit}>
                   <SelectTrigger className={selectClass}>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t("selectStatus")} />
                   </SelectTrigger>
                   <SelectContent>
                     {HEALTH_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Preferred work time">
+              <Field label={t("preferredWorkTime")}>
                 <Select value={form.preferredWorkTime} onValueChange={(value) => setField("preferredWorkTime", value)} disabled={!canEdit}>
                   <SelectTrigger className={selectClass}>
-                    <SelectValue placeholder="Select time" />
+                    <SelectValue placeholder={t("selectTime")} />
                   </SelectTrigger>
                   <SelectContent>
                     {WORK_TIME_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -988,22 +990,22 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
         ) : null}
 
         {activeSection === "trust" ? (
-          <SectionShell icon={ShieldCheck} title="Trust badges" description="Verification statuses are kept in sync with existing account data.">
+          <SectionShell icon={ShieldCheck} title={t("trustTitle")} description={t("trustBadgesDescription")}>
             {[
-              { icon: Phone, label: "Phone verified", action: "Verified", done: Boolean(form.phoneNumber) },
+              { icon: Phone, label: t("phoneVerified"), action: t("verified"), done: Boolean(form.phoneNumber) },
               {
                 icon: FileBadge,
-                label: "ID verified",
+                label: t("idVerified"),
                 // Reflect the live document status: approved → done, pending →
                 // "In review", rejected → "Re-upload", none → "Upload ID".
                 action:
                   idStatus === "APPROVED"
-                    ? "Verified"
+                    ? t("verified")
                     : idStatus === "PENDING_VERIFICATION"
-                      ? "In review"
+                      ? t("inReview")
                       : idStatus === "REJECTED"
-                        ? "Re-upload"
-                        : "Upload ID",
+                        ? t("reUpload")
+                        : t("uploadId"),
                 done: idStatus === "APPROVED",
                 onClick:
                   idStatus === "APPROVED" || idStatus === "PENDING_VERIFICATION"
