@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
 import Image from 'next/image';
@@ -90,6 +91,7 @@ const statusColors: Record<string, string> = {
 };
 
 const BookingDetails: React.FC = () => {
+    const t = useTranslations('receivedBookingDetails');
     const { id } = useParams();
     const router = useRouter();
     const [booking, setBooking] = useState<Booking | null>(null);
@@ -117,7 +119,7 @@ const BookingDetails: React.FC = () => {
                 setStatus(response.data.data.status);
                 setError(null);
             } catch {
-                setError('Failed to fetch booking');
+                setError(t('failedFetchBooking'));
             } finally {
                 setLoading(false);
             }
@@ -141,7 +143,7 @@ const BookingDetails: React.FC = () => {
 
     const handleSendOtp = async () => {
         if (!status) {
-            setUpdateError('Please select a status before sending OTP');
+            setUpdateError(t('selectStatusBeforeOtp'));
             return;
         }
         try {
@@ -165,7 +167,7 @@ const BookingDetails: React.FC = () => {
             }
         } catch (err) {
             const error = err as AxiosError;
-            setUpdateError('Failed to send OTP');
+            setUpdateError(t('failedSendOtp'));
             console.error('Error sending OTP:', error);
         } finally {
             setUpdating(false);
@@ -180,12 +182,12 @@ const BookingDetails: React.FC = () => {
             const validOtp = isTestPhone ? (testOtp || STATIC_OTP) : otp;
 
             if (!otp) {
-                setUpdateError('Please enter an OTP');
+                setUpdateError(t('enterOtpValidation'));
                 return;
             }
 
             if (otp !== validOtp) {
-                setUpdateError('Invalid OTP');
+                setUpdateError(t('invalidOtp'));
                 return;
             }
 
@@ -204,7 +206,7 @@ const BookingDetails: React.FC = () => {
             console.log('Status updated successfully:', response.data);
         } catch (err) {
             const error = err as AxiosError;
-            setUpdateError('Failed to update status');
+            setUpdateError(t('failedUpdateStatus'));
             console.error('Error updating status:', error);
         } finally {
             setUpdating(false);
@@ -224,11 +226,11 @@ const BookingDetails: React.FC = () => {
             <PageShell className="justify-center">
                 <EmptyState
                     icon={Circle}
-                    title="Booking not found"
-                    description={error || 'This booking could not be loaded.'}
+                    title={t('bookingNotFound')}
+                    description={error || t('bookingCouldNotBeLoaded')}
                     action={
                         <AppButton appVariant="secondary" onClick={() => router.push('/work')} className="w-full">
-                            Back to Work
+                            {t('backToWork')}
                         </AppButton>
                     }
                 />
@@ -238,7 +240,7 @@ const BookingDetails: React.FC = () => {
 
     return (
         <PageShell className="gap-4">
-            <BackButtonHeader text="Booking Details" className="p-4" backHref="/" />
+            <BackButtonHeader text={t('bookingDetails')} className="p-4" backHref="/" />
 
             <div className="space-y-4">
                 {/* Service Card */}
@@ -281,7 +283,7 @@ const BookingDetails: React.FC = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {/* User Card */}
                     <Card>
-                        <AppSectionHeader title="Customer" icon={User} className="mb-3 px-0" />
+                        <AppSectionHeader title={t('customer')} icon={User} className="mb-3 px-0" />
                         <div className="flex items-center mb-2">
                             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden mr-3">
                                 {booking.user?.profilePicture ? (
@@ -308,7 +310,7 @@ const BookingDetails: React.FC = () => {
 
                     {/* Worker Card */}
                     <Card>
-                        <AppSectionHeader title="Worker" icon={User} className="mb-3 px-0" />
+                        <AppSectionHeader title={t('worker')} icon={User} className="mb-3 px-0" />
                         <div className="flex items-center mb-2">
                             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3">
                                 <User />
@@ -324,7 +326,7 @@ const BookingDetails: React.FC = () => {
 
                 {/* Address Section */}
                 <Card>
-                    <AppSectionHeader title="Service Address" icon={MapPin} className="mb-3 px-0" />
+                    <AppSectionHeader title={t('serviceAddress')} icon={MapPin} className="mb-3 px-0" />
                     <div className="flex flex-col sm:flex-row gap-2 text-sm font-semibold">
                         <p className="text-gray-700">{booking.address.street}</p>
                         <p className="text-gray-700">{booking.address.city}, {booking.address.state}</p>
@@ -334,7 +336,7 @@ const BookingDetails: React.FC = () => {
 
                 {/* Status Update Section */}
                 <Card>
-                    <AppSectionHeader title="Update Booking Status" className="mb-3 px-0" />
+                    <AppSectionHeader title={t('updateBookingStatus')} className="mb-3 px-0" />
 
                     <Select
                         value={status}
@@ -342,12 +344,12 @@ const BookingDetails: React.FC = () => {
                         disabled={otpSent || updating}
                     >
                         <SelectTrigger className={appInputClass}>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder={t('selectStatus')} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="PENDING">{t('statusPending')}</SelectItem>
                             {/* <SelectItem value="CONFIRMED">Confirmed</SelectItem> */}
-                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="COMPLETED">{t('statusCompleted')}</SelectItem>
                             {/* <SelectItem value="CANCELLED">Cancelled</SelectItem> */}
                         </SelectContent>
                     </Select>
@@ -360,10 +362,10 @@ const BookingDetails: React.FC = () => {
                         {updating ? (
                             <>
                                 <Loader2 className="animate-spin mr-2 w-4 h-4" />
-                                Sending OTP...
+                                {t('sendingOtp')}
                             </>
                         ) : (
-                            'Send OTP to Customer'
+                            t('sendOtpToCustomer')
                         )}
                     </AppButton>
 
@@ -385,7 +387,7 @@ const BookingDetails: React.FC = () => {
                     <DialogContent className="w-[360px]  sm:max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="flex items-center justify-between">
-                                Enter OTP
+                                {t('enterOtp')}
                                 {/* <Button
                                     variant="ghost"
                                     size="icon"
@@ -398,16 +400,16 @@ const BookingDetails: React.FC = () => {
                         </DialogHeader>
                         <div className="space-y-4">
                             <p className="text-sm text-gray-600">
-                                OTP sent to {booking?.user?.phoneNumber}
+                                {t('otpSentTo', { phone: booking?.user?.phoneNumber ?? '' })}
                                 {TEST_PHONE_NUMBERS.includes(booking?.user.phoneNumber || '') && testOtp && (
-                                    <span className="ml-2 text-xs text-gray-500">(Test OTP: {testOtp})</span>
+                                    <span className="ml-2 text-xs text-gray-500">{t('testOtpLabel', { otp: testOtp })}</span>
                                 )}
                             </p>
                             <Input
                                 type="text"
                                 value={otp}
                                 onChange={(e) => setOtp(e.target.value)}
-                                placeholder="Enter 6-digit OTP"
+                                placeholder={t('enterSixDigitOtp')}
                                 className={appInputClass}
                                 maxLength={6}
                             />
@@ -426,12 +428,12 @@ const BookingDetails: React.FC = () => {
                                 {updating ? (
                                     <>
                                         <Loader2 className="animate-spin mr-2 w-4 h-4" />
-                                        Updating...
+                                        {t('updating')}
                                     </>
                                 ) : (
                                     <>
                                         <CheckCircle className="mr-2 w-4 h-4" />
-                                        Verify OTP & Update Status
+                                        {t('verifyOtpAndUpdate')}
                                     </>
                                 )}
                             </AppButton>
