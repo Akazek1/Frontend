@@ -127,7 +127,7 @@ export default function AgencyWorkersPage() {
 
   function exportCsv() {
     const rows = [
-      [t("csvName"), t("csvPhone"), t("csvSkill"), t("csvStatus"), t("csvCurrentEmployer"), t("csvSince")],
+      ["Name", "Phone", "Skill", "Status", "Current Employer", "Since"],
       ...filtered.map((w) => [
         fullName(w, t),
         w.phoneNumber ?? "",
