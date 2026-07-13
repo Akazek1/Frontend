@@ -4,29 +4,31 @@
  * page never hardcodes strings.
  */
 
-export const SERVICE_DETAIL_LABELS = {
-  availableToday: "Available Today",
-  verified: "Verified",
-  priceLabel: "Price",
-  priceCaption: "Price varies based on task and size",
-  availabilityLabel: "Availability",
-  availabilityValue: "Flexible Hours",
-  availabilityCaption: "Morning / Afternoon",
-  speaks: "Speaks:",
-  aboutPrefix: "About",
-  readMore: "Read more",
-  readLess: "Read less",
-  servicesOffered: "Services Offered",
-  workPhotos: "Work Photos",
-  viewAll: "View all",
-  reviews: "Reviews",
-  seeAll: "See all",
-  message: "Message",
-  requestToHire: "Request to Hire",
-  requestSent: "Request Sent",
-  noReviewsYet: "No reviews yet.",
-  serviceNotFound: "Service not found",
-} as const;
+export function serviceDetailLabels(t: (key: string) => string) {
+  return {
+    availableToday: t("availableToday"),
+    verified: t("verified"),
+    priceLabel: t("priceLabel"),
+    priceCaption: t("priceCaption"),
+    availabilityLabel: t("availabilityLabel"),
+    availabilityValue: t("availabilityValue"),
+    availabilityCaption: t("availabilityCaption"),
+    speaks: t("speaks"),
+    aboutPrefix: t("aboutPrefix"),
+    readMore: t("readMore"),
+    readLess: t("readLess"),
+    servicesOffered: t("servicesOffered"),
+    workPhotos: t("workPhotos"),
+    viewAll: t("viewAll"),
+    reviews: t("reviews"),
+    seeAll: t("seeAll"),
+    message: t("message"),
+    requestToHire: t("requestToHire"),
+    requestSent: t("requestSent"),
+    noReviewsYet: t("noReviewsYet"),
+    serviceNotFound: t("serviceNotFound"),
+  } as const;
+}
 
 export type StatKey = "years" | "jobs" | "rehire";
 
@@ -38,11 +40,13 @@ export interface ProviderStat {
 
 // Only metrics backed by real data. Values are computed on the detail page
 // from the provider's yearsOfExperience and the service's review/job stats.
-export const PROVIDER_STATS: ProviderStat[] = [
-  { key: "years", icon: "Briefcase", label: "Years Exp" },
-  { key: "jobs", icon: "ClipboardCheck", label: "Jobs Done" },
-  { key: "rehire", icon: "Smile", label: "Would Rehire" },
-];
+export function providerStats(t: (key: string) => string): ProviderStat[] {
+  return [
+    { key: "years", icon: "Briefcase", label: t("yearsExp") },
+    { key: "jobs", icon: "ClipboardCheck", label: t("jobsDone") },
+    { key: "rehire", icon: "Smile", label: t("wouldRehire") },
+  ];
+}
 
 // Map service-category names → lucide icon names for the pills
 export const SERVICE_CATEGORY_ICONS: Record<string, string> = {
