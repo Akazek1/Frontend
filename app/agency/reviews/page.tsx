@@ -1,7 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ComingSoon } from "@/components/agency/coming-soon";
 
 export default function AgencyReviewsPage() {
-  return <ComingSoon title="Reviews" description="Reviews left for your workers and agency." />;
+  const t = useTranslations("agencyComingSoon");
+  return <ComingSoon title={t("reviewsTitle")} description={t("reviewsDescription")} />;
 }

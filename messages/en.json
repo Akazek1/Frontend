@@ -517,6 +517,22 @@
     "manageWorkers": "Manage Workers",
     "enrolled": "{count} enrolled"
   },
+  "agencyComingSoon": {
+    "comingSoon": "Coming soon",
+    "roadmapNotice": "This section is part of the agency console roadmap and will be available shortly.",
+    "documentsTitle": "Documents",
+    "documentsDescription": "Worker documents, contracts and verification files.",
+    "messagesTitle": "Messages",
+    "messagesDescription": "Conversations with employers and workers.",
+    "paymentsTitle": "Payments",
+    "paymentsDescription": "Commission payments and payout history.",
+    "reportsTitle": "Reports",
+    "reportsDescription": "Performance and placement analytics.",
+    "reviewsTitle": "Reviews",
+    "reviewsDescription": "Reviews left for your workers and agency.",
+    "settingsTitle": "Settings",
+    "settingsDescription": "Agency profile and account settings."
+  },
   "agencyIssueDetail": {
     "unknownName": "Unknown",
     "issueNotFound": "Issue not found",
