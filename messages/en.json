@@ -1402,5 +1402,28 @@
     "passwordReset": "Password reset",
     "description": "Self-service password reset is coming with the full agency accounts release. For now, please contact support to reset your password.",
     "backToSignIn": "Back to sign in"
+  },
+  "notFound": {
+    "errorBadge": "Error 404 • Page Not Found",
+    "heading": "Something went wrong.",
+    "description": "The link you followed might be broken, or the page may have been moved.",
+    "backToHome": "Back to Home",
+    "quickGuide": "Quick Guide",
+    "verifiedProfessionals": "Verified Professionals",
+    "verifiedProfessionalsDesc": "Trusted, ID-verified workers only.",
+    "simpleBooking": "Simple Booking",
+    "simpleBookingDesc": "Easy scheduling in a few taps.",
+    "supportCenter": "Support Center",
+    "supportCenterDesc": "We're here to help you 24/7.",
+    "visitHelpCenter": "Visit Help Center"
+  },
+  "errorBoundary": {
+    "loading": "Loading…",
+    "appUpdated": "App updated",
+    "newVersionAvailable": "A new version of the app is available. Please refresh to continue.",
+    "refreshPage": "Refresh page",
+    "somethingWentWrong": "Something went wrong",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try again"
   }
 }
