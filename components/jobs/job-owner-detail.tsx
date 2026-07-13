@@ -13,6 +13,7 @@ import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Banknote,
   Briefcase,
@@ -51,6 +52,7 @@ export default function JobOwnerDetail({
   onApplicationStatusChange: (id: string, status: JobApplication["status"]) => void;
   onJobStatusChange: (status: Job["status"]) => void;
 }) {
+  const t = useTranslations("jobOwnerDetail");
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
@@ -103,7 +105,7 @@ export default function JobOwnerDetail({
   }, [applications, statusFilter, search, sort]);
 
   const statusLabel =
-    job.status === "AWARDED" ? "Filled" : job.status[0] + job.status.slice(1).toLowerCase();
+    job.status === "AWARDED" ? t("filled") : job.status[0] + job.status.slice(1).toLowerCase();
   const statusClass =
     job.status === "OPEN"
       ? "bg-[#E7F4E2] text-brand"
@@ -119,12 +121,12 @@ export default function JobOwnerDetail({
     try {
       const result = await jobsService.updateApplicationStatus(app.id, "ACCEPTED");
       onApplicationStatusChange(app.id, "ACCEPTED");
-      toast.success("Offer sent. Awaiting worker acceptance.");
+      toast.success(t("offerSent"));
       if (result?.bookingId) {
         router.push(`/conversations/inbox/${result.bookingId}`);
       }
     } catch {
-      toast.error("Failed to hire worker.");
+      toast.error(t("failedHireWorker"));
     } finally {
       setActingId(null);
     }
@@ -135,9 +137,9 @@ export default function JobOwnerDetail({
     try {
       await jobsService.updateApplicationStatus(app.id, "REJECTED");
       onApplicationStatusChange(app.id, "REJECTED");
-      toast.success("Application rejected.");
+      toast.success(t("applicationRejected"));
     } catch {
-      toast.error("Failed to reject application.");
+      toast.error(t("failedRejectApplication"));
     } finally {
       setActingId(null);
     }
@@ -149,9 +151,9 @@ export default function JobOwnerDetail({
     try {
       await jobsService.updateJob(job.id, { status: "CLOSED" });
       onJobStatusChange("CLOSED");
-      toast.success("Job post closed.");
+      toast.success(t("jobPostClosed"));
     } catch {
-      toast.error("Could not close post.");
+      toast.error(t("couldNotClosePost"));
     } finally {
       setClosingPost(false);
     }
@@ -168,7 +170,7 @@ export default function JobOwnerDetail({
             <button
               type="button"
               onClick={() => router.back()}
-              aria-label="Back"
+              aria-label={t("back")}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink"
             >
               <ChevronLeftIcon />
@@ -180,11 +182,11 @@ export default function JobOwnerDetail({
               href={`/post-job?edit=${job.id}`}
               className="text-[13px] font-black text-brand"
             >
-              Edit Post
+              {t("editPost")}
             </Link>
             <button
               type="button"
-              aria-label="More"
+              aria-label={t("more")}
               className="flex h-10 w-10 items-center justify-center text-ink"
             >
               <span aria-hidden className="text-[18px] leading-none">⋮</span>
@@ -195,9 +197,9 @@ export default function JobOwnerDetail({
           <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold", statusClass)}>
             {statusLabel}
           </span>
-          <span className="font-bold text-ink">{counts.all} Applicants</span>
+          <span className="font-bold text-ink">{t("applicantsCount", { count: counts.all })}</span>
           <span className="text-[#9CA3AF]">•</span>
-          <span>Posted {formatRelative(job.createdAt)}</span>
+          <span>{t("postedRelative", { relative: formatRelative(job.createdAt, t) })}</span>
         </div>
       </div>
 
@@ -207,7 +209,7 @@ export default function JobOwnerDetail({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="inline-flex items-center gap-2 text-[14px] font-black text-brand">
               <ClipboardList className="h-4 w-4" />
-              Job Details
+              {t("jobDetails")}
             </h2>
             <div className="flex items-center gap-2">
               <Link
@@ -215,7 +217,7 @@ export default function JobOwnerDetail({
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-brand/30 bg-white px-3 text-[12px] font-black text-brand"
               >
                 <Pencil className="h-3.5 w-3.5" />
-                Edit Post
+                {t("editPost")}
               </Link>
               <button
                 type="button"
@@ -224,7 +226,7 @@ export default function JobOwnerDetail({
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 text-[12px] font-black text-red-500 disabled:opacity-50"
               >
                 {closingPost ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                Close Post
+                {t("closePost")}
               </button>
             </div>
           </div>
@@ -234,25 +236,25 @@ export default function JobOwnerDetail({
               {/* Left column — facts */}
               <div className="space-y-3 text-[13px] text-ink">
                 <FactRow icon={<MapPin className="h-4 w-4 text-ink-subtle" />}>
-                  {formatLocation(job)}
+                  {formatLocation(job, t)}
                 </FactRow>
                 <FactRow icon={<CalendarDays className="h-4 w-4 text-ink-subtle" />}>
-                  {formatSchedule(job)}
+                  {formatSchedule(job, t)}
                 </FactRow>
                 <FactRow icon={<Banknote className="h-4 w-4 text-ink-subtle" />}>
-                  Budget: {formatBudget(job)}
+                  {t("budgetPrefix", { amount: formatBudget(job, t) })}
                 </FactRow>
               </div>
 
               {/* Right column — description */}
               <div className="md:border-l md:border-gray-100 md:pl-4">
-                <h3 className="text-[13px] font-black text-ink">Description</h3>
+                <h3 className="text-[13px] font-black text-ink">{t("description")}</h3>
                 {description ? (
                   <p className="mt-1.5 whitespace-pre-line text-[13px] leading-relaxed text-ink-muted">
                     {description}
                   </p>
                 ) : (
-                  <p className="mt-1.5 text-[13px] italic text-[#9CA3AF]">No description provided.</p>
+                  <p className="mt-1.5 text-[13px] italic text-[#9CA3AF]">{t("noDescriptionProvided")}</p>
                 )}
               </div>
             </div>
@@ -264,25 +266,25 @@ export default function JobOwnerDetail({
           <StatTile
             icon={<User className="h-5 w-5 text-brand" />}
             value={counts.all}
-            label="Applicants"
+            label={t("applicants")}
             color="text-brand"
           />
           <StatTile
             icon={<Eye className="h-5 w-5 text-[#1155FF]" />}
             value="—"
-            label="Views"
+            label={t("views")}
             color="text-[#1155FF]"
           />
           <StatTile
             icon={<CheckCircle2 className="h-5 w-5 text-[#1155FF]" />}
             value={counts.hired}
-            label="Hired"
+            label={t("hired")}
             color="text-ink"
           />
           <StatTile
             icon={<XCircleIcon />}
             value={counts.rejected}
-            label="Rejected"
+            label={t("rejected")}
             color="text-ink"
           />
         </section>
@@ -290,21 +292,21 @@ export default function JobOwnerDetail({
         {/* ── Filter tabs ────────────────────────────────────────── */}
         <section className="flex gap-2">
           <FilterTab
-            label="All Applicants"
+            label={t("allApplicants")}
             count={counts.all}
             active={statusFilter === "all"}
             onClick={() => setStatusFilter("all")}
             tone="green"
           />
           <FilterTab
-            label="Hired"
+            label={t("hired")}
             count={counts.hired}
             active={statusFilter === "hired"}
             onClick={() => setStatusFilter("hired")}
             tone="neutral"
           />
           <FilterTab
-            label="Rejected"
+            label={t("rejected")}
             count={counts.rejected}
             active={statusFilter === "rejected"}
             onClick={() => setStatusFilter("rejected")}
@@ -320,7 +322,7 @@ export default function JobOwnerDetail({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search applicants"
+              placeholder={t("searchApplicants")}
               className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9CA3AF]"
             />
           </label>
@@ -330,9 +332,9 @@ export default function JobOwnerDetail({
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="h-11 appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 text-[13px] font-bold text-ink"
             >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="name">Name</option>
+              <option value="newest">{t("newestFirst")}</option>
+              <option value="oldest">{t("oldestFirst")}</option>
+              <option value="name">{t("name")}</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
           </div>
@@ -361,9 +363,9 @@ export default function JobOwnerDetail({
             <ShieldCheck className="h-5 w-5 text-brand" />
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
+            <p className="text-[13px] font-black text-ink">{t("safeAndSecure")}</p>
             <p className="mt-0.5 text-[12px] text-ink-muted">
-              We review all applications and keep your information protected.
+              {t("safeAndSecureDesc")}
             </p>
           </div>
         </section>
@@ -373,23 +375,22 @@ export default function JobOwnerDetail({
       <Dialog open={confirmHire !== null} onOpenChange={(o) => !o && setConfirmHire(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Hire this worker?</DialogTitle>
+            <DialogTitle>{t("hireThisWorker")}</DialogTitle>
           </DialogHeader>
           {confirmHire && (
             <div className="space-y-4">
               <p className="text-[13px] text-ink-muted">
-                This sends an official offer to{" "}
-                <span className="font-semibold text-ink">
-                  {confirmHire.worker?.firstName} {confirmHire.worker?.lastName}
-                </span>
-                . The job is only confirmed after they accept.
+                {t.rich("hireConfirmMessage", {
+                  fullName: `${confirmHire.worker?.firstName ?? ""} ${confirmHire.worker?.lastName ?? ""}`,
+                  name: (chunks) => <span className="font-semibold text-ink">{chunks}</span>,
+                })}
               </p>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setConfirmHire(null)}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button onClick={handleHire} className="bg-brand hover:bg-[#0e4209]">
-                  Send Offer
+                  {t("sendOffer")}
                 </Button>
               </div>
             </div>
@@ -401,22 +402,21 @@ export default function JobOwnerDetail({
       <Dialog open={confirmClose} onOpenChange={setConfirmClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Close this post?</DialogTitle>
+            <DialogTitle>{t("closeThisPost")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-[13px] text-ink-muted">
-              Closing the post stops accepting new applicants. Existing accepted hires remain
-              unaffected.
+              {t("closePostConfirmMessage")}
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setConfirmClose(false)}>
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 onClick={handleClosePost}
                 className="bg-red-500 text-white hover:bg-red-600"
               >
-                Close Post
+                {t("closePost")}
               </Button>
             </div>
           </div>
@@ -498,8 +498,9 @@ function ApplicantCard({
   onHire: () => void;
   onReject: () => void;
 }) {
+  const t = useTranslations("jobOwnerDetail");
   const w = app.worker;
-  const name = `${w?.firstName || ""} ${w?.lastName || ""}`.trim() || "Worker";
+  const name = `${w?.firstName || ""} ${w?.lastName || ""}`.trim() || t("workerFallback");
   const trustScore = w?.trustScore || 0;
   const jobs = w?.jobsCompleted || 0;
   const years = w?.yearsOfExperience;
@@ -518,21 +519,21 @@ function ApplicantCard({
           {(trustScore > 0 || jobs > 0) && (
             <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-muted">
               <ShieldCheck className="h-3.5 w-3.5 text-brand" />
-              {trustScore > 0 && <span className="font-bold text-ink">Trust {trustScore.toFixed(1)}</span>}
+              {trustScore > 0 && <span className="font-bold text-ink">{t("trustScore", { score: trustScore.toFixed(1) })}</span>}
               {trustScore > 0 && jobs > 0 && <span className="text-ink-subtle">•</span>}
-              {jobs > 0 && <span className="text-ink-subtle">{jobs} jobs done</span>}
+              {jobs > 0 && <span className="text-ink-subtle">{t("jobsDone", { count: jobs })}</span>}
             </p>
           )}
           <p className="mt-0.5 text-[12px] text-ink-muted">
-            {years ? `${years} year${years === 1 ? "" : "s"} experience` : "Experience not set"}
+            {years ? t("yearsExperience", { years }) : t("experienceNotSet")}
             {langs.length > 0 && (
               <>
                 <span className="mx-1.5 text-[#9CA3AF]">•</span>
-                Speaks {langs.join(", ")}
+                {t("speaksLanguages", { languages: langs.join(", ") })}
               </>
             )}
           </p>
-          <p className="mt-1 text-[11px] text-[#9CA3AF]">Applied {formatRelative(app.createdAt)}</p>
+          <p className="mt-1 text-[11px] text-[#9CA3AF]">{t("appliedRelative", { relative: formatRelative(app.createdAt, t) })}</p>
         </div>
 
         <div className="flex w-[112px] shrink-0 flex-col gap-1.5">
@@ -541,7 +542,7 @@ function ApplicantCard({
             className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
           >
             <MessageCircleMore className="h-3.5 w-3.5" />
-            Message
+            {t("message")}
           </Link>
           {status === "PENDING" ? (
             <>
@@ -552,7 +553,7 @@ function ApplicantCard({
                 className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[12px] font-black text-white disabled:opacity-60"
               >
                 {isActing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Briefcase className="h-3.5 w-3.5" />}
-                Hire
+                {t("hire")}
               </button>
               <button
                 type="button"
@@ -561,7 +562,7 @@ function ApplicantCard({
                 className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
               >
                 <XCircleSmall />
-                Reject
+                {t("reject")}
               </button>
             </>
           ) : (
@@ -573,7 +574,7 @@ function ApplicantCard({
                   : "border-gray-200 bg-gray-50 text-gray-500",
               )}
             >
-              {status === "ACCEPTED" ? "Hired" : "Rejected"}
+              {status === "ACCEPTED" ? t("hired") : t("rejected")}
             </span>
           )}
         </div>
@@ -603,12 +604,13 @@ function Avatar({
 }
 
 function EmptyState({ statusFilter }: { statusFilter: StatusFilter }) {
+  const t = useTranslations("jobOwnerDetail");
   const text =
     statusFilter === "hired"
-      ? "No one has been hired yet."
+      ? t("noOneHiredYet")
       : statusFilter === "rejected"
-        ? "No applicants have been rejected."
-        : "No applicants yet — we'll notify you as people apply.";
+        ? t("noApplicantsRejected")
+        : t("noApplicantsYet");
   return (
     <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center">
       <User className="mx-auto h-8 w-8 text-gray-300" />
@@ -647,14 +649,14 @@ function XCircleSmall() {
 // Pure helpers (formatting)
 // ---------------------------------------------------------------------------
 
-function formatLocation(job: Job): string {
+function formatLocation(job: Job, t: (key: string) => string): string {
   const a = job.address;
-  if (!a) return "Location not set";
+  if (!a) return t("locationNotSet");
   const parts = [a.city, a.district].filter(Boolean) as string[];
-  return parts.join(", ") || "Location not set";
+  return parts.join(", ") || t("locationNotSet");
 }
 
-function formatSchedule(job: Job): string {
+function formatSchedule(job: Job, t: (key: string) => string): string {
   if (job.startDate) {
     try {
       return new Date(job.startDate).toLocaleDateString("en-RW", {
@@ -669,29 +671,27 @@ function formatSchedule(job: Job): string {
   if (job.scheduleType) {
     return job.scheduleType.charAt(0).toUpperCase() + job.scheduleType.slice(1);
   }
-  return "Flexible";
+  return t("flexible");
 }
 
-function formatBudget(job: Job): string {
+function formatBudget(job: Job, t: (key: string, values?: Record<string, string | number>) => string): string {
   if (job.budgetMin && job.budgetMax && job.budgetMin !== job.budgetMax) {
-    return `${job.budgetMin.toLocaleString()} – ${job.budgetMax.toLocaleString()} RWF/day`;
+    return t("budgetRange", { min: job.budgetMin.toLocaleString(), max: job.budgetMax.toLocaleString() });
   }
   const value = job.budgetMin || job.budgetMax;
-  return value ? `${value.toLocaleString()} RWF/day` : "Negotiable";
+  return value ? t("budgetSingle", { amount: value.toLocaleString() }) : t("negotiable");
 }
 
-function formatRelative(iso?: string): string {
-  if (!iso) return "recently";
+function formatRelative(iso: string | undefined, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (!iso) return t("recently");
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t("justNow");
+  if (minutes < 60) return t("minutesAgo", { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("hoursAgo", { hours });
   const days = Math.floor(hours / 24);
-  if (days === 1) return "1 day ago";
-  if (days < 7) return `${days} days ago`;
+  if (days < 7) return t("daysAgo", { days });
   const weeks = Math.floor(days / 7);
-  if (weeks === 1) return "1 week ago";
-  return `${weeks} weeks ago`;
+  return t("weeksAgo", { weeks });
 }
