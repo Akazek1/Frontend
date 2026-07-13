@@ -1586,5 +1586,12 @@
     "nearby": "Nearby",
     "noResultsFound": "No results found",
     "noResultsHint": "Try adjusting your search or filters to find what you're looking for."
+  },
+  "homeOverview": {
+    "searchJobsPlaceholder": "Search jobs by title, category...",
+    "searchProvidersPlaceholder": "Search by provider name, service, category...",
+    "clearSearch": "Clear search",
+    "openFilters": "Open filters",
+    "filter": "Filter"
   }
 }

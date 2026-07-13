@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Header from "@/components/header/header";
 import GuestHeader from "@/components/header/guest-header";
 import Categories from "@/components/home/category-scroller";
@@ -20,6 +21,7 @@ import { Icons } from "@/components/icons";
 
 
 const HomeContent = () => {
+  const t = useTranslations("homeOverview");
   const [searchQuery, setSearchQuery] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [filterTrigger, setFilterTrigger] = useState(0);
@@ -138,8 +140,8 @@ const HomeContent = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   viewMode === "provider"
-                    ? "Search jobs by title, category..."
-                    : "Search by provider name, service, category..."
+                    ? t("searchJobsPlaceholder")
+                    : t("searchProvidersPlaceholder")
                 }
                 className="h-10 w-full rounded-2xl border border-[#DDE3DD] bg-white pl-10 pr-9 text-[14px] font-medium text-ink shadow-sm outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
@@ -148,7 +150,7 @@ const HomeContent = () => {
                   type="button"
                   onClick={handleClear}
                   className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[#7A827A] hover:bg-gray-100"
-                  aria-label="Clear search"
+                  aria-label={t("clearSearch")}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -158,10 +160,10 @@ const HomeContent = () => {
               type="button"
               onClick={handleFilterClick}
               className="flex h-10 shrink-0 items-center gap-2 rounded-2xl border border-[#DDE3DD] bg-white px-3.5 shadow-sm transition active:scale-95 hover:border-brand hover:bg-[#F1F8F1]"
-              aria-label="Open filters"
+              aria-label={t("openFilters")}
             >
               <SlidersHorizontal className="h-4 w-4 text-brand" />
-              <span className="text-[13px] font-bold text-ink">Filter</span>
+              <span className="text-[13px] font-bold text-ink">{t("filter")}</span>
             </button>
           </div>
         </div>
