@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus, ArrowDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -175,6 +176,7 @@ function MessageBubble({
   onRetry: () => void;
   onQuoteClick: (id: string) => void;
 }) {
+  const t = useTranslations("chatRoom");
   const status = msg.status;
   const isDeleted = Boolean(msg.deletedAt);
   const reactions = msg.reactions ?? [];
@@ -203,7 +205,7 @@ function MessageBubble({
             "rounded-2xl px-4 py-2 text-[13px] italic shadow-sm",
             isMe ? "bg-brand/40 text-white rounded-br-none" : "bg-gray-50 text-gray-400 border border-gray-100 rounded-bl-none",
           )}>
-            This message was deleted
+            {t("messageWasDeleted")}
           </div>
         </div>
       </div>
@@ -247,10 +249,10 @@ function MessageBubble({
             )}
           >
             <span className="font-semibold text-brand">
-              {msg.replyTo.senderId === currentUserId ? "You" : msg.replyTo.sender.firstName}
+              {msg.replyTo.senderId === currentUserId ? t("you") : msg.replyTo.sender.firstName}
             </span>
             <span className="line-clamp-1 text-ink-subtle">
-              {msg.replyTo.content || "Deleted message"}
+              {msg.replyTo.content || t("deletedMessageQuote")}
             </span>
           </button>
         )}
@@ -309,7 +311,7 @@ function MessageBubble({
 
         <div className={`flex items-center gap-1 text-[9px] font-medium text-gray-400 ${isMe ? "justify-end" : "justify-start"}`}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          {msg.editedAt && <span className="italic">edited</span>}
+          {msg.editedAt && <span className="italic">{t("edited")}</span>}
 
           {isMe && (
             status === 'sending' ? (
@@ -317,7 +319,7 @@ function MessageBubble({
             ) : status === 'error' ? (
               <button type="button" onClick={onRetry} className="ml-1 flex items-center gap-0.5 text-red-500 hover:text-red-600">
                 <AlertCircle className="h-3.5 w-3.5" />
-                <span className="text-[9px] font-semibold underline">Tap to retry</span>
+                <span className="text-[9px] font-semibold underline">{t("tapToRetry")}</span>
               </button>
             ) : (
               msg.isRead ? (
@@ -343,12 +345,13 @@ function MessageBubble({
 // and reply. Hidden on touch devices, which use double-tap / long-press /
 // swipe instead.
 function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () => void }) {
+  const t = useTranslations("chatRoom");
   return (
     <div className="hidden shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 [@media(hover:hover)]:flex">
       <button
         type="button"
         onClick={onReact}
-        aria-label="React"
+        aria-label={t("react")}
         className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
       >
         <SmilePlus className="h-4 w-4" />
@@ -356,7 +359,7 @@ function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () =
       <button
         type="button"
         onClick={onReply}
-        aria-label="Reply"
+        aria-label={t("reply")}
         className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
       >
         <Reply className="h-4 w-4" />
@@ -366,6 +369,7 @@ function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () =
 }
 
 const ChatRoom = ({ bookingId }: { bookingId: string }) => {
+  const t = useTranslations("chatRoom");
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const [booking, setBooking] = useState<BookingDetails | null>(null);
@@ -708,7 +712,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       setMessages(((data.messages || []) as Message[]).map((m) => ({ ...m, status: 'sent' })));
       setTasks((data.tasks || []) as Task[]);
     } catch {
-      toast.error("Failed to load conversation");
+      toast.error(t("failedLoadConversation"));
       router.push("/conversations");
     } finally {
       setIsLoading(false);
@@ -741,7 +745,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       status: 'sending',
       sender: {
         id: user.id,
-        firstName: user.firstName || "You",
+        firstName: user.firstName || t("you"),
         lastName: user.lastName || "",
       },
       replyTo: replyingTo
@@ -812,7 +816,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       }
     } catch (error) {
       console.error("Message send error:", error);
-      toast.error("Message failed to send");
+      toast.error(t("messageFailedToSend"));
       setMessages((prev) => prev.map(m => (m.id === tempId) ? { ...m, status: 'error' } : m));
     } finally {
       setIsSubmitting(false);
@@ -864,7 +868,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
       }
     } catch {
-      toast.error("Still couldn't send. Check your connection.");
+      toast.error(t("stillCouldNotSend"));
       setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" as const } : m)));
     }
   };
@@ -884,7 +888,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         id: mine?.id ?? `temp-reaction-${Date.now()}`,
         emoji,
         userId: user.id,
-        user: { id: user.id, firstName: user.firstName || "You", lastName: user.lastName || "" },
+        user: { id: user.id, firstName: user.firstName || t("you"), lastName: user.lastName || "" },
       },
     ];
   };
@@ -906,7 +910,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       setMessages((prev) =>
         prev.map((m) => (m.id === messageId ? { ...m, reactions: prevReactions } : m)),
       );
-      toast.error("Couldn't update reaction");
+      toast.error(t("couldNotUpdateReaction"));
     };
 
     try {
@@ -961,9 +965,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-      toast.success("Copied");
+      toast.success(t("copied"));
     } catch {
-      toast.error("Couldn't copy");
+      toast.error(t("couldNotCopy"));
     }
   };
 
@@ -1030,10 +1034,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         const confirmed = ack.message;
         setMessages((cur) => cur.map((m) => (m.id === messageId ? { ...confirmed, status: "sent" } : m)));
       } else {
-        revert(ack?.error || "Couldn't edit message");
+        revert(ack?.error || t("couldNotEditMessage"));
       }
     } catch (err) {
-      revert(getApiErrorMessage(err, "Couldn't edit message"));
+      revert(getApiErrorMessage(err, t("couldNotEditMessage")));
     } finally {
       setIsSubmitting(false);
     }
@@ -1078,10 +1082,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         const confirmed = ack.message;
         setMessages((cur) => cur.map((m) => (m.id === messageId ? { ...confirmed, status: "sent" } : m)));
       } else {
-        revert(ack?.error || "Couldn't unsend message");
+        revert(ack?.error || t("couldNotUnsendMessage"));
       }
     } catch (err) {
-      revert(getApiErrorMessage(err, "Couldn't unsend message"));
+      revert(getApiErrorMessage(err, t("couldNotUnsendMessage")));
     }
   };
 
@@ -1091,10 +1095,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     setIsUpdatingStatus(true);
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: BOOKING_STATUS.CONFIRMED });
-      toast.success("Offer accepted. Booking confirmed.");
+      toast.success(t("offerAcceptedBookingConfirmed"));
       fetchBookingDetails();
     } catch {
-      toast.error("Failed to approve request");
+      toast.error(t("failedApproveRequest"));
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -1109,11 +1113,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     setIsUpdatingStatus(true);
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: BOOKING_STATUS.CANCELLED });
-      toast.success("Offer revoked.");
+      toast.success(t("offerRevoked"));
       setIsConfirmingRevoke(false);
       fetchBookingDetails();
     } catch {
-      toast.error("Failed to revoke offer");
+      toast.error(t("failedRevokeOffer"));
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -1128,8 +1132,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     ...review,
     user: review.user || review.author || {
       id: "",
-      firstName: "Previous",
-      lastName: "Partner",
+      firstName: t("previousReviewerFirstName"),
+      lastName: t("previousReviewerLastName"),
       profilePicture: "",
     },
     booking: review.booking || {
@@ -1146,7 +1150,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     if (status !== BOOKING_STATUS.COMPLETED) return;
 
     if (currentUserHasReviewed()) {
-      toast("You already reviewed this job.");
+      toast(t("alreadyReviewedJob"));
       return;
     }
 
@@ -1163,7 +1167,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       if (existing) {
         const comment = payload.comment?.trim();
         if (!comment) {
-          toast.error("Add a comment to complete your review.");
+          toast.error(t("addCommentToComplete"));
           return false;
         }
         const response = await api.patch(`/feedback/${existing.id}`, { comment });
@@ -1180,7 +1184,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               }
             : prev,
         );
-        toast.success("Review updated.");
+        toast.success(t("reviewUpdated"));
         return true;
       }
 
@@ -1200,11 +1204,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             : prev,
         );
       }
-      toast.success("Review submitted.");
+      toast.success(t("reviewSubmitted"));
       return true;
     } catch (error) {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(message || "Could not submit review.");
+      toast.error(message || t("couldNotSubmitReview"));
       return false;
     }
   };
@@ -1226,7 +1230,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       return true;
     } catch (error) {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(message || "Could not post reply.");
+      toast.error(message || t("couldNotPostReply"));
       return false;
     }
   };
@@ -1256,17 +1260,17 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   if (!booking || !user) return null;
 
   const partner = user.id === booking.workerId ? booking.employer : booking.worker;
-  const partnerName = partner ? `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim() : "Unknown Partner";
+  const partnerName = partner ? `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim() : t("unknownPartnerFallback");
   const isWorker = user.id === booking.workerId;
-  const contextTitle = booking.service?.category?.name || booking.job?.title || "Work request";
+  const contextTitle = booking.service?.category?.name || booking.job?.title || t("workRequestFallback");
   // Role-aware label for the partner: a worker is described by the service they
   // provide (e.g. "Driver"); an employer is simply the "Employer" — never the
   // service title, which would wrongly imply they do that job.
-  const partnerRoleLabel = isWorker ? "Employer" : contextTitle;
+  const partnerRoleLabel = isWorker ? t("employer") : contextTitle;
   // Review wording follows the direction of the relationship.
   const rehireQuestion = isWorker
-    ? "Would you work with this person again?"
-    : "Would you hire this person again?";
+    ? t("rehireQuestionProvider")
+    : t("rehireQuestionEmployer");
   const isPending = booking.status === BOOKING_STATUS.PENDING;
   const isApproved = booking.status !== BOOKING_STATUS.PENDING && booking.status !== BOOKING_STATUS.CANCELLED;
   // Timestamp of the partner's most recent message — a message of mine stops
@@ -1329,7 +1333,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
-            {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Online</span>}
+            {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">{t("online")}</span>}
           </div>
           <p className="truncate text-[11px] text-ink-subtle font-medium">{partnerRoleLabel}</p>
         </div>
@@ -1389,7 +1393,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {hasTaskTab && (
         <button
           onClick={() => setIsDrawerOpen(true)}
-          aria-label="View job tasks"
+          aria-label={t("viewJobTasks")}
           aria-expanded={isDrawerOpen}
           className={`absolute right-0 top-[72px] z-30 flex h-16 w-12 flex-col items-center justify-center gap-1 rounded-l-full rounded-r-none border border-r-0 shadow-[-6px_6px_18px_rgba(20,91,16,0.12)] transition-all hover:-translate-x-0.5 active:scale-95 ${
             isDrawerOpen
@@ -1407,7 +1411,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="flex flex-col items-center justify-center gap-2 bg-gray-100 px-3 py-3 text-[11px] font-medium text-gray-600 shadow-inner">
           <div className="flex items-center gap-2">
             <Archive className="h-3.5 w-3.5" />
-            This job is complete. Messages remain visible, but chat is read-only.
+            {t("jobCompleteReadOnly")}
           </div>
           <Button
             type="button"
@@ -1421,25 +1425,25 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             }}
             className="h-8 rounded-full bg-brand px-4 text-[11px] font-bold text-white hover:bg-brand-dark"
           >
-            {hasCompleteReview ? "View Review" : "Leave Review"}
+            {hasCompleteReview ? t("viewReview") : t("leaveReview")}
           </Button>
         </div>
       )}
       {isCancelled && (
         <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-[11px] font-medium text-red-600 shadow-inner">
           <AlertCircle className="h-3.5 w-3.5" />
-          This booking was cancelled. Chat is closed.
+          {t("bookingCancelledClosed")}
         </div>
       )}
       {isPending && !isWorker && (
         <div className="flex flex-col items-center gap-2 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
-            Offer sent. You are protected once the provider accepts here.
+            {t("offerSentProtected")}
           </p>
           {isConfirmingRevoke ? (
             <div className="flex w-full max-w-[300px] flex-col items-center gap-1.5">
               <p className="text-center text-[11px] font-bold text-red-600">
-                Revoke this offer? This cancels the request.
+                {t("revokeOfferConfirm")}
               </p>
               <div className="flex w-full gap-2">
                 <Button
@@ -1448,7 +1452,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                   size="sm"
                   className="h-8 flex-1 rounded-full bg-red-500 text-[11px] font-bold text-white hover:bg-red-600"
                 >
-                  {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, revoke"}
+                  {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : t("yesRevoke")}
                 </Button>
                 <Button
                   onClick={() => setIsConfirmingRevoke(false)}
@@ -1457,7 +1461,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                   variant="outline"
                   className="h-8 flex-1 rounded-full border-gray-300 text-[11px] font-bold text-ink hover:bg-gray-50"
                 >
-                  Keep offer
+                  {t("keepOffer")}
                 </Button>
               </div>
             </div>
@@ -1470,7 +1474,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               className="h-8 rounded-full border-red-300 px-4 text-[11px] font-bold text-red-600 hover:bg-red-50"
             >
               <X className="mr-1.5 h-3.5 w-3.5" />
-              Revoke Offer
+              {t("revokeOffer")}
             </Button>
           )}
         </div>
@@ -1478,16 +1482,16 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {isPending && isWorker && (
         <div className="flex flex-col items-center gap-2 bg-orange-50 p-3 shadow-inner">
           <p className="text-center text-[11px] font-medium text-orange-700">
-            You have an offer. Accept here to start — your pay and reviews stay protected. Accept only if you agree to the work details.
+            {t("workerHasOfferMessage")}
           </p>
-          <Button 
+          <Button
             onClick={handleApproveRequest}
             disabled={isUpdatingStatus}
             size="sm"
             className="h-8 rounded-full bg-brand px-4 text-[11px] font-bold text-white hover:bg-brand-dark"
           >
             {isUpdatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />}
-            Accept Offer
+            {t("acceptOffer")}
           </Button>
         </div>
       )}
@@ -1495,11 +1499,11 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       {/* Messages Area */}
       <main ref={mainRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-28">
         <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
-          <p className="text-[11px] font-semibold text-ink">Booking Details</p>
+          <p className="text-[11px] font-semibold text-ink">{t("bookingDetails")}</p>
           <p className="mt-1 text-[10px] text-ink-subtle">
             {isPending
-              ? "This work isn't confirmed yet. Confirm here before starting so your pay and reviews are protected."
-              : "Keep all communications within Akazek to ensure your safety and protection."}
+              ? t("workNotConfirmedYet")
+              : t("keepCommunicationsInApp")}
           </p>
         </div>
 
@@ -1554,18 +1558,18 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" />
               <div className="flex-1">
                 <p className="text-[11px] font-bold text-brand">
-                  {isWorker ? "Ready to start?" : `Waiting for ${partner?.firstName || "the provider"}`}
+                  {isWorker ? t("readyToStart") : t("waitingForPartner", { name: partner?.firstName || t("theProviderFallback") })}
                 </p>
                 <p className="mt-0.5 text-[10px] leading-relaxed text-ink-subtle">
                   {isWorker
-                    ? "Tap Accept to start the job. Your pay and reviews are protected here."
-                    : `${partner?.firstName || "The provider"} has not accepted yet. Do not pay or start outside Akazek — you are protected once they accept here.`}
+                    ? t("tapAcceptToStart")
+                    : t("partnerNotAcceptedYet", { name: partner?.firstName || t("theProviderFallbackCapitalized") })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setNudgeDismissBaseline(messages.length)}
-                aria-label="Dismiss reminder"
+                aria-label={t("dismissReminder")}
                 className="rounded-full p-0.5 text-ink-subtle hover:bg-black/5 hover:text-ink"
               >
                 <X className="h-3.5 w-3.5" />
@@ -1580,7 +1584,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                 className="mt-2 h-9 w-full rounded-full bg-brand text-[12px] font-bold text-white hover:bg-brand-dark"
               >
                 {isUpdatingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="mr-1.5 h-4 w-4" />}
-                Accept Offer
+                {t("acceptOffer")}
               </Button>
             ) : (
               <Button
@@ -1590,7 +1594,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
                 variant="outline"
                 className="mt-2 h-9 w-full rounded-full border-brand/30 text-[12px] font-bold text-brand hover:bg-brand/5"
               >
-                {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Remind {partner?.firstName || "provider"}</>}
+                {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("remindPartner", { name: partner?.firstName || t("providerFallback") })}
               </Button>
             )}
           </div>
@@ -1606,7 +1610,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           onClick={() => scrollToBottom()}
           className="absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white shadow-lg animate-in fade-in slide-in-from-bottom-2"
         >
-          New messages
+          {t("newMessages")}
           <ArrowDown className="h-3.5 w-3.5" />
         </button>
       )}
@@ -1617,14 +1621,14 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-amber-400 bg-amber-50 px-3 py-2">
             <Pencil className="h-3.5 w-3.5 shrink-0 text-amber-500" />
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-amber-600">Editing message</p>
+              <p className="text-[11px] font-semibold text-amber-600">{t("editingMessage")}</p>
               <p className="line-clamp-1 text-[12px] text-ink-subtle">{editingMessage.content}</p>
             </div>
             <button
               type="button"
               onClick={handleCancelEdit}
               className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Cancel edit"
+              aria-label={t("cancelEdit")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -1633,7 +1637,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-brand/40 bg-gray-50 px-3 py-2">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-brand">
-                {replyTarget.senderId === user?.id ? "You" : replyTarget.sender.firstName}
+                {replyTarget.senderId === user?.id ? t("you") : replyTarget.sender.firstName}
               </p>
               <p className="line-clamp-1 text-[12px] text-ink-subtle">{replyTarget.content}</p>
             </div>
@@ -1641,7 +1645,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
               type="button"
               onClick={() => setReplyTarget(null)}
               className="shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Cancel reply"
+              aria-label={t("cancelReply")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -1650,7 +1654,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         <div className="flex items-end gap-2">
           <Textarea
             ref={inputRef}
-            placeholder={isReadOnly ? "This conversation is read-only" : editingMessage ? "Edit your message..." : "Type a message..."}
+            placeholder={isReadOnly ? t("readOnlyPlaceholder") : editingMessage ? t("editPlaceholder") : t("typePlaceholder")}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
