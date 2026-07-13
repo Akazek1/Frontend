@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { KeyRound, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { colors } from "@/constant/colors";
 
 export default function BusinessChangePasswordPage() {
+  const t = useTranslations("businessChangePassword");
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -16,9 +18,9 @@ export default function BusinessChangePasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!current) return toast.error("Enter your current password");
-    if (next.length < 8) return toast.error("New password must be at least 8 characters");
-    if (next !== confirm) return toast.error("Passwords do not match");
+    if (!current) return toast.error(t("enterCurrentPassword"));
+    if (next.length < 8) return toast.error(t("passwordTooShort"));
+    if (next !== confirm) return toast.error(t("passwordsDoNotMatch"));
 
     setLoading(true);
     try {
@@ -27,10 +29,10 @@ export default function BusinessChangePasswordPage() {
         { currentPassword: current, newPassword: next },
         { withCredentials: true },
       );
-      toast.success("Password updated.");
+      toast.success(t("passwordUpdated"));
       window.location.href = "/agency";
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not update your password"));
+      toast.error(getApiErrorMessage(err, t("couldNotUpdatePassword")));
       setLoading(false);
     }
   }
@@ -65,18 +67,18 @@ export default function BusinessChangePasswordPage() {
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: colors.backgroundTertiary }}>
               <KeyRound className="h-7 w-7" style={{ color: colors.primary }} />
             </div>
-            <h1 className="text-[22px] font-black text-ink">Set a new password</h1>
-            <p className="mt-1 text-[13px] text-ink-muted">Choose a new password to finish signing in.</p>
+            <h1 className="text-[22px] font-black text-ink">{t("setNewPassword")}</h1>
+            <p className="mt-1 text-[13px] text-ink-muted">{t("chooseNewPasswordDesc")}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {pwField("Current (or temporary) password", current, setCurrent, "current-password")}
-            {pwField("New password", next, setNext, "new-password")}
-            {pwField("Confirm new password", confirm, setConfirm, "new-password")}
+            {pwField(t("currentPasswordLabel"), current, setCurrent, "current-password")}
+            {pwField(t("newPasswordLabel"), next, setNext, "new-password")}
+            {pwField(t("confirmNewPasswordLabel"), confirm, setConfirm, "new-password")}
 
             <button type="submit" disabled={loading}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark disabled:opacity-60">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Update password"}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t("updatePassword")}
             </button>
           </form>
         </div>
