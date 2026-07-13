@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import BackButtonHeader from "@/components/header/back-button-header";
@@ -42,6 +43,8 @@ async function fetchNotificationsPage(page: number) {
 }
 
 const NotificationHistoryPage = () => {
+  const t = useTranslations("notificationHistory");
+  const tShared = useTranslations("notificationsShared");
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -77,7 +80,7 @@ const NotificationHistoryPage = () => {
       setPage(nextPage);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      toast.error("Failed to load notifications");
+      toast.error(t("failedToLoad"));
     } finally {
       setLoadingMore(false);
     }
@@ -108,15 +111,15 @@ const NotificationHistoryPage = () => {
       await api.patch(`/users/notifications/read-all`);
       const now = new Date().toISOString();
       setItems((prev) => prev.map((n) => ({ ...n, status: "READ", readAt: n.readAt ?? now })));
-      toast.success("All notifications marked as read");
+      toast.success(t("allMarkedRead"));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to mark all read");
+      toast.error(t("failedToMarkAllRead"));
     }
   };
 
   const hasMore = items.length < total;
-  const counts = useMemo(() => getNotificationFilterCounts(items), [items]);
+  const counts = useMemo(() => getNotificationFilterCounts(items, tShared), [items, tShared]);
   const filteredItems = useMemo(
     () => filterNotifications(items, activeFilter),
     [activeFilter, items],
@@ -124,21 +127,21 @@ const NotificationHistoryPage = () => {
   // Collapse same-conversation message notifications into one row (like the
   // bell), then bucket by date.
   const conversationGrouped = useMemo(() => groupNotifications(filteredItems), [filteredItems]);
-  const groupedItems = useMemo(() => groupNotificationsByDate(conversationGrouped), [conversationGrouped]);
+  const groupedItems = useMemo(() => groupNotificationsByDate(conversationGrouped, tShared), [conversationGrouped, tShared]);
   const allLoadedNotificationsRead = items.length === 0 || items.every((n) => !!n.readAt || n.status === "READ");
 
   return (
     <PageShell className="gap-5">
       <div className="flex items-center justify-between gap-3">
-        <BackButtonHeader text="Notifications" fallbackHref="/more/notifications" />
+        <BackButtonHeader text={t("notifications")} fallbackHref="/more/notifications" />
 
         <button
           type="button"
           onClick={handleMarkAll}
           disabled={allLoadedNotificationsRead}
           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE8DA] bg-white text-brand shadow-sm disabled:text-gray-300"
-          aria-label="Mark all notifications as read"
-          title="Mark all as read"
+          aria-label={t("markAllAsRead")}
+          title={t("markAllAsReadTitle")}
         >
           <CheckCheck className="h-5 w-5" />
         </button>
@@ -146,7 +149,7 @@ const NotificationHistoryPage = () => {
 
       <div className="-mx-5 overflow-x-auto px-5 scrollbar-hide">
         <div className="flex min-w-max gap-2">
-          {notificationFilters.map((filter) => {
+          {notificationFilters(tShared).map((filter) => {
             const active = activeFilter === filter.id;
             const count = filter.id === "all" && total > counts.all ? total : counts[filter.id];
 
@@ -170,7 +173,7 @@ const NotificationHistoryPage = () => {
                       active ? "bg-white/20 text-white" : "bg-[#EAF8E9] text-[#10851B]",
                     )}
                   >
-                    {count > 99 ? "99+" : count}
+                    {count > 99 ? t("countPlus") : count}
                   </span>
                 )}
               </button>
@@ -186,11 +189,11 @@ const NotificationHistoryPage = () => {
       ) : filteredItems.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title={items.length === 0 ? "No notifications yet" : "Nothing here yet"}
+          title={items.length === 0 ? t("noNotificationsYet") : t("nothingHereYet")}
           description={
             items.length === 0
-              ? "When something important happens, it will show up here."
-              : "Try another filter to see more notifications."
+              ? t("noNotificationsDesc")
+              : t("tryAnotherFilter")
           }
         />
       ) : (
@@ -221,7 +224,7 @@ const NotificationHistoryPage = () => {
                 appVariant="secondary"
                 className="h-10 rounded-full px-5"
               >
-                {loadingMore ? "Loading..." : "Load more"}
+                {loadingMore ? t("loading") : t("loadMore")}
               </AppButton>
             </div>
           )}
