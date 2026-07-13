@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronRight, Inbox, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
-import { AgencyInquiry, INQUIRY_STATUS, inquiryPersonName } from "@/constant/agency-inquiries";
+import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
 
 export default function InquiriesListPage() {
+  const t = useTranslations("inquiriesList");
+  const tShared = useTranslations("inquiryShared");
   const router = useRouter();
   const { user } = useAuth();
   const [items, setItems] = useState<AgencyInquiry[]>([]);
@@ -35,8 +38,8 @@ export default function InquiriesListPage() {
   return (
     <div className="mx-auto min-h-screen w-full max-w-[428px] bg-surface">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3">
-        <button onClick={() => router.back()} aria-label="Back"><ArrowLeft className="h-5 w-5 text-ink" /></button>
-        <p className="text-[16px] font-bold text-ink">{isWorker ? "Placement Offers" : "My Inquiries"}</p>
+        <button onClick={() => router.back()} aria-label={t("back")}><ArrowLeft className="h-5 w-5 text-ink" /></button>
+        <p className="text-[16px] font-bold text-ink">{isWorker ? t("placementOffers") : t("myInquiries")}</p>
       </header>
 
       {loading ? (
@@ -46,16 +49,16 @@ export default function InquiriesListPage() {
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 px-6 py-24 text-center">
           <Inbox className="h-8 w-8 text-gray-300" />
-          <p className="text-[14px] font-semibold text-ink">{isWorker ? "No placement offers" : "No inquiries yet"}</p>
+          <p className="text-[14px] font-semibold text-ink">{isWorker ? t("noPlacementOffers") : t("noInquiriesYet")}</p>
           <p className="text-[12px] text-ink-muted">
-            {isWorker ? "When your agency proposes you to an employer, it shows up here." : "Contact an agency from a worker's profile to get started."}
+            {isWorker ? t("placementOffersHint") : t("inquiriesHint")}
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-2 p-4">
           {items.map((inq) => {
-            const st = INQUIRY_STATUS[inq.status];
-            const other = isWorker ? inquiryPersonName(inq.employer) : inq.agency?.name ?? "Agency";
+            const st = inquiryStatusMap(tShared)[inq.status];
+            const other = isWorker ? inquiryPersonName(inq.employer, tShared) : inq.agency?.name ?? t("agencyFallback");
             return (
               <button
                 key={inq.id}

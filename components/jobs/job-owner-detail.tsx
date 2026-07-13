@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { goBackOr } from "@/lib/navigation";
 import {
   Banknote,
   Briefcase,
@@ -169,7 +170,7 @@ export default function JobOwnerDetail({
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => goBackOr(router, "/work/job-posts")}
               aria-label={t("back")}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink"
             >

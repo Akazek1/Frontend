@@ -3,12 +3,14 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import { AgencyProvider } from "@/context/agency-context";
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { colors } from "@/constant/colors";
 
 function AgencyGuard({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("agencyLayout");
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -37,9 +39,9 @@ function AgencyGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-[#F4F7F3] px-6 text-center">
         <div>
-          <p className="text-[16px] font-bold text-ink">Agency access only</p>
+          <p className="text-[16px] font-bold text-ink">{t("agencyAccessOnly")}</p>
           <p className="mt-1 text-[13px] text-ink-muted">
-            This area is for staffing agency accounts.
+            {t("areaForAgencyAccounts")}
           </p>
         </div>
       </div>

@@ -63,6 +63,20 @@ export const usePushNotifications = () => {
           const notificationId =
             typeof data.notificationId === "string" ? data.notificationId : null;
 
+          // Chat pushes are now sent even when the recipient is connected
+          // (socket presence is unreliable on mobile). If the user is already
+          // reading THIS conversation, the message just appeared as a chat
+          // bubble — a toast on top would be noise.
+          if (
+            data.type === "NEW_MESSAGE" &&
+            typeof data.bookingId === "string" &&
+            window.location.pathname.startsWith(
+              `/conversations/inbox/${data.bookingId}`,
+            )
+          ) {
+            return;
+          }
+
           toast.custom(
             (t) => (
               <div

@@ -3,20 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import { AgencyCard, AgencyEmpty, AgencyLoading, AgencyPageHeader, Avatar, StatusPill } from "@/components/agency/agency-ui";
-import { AgencyInquiry, INQUIRY_STATUS, inquiryPersonName } from "@/constant/agency-inquiries";
+import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: ReturnType<typeof useTranslations>) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("justNow");
+  if (mins < 60) return t("minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t("hoursAgo", { count: hrs });
+  return t("daysAgo", { count: Math.floor(hrs / 24) });
 }
 
 export default function AgencyInquiriesPage() {
+  const t = useTranslations("agencyRequests");
+  const tShared = useTranslations("inquiryShared");
   const router = useRouter();
   const [inquiries, setInquiries] = useState<AgencyInquiry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,17 +45,17 @@ export default function AgencyInquiriesPage() {
   return (
     <div>
       <AgencyPageHeader
-        title="Inquiries"
-        subtitle="Employers reaching out to hire through your agency."
-        badge={pending > 0 ? <StatusPill label={`${pending} new`} tone="amber" /> : undefined}
+        title={t("inquiries")}
+        subtitle={t("inquiriesSubtitle")}
+        badge={pending > 0 ? <StatusPill label={t("newCount", { count: pending })} tone="amber" /> : undefined}
       />
 
       {inquiries.length === 0 ? (
-        <AgencyEmpty title="No inquiries yet" hint="When employers contact your agency, they'll appear here." />
+        <AgencyEmpty title={t("noInquiriesYet")} hint={t("noInquiriesHint")} />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           {inquiries.map((inq) => {
-            const st = INQUIRY_STATUS[inq.status];
+            const st = inquiryStatusMap(tShared)[inq.status];
             return (
               <AgencyCard
                 key={inq.id}
@@ -61,15 +64,15 @@ export default function AgencyInquiriesPage() {
               >
                 <div className="mb-3 flex items-center justify-between">
                   <StatusPill label={st.label} tone={st.tone} />
-                  <span className="text-[12px] text-ink-muted">{timeAgo(inq.updatedAt)}</span>
+                  <span className="text-[12px] text-ink-muted">{timeAgo(inq.updatedAt, t)}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Avatar src={inq.employer.profilePicture} name={inquiryPersonName(inq.employer)} size={44} />
+                  <Avatar src={inq.employer.profilePicture} name={inquiryPersonName(inq.employer, tShared)} size={44} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-bold text-ink">{inquiryPersonName(inq.employer)}</p>
+                    <p className="truncate text-[15px] font-bold text-ink">{inquiryPersonName(inq.employer, tShared)}</p>
                     {inq.workerOfInterest && (
                       <p className="truncate text-[12px] text-ink-muted">
-                        Interested in {inquiryPersonName(inq.workerOfInterest)}
+                        {t("interestedIn", { name: inquiryPersonName(inq.workerOfInterest, tShared) })}
                       </p>
                     )}
                   </div>

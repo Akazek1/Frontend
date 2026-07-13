@@ -1,13 +1,19 @@
-export const ISSUE_TYPE_LABEL: Record<string, string> = {
-  NO_SHOW: "Didn't show up",
-  MISCONDUCT: "Misconduct",
-  POOR_PERFORMANCE: "Poor performance",
-  SAFETY_CONCERN: "Safety concern",
-  OTHER: "Other",
-};
+export function issueTypeLabelMap(t: (key: string) => string): Record<string, string> {
+  return {
+    NO_SHOW: t("typeNoShow"),
+    MISCONDUCT: t("typeMisconduct"),
+    POOR_PERFORMANCE: t("typePoorPerformance"),
+    SAFETY_CONCERN: t("typeSafetyConcern"),
+    OTHER: t("typeOther"),
+  };
+}
 
-export const ISSUE_STATUS: Record<string, { label: string; tone: "red" | "amber" | "green" }> = {
-  REPORTED: { label: "Reported", tone: "red" },
-  AGENCY_NOTIFIED: { label: "In Progress", tone: "amber" },
-  RESOLVED: { label: "Resolved", tone: "green" },
-};
+export function issueStatusMap(
+  t: (key: string) => string,
+): Record<string, { label: string; tone: "red" | "amber" | "green" }> {
+  return {
+    REPORTED: { label: t("statusReported"), tone: "red" },
+    AGENCY_NOTIFIED: { label: t("statusInProgress"), tone: "amber" },
+    RESOLVED: { label: t("statusResolved"), tone: "green" },
+  };
+}

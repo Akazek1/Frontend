@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Loader2 } from "lucide-react";
 import { Inter } from "next/font/google";
+import { useTranslations } from "next-intl";
 import { Textarea } from "@/components/ui/textarea";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
@@ -23,8 +24,9 @@ const inter = Inter({
 });
 
 const Feedback = () => {
+  const t = useTranslations("feedback");
   const [message, setMessage] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); 
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Handle textarea change
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -34,22 +36,22 @@ const Feedback = () => {
   // Handle form submission
   const handleSubmit = async () => {
     if (!message.trim()) {
-      toast.error("Please write a short message before submitting");
+      toast.error(t("pleaseWriteMessage"));
       return;
     }
 
     setIsSubmitting(true);
     try {
       const payload = {
-        message: message.trim() || undefined, 
+        message: message.trim() || undefined,
       };
 
       await api.post("/feedback", payload);
-      toast.success("Thanks for your valuable feedback!");
-      setMessage(""); 
+      toast.success(t("thanksForFeedback"));
+      setMessage("");
     } catch (err) {
       console.error("Error submitting feedback:", err);
-      toast.error(getApiErrorMessage(err, "Failed to submit feedback"));
+      toast.error(getApiErrorMessage(err, t("failedToSubmit")));
     } finally {
       setIsSubmitting(false);
     }
@@ -58,15 +60,15 @@ const Feedback = () => {
   return (
     <PageShell className={cn("gap-5", inter.className)}>
       {/* Header */}
-      <BackButtonHeader text="Share Feedback" />
+      <BackButtonHeader text={t("shareFeedback")} />
       <div className={cn(appContentClass, "cursor-pointer gap-5")}>
         <h1 className="text-ink text-xl font-medium leading-6 pr-6">
-          Tell us what we can improve
+          {t("tellUsWhatToImprove")}
         </h1>
-        <FormField label="Feedback" className="space-y-2">
+        <FormField label={t("feedbackLabel")} className="space-y-2">
           <Textarea
             className={cn(appTextareaClass, "min-h-[140px]")}
-            placeholder="Share what worked well, what felt confusing, or what you need next."
+            placeholder={t("feedbackPlaceholder")}
             rows={6}
             value={message}
             onChange={handleMessageChange}
@@ -80,10 +82,10 @@ const Feedback = () => {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Submitting...
+              {t("submitting")}
             </>
           ) : (
-            "Submit"
+            t("submit")
           )}
         </AppButton>
       </div>

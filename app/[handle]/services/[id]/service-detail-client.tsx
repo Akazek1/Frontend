@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { goBackOr } from "@/lib/navigation";
 import {
     ArrowLeft,
     Bookmark,
@@ -46,9 +48,9 @@ import {
 import { colors } from "@/constant/colors";
 import {
     DEFAULT_CATEGORY_ICON,
-    PROVIDER_STATS,
+    providerStats,
     SERVICE_CATEGORY_ICONS,
-    SERVICE_DETAIL_LABELS,
+    serviceDetailLabels,
 } from "@/constant/service-detail";
 import { Service } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -93,6 +95,10 @@ interface ExistingBookingSummary {
 }
 
 export function ServiceDetailClient() {
+    const t = useTranslations("serviceDetail");
+    const tShared = useTranslations("serviceDetailShared");
+    const SERVICE_DETAIL_LABELS = serviceDetailLabels(tShared);
+    const PROVIDER_STATS = providerStats(tShared);
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -209,15 +215,15 @@ export function ServiceDetailClient() {
     const company = service?.company;
     const isCompanyCard = !provider && !!company;
     const providerName = useMemo(
-        () => (isCompanyCard ? company?.name || "Company" : getProviderName(provider)),
-        [isCompanyCard, company, provider],
+        () => (isCompanyCard ? company?.name || t("companyFallback") : getProviderName(provider)),
+        [isCompanyCard, company, provider, t],
     );
     const providerHandle = useMemo(() => getProviderHandle(provider), [provider]);
     // Company cards don't have an individual profile to link to.
     const profilePath = isCompanyCard ? null : `/${providerHandle.replace(/^@/, "")}`;
     const firstName = isCompanyCard
-        ? company?.name || "Company"
-        : provider?.firstName || providerName.split(" ")[0] || "Provider";
+        ? company?.name || t("companyFallback")
+        : provider?.firstName || providerName.split(" ")[0] || t("providerFallback");
 
     const serviceImages = useMemo(() => getServiceImages(service), [service]);
     const workPhotos = serviceImages;
@@ -243,8 +249,8 @@ export function ServiceDetailClient() {
     const aboutText = (service?.description || provider?.bio || "").trim();
 
     const priceText = useMemo(() => {
-        if (!service) return "Price on request";
-        return formatPrice(service.priceMin, service.priceMax, service.priceType) || "Price on request";
+        if (!service) return t("priceOnRequest");
+        return formatPrice(service.priceMin, service.priceMax, service.priceType) || t("priceOnRequest");
     }, [service]);
 
     // Real stats only. Counts are 0 for a new provider; years shows "—" when
@@ -291,11 +297,11 @@ export function ServiceDetailClient() {
                 comment: payload.comment,
                 bookingId: reviewBookingId,
             });
-            toast.success("Review submitted.");
+            toast.success(t("reviewSubmitted"));
             setReviewBookingId(null); // card returns to "Request to Hire"
             return true;
         } catch (err) {
-            toast.error(getApiErrorMessage(err, "Could not submit your review."));
+            toast.error(getApiErrorMessage(err, t("couldNotSubmitReview")));
             return false;
         }
     };
@@ -303,7 +309,7 @@ export function ServiceDetailClient() {
     const openHireModal = () => {
         if (!service || hasRequested) return;
         if (isOwnService) {
-            toast.error("You can't book your own service.");
+            toast.error(t("cantBookOwnService"));
             return;
         }
         setHireNotes("");
@@ -313,7 +319,7 @@ export function ServiceDetailClient() {
     const handleInquirySubmit = async () => {
         if (!service?.provider?.agency || inquirySubmitting) return;
         if (inquiryNote.trim().length < 5) {
-            toast.error("Please add a short note about what you need.");
+            toast.error(t("addShortNote"));
             return;
         }
         setInquirySubmitting(true);
@@ -323,12 +329,12 @@ export function ServiceDetailClient() {
                 workerOfInterestId: service.provider.id,
                 note: inquiryNote.trim(),
             });
-            toast.success(`Inquiry sent to ${service.provider.agency.name}!`);
+            toast.success(t("inquirySentTo", { name: service.provider.agency.name }));
             setInquirySent(true);
             setIsInquiryOpen(false);
             setInquiryNote("");
         } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to send inquiry."));
+            toast.error(getApiErrorMessage(err, t("failedToSendInquiry")));
         } finally {
             setInquirySubmitting(false);
         }
@@ -342,12 +348,12 @@ export function ServiceDetailClient() {
                 serviceId: service.id,
                 ...(hireNotes.trim() ? { notes: hireNotes.trim() } : {}),
             });
-            toast.success(`Booking request sent to ${firstName}!`);
+            toast.success(t("bookingRequestSentTo", { name: firstName }));
             setHasRequested(true);
             setIsHireModalOpen(false);
             setHireNotes("");
         } catch (err) {
-            toast.error(getApiErrorMessage(err, "Failed to send request."));
+            toast.error(getApiErrorMessage(err, t("failedToSendRequest")));
         } finally {
             setSubmitting(false);
         }
@@ -369,11 +375,11 @@ export function ServiceDetailClient() {
             <div className="min-h-screen p-4" style={{ backgroundColor: colors.background }}>
                 <button
                     type="button"
-                    onClick={() => router.back()}
+                    onClick={() => goBackOr(router, "/")}
                     className="flex items-center gap-2 text-sm font-medium"
                     style={{ color: colors.text }}
                 >
-                    <ArrowLeft className="h-5 w-5" /> Back
+                    <ArrowLeft className="h-5 w-5" /> {t("back")}
                 </button>
                 <div className="mt-6 rounded-lg bg-white p-6 text-center text-sm text-red-500">
                     {error || SERVICE_DETAIL_LABELS.serviceNotFound}
@@ -388,8 +394,8 @@ export function ServiceDetailClient() {
             <div className="sticky top-0 z-20 flex items-center justify-between bg-surface px-4 pb-2 pt-4">
                 <button
                     type="button"
-                    onClick={() => router.back()}
-                    aria-label="Go back"
+                    onClick={() => goBackOr(router, "/")}
+                    aria-label={t("goBack")}
                     className="-ml-1 p-1"
                 >
                     <ArrowLeft className="h-6 w-6" style={{ color: colors.text }} />
@@ -397,7 +403,7 @@ export function ServiceDetailClient() {
                 <div className="flex items-center gap-3">
                     <button
                         type="button"
-                        aria-label="Share"
+                        aria-label={t("share")}
                         onClick={() => shareLink(window.location.href, providerName)}
                         className="p-1"
                     >
@@ -406,7 +412,7 @@ export function ServiceDetailClient() {
                     {!isOwnService && (
                         <button
                             type="button"
-                            aria-label="Bookmark"
+                            aria-label={t("bookmark")}
                             onClick={() => requireAuth(() => setBookmarked((v) => !v))}
                             className="p-1"
                         >
@@ -428,7 +434,7 @@ export function ServiceDetailClient() {
                         <button
                             type="button"
                             onClick={() => openLightbox([providerPhoto], 0)}
-                            aria-label={`View ${providerName}'s photo`}
+                            aria-label={t("viewPersonPhoto", { name: providerName })}
                             className="relative block h-[120px] w-[120px] overflow-hidden rounded-full bg-gray-100"
                         >
                             <Image
@@ -446,7 +452,7 @@ export function ServiceDetailClient() {
                         <div
                             className={`absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold text-white ${availableToday ? "bg-brand/85" : "bg-red-600/85"}`}
                         >
-                            {availableToday ? SERVICE_DETAIL_LABELS.availableToday : "Unavailable"}
+                            {availableToday ? SERVICE_DETAIL_LABELS.availableToday : t("unavailable")}
                         </div>
                     </div>
 
@@ -480,7 +486,7 @@ export function ServiceDetailClient() {
                                     {isVerified ? <VerifiedBadge size={20} /> : null}
                                 </div>
                                 <p className="text-sm" style={{ color: colors.textLight }}>
-                                    Service company
+                                    {t("serviceCompany")}
                                 </p>
                             </div>
                         )}
@@ -523,7 +529,7 @@ export function ServiceDetailClient() {
                         <div className="rounded-2xl border border-[#C8E6C4] bg-[#EEF8EA] p-4">
                             <div className="mb-3 flex items-center gap-1">
                                 <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                                    Backed by
+                                    {t("backedBy")}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
@@ -554,7 +560,7 @@ export function ServiceDetailClient() {
                                         </div>
                                         {provider.agency._count && (
                                             <p className="text-[11px] text-ink-muted">
-                                                {provider.agency._count.workers} Active Workers · {provider.agency._count.placements} Placements
+                                                {t("activeWorkersAndPlacements", { workers: provider.agency._count.workers, placements: provider.agency._count.placements })}
                                             </p>
                                         )}
                                     </div>
@@ -564,12 +570,12 @@ export function ServiceDetailClient() {
                                     className="flex-shrink-0 rounded-lg border border-brand px-3 py-1.5 text-[11px] font-semibold text-brand"
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    View Profile
+                                    {t("viewProfile")}
                                 </Link>
                             </div>
                             {/* Trust badges row */}
                             <div className="mt-3 flex items-center gap-3 flex-wrap">
-                                {["ID Verified", "Police Checked", "Replacement Guaranteed"].map((badge) => (
+                                {[t("badgeIdVerified"), t("badgePoliceChecked"), t("badgeReplacementGuaranteed")].map((badge) => (
                                     <span key={badge} className="flex items-center gap-1 text-[11px] font-medium text-brand">
                                         <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
                                         {badge}
@@ -587,14 +593,14 @@ export function ServiceDetailClient() {
                                 <ShieldCheck className="h-5 w-5" style={{ color: colors.primary }} />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-[13px] font-bold text-ink">Hiring Protection</p>
+                                <p className="text-[13px] font-bold text-ink">{t("hiringProtection")}</p>
                                 <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">
-                                    If this worker doesn&apos;t work out, {provider.agency.name} guarantees a free replacement within the coverage window.
+                                    {t("hiringProtectionDesc", { agency: provider.agency.name })}
                                 </p>
                             </div>
                             <div className="flex-shrink-0 text-right">
-                                <p className="text-[11px] font-bold text-brand">Covered for</p>
-                                <p className="text-[13px] font-extrabold text-brand">30 Days</p>
+                                <p className="text-[11px] font-bold text-brand">{t("coveredFor")}</p>
+                                <p className="text-[13px] font-extrabold text-brand">{t("thirtyDays")}</p>
                             </div>
                         </div>
                     </div>
@@ -679,13 +685,13 @@ export function ServiceDetailClient() {
                             </div>
                             <div>
                                 <h2 className="text-[15px] font-bold" style={{ color: colors.text }}>
-                                    Education
+                                    {t("education")}
                                 </h2>
                                 <p className="mt-1 text-[13px]" style={{ color: colors.textSecondary }}>
                                     {educationLevel}
                                 </p>
                                 <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                                    Shared by {firstName}; no document required.
+                                    {t("sharedByNoDocument", { name: firstName })}
                                 </p>
                             </div>
                         </div>
@@ -820,7 +826,7 @@ export function ServiceDetailClient() {
                                 type="button"
                                 key={i}
                                 onClick={() => openLightbox(workPhotos, i)}
-                                aria-label="View photo"
+                                aria-label={t("viewPhoto")}
                                 className="relative h-40 w-40 flex-shrink-0 snap-start overflow-hidden rounded-xl bg-gray-100"
                             >
                                 <Image
@@ -853,7 +859,7 @@ export function ServiceDetailClient() {
                             className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
                         >
                             <Flag className="w-3.5 h-3.5" />
-                            Report this service
+                            {t("reportThisService")}
                         </button>
                     </div>
                 )}
@@ -870,7 +876,7 @@ export function ServiceDetailClient() {
             <ReviewPromptDialog
                 open={reviewOpen}
                 subject={{ title: providerName, subtitle: service ? getServiceDisplayName(service) : undefined }}
-                rehireQuestion="Would you hire this person again?"
+                rehireQuestion={t("rehireQuestion")}
                 onOpenChange={setReviewOpen}
                 onSubmit={submitProviderReview}
             />
@@ -888,23 +894,23 @@ export function ServiceDetailClient() {
                     <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Contact Agency</p>
+                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{t("contactAgency")}</p>
                                 <h3 className="text-[17px] font-black text-ink mt-0.5">{service.provider.agency.name}</h3>
-                                <p className="text-[13px] text-gray-400">About {providerName}</p>
+                                <p className="text-[13px] text-gray-400">{t("aboutName", { name: providerName })}</p>
                             </div>
                             <button onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }} className="p-1 text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <p className="text-[12px] leading-relaxed text-gray-500">
-                            Send a short note to the agency. They&apos;ll review your request and reach out to discuss before placing a worker with you.
+                            {t("inquiryModalDesc")}
                         </p>
                         <textarea
                             autoFocus
                             value={inquiryNote}
                             onChange={(e) => setInquiryNote(e.target.value)}
                             rows={4}
-                            placeholder="e.g. I'm looking for a full-time nanny in Kicukiro, starting next month."
+                            placeholder={t("inquiryPlaceholder")}
                             className="w-full rounded-2xl border border-gray-200 p-3 text-[14px] outline-none focus:border-brand resize-none"
                         />
                         <div className="flex gap-3">
@@ -912,14 +918,14 @@ export function ServiceDetailClient() {
                                 onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }}
                                 className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
                             >
-                                Cancel
+                                {t("cancel")}
                             </button>
                             <button
                                 onClick={handleInquirySubmit}
                                 disabled={inquirySubmitting}
                                 className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                             >
-                                {inquirySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Inquiry"}
+                                {inquirySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendInquiry")}
                             </button>
                         </div>
                     </div>
@@ -931,7 +937,7 @@ export function ServiceDetailClient() {
                     <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">Request to Hire</p>
+                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{SERVICE_DETAIL_LABELS.requestToHire}</p>
                                 <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
                                 <p className="text-[13px] text-gray-400">{getServiceDisplayName(service)}</p>
                             </div>
@@ -941,12 +947,12 @@ export function ServiceDetailClient() {
                         </div>
                         <div>
                             <label className="text-[12px] font-semibold text-ink block mb-1.5">
-                                Message <span className="text-gray-400 font-normal">(optional)</span>
+                                {t("messageOptional")} <span className="text-gray-400 font-normal">{t("optional")}</span>
                             </label>
                             <textarea
                                 value={hireNotes}
                                 onChange={(e) => setHireNotes(e.target.value)}
-                                placeholder="Describe what you need, preferred schedule, or any specific requirements…"
+                                placeholder={t("hireMessagePlaceholder")}
                                 rows={3}
                                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
                             />
@@ -956,14 +962,14 @@ export function ServiceDetailClient() {
                                 onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }}
                                 className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
                             >
-                                Cancel
+                                {t("cancel")}
                             </button>
                             <button
                                 onClick={handleHireSubmit}
                                 disabled={submitting}
                                 className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
                             >
-                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Request"}
+                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendRequest")}
                             </button>
                         </div>
                     </div>
@@ -983,7 +989,7 @@ export function ServiceDetailClient() {
                         style={{ backgroundColor: colors.primary }}
                     >
                         <Pencil className="h-4 w-4" />
-                        Edit Service
+                        {t("editService")}
                     </button>
                 ) : provider?.agency ? (
                     <div className="flex items-center gap-3">
@@ -995,7 +1001,7 @@ export function ServiceDetailClient() {
                                 color: colors.primary,
                             }}
                         >
-                            View Agency
+                            {t("viewAgency")}
                         </Link>
                         <button
                             onClick={() => requireAuth(() => setIsInquiryOpen(true), "hire")}
@@ -1003,7 +1009,7 @@ export function ServiceDetailClient() {
                             className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
                             style={{ backgroundColor: inquirySent ? "#9CA3AF" : colors.primary }}
                         >
-                            {inquirySent ? "Inquiry Sent" : "Contact Agency"}
+                            {inquirySent ? t("inquirySent") : t("contactAgency")}
                         </button>
                     </div>
                 ) : (
@@ -1015,7 +1021,7 @@ export function ServiceDetailClient() {
                                 style={{ backgroundColor: "#C2630B" }}
                             >
                                 <Star className="h-5 w-5 fill-white stroke-white" />
-                                Leave a review
+                                {t("leaveAReview")}
                             </button>
                         ) : (
                             <button
@@ -1047,6 +1053,8 @@ export function ServiceDetailClient() {
  * uses, but renders only the first review inline to match the screenshot.
  */
 function ReviewsBlock({ serviceId, providerId }: { serviceId: string; providerId?: string }) {
+    const tShared = useTranslations("serviceDetailShared");
+    const SERVICE_DETAIL_LABELS = serviceDetailLabels(tShared);
     const searchParams = useSearchParams();
     const focusedReviewId = searchParams.get("reviewId");
     const { reviews, totalReviews, loading, replyToReview } = useReviews({ serviceId });

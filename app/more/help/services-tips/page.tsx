@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Lightbulb } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PageHeader, PageShell, appStickyHeaderClass } from "@/components/ui/app-primitives";
 
 /**
@@ -10,11 +11,12 @@ import { PageHeader, PageShell, appStickyHeaderClass } from "@/components/ui/app
  * the affordance has somewhere to go today.
  */
 export default function ServicesTipsHelpPage() {
+  const t = useTranslations("servicesTipsHelp");
   const router = useRouter();
   return (
     <PageShell padded={false} bottomNav={false}>
       <PageHeader
-        title="Tips for great services"
+        title={t("title")}
         compact
         onBack={() => router.back()}
         className={appStickyHeaderClass}
@@ -23,10 +25,9 @@ export default function ServicesTipsHelpPage() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
           <Lightbulb className="h-7 w-7 text-brand" />
         </div>
-        <h2 className="text-[16px] font-black text-ink">Coming soon</h2>
+        <h2 className="text-[16px] font-black text-ink">{t("comingSoon")}</h2>
         <p className="max-w-[280px] text-[13px] text-ink-muted">
-          A guide with photo, copy, and pricing tips for getting more hire requests
-          is on the way.
+          {t("description")}
         </p>
       </div>
     </PageShell>

@@ -18,6 +18,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Switch } from "@/components/ui/switch";
@@ -56,7 +57,7 @@ const defaultPreferences: NotificationPreferences = {
   paymentUpdates: true,
 };
 
-const preferenceGroups: Array<{
+function getPreferenceGroups(t: (key: string) => string): Array<{
   title: string;
   icon: React.ElementType;
   items: Array<{
@@ -66,98 +67,108 @@ const preferenceGroups: Array<{
     icon: React.ElementType;
     tone: string;
   }>;
-}> = [
-  {
-    title: "Messages",
-    icon: MessageCircle,
-    items: [
-      {
-        key: "messages",
-        title: "New messages",
-        description: "Notify me when a client or worker sends a message",
-        icon: MessageCircle,
-        tone: "bg-emerald-50 text-brand",
-      },
-    ],
-  },
-  {
-    title: "Bookings",
-    icon: CalendarCheck,
-    items: [
-      {
-        key: "bookingInquiries",
-        title: "Booking requests",
-        description: "Official offers and new interest in your job posts",
-        icon: BriefcaseBusiness,
-        tone: "bg-emerald-50 text-brand",
-      },
-      {
-        key: "bookingConfirmations",
-        title: "Booking updates",
-        description: "Confirmations, cancellations, filled positions, and application updates",
-        icon: CalendarCheck,
-        tone: "bg-blue-50 text-[#2563EB]",
-      },
-    ],
-  },
-  {
-    title: "Payments",
-    icon: WalletCards,
-    items: [
-      {
-        key: "paymentUpdates",
-        title: "Payment updates",
-        description: "Payments received, failed, refunded, or requiring attention",
-        icon: WalletCards,
-        tone: "bg-amber-50 text-[#B45309]",
-      },
-    ],
-  },
-  {
-    title: "Reviews",
-    icon: Star,
-    items: [
-      {
-        key: "profileReviews",
-        title: "Profile reviews",
-        description: "New reviews and replies to reviews you wrote",
-        icon: Star,
-        tone: "bg-yellow-50 text-[#D97706]",
-      },
-    ],
-  },
-];
+}> {
+  return [
+    {
+      title: t("groupMessages"),
+      icon: MessageCircle,
+      items: [
+        {
+          key: "messages",
+          title: t("itemNewMessagesTitle"),
+          description: t("itemNewMessagesDesc"),
+          icon: MessageCircle,
+          tone: "bg-emerald-50 text-brand",
+        },
+      ],
+    },
+    {
+      title: t("groupBookings"),
+      icon: CalendarCheck,
+      items: [
+        {
+          key: "bookingInquiries",
+          title: t("itemBookingRequestsTitle"),
+          description: t("itemBookingRequestsDesc"),
+          icon: BriefcaseBusiness,
+          tone: "bg-emerald-50 text-brand",
+        },
+        {
+          key: "bookingConfirmations",
+          title: t("itemBookingUpdatesTitle"),
+          description: t("itemBookingUpdatesDesc"),
+          icon: CalendarCheck,
+          tone: "bg-blue-50 text-[#2563EB]",
+        },
+      ],
+    },
+    {
+      title: t("groupPayments"),
+      icon: WalletCards,
+      items: [
+        {
+          key: "paymentUpdates",
+          title: t("itemPaymentUpdatesTitle"),
+          description: t("itemPaymentUpdatesDesc"),
+          icon: WalletCards,
+          tone: "bg-amber-50 text-[#B45309]",
+        },
+      ],
+    },
+    {
+      title: t("groupReviews"),
+      icon: Star,
+      items: [
+        {
+          key: "profileReviews",
+          title: t("itemProfileReviewsTitle"),
+          description: t("itemProfileReviewsDesc"),
+          icon: Star,
+          tone: "bg-yellow-50 text-[#D97706]",
+        },
+      ],
+    },
+  ];
+}
 
-const channels = [
-  {
-    title: "Push",
-    description: "This device",
-    status: "On",
-    icon: Smartphone,
-    tone: "bg-emerald-50 text-brand",
-    statusClassName: "bg-emerald-50 text-brand",
-  },
-  {
-    title: "Email",
-    description: "Not configured",
-    status: "Off",
-    icon: Mail,
-    tone: "bg-blue-50 text-[#2563EB]",
-    statusClassName: "bg-gray-100 text-[#6B7280]",
-  },
-  {
-    title: "SMS",
-    description: "Not configured",
-    status: "Off",
-    icon: MessageSquareText,
-    tone: "bg-orange-50 text-[#F59E0B]",
-    statusClassName: "bg-gray-100 text-[#6B7280]",
-  },
-];
+function getChannels(t: (key: string) => string) {
+  return [
+    {
+      id: "push",
+      title: t("channelPush"),
+      description: t("channelPushDesc"),
+      status: t("statusOn"),
+      icon: Smartphone,
+      tone: "bg-emerald-50 text-brand",
+      statusClassName: "bg-emerald-50 text-brand",
+    },
+    {
+      id: "email",
+      title: t("channelEmail"),
+      description: t("notConfigured"),
+      status: t("statusOff"),
+      icon: Mail,
+      tone: "bg-blue-50 text-[#2563EB]",
+      statusClassName: "bg-gray-100 text-[#6B7280]",
+    },
+    {
+      id: "sms",
+      title: t("channelSms"),
+      description: t("notConfigured"),
+      status: t("statusOff"),
+      icon: MessageSquareText,
+      tone: "bg-orange-50 text-[#F59E0B]",
+      statusClassName: "bg-gray-100 text-[#6B7280]",
+    },
+  ];
+}
 
 const PREFERENCES_KEY = ["notification-preferences"] as const;
 
 const NotificationsPreferences = () => {
+  const t = useTranslations("notificationSettings");
+  const preferenceGroups = getPreferenceGroups(t);
+  const channels = getChannels(t);
   const queryClient = useQueryClient();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [savingKey, setSavingKey] = useState<PreferenceKey | null>(null);
@@ -182,7 +193,7 @@ const NotificationsPreferences = () => {
 
   const handleDeviceToggle = async (next: boolean) => {
     if (devicePermission === "unsupported") {
-      toast.error("Open the installed Akazek app (Add to Home Screen) to enable notifications.");
+      toast.error(t("deviceUnsupported"));
       return;
     }
     setDeviceBusy(true);
@@ -196,7 +207,7 @@ const NotificationsPreferences = () => {
           setDevicePermission(permission);
         }
         if (permission === "denied") {
-          toast.error("Notifications are blocked. Enable them in your device settings.");
+          toast.error(t("notificationsBlocked"));
           return;
         }
         if (permission !== "granted") return;
@@ -205,14 +216,14 @@ const NotificationsPreferences = () => {
         const token = await registerFcmToken();
         toast[token ? "success" : "error"](
           token
-            ? "Notifications enabled on this device"
-            : "Couldn't finish enabling notifications. Please try again.",
+            ? t("notificationsEnabledDevice")
+            : t("couldNotEnable"),
         );
       } else {
         localStorage.setItem(DEVICE_PUSH_KEY, "off");
         setDeviceOptedOut(true);
         await unregisterFcmToken();
-        toast.success("Notifications turned off on this device");
+        toast.success(t("notificationsTurnedOff"));
       }
     } finally {
       setDeviceBusy(false);
@@ -221,12 +232,12 @@ const NotificationsPreferences = () => {
 
   const deviceDescription =
     devicePermission === "unsupported"
-      ? "Open the installed app (Add to Home Screen) to turn on notifications."
+      ? t("deviceDescUnsupported")
       : devicePermission === "denied"
-        ? "Blocked — allow notifications for Akazek in your device settings."
+        ? t("deviceDescDenied")
         : deviceEnabled
-          ? "You'll get booking, message, and review alerts on this phone."
-          : "Turn on to get booking, message, and review alerts on this phone.";
+          ? t("deviceDescEnabled")
+          : t("deviceDescDisabled");
 
   // Cached: revisiting the settings page renders the saved toggles instantly.
   const { data: savedPreferences, isLoading } = useQuery({
@@ -256,10 +267,10 @@ const NotificationsPreferences = () => {
       // Keep the cache in sync so a remount within the cache window doesn't
       // briefly re-show the old value.
       queryClient.setQueryData<Partial<NotificationPreferences>>(PREFERENCES_KEY, updated);
-      toast.success("Notification preferences updated");
+      toast.success(t("preferencesUpdated"));
     } catch (err) {
       console.error("Error updating preferences:", err);
-      toast.error("Failed to update preferences");
+      toast.error(t("failedToUpdate"));
       setPreferences(previous);
     } finally {
       setSavingKey(null);
@@ -277,8 +288,8 @@ const NotificationsPreferences = () => {
   return (
     <PageShell className="gap-5">
       <BackButtonHeader
-        text="Notification Settings"
-        subtitle="Choose the Akazek updates you want to receive."
+        text={t("notificationSettingsTitle")}
+        subtitle={t("chooseUpdatesSubtitle")}
         backHref="/more"
       />
 
@@ -292,9 +303,9 @@ const NotificationsPreferences = () => {
             </span>
             <div>
               <span className="block text-[15px] font-semibold text-ink">
-                Notification history
+                {t("notificationHistory")}
               </span>
-              <span className="text-[13px] text-[#6B7280]">Review recent alerts</span>
+              <span className="text-[13px] text-[#6B7280]">{t("reviewRecentAlerts")}</span>
             </div>
           </div>
           <ChevronRight className="h-5 w-5 text-brand" />
@@ -307,7 +318,7 @@ const NotificationsPreferences = () => {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-semibold leading-5 text-ink">
-                Notifications on this device
+                {t("notificationsThisDevice")}
               </p>
               <p className="mt-0.5 text-[13px] leading-5 text-[#6B7280]">{deviceDescription}</p>
             </div>
@@ -319,7 +330,7 @@ const NotificationsPreferences = () => {
                 devicePermission === "denied"
               }
               onCheckedChange={handleDeviceToggle}
-              aria-label="Toggle notifications on this device"
+              aria-label={t("toggleNotificationsDevice")}
               className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-[#D1D5DB]"
             />
           </div>
@@ -368,7 +379,7 @@ const NotificationsPreferences = () => {
                           checked={preferences[item.key]}
                           disabled={isSaving}
                           onCheckedChange={() => handleToggle(item.key)}
-                          aria-label={`Toggle ${item.title}`}
+                          aria-label={t("toggleItem", { title: item.title })}
                           className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-[#D1D5DB]"
                         />
                       </div>
@@ -381,15 +392,15 @@ const NotificationsPreferences = () => {
         </div>
 
         <section className="space-y-2">
-          <AppSectionHeader title="Notification channels" icon={ShieldCheck} />
+          <AppSectionHeader title={t("notificationChannels")} icon={ShieldCheck} />
 
           <div className="grid grid-cols-3 gap-3">
             {channels.map((channel) => {
               const ChannelIcon = channel.icon;
               // The Push card reflects the live device state instead of a
               // hardcoded "On"; Email/SMS stay as their static placeholders.
-              const isPush = channel.title === "Push";
-              const status = isPush ? (deviceEnabled ? "On" : "Off") : channel.status;
+              const isPush = channel.id === "push";
+              const status = isPush ? (deviceEnabled ? t("statusOn") : t("statusOff")) : channel.status;
               const statusClassName = isPush
                 ? deviceEnabled
                   ? "bg-emerald-50 text-brand"
@@ -399,7 +410,7 @@ const NotificationsPreferences = () => {
               return (
                 <Card
                   variant="list"
-                  key={channel.title}
+                  key={channel.id}
                   className="p-3"
                 >
                   <div className="flex flex-col gap-3">
@@ -435,8 +446,7 @@ const NotificationsPreferences = () => {
         <Card className="flex gap-3 border-[#BFD8FF] bg-[#EEF6FF] text-[#2F5E9E]">
           <Info className="mt-0.5 h-5 w-5 shrink-0" />
           <p className="text-[13px] leading-5">
-            Important account, safety, and booking-critical notifications may still be sent when
-            needed to keep your account and active bookings secure.
+            {t("criticalNotice")}
           </p>
         </Card>
     </PageShell>

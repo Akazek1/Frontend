@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
@@ -47,6 +48,7 @@ function getResponseStatus(error: unknown): number | undefined {
 }
 
 const JobDetailPage = () => {
+  const t = useTranslations("jobDetail");
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -79,7 +81,7 @@ const JobDetailPage = () => {
           router.push(`/onboarding?step=login&redirect=/jobs/${id}`);
         } else {
           console.error("Failed to fetch job details:", err);
-          toast.error("Job not found");
+          toast.error(t("jobNotFound"));
           router.push("/work");
         }
       } finally {
@@ -94,9 +96,9 @@ const JobDetailPage = () => {
     try {
       await jobsService.updateApplicationStatus(appId, "REJECTED");
       setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: "REJECTED" } : a));
-      toast.success("Application declined.");
+      toast.success(t("applicationDeclined"));
     } catch {
-      toast.error("Failed to decline application.");
+      toast.error(t("failedDeclineApplication"));
     } finally {
       setActionLoading(null);
     }
@@ -114,12 +116,12 @@ const JobDetailPage = () => {
           ? { ...a, status: "ACCEPTED" }
           : a
       ));
-      toast.success("Offer sent. The provider needs to accept before the job is confirmed.");
+      toast.success(t("offerSentPendingAccept"));
       if (result?.bookingId) {
         router.push(`/conversations/inbox/${result.bookingId}`);
       }
     } catch {
-      toast.error("Failed to hire worker. Please try again.");
+      toast.error(t("failedHireWorker"));
     } finally {
       setActionLoading(null);
     }
@@ -158,8 +160,8 @@ const JobDetailPage = () => {
     <PageShell padded={false} className="overflow-x-hidden">
       {/* Premium Header */}
       <PageHeader
-        title="Job Detail"
-        subtitle="Review job requirements and applicants"
+        title={t("jobDetailTitle")}
+        subtitle={t("reviewJobDesc")}
         onBack={() => router.back()}
         className={appStickyHeaderClass}
       />
@@ -192,9 +194,9 @@ const JobDetailPage = () => {
                 <DollarSign className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Budget</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{t("budget")}</p>
                 <p className="text-[13px] font-black text-ink">
-                  {job.budgetMin ? `${job.budgetMin.toLocaleString()} RWF` : "Negotiable"}
+                  {job.budgetMin ? `${job.budgetMin.toLocaleString()} RWF` : t("negotiable")}
                 </p>
               </div>
             </div>
@@ -203,8 +205,8 @@ const JobDetailPage = () => {
                 <Timer className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Schedule</p>
-                <p className="text-[13px] font-black text-ink capitalize">{job.scheduleType || "Flexible"}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{t("schedule")}</p>
+                <p className="text-[13px] font-black text-ink capitalize">{job.scheduleType || t("flexible")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-[#EDF1EC] bg-gray-50/50 p-3">
@@ -212,7 +214,7 @@ const JobDetailPage = () => {
                 <MapPin className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Location</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{t("location")}</p>
                 <p className="text-[13px] font-black text-ink truncate">{job.address?.city || "Kigali"}</p>
               </div>
             </div>
@@ -221,8 +223,8 @@ const JobDetailPage = () => {
                 <CalendarDays className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Starts</p>
-                <p className="text-[13px] font-black text-ink truncate">{job.startDate ? new Date(job.startDate).toLocaleDateString() : "ASAP"}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{t("starts")}</p>
+                <p className="text-[13px] font-black text-ink truncate">{job.startDate ? new Date(job.startDate).toLocaleDateString() : t("asap")}</p>
               </div>
             </div>
           </div>
@@ -232,7 +234,7 @@ const JobDetailPage = () => {
         {!isOwner && (
           <Card>
             <h2 className="text-sm font-black text-ink mb-5 uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4 text-brand" /> Employer Profile
+              <User className="w-4 h-4 text-brand" /> {t("employerProfile")}
             </h2>
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 border-2 border-white shadow-md ring-1 ring-gray-100">
@@ -246,7 +248,7 @@ const JobDetailPage = () => {
                   <p className="text-[16px] font-black text-ink">{job.employer.firstName} {job.employer.lastName}</p>
                   {job.employer.isVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-50" />}
                 </div>
-                <p className="text-[12px] text-gray-400 font-medium">Member since {new Date(job.createdAt).getFullYear()}</p>
+                <p className="text-[12px] text-gray-400 font-medium">{t("memberSinceYear", { year: new Date(job.createdAt).getFullYear() })}</p>
               </div>
             </div>
             {job.employer.bio && (
@@ -262,11 +264,11 @@ const JobDetailPage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
               <h2 className="text-[15px] font-black text-ink uppercase tracking-wider flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-brand" /> Applicants ({applications.length})
+                <Briefcase className="w-4 h-4 text-brand" /> {t("applicantsCount", { count: applications.length })}
               </h2>
               <div className="flex items-center gap-1 bg-surface px-2 py-0.5 rounded-full">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] font-black text-brand uppercase tracking-tighter">Live</span>
+                <span className="text-[10px] font-black text-brand uppercase tracking-tighter">{t("live")}</span>
               </div>
             </div>
 
@@ -287,7 +289,7 @@ const JobDetailPage = () => {
                             <p className="text-[14px] font-black text-ink group-hover:text-brand transition-colors">{app.worker?.firstName} {app.worker?.lastName}</p>
                             {app.worker?.isVerified && <ShieldCheck className="w-3.5 h-3.5 text-brand" />}
                           </div>
-                          <p className="text-[11px] text-gray-400 font-medium">Applied {formatDistanceToNow(new Date(app.createdAt))} ago</p>
+                          <p className="text-[11px] text-gray-400 font-medium">{t("appliedAgo", { time: formatDistanceToNow(new Date(app.createdAt)) })}</p>
                         </div>
                       </div>
                       
@@ -317,14 +319,14 @@ const JobDetailPage = () => {
                             className="flex-1 h-11 rounded-[18px] border-2 border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 font-black text-[12px] uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                           >
                             {actionLoading === app.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                            Decline
+                            {t("decline")}
                           </button>
                           <button
                             onClick={() => setConfirmHire({ appId: app.id, workerName: `${app.worker?.firstName} ${app.worker?.lastName}` })}
                             disabled={!!actionLoading}
                             className="flex-3 h-11 rounded-[18px] bg-brand hover:bg-brand-dark text-white font-black text-[12px] uppercase tracking-widest transition-all shadow-lg shadow-brand/10 flex items-center justify-center gap-2 grow-[2]"
                           >
-                            <Check className="w-4 h-4" /> Send Offer
+                            <Check className="w-4 h-4" /> {t("sendOffer")}
                           </button>
                         </>
                       ) : (
@@ -334,7 +336,7 @@ const JobDetailPage = () => {
                             : "bg-gray-50 text-gray-300 border-gray-100"
                         }`}>
                           <ShieldCheck className="w-4 h-4 opacity-70" />
-                          {app.status === "ACCEPTED" ? "Offer Sent" : "Declined"}
+                          {app.status === "ACCEPTED" ? t("offerSentStatus") : t("declinedStatus")}
                         </div>
                       )}
                     </div>
@@ -344,8 +346,8 @@ const JobDetailPage = () => {
             ) : (
               <EmptyState
                 icon={User}
-                title="Waiting for applicants"
-                description="We'll notify you as soon as workers start applying for your job."
+                title={t("waitingForApplicants")}
+                description={t("waitingForApplicantsDesc")}
               />
             )}
           </div>
@@ -361,7 +363,7 @@ const JobDetailPage = () => {
             className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
           >
             <Flag className="w-3.5 h-3.5" />
-            Report this job
+            {t("reportThisJob")}
           </button>
         </div>
       )}
@@ -380,14 +382,14 @@ const JobDetailPage = () => {
         <>
           <SheetOverlay onClick={() => setConfirmHire(null)} aria-hidden="true" />
           <SheetPanel className="max-w-sm" onClose={() => setConfirmHire(null)}>
-            <SheetHeader title={`Send offer to ${confirmHire.workerName}?`} onClose={() => setConfirmHire(null)} className="border-b-0 pb-2" />
+            <SheetHeader title={t("sendOfferToName", { name: confirmHire.workerName })} onClose={() => setConfirmHire(null)} className="border-b-0 pb-2" />
             <SheetBody className="pt-2">
               <div className="flex flex-col items-center text-center gap-2">
               <div className="w-14 h-14 rounded-full bg-[#E8F5E9] flex items-center justify-center">
                 <Check className="w-7 h-7 text-brand" />
               </div>
               <p className="text-[13px] text-gray-400 leading-relaxed">
-                This opens a conversation and sends an official offer. The job is only confirmed after {confirmHire.workerName.split(" ")[0]} accepts.
+                {t("hireConfirmMessage", { firstName: confirmHire.workerName.split(" ")[0] })}
               </p>
             </div>
             </SheetBody>
@@ -397,13 +399,13 @@ const JobDetailPage = () => {
                 onClick={() => setConfirmHire(null)}
                 className="flex-1"
               >
-                Cancel
+                {t("cancel")}
               </AppButton>
               <AppButton
                 onClick={handleHireConfirmed}
                 className="flex flex-1 items-center justify-center gap-2"
               >
-                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Offer"}
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendOffer")}
               </AppButton>
             </SheetFooter>
           </SheetPanel>

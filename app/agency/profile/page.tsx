@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, Avatar, StatusPill } from "@/components/agency/agency-ui";
@@ -54,14 +55,12 @@ interface AgencyProfileData {
   workers: ProfileWorker[];
 }
 
-function name(p: { firstName: string | null; lastName: string | null }) {
-  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown";
+function name(p: { firstName: string | null; lastName: string | null }, t: (key: string) => string) {
+  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || t("unknownName");
 }
 
-const GUARANTEE_TEXT =
-  "We offer a 30-day free replacement guarantee for all placements. If it doesn't work out, we will replace the worker for free.";
-
 export default function AgencyProfilePage() {
+  const t = useTranslations("agencyProfile");
   const [data, setData] = useState<AgencyProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +71,7 @@ export default function AgencyProfilePage() {
         const res = await api.get("/agency/profile");
         setData(res.data?.data || res.data);
       } catch (err) {
-        setError(getApiErrorMessage(err, "Could not load profile"));
+        setError(getApiErrorMessage(err, t("couldNotLoadProfile")));
       } finally {
         setLoading(false);
       }
@@ -81,7 +80,7 @@ export default function AgencyProfilePage() {
   }, []);
 
   if (loading) return <AgencyLoading />;
-  if (error || !data) return <p className="text-[14px] text-ink-muted">{error || "Could not load profile"}</p>;
+  if (error || !data) return <p className="text-[14px] text-ink-muted">{error || t("couldNotLoadProfile")}</p>;
 
   const { org, stats, workers } = data;
 
@@ -90,12 +89,12 @@ export default function AgencyProfilePage() {
       {/* Top actions */}
       <div className="mb-4 flex items-center justify-between">
         <Link href="/agency" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline">
-          <ArrowRight className="h-4 w-4 rotate-180" /> Back to dashboard
+          <ArrowRight className="h-4 w-4 rotate-180" /> {t("backToDashboard")}
         </Link>
         <div className="flex items-center gap-2">
-          <StatusPill label="You are the owner" tone="green" className="hidden sm:inline-flex" />
+          <StatusPill label={t("youAreOwner")} tone="green" className="hidden sm:inline-flex" />
           <button className="flex h-10 items-center gap-2 rounded-xl bg-brand px-3 text-[13px] font-semibold text-white hover:bg-brand-dark">
-            <Pencil className="h-4 w-4" /> Edit Profile
+            <Pencil className="h-4 w-4" /> {t("editProfile")}
           </button>
           <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-ink-muted hover:bg-gray-50">
             <MoreHorizontal className="h-4 w-4" />
@@ -152,23 +151,22 @@ export default function AgencyProfilePage() {
         {/* LEFT: about + contact */}
         <div className="flex flex-col gap-4">
           <AgencyCard className="p-5">
-            <h2 className="mb-2 text-[15px] font-bold text-ink">About Us</h2>
+            <h2 className="mb-2 text-[15px] font-bold text-ink">{t("aboutUs")}</h2>
             <p className="whitespace-pre-line text-[13px] leading-relaxed text-ink-muted">
-              {org.description ||
-                `${org.name} connects trusted, trained and verified household workers with families across Kigali. We specialize in quality, reliability and long-term relationships.`}
+              {org.description || t("defaultDescription", { name: org.name })}
             </p>
 
             <div className="mt-4 flex items-start gap-3 rounded-xl bg-[#EEF8EA] p-3.5">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
               <div>
-                <p className="text-[13px] font-bold text-ink">Our Guarantee Policy</p>
-                <p className="mt-0.5 text-[12px] leading-snug text-ink-muted">{GUARANTEE_TEXT}</p>
+                <p className="text-[13px] font-bold text-ink">{t("ourGuaranteePolicy")}</p>
+                <p className="mt-0.5 text-[12px] leading-snug text-ink-muted">{t("guaranteeText")}</p>
               </div>
             </div>
           </AgencyCard>
 
           <AgencyCard className="p-5">
-            <h2 className="mb-3 text-[15px] font-bold text-ink">Contact Information</h2>
+            <h2 className="mb-3 text-[15px] font-bold text-ink">{t("contactInformation")}</h2>
             <div className="space-y-3">
               {org.phone && <ContactRow icon={Phone} value={org.phone} />}
               {org.email && <ContactRow icon={Mail} value={org.email} />}
@@ -179,7 +177,7 @@ export default function AgencyProfilePage() {
 
           {org.operatingHours && (
             <AgencyCard className="p-5">
-              <h2 className="mb-3 text-[15px] font-bold text-ink">Operating Hours</h2>
+              <h2 className="mb-3 text-[15px] font-bold text-ink">{t("operatingHours")}</h2>
               <div className="flex items-center gap-2 text-[13px] text-ink">
                 <Clock className="h-4 w-4 text-brand" />
                 {org.operatingHours}
@@ -192,25 +190,25 @@ export default function AgencyProfilePage() {
         <div className="flex flex-col gap-4 lg:col-span-2">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <StatCard icon={<Users className="h-5 w-5 text-brand" />} value={stats.totalWorkers} label="Total Workers" />
-            <StatCard icon={<Briefcase className="h-5 w-5 text-brand" />} value={stats.totalPlacements} label="Total Placements" />
+            <StatCard icon={<Users className="h-5 w-5 text-brand" />} value={stats.totalWorkers} label={t("totalWorkers")} />
+            <StatCard icon={<Briefcase className="h-5 w-5 text-brand" />} value={stats.totalPlacements} label={t("totalPlacements")} />
             <StatCard
               icon={<MessageSquare className="h-5 w-5 text-brand" />}
               value={stats.reviewCount}
-              label={stats.reviewCount === 1 ? "Review" : "Reviews"}
+              label={stats.reviewCount === 1 ? t("review") : t("reviews")}
             />
           </div>
 
           {/* Workers */}
           <AgencyCard className="p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[15px] font-bold text-ink">Our Workers</h2>
+              <h2 className="text-[15px] font-bold text-ink">{t("ourWorkers")}</h2>
               <Link href="/agency/workers" className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand hover:underline">
-                View all workers <ArrowRight className="h-4 w-4" />
+                {t("viewAllWorkers")} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             {workers.length === 0 ? (
-              <p className="rounded-xl bg-gray-50 p-4 text-center text-[13px] text-ink-muted">No workers enrolled yet.</p>
+              <p className="rounded-xl bg-gray-50 p-4 text-center text-[13px] text-ink-muted">{t("noWorkersEnrolled")}</p>
             ) : (
               <div className="flex flex-col divide-y divide-gray-50">
                 {workers.map((w) => (
@@ -219,15 +217,15 @@ export default function AgencyProfilePage() {
                     href={`/agency/workers/${w.id}`}
                     className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:opacity-80"
                   >
-                    <Avatar src={w.profilePicture} name={name(w)} size={42} />
+                    <Avatar src={w.profilePicture} name={name(w, t)} size={42} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
-                        <p className="truncate text-[14px] font-bold text-ink">{name(w)}</p>
+                        <p className="truncate text-[14px] font-bold text-ink">{name(w, t)}</p>
                         {w.isVerified && <VerifiedBadge size={13} />}
                       </div>
                       <p className="truncate text-[12px] text-ink-muted">{w.skill ?? "—"}</p>
                     </div>
-                    <StatusPill label={w.onJob ? "On Job" : "Available"} tone={w.onJob ? "amber" : "green"} />
+                    <StatusPill label={w.onJob ? t("onJob") : t("available")} tone={w.onJob ? "amber" : "green"} />
                     <div className="hidden w-20 items-center justify-end gap-1 text-[12px] text-ink-muted sm:flex">
                       <MessageSquare className="h-3.5 w-3.5 text-brand" />
                       <span className="font-bold text-ink">{w.reviewCount}</span>

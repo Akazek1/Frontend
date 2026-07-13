@@ -2,12 +2,12 @@
 import { Briefcase, Smile, MapPin, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useBookmark } from "@/context/bookmark-context";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { redactName } from "@/lib/privacy-utils";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
-import { SERVICE_DETAIL_LABELS } from "@/constant/service-detail";
 
 interface AgencyInfo {
   id: string;
@@ -74,6 +74,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   needsReview = false,
   onLeaveReview,
 }) => {
+  const t = useTranslations("serviceCard");
+  const tShared = useTranslations("serviceDetailShared");
   const router = useRouter();
   const { isBookmarked: isBookmarkedContext, toggleBookmark, isLoading } = useBookmark("services");
   const isServiceBookmarked = isBookmarkedProp !== undefined ? isBookmarkedProp : isBookmarkedContext(id);
@@ -106,7 +108,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   };
 
   const thumbnailSrc = image || profileImage || "";
-  const thumbnailAlt = image ? title : name || "Service";
+  const thumbnailAlt = image ? title : name || t("service");
 
   return (
     <div
@@ -134,7 +136,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             available ? "bg-brand/85 text-white" : "bg-red-600/85 text-white"
           }`}
         >
-          {available ? "Available Today" : "Unavailable"}
+          {available ? t("availableToday") : t("unavailable")}
         </span>
       </div>
 
@@ -145,7 +147,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex items-start justify-between gap-1">
           <div className="flex items-center gap-1 min-w-0">
             <span className="text-[13px] font-bold text-ink truncate">
-              {displayProviderName || "Unknown Provider"}
+              {displayProviderName || t("unknownProvider")}
             </span>
             {verified && <VerifiedBadge size={16} />}
           </div>
@@ -154,10 +156,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             disabled={isLoading || isOwnService}
             aria-label={
               isOwnService
-                ? "Bookmark is unavailable on your own service"
+                ? t("bookmarkUnavailableOwn")
                 : isServiceBookmarked
-                ? "Remove bookmark"
-                : "Bookmark this service"
+                ? t("removeBookmark")
+                : t("bookmarkThisService")
             }
             className="flex-shrink-0 p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -183,7 +185,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Row 3: service title */}
         <span className="text-[12px] text-ink-muted capitalize leading-tight">
-          {title || "Service"}
+          {title || t("service")}
         </span>
 
         {/* Row 4: trust metrics — jobs done | would rehire */}
@@ -193,7 +195,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               <Briefcase className="w-3 h-3 text-brand flex-shrink-0" />
               <span className="font-bold text-ink">{jobsCompleted}</span>
               <span className="text-ink-muted">
-                {jobsCompleted === 1 ? "job done" : "jobs done"}
+                {t("jobsDoneCount", { count: jobsCompleted })}
               </span>
             </span>
             {wouldHireAgain > 0 && (
@@ -202,19 +204,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 <span className="flex items-center gap-1">
                   <Smile className="w-3 h-3 text-brand flex-shrink-0" />
                   <span className="font-bold text-ink">{wouldHireAgain}</span>
-                  <span className="text-ink-muted">would rehire</span>
+                  <span className="text-ink-muted">{t("wouldRehire")}</span>
                 </span>
               </>
             )}
           </div>
         ) : (
-          <span className="text-[11px] font-semibold text-brand">New</span>
+          <span className="text-[11px] font-semibold text-brand">{t("new")}</span>
         )}
 
         {/* Row 5: 📍 location · distance (distance hidden when unknown) */}
         <div className="flex items-center gap-1 text-[11px] text-ink-muted">
           <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span className="truncate max-w-[140px]">{location || "Rwanda"}</span>
+          <span className="truncate max-w-[140px]">{location || t("rwanda")}</span>
           {distance && (
             <>
               <span className="text-gray-300">·</span>
@@ -227,7 +229,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         {languages && (
           <div className="flex items-center gap-1 text-[11px] text-ink-muted">
             <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Speaks: {languages}</span>
+            <span className="truncate">{t("speaksWith", { languages })}</span>
           </div>
         )}
 
@@ -237,12 +239,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             <div className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-brand flex-shrink-0" />
               <span className="text-[10px] font-bold text-brand truncate">
-                Backed by {agency.name}
+                {t("backedByName", { name: agency.name })}
               </span>
               {agency.verified && <VerifiedBadge size={12} />}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {[" ID Verified", "Police Checked", "Replacement Guaranteed"].map((badge) => (
+              {[t("badgeIdVerified"), t("badgePoliceChecked"), t("badgeReplacementGuaranteed")].map((badge) => (
                 <span key={badge} className="flex items-center gap-0.5 text-[9px] font-medium text-brand/80">
                   <ShieldCheck className="w-2.5 h-2.5" />
                   {badge}
@@ -283,7 +285,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               }}
               className="flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-brand text-white hover:bg-[#0f4a0c]"
             >
-              Contact Agency
+              {t("contactAgency")}
             </button>
           ) : !isOwnService && needsReview ? (
             // You have a completed job with this provider you haven't reviewed —
@@ -296,7 +298,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-[#C2630B] text-white hover:bg-[#a4530a]"
             >
               <Star className="w-3.5 h-3.5 fill-white stroke-white" />
-              Leave a review
+              {t("leaveAReview")}
             </button>
           ) : (
             <button
@@ -311,10 +313,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               }`}
             >
               {isOwnService
-                ? "Your service"
+                ? t("yourService")
                 : hasRequested
-                ? SERVICE_DETAIL_LABELS.requestSent
-                : SERVICE_DETAIL_LABELS.requestToHire}
+                ? tShared("requestSent")
+                : tShared("requestToHire")}
             </button>
           )}
         </div>

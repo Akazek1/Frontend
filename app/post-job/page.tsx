@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
@@ -23,6 +24,7 @@ const DISTRICTS = [
 ];
 
 const PostJobPage: React.FC = () => {
+  const t = useTranslations("postJob");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -36,6 +38,14 @@ const PostJobPage: React.FC = () => {
     startDate: "",
     scheduleType: "one-time",
   });
+
+  const SCHEDULE_TYPES = [
+    { value: "one-time", label: t("scheduleOneTime") },
+    { value: "daily", label: t("scheduleDaily") },
+    { value: "weekly", label: t("scheduleWeekly") },
+    { value: "monthly", label: t("scheduleMonthly") },
+    { value: "live-in", label: t("scheduleLiveIn") },
+  ];
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -55,7 +65,7 @@ const PostJobPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.categoryId || !form.description || !form.district) {
-      toast.error("Please fill in all required fields.");
+      toast.error(t("fillRequiredFields"));
       return;
     }
 
@@ -72,10 +82,10 @@ const PostJobPage: React.FC = () => {
         startDate: form.startDate || undefined,
         scheduleType: form.scheduleType,
       });
-      toast.success("Job posted successfully!");
+      toast.success(t("jobPostedSuccess"));
       router.push("/work/job-posts");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to post job."));
+      toast.error(getApiErrorMessage(err, t("failedToPost")));
     } finally {
       setLoading(false);
     }
@@ -84,23 +94,23 @@ const PostJobPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface">
       <div className="sticky top-0 z-20 bg-surface px-4 pt-4 pb-3 shadow-sm">
-        <BackButtonHeader text="Post a Custom Job" backHref="/" />
+        <BackButtonHeader text={t("postACustomJob")} backHref="/" />
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 pb-28 pt-4 space-y-4">
 
         {/* What do you need? */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-ink">What do you need?</h2>
+          <h2 className="text-[13px] font-bold text-ink">{t("whatDoYouNeed")}</h2>
 
           {/* Title */}
           <div className="space-y-1.5">
             <label className="text-[12px] font-semibold text-ink">
-              Job title <span className="text-red-500">*</span>
+              {t("jobTitle")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              placeholder="e.g. Need a cleaner for Saturday morning"
+              placeholder={t("jobTitlePlaceholder")}
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
@@ -110,14 +120,14 @@ const PostJobPage: React.FC = () => {
           {/* Category */}
           <div className="space-y-1.5">
             <label className="text-[12px] font-semibold text-ink">
-              Category <span className="text-red-500">*</span>
+              {t("category")} <span className="text-red-500">*</span>
             </label>
             <select
               value={form.categoryId}
               onChange={(e) => set("categoryId", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
-              <option value="">Select a category</option>
+              <option value="">{t("selectCategory")}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -127,11 +137,11 @@ const PostJobPage: React.FC = () => {
           {/* Description */}
           <div className="space-y-1.5">
             <label className="text-[12px] font-semibold text-ink">
-              Description <span className="text-red-500">*</span>
+              {t("description")} <span className="text-red-500">*</span>
             </label>
             <textarea
               rows={4}
-              placeholder="Describe what you need in detail — size of home, number of rooms, any special requirements..."
+              placeholder={t("descriptionPlaceholder")}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
@@ -141,19 +151,19 @@ const PostJobPage: React.FC = () => {
 
         {/* Location & Timing */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-ink">Location & Timing</h2>
+          <h2 className="text-[13px] font-bold text-ink">{t("locationAndTiming")}</h2>
 
           {/* Location */}
           <div className="space-y-1.5">
             <label className="text-[12px] font-semibold text-ink">
-              District <span className="text-red-500">*</span>
+              {t("district")} <span className="text-red-500">*</span>
             </label>
             <select
               value={form.district}
               onChange={(e) => set("district", e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink bg-white focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
-              <option value="">Select your district</option>
+              <option value="">{t("selectDistrict")}</option>
               {DISTRICTS.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
@@ -162,7 +172,7 @@ const PostJobPage: React.FC = () => {
 
           {/* Preferred date */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-ink">Preferred start date</label>
+            <label className="text-[12px] font-semibold text-ink">{t("preferredStartDate")}</label>
             <input
               type="date"
               value={form.startDate}
@@ -174,20 +184,20 @@ const PostJobPage: React.FC = () => {
 
           {/* Schedule Type */}
           <div className="space-y-1.5">
-            <label className="text-[12px] font-semibold text-ink">Schedule</label>
+            <label className="text-[12px] font-semibold text-ink">{t("schedule")}</label>
             <div className="flex flex-wrap gap-2">
-              {["one-time", "daily", "weekly", "monthly", "live-in"].map((opt) => (
+              {SCHEDULE_TYPES.map((opt) => (
                 <button
                   type="button"
-                  key={opt}
-                  onClick={() => set("scheduleType", opt)}
+                  key={opt.value}
+                  onClick={() => set("scheduleType", opt.value)}
                   className={`px-3 py-2 rounded-xl text-[11px] font-semibold capitalize border transition-colors ${
-                    form.scheduleType === opt
+                    form.scheduleType === opt.value
                       ? "bg-brand text-white border-brand"
                       : "bg-white text-ink-muted border-gray-200"
                   }`}
                 >
-                  {opt}
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -196,23 +206,23 @@ const PostJobPage: React.FC = () => {
 
         {/* Budget */}
         <div className="bg-white rounded-2xl p-4 space-y-4 shadow-sm border border-gray-100">
-          <h2 className="text-[13px] font-bold text-ink">Budget <span className="text-[11px] font-normal text-gray-400">(optional)</span></h2>
+          <h2 className="text-[13px] font-bold text-ink">{t("budget")} <span className="text-[11px] font-normal text-gray-400">{t("optional")}</span></h2>
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
-              <label className="text-[12px] font-semibold text-ink">Min (RWF)</label>
+              <label className="text-[12px] font-semibold text-ink">{t("minRwf")}</label>
               <input
                 type="number"
-                placeholder="e.g. 5000"
+                placeholder={t("minPlaceholder")}
                 value={form.budgetMin}
                 onChange={(e) => set("budgetMin", e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </div>
             <div className="flex-1 space-y-1.5">
-              <label className="text-[12px] font-semibold text-ink">Max (RWF)</label>
+              <label className="text-[12px] font-semibold text-ink">{t("maxRwf")}</label>
               <input
                 type="number"
-                placeholder="e.g. 15000"
+                placeholder={t("maxPlaceholder")}
                 value={form.budgetMax}
                 onChange={(e) => set("budgetMax", e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30"
@@ -228,7 +238,7 @@ const PostJobPage: React.FC = () => {
           className="w-full bg-brand text-white font-bold py-3.5 rounded-2xl text-[14px] flex items-center justify-center gap-2 hover:bg-[#0f4a0c] transition-colors disabled:opacity-60"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {loading ? "Posting…" : "Post Job"}
+          {loading ? t("posting") : t("postJob")}
         </button>
       </form>
     </div>

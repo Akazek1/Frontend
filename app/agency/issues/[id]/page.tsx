@@ -22,7 +22,7 @@ import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, AgencyPageHeader, Avatar, StatusPill } from "@/components/agency/agency-ui";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { cn } from "@/lib/utils";
-import { ISSUE_STATUS, ISSUE_TYPE_LABEL } from "@/constant/agency-issues";
+import { issueStatusMap, issueTypeLabelMap } from "@/constant/agency-issues";
 
 interface IssueDetail {
   id: string;
@@ -70,6 +70,7 @@ function fmt(iso: string | null) {
 
 export default function IssueDetailPage() {
   const t = useTranslations("agencyIssueDetail");
+  const tShared = useTranslations("issueShared");
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -123,7 +124,7 @@ export default function IssueDetailPage() {
 
   const isResolved = issue.status === "RESOLVED";
   const worker = issue.placement.worker;
-  const st = ISSUE_STATUS[issue.status] ?? ISSUE_STATUS.REPORTED;
+  const st = issueStatusMap(tShared)[issue.status] ?? issueStatusMap(tShared).REPORTED;
 
   const trail = [
     { label: t("trailReported"), at: issue.createdAt, done: true, tone: "red" as const },
@@ -154,7 +155,7 @@ export default function IssueDetailPage() {
             <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("issueType")}</p>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEECEC] px-3 py-1.5 text-[13px] font-bold text-[#DC2626]">
               <AlertCircle className="h-4 w-4" />
-              {ISSUE_TYPE_LABEL[issue.issueType] ?? issue.issueType}
+              {issueTypeLabelMap(tShared)[issue.issueType] ?? issue.issueType}
             </span>
             <p className="mb-1.5 mt-4 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("descriptionFromEmployer")}</p>
             <p className="whitespace-pre-line text-[14px] leading-relaxed text-ink">{issue.description}</p>

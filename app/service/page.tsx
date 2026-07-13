@@ -2,6 +2,7 @@
 import React, { useState, useRef } from "react";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useServiceList } from "@/hooks/useServiceList";
 import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
@@ -12,6 +13,7 @@ import FilterModal, { FilterValues } from "@/components/search/filter-modal";
 
 
 const ServicePage = () => {
+    const t = useTranslations("servicesBrowse");
     const router = useRouter();
     const searchParams = useSearchParams();
     const category = searchParams.get("category");
@@ -69,14 +71,14 @@ const ServicePage = () => {
     return (
         <div className="bg-surface min-h-dvh space-y-6 p-6">
             {/* Header with Back Arrow */}
-            <BackButtonHeader text={grouping || category || "Services"} backHref="/" />
+            <BackButtonHeader text={grouping || category || t("services")} backHref="/" />
 
             <div className="rounded-3xl border border-[#DDEDDD] bg-white p-3 shadow-sm">
                 <div className="relative">
                     <Icons.SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#878787]" />
                     <input
                         type="text"
-                        placeholder="Search name, service, category, area"
+                        placeholder={t("searchPlaceholder")}
                         className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-ink outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
                         value={inputValue}
                         onChange={handleSearchChange}
@@ -84,8 +86,8 @@ const ServicePage = () => {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7A827A]">Refine results</p>
-                        <p className="truncate text-[12px] text-[#4B554B]">Service type, area, price, availability</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7A827A]">{t("refineResults")}</p>
+                        <p className="truncate text-[12px] text-[#4B554B]">{t("refineResultsDesc")}</p>
                     </div>
                     <button
                         type="button"
@@ -93,7 +95,7 @@ const ServicePage = () => {
                         className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-brand px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
                     >
                         <Icons.FilerIcon className="w-4 h-4 fill-white" />
-                        Filter
+                        {t("filter")}
                         {Object.values(filters).filter(Boolean).length > 0 && (
                             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-brand">
                                 {Object.values(filters).filter(Boolean).length}
@@ -107,14 +109,14 @@ const ServicePage = () => {
             {isLoading && (
                 <div className="flex flex-col items-center justify-center py-12">
                     <div className="w-8 h-8 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
-                    <p className="mt-4 text-sm text-[#878787]">Finding services...</p>
+                    <p className="mt-4 text-sm text-[#878787]">{t("findingServices")}</p>
                 </div>
             )}
 
             {/* Error State */}
             {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-center text-sm">
-                    Something went wrong while fetching services.
+                    {t("fetchError")}
                 </div>
             )}
 
@@ -127,7 +129,7 @@ const ServicePage = () => {
                                 <ServiceCard
                                     key={service.id}
                                     {...mapServiceToProviderCard(service)}
-                                    distance={filters.distanceKm ? `Within ${filters.distanceKm} km` : "Nearby"}
+                                    distance={filters.distanceKm ? t("withinKm", { km: filters.distanceKm }) : t("nearby")}
                                     onClick={() => router.push(getServiceDetailPath(service))}
                                     onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
                                 />
@@ -138,9 +140,9 @@ const ServicePage = () => {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Icons.SearchIcon className="w-8 h-8 fill-gray-300" />
                             </div>
-                            <h3 className="text-base font-bold text-ink">No results found</h3>
+                            <h3 className="text-base font-bold text-ink">{t("noResultsFound")}</h3>
                             <p className="text-sm text-[#878787] mt-1 max-w-[200px]">
-                                Try adjusting your search or filters to find what you&apos;re looking for.
+                                {t("noResultsHint")}
                             </p>
                         </div>
                     )}

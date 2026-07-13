@@ -7,6 +7,7 @@ import type { AppDispatch, RootState } from "@/store";
 import { persistor } from "@/store";
 import { initializeSocket, disconnectSocket } from "@/lib/socket";
 import { getAuthToken } from "@/lib/auth-utils";
+import { isDevicePushOptedOut } from "@/services/fcm-token-service";
 import { logout, updateUser } from "@/store/slices/auth-slice";
 
 /**
@@ -32,9 +33,19 @@ export function useSocketConnection() {
 
     const socket = initializeSocket(effectiveToken, user.id);
 
-    // Global notification toast — fires on every page
+    // Global notification toast — fires on every page. Skipped when push is
+    // active on this device: the same event also arrives through FCM and
+    // usePushNotifications shows a richer, tappable toast — both firing gave
+    // users every in-app notification twice. This socket toast remains the
+    // fallback for users without notification permission.
     const handleNewNotification = (notification: { title: string; body: string }) => {
-      console.log("🔔 [socket] newNotification received:", notification);
+      if (
+        "Notification" in window &&
+        Notification.permission === "granted" &&
+        !isDevicePushOptedOut()
+      ) {
+        return;
+      }
       toast.success(`${notification.title}\n${notification.body}`, {
         duration: 5000,
         style: { fontSize: "13px", maxWidth: "320px" },

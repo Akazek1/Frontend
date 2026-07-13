@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   NotificationItem,
@@ -19,16 +20,18 @@ import {
 
 export type NotificationFilter = "all" | "unread" | "jobs" | "payments";
 
-export const notificationFilters: Array<{
+export function notificationFilters(t: (key: string) => string): Array<{
   id: NotificationFilter;
   label: string;
   showCount?: boolean;
-}> = [
-  { id: "all", label: "All", showCount: true },
-  { id: "unread", label: "Unread", showCount: true },
-  { id: "jobs", label: "Jobs" },
-  { id: "payments", label: "Payments" },
-];
+}> {
+  return [
+    { id: "all", label: t("filterAll"), showCount: true },
+    { id: "unread", label: t("filterUnread"), showCount: true },
+    { id: "jobs", label: t("filterJobs") },
+    { id: "payments", label: t("filterPayments") },
+  ];
+}
 
 type NotificationTone = "green" | "blue" | "gold" | "red" | "purple";
 type NotificationCategory = Exclude<NotificationFilter, "all" | "unread"> | "messages" | "system";
@@ -95,8 +98,8 @@ export function filterNotifications(items: NotificationItem[], filter: Notificat
   return items.filter((item) => getNotificationPresentation(item).category === filter);
 }
 
-export function getNotificationFilterCounts(items: NotificationItem[]) {
-  return notificationFilters.reduce<Record<NotificationFilter, number>>(
+export function getNotificationFilterCounts(items: NotificationItem[], t: (key: string) => string) {
+  return notificationFilters(t).reduce<Record<NotificationFilter, number>>(
     (counts, filter) => {
       counts[filter.id] = filterNotifications(items, filter.id).length;
       return counts;
@@ -105,7 +108,7 @@ export function getNotificationFilterCounts(items: NotificationItem[]) {
   );
 }
 
-export function groupNotificationsByDate(items: NotificationItem[]) {
+export function groupNotificationsByDate(items: NotificationItem[], t: (key: string) => string) {
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
@@ -116,9 +119,9 @@ export function groupNotificationsByDate(items: NotificationItem[]) {
     left.getDate() === right.getDate();
 
   const groups = [
-    { title: "Today", items: [] as NotificationItem[] },
-    { title: "Yesterday", items: [] as NotificationItem[] },
-    { title: "Earlier", items: [] as NotificationItem[] },
+    { title: t("today"), items: [] as NotificationItem[] },
+    { title: t("yesterday"), items: [] as NotificationItem[] },
+    { title: t("earlier"), items: [] as NotificationItem[] },
   ];
 
   items.forEach((item) => {
@@ -152,6 +155,7 @@ export function NotificationRow({
   count = 1,
   unread,
 }: NotificationRowProps) {
+  const t = useTranslations("notificationsShared");
   const { Icon, tone } = getNotificationPresentation(notification);
   const isUnread = unread ?? (!notification.readAt && notification.status !== "READ");
   const styles = toneClasses[tone];
@@ -221,7 +225,7 @@ export function NotificationRow({
             "mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#10851B]",
             isCompact && "hidden",
           )}
-          aria-label="Unread notification"
+          aria-label={t("unreadNotification")}
         />
       )}
     </button>

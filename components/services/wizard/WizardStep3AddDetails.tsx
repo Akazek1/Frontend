@@ -2,24 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { ChevronLeft, ChevronRight, Loader2, MapPin, Pencil, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppButton } from "@/components/ui/app-primitives";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
 import type { WizardFormState, PriceMode } from "@/hooks/useAddServiceForm";
 import type { ChargedPer } from "@/services/services-service";
 
-const CHARGED_PER: Array<{ value: ChargedPer; label: string }> = [
-  { value: "one_time", label: "One Time" },
-  { value: "daily", label: "Day" },
-  { value: "weekly", label: "Week" },
-  { value: "monthly", label: "Month" },
+const CHARGED_PER = (t: (key: string) => string): Array<{ value: ChargedPer; label: string }> => [
+  { value: "one_time", label: t("chargedOneTime") },
+  { value: "daily", label: t("chargedDaily") },
+  { value: "weekly", label: t("chargedWeekly") },
+  { value: "monthly", label: t("chargedMonthly") },
 ];
 
-export const chargedPerUnit: Record<ChargedPer, string> = {
-  one_time: "one time",
-  daily: "day",
-  weekly: "week",
-  monthly: "month",
-};
+export const chargedPerUnit = (t: (key: string) => string): Record<ChargedPer, string> => ({
+  one_time: t("unitOneTime"),
+  daily: t("unitDaily"),
+  weekly: t("unitWeekly"),
+  monthly: t("unitMonthly"),
+});
 
 interface WizardStep3AddDetailsProps {
   form: WizardFormState;
@@ -135,6 +136,7 @@ export function WizardStep3AddDetails({
   isSubmitting,
   submitLabel,
 }: WizardStep3AddDetailsProps) {
+  const t = useTranslations("serviceWizard");
   // Stable object URLs for local file previews; revoked when files change.
   const fileUrls = useMemo(
     () => form.newImageFiles.map((f) => URL.createObjectURL(f)),
@@ -213,11 +215,11 @@ export function WizardStep3AddDetails({
   };
   // ──────────────────────────────────────────────────────────────────────────
 
-  const unit = chargedPerUnit[form.chargedPer];
+  const unit = chargedPerUnit(t)[form.chargedPer];
   const priceLabel =
     form.priceMode === "fixed"
-      ? `Price (RWF/${unit})`
-      : `Price Range (RWF/${unit})`;
+      ? t("priceLabelFixed", { unit })
+      : t("priceLabelRange", { unit });
 
   return (
     <div className="flex flex-col gap-5 pb-24">
@@ -240,7 +242,7 @@ export function WizardStep3AddDetails({
             onClick={onChangeService}
             className="flex shrink-0 items-center gap-1.5 text-[13px] font-bold text-brand"
           >
-            Change
+            {t("change")}
             <Pencil className="h-4 w-4" />
           </button>
         )}
@@ -249,10 +251,10 @@ export function WizardStep3AddDetails({
       {/* Photos */}
       <section>
         <h3 className="text-[15px] font-black text-ink">
-          Add Photos <span className="font-semibold text-ink-muted">(optional)</span>
+          {t("addPhotos")} <span className="font-semibold text-ink-muted">{t("optional")}</span>
         </h3>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
-          Show your work and build trust with employers.
+          {t("showWorkDesc")}
         </p>
         <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
           {displayOrder.map((originalIdx, displayPos) => {
@@ -282,7 +284,7 @@ export function WizardStep3AddDetails({
                 {/* Cover badge on first position */}
                 {displayPos === 0 && canReorder && (
                   <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                    Cover
+                    {t("cover")}
                   </span>
                 )}
 
@@ -291,7 +293,7 @@ export function WizardStep3AddDetails({
                 {!drag && (
                   <button
                     type="button"
-                    aria-label="Remove photo"
+                    aria-label={t("removePhoto")}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => onRemoveImageAt(originalIdx)}
                     className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/70 text-white"
@@ -306,7 +308,7 @@ export function WizardStep3AddDetails({
                   <div className="absolute inset-x-0 bottom-0 flex justify-between">
                     <button
                       type="button"
-                      aria-label="Move photo left"
+                      aria-label={t("movePhotoLeft")}
                       disabled={isFirst}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => onReorderImages(originalIdx, originalIdx - 1)}
@@ -316,7 +318,7 @@ export function WizardStep3AddDetails({
                     </button>
                     <button
                       type="button"
-                      aria-label="Move photo right"
+                      aria-label={t("movePhotoRight")}
                       disabled={isLast}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => onReorderImages(originalIdx, originalIdx + 1)}
@@ -332,13 +334,13 @@ export function WizardStep3AddDetails({
           {isAddingImages && (
             <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#C9D8C5] bg-white text-ink-muted">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-[11px] font-semibold">Processing…</span>
+              <span className="text-[11px] font-semibold">{t("processing")}</span>
             </div>
           )}
           {totalImageCount < maxImages && !isAddingImages && (
             <label className="flex h-[88px] w-[88px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#C9D8C5] bg-white text-ink-muted transition-colors hover:border-brand hover:text-brand">
               <Plus className="h-5 w-5" />
-              <span className="text-[11px] font-semibold">Add more</span>
+              <span className="text-[11px] font-semibold">{t("addMore")}</span>
               <input
                 type="file"
                 multiple
@@ -355,27 +357,27 @@ export function WizardStep3AddDetails({
           )}
         </div>
         <p className="mt-1.5 text-[11.5px] text-ink-muted">
-          {allImages.length > 1 ? "Use the arrows to reorder · First photo is the cover · " : ""}You can add up to {maxImages} photos
+          {allImages.length > 1 ? t("reorderHint") : ""}{t("addUpToPhotos", { max: maxImages })}
         </p>
       </section>
 
       {/* Price */}
       <section>
-        <h3 className="text-[15px] font-black text-ink">Price</h3>
+        <h3 className="text-[15px] font-black text-ink">{t("price")}</h3>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
-          Set how you charge for this service.
+          {t("setHowYouCharge")}
         </p>
 
         <div className="mt-3 flex gap-2.5">
           <PriceModeCard
-            title="Fixed Price"
-            caption="Set one price"
+            title={t("fixedPrice")}
+            caption={t("setOnePrice")}
             active={form.priceMode === "fixed"}
             onClick={() => onSetField("priceMode", "fixed" as PriceMode)}
           />
           <PriceModeCard
-            title="Price Range"
-            caption="Set minimum and maximum price"
+            title={t("priceRange")}
+            caption={t("setMinMaxPrice")}
             active={form.priceMode === "range"}
             onClick={() => onSetField("priceMode", "range" as PriceMode)}
           />
@@ -385,10 +387,10 @@ export function WizardStep3AddDetails({
         <div className="mt-2.5 flex items-center justify-between rounded-2xl border border-[#DCE8D9] bg-white p-3.5">
           <span className="min-w-0">
             <span className="block text-[13.5px] font-bold text-ink">
-              Open to Negotiate
+              {t("openToNegotiate")}
             </span>
             <span className="mt-0.5 block text-[11.5px] text-ink-muted">
-              Employers can negotiate the price
+              {t("employersCanNegotiate")}
             </span>
           </span>
           <button
@@ -415,7 +417,7 @@ export function WizardStep3AddDetails({
         <div className="mt-2.5 flex items-center gap-2.5">
           {form.priceMode === "fixed" ? (
             <PriceInput
-              label="Price"
+              label={t("priceInputLabel")}
               value={form.priceMin}
               placeholder="20,000"
               onChange={(v) => onSetField("priceMin", v)}
@@ -423,14 +425,14 @@ export function WizardStep3AddDetails({
           ) : (
             <>
               <PriceInput
-                label="Minimum price"
+                label={t("minimumPrice")}
                 value={form.priceMin}
                 placeholder="15,000"
                 onChange={(v) => onSetField("priceMin", v)}
               />
               <span className="text-ink-muted">–</span>
               <PriceInput
-                label="Maximum price"
+                label={t("maximumPrice")}
                 value={form.priceMax}
                 placeholder="25,000"
                 onChange={(v) => onSetField("priceMax", v)}
@@ -441,7 +443,7 @@ export function WizardStep3AddDetails({
 
         {/* Charged per */}
         <div className="mt-3 flex gap-2">
-          {CHARGED_PER.map(({ value, label }) => (
+          {CHARGED_PER(t).map(({ value, label }) => (
             <button
               key={value}
               type="button"
@@ -461,12 +463,12 @@ export function WizardStep3AddDetails({
       {/* Service areas (auto-resolved from the worker's default address) */}
       <section>
         <h3 className="text-[14px] font-black text-ink">
-          Service Areas <span className="font-semibold text-ink-muted">(optional)</span>
+          {t("serviceAreas")} <span className="font-semibold text-ink-muted">{t("optional")}</span>
         </h3>
         <div className="mt-2.5 flex items-center gap-3 rounded-2xl border border-[#DCE8D9] bg-white p-3.5">
           <MapPin className="h-5 w-5 shrink-0 text-brand" />
           <span className="flex-1 text-[14px] font-semibold text-ink">
-            {serviceArea || "Your default area"}
+            {serviceArea || t("yourDefaultArea")}
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" />
         </div>
@@ -475,17 +477,17 @@ export function WizardStep3AddDetails({
       {/* Description */}
       <section>
         <h3 className="text-[14px] font-black text-ink">
-          Description <span className="font-semibold text-ink-muted">(optional)</span>
+          {t("description")} <span className="font-semibold text-ink-muted">{t("optional")}</span>
         </h3>
         <p className="mt-0.5 text-[12.5px] text-ink-muted">
-          Tell clients a bit about your service...
+          {t("tellClientsAboutService")}
         </p>
         <div className="mt-2.5 rounded-2xl border border-[#DCE8D9] bg-white p-3.5 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
           <textarea
             value={form.description}
             maxLength={maxDescription}
             rows={3}
-            placeholder="I provide thorough cleaning for homes and offices. I pay attention to details and use quality products."
+            placeholder={t("descriptionPlaceholder")}
             onChange={(e) => onSetField("description", e.target.value)}
             className="w-full resize-none bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-muted/60"
           />
@@ -504,7 +506,7 @@ export function WizardStep3AddDetails({
           onClick={onSubmit}
         >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? "Saving…" : submitLabel}
+          {isSubmitting ? t("saving") : submitLabel}
         </AppButton>
       </div>
     </div>

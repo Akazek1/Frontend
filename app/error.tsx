@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface ErrorProps {
   error: Error & { digest?: string }
@@ -8,6 +9,7 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps) {
+  const t = useTranslations("errorBoundary")
   const isChunkError =
     error.name === "ChunkLoadError" ||
     error.message?.includes("Loading chunk") ||
@@ -34,7 +36,7 @@ export default function Error({ error, reset }: ErrorProps) {
       <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-center px-6">
           <div className="w-8 h-8 border-2 border-brand-strong border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Loading…</p>
+          <p className="text-sm text-gray-500">{t("loading")}</p>
         </div>
       </div>
     )
@@ -46,9 +48,9 @@ export default function Error({ error, reset }: ErrorProps) {
       <div className="bg-surface flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
           <p className="text-4xl">🔄</p>
-          <h1 className="text-lg font-bold text-gray-900">App updated</h1>
+          <h1 className="text-lg font-bold text-gray-900">{t("appUpdated")}</h1>
           <p className="text-sm text-gray-500">
-            A new version of the app is available. Please refresh to continue.
+            {t("newVersionAvailable")}
           </p>
           <button
             onClick={() => {
@@ -57,7 +59,7 @@ export default function Error({ error, reset }: ErrorProps) {
             }}
             className="mt-2 px-6 py-3 bg-brand-strong text-white text-sm font-semibold rounded-full hover:bg-brand transition-colors"
           >
-            Refresh page
+            {t("refreshPage")}
           </button>
         </div>
       </div>
@@ -69,15 +71,15 @@ export default function Error({ error, reset }: ErrorProps) {
     <div className="bg-surface flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4 text-center px-6 max-w-sm">
         <p className="text-4xl">😕</p>
-        <h1 className="text-lg font-bold text-gray-900">Something went wrong</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t("somethingWentWrong")}</h1>
         <p className="text-sm text-gray-500">
-          An unexpected error occurred. Please try again.
+          {t("unexpectedError")}
         </p>
         <button
           onClick={reset}
           className="mt-2 px-6 py-3 bg-brand-strong text-white text-sm font-semibold rounded-full hover:bg-brand transition-colors"
         >
-          Try again
+          {t("tryAgain")}
         </button>
       </div>
     </div>

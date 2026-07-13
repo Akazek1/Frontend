@@ -40,6 +40,11 @@ export function resolveNotificationHref(data: NotificationRouteData): string | n
   // booking's inbox here would drop them into an empty, locked room.
   if (type === "HIRE_REQUEST") return "/work?tab=requests";
 
+  // Cancelled bookings land in the Work "Done" list (mappers.tsx buckets
+  // COMPLETED/CANCELLED there), which shows the booking with its Cancelled
+  // badge in context — calmer than dropping the user into the dead chat.
+  if (type === "BOOKING_CANCELLED") return "/work?tab=done";
+
   if (type === "VERIFICATION_REVOKED") return "/profile";
 
   if (bookingId) return `/conversations/inbox/${encodeURIComponent(bookingId)}`;
