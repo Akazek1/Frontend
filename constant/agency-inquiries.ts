@@ -33,16 +33,23 @@ export interface InquiryMessage {
   sender?: InquiryPerson;
 }
 
-export const INQUIRY_STATUS: Record<InquiryStatus, { label: string; tone: "amber" | "blue" | "green" | "gray" }> = {
-  PENDING: { label: "New", tone: "amber" },
-  TALKING: { label: "In conversation", tone: "blue" },
-  HANDED_OVER: { label: "Awaiting worker", tone: "amber" },
-  CONVERTED: { label: "Placed", tone: "green" },
-  DECLINED: { label: "Declined", tone: "gray" },
-  CLOSED: { label: "Closed", tone: "gray" },
-};
+export function inquiryStatusMap(
+  t: (key: string) => string,
+): Record<InquiryStatus, { label: string; tone: "amber" | "blue" | "green" | "gray" }> {
+  return {
+    PENDING: { label: t("statusNew"), tone: "amber" },
+    TALKING: { label: t("statusInConversation"), tone: "blue" },
+    HANDED_OVER: { label: t("statusAwaitingWorker"), tone: "amber" },
+    CONVERTED: { label: t("statusPlaced"), tone: "green" },
+    DECLINED: { label: t("statusDeclined"), tone: "gray" },
+    CLOSED: { label: t("statusClosed"), tone: "gray" },
+  };
+}
 
-export function inquiryPersonName(p: { firstName: string | null; lastName: string | null } | null | undefined) {
-  if (!p) return "Unknown";
-  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown";
+export function inquiryPersonName(
+  p: { firstName: string | null; lastName: string | null } | null | undefined,
+  t: (key: string) => string,
+) {
+  if (!p) return t("unknownName");
+  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || t("unknownName");
 }

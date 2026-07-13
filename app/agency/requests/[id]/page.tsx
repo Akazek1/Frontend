@@ -21,7 +21,7 @@ import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, AgencyPageHeader, Avatar, StatusPill } from "@/components/agency/agency-ui";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
-import { AgencyInquiry, INQUIRY_STATUS, inquiryPersonName } from "@/constant/agency-inquiries";
+import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
 import { cn } from "@/lib/utils";
 
 interface AgencyWorkerLite {
@@ -35,6 +35,7 @@ interface AgencyWorkerLite {
 
 export default function AgencyInquiryDetailPage() {
   const t = useTranslations("agencyInquiryDetail");
+  const tShared = useTranslations("inquiryShared");
   const params = useParams();
   const id = params.id as string;
 
@@ -128,7 +129,7 @@ export default function AgencyInquiryDetailPage() {
     );
   }
 
-  const st = INQUIRY_STATUS[inquiry.status];
+  const st = inquiryStatusMap(tShared)[inquiry.status];
   const isTalking = inquiry.status === "TALKING";
   const isPending = inquiry.status === "PENDING";
 
@@ -136,7 +137,7 @@ export default function AgencyInquiryDetailPage() {
     <div className="pb-6">
       <AgencyPageHeader
         title={t("hiringInquiry")}
-        subtitle={t("fromName", { name: inquiryPersonName(inquiry.employer) })}
+        subtitle={t("fromName", { name: inquiryPersonName(inquiry.employer, tShared) })}
         backHref="/agency/requests"
         badge={<StatusPill label={st.label} tone={st.tone} />}
       />
@@ -147,10 +148,10 @@ export default function AgencyInquiryDetailPage() {
           <AgencyCard className="p-5">
             <h2 className="mb-3 text-[15px] font-bold text-ink">{t("employer")}</h2>
             <button onClick={() => setShowEmployer((s) => !s)} className="flex w-full items-center gap-3 text-left">
-              <Avatar src={inquiry.employer.profilePicture} name={inquiryPersonName(inquiry.employer)} size={52} />
+              <Avatar src={inquiry.employer.profilePicture} name={inquiryPersonName(inquiry.employer, tShared)} size={52} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
-                  <p className="text-[16px] font-bold text-ink hover:underline">{inquiryPersonName(inquiry.employer)}</p>
+                  <p className="text-[16px] font-bold text-ink hover:underline">{inquiryPersonName(inquiry.employer, tShared)}</p>
                   {inquiry.employer.isVerified && <VerifiedBadge size={14} />}
                 </div>
                 {inquiry.employer.phoneNumber && (
@@ -179,9 +180,9 @@ export default function AgencyInquiryDetailPage() {
             <AgencyCard className="p-5">
               <h2 className="mb-3 text-[15px] font-bold text-ink">{t("workerOfInterest")}</h2>
               <div className="flex items-center gap-3">
-                <Avatar src={inquiry.workerOfInterest.profilePicture} name={inquiryPersonName(inquiry.workerOfInterest)} size={44} />
+                <Avatar src={inquiry.workerOfInterest.profilePicture} name={inquiryPersonName(inquiry.workerOfInterest, tShared)} size={44} />
                 <div className="flex items-center gap-1">
-                  <p className="text-[14px] font-bold text-ink">{inquiryPersonName(inquiry.workerOfInterest)}</p>
+                  <p className="text-[14px] font-bold text-ink">{inquiryPersonName(inquiry.workerOfInterest, tShared)}</p>
                   {inquiry.workerOfInterest.isVerified && <VerifiedBadge size={13} />}
                 </div>
               </div>
@@ -195,7 +196,7 @@ export default function AgencyInquiryDetailPage() {
                 <UserCheck className="h-5 w-5 shrink-0 text-[#B45309]" />
                 <p className="text-[13px] text-ink">
                   {t.rich("waitingForAcceptance", {
-                    worker: inquiryPersonName(inquiry.handoverWorker),
+                    worker: inquiryPersonName(inquiry.handoverWorker, tShared),
                     name: (chunks) => <span className="font-bold">{chunks}</span>,
                   })}
                 </p>
@@ -214,7 +215,7 @@ export default function AgencyInquiryDetailPage() {
               <CheckCircle2 className="h-5 w-5 text-brand" />
               <p className="text-[13px] text-ink">
                 {t.rich("placedWith", {
-                  worker: inquiryPersonName(inquiry.handoverWorker),
+                  worker: inquiryPersonName(inquiry.handoverWorker, tShared),
                   name: (chunks) => <span className="font-bold">{chunks}</span>,
                 })}
               </p>
@@ -307,7 +308,7 @@ export default function AgencyInquiryDetailPage() {
                 <option value="">{t("selectWorker")}</option>
                 {availableWorkers.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {inquiryPersonName(w)}{w.skill ? ` · ${w.skill}` : ""}
+                    {inquiryPersonName(w, tShared)}{w.skill ? ` · ${w.skill}` : ""}
                   </option>
                 ))}
               </select>

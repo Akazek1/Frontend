@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, Send, ShieldCheck, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { goBackOr } from "@/lib/navigation";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
-import { AgencyInquiry, INQUIRY_STATUS, inquiryPersonName } from "@/constant/agency-inquiries";
+import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
 
 export default function InquiryDetailPage() {
+  const t = useTranslations("inquiryDetail");
+  const tShared = useTranslations("inquiryShared");
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -29,7 +32,7 @@ export default function InquiryDetailPage() {
       const res = await api.get(`/inquiries/${id}`);
       setInquiry(res.data?.data || res.data);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Inquiry not found"));
+      setError(getApiErrorMessage(err, t("inquiryNotFound")));
     } finally {
       setLoading(false);
     }
@@ -64,9 +67,9 @@ export default function InquiryDetailPage() {
     return (
       <div className="p-4">
         <button onClick={() => goBackOr(router, "/inquiries")} className="mb-4 flex items-center gap-2 text-sm font-medium text-ink">
-          <ArrowLeft className="h-5 w-5" /> Back
+          <ArrowLeft className="h-5 w-5" /> {t("back")}
         </button>
-        <p className="text-sm text-ink-muted">{error || "Inquiry not found"}</p>
+        <p className="text-sm text-ink-muted">{error || t("inquiryNotFound")}</p>
       </div>
     );
   }
@@ -74,7 +77,7 @@ export default function InquiryDetailPage() {
   const meId = user?.id;
   const isEmployer = meId === inquiry.employer.id;
   const isHandoverWorker = meId === inquiry.handoverWorker?.id;
-  const st = INQUIRY_STATUS[inquiry.status];
+  const st = inquiryStatusMap(tShared)[inquiry.status];
 
   async function sendMessage() {
     if (!draft.trim()) return;
@@ -84,7 +87,7 @@ export default function InquiryDetailPage() {
       setDraft("");
       await load();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not send message"));
+      toast.error(getApiErrorMessage(err, t("couldNotSendMessage")));
     } finally {
       setBusy(false);
     }
@@ -94,10 +97,10 @@ export default function InquiryDetailPage() {
     setBusy(true);
     try {
       await api.post(`/inquiries/${id}/handover/accept`);
-      toast.success("You're confirmed! A booking has been created.");
+      toast.success(t("confirmedBookingCreated"));
       router.push("/conversations");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not accept"));
+      toast.error(getApiErrorMessage(err, t("couldNotAccept")));
       setBusy(false);
     }
   }
@@ -106,24 +109,24 @@ export default function InquiryDetailPage() {
     setBusy(true);
     try {
       await api.post(`/inquiries/${id}/handover/decline`);
-      toast.success("Offer declined.");
+      toast.success(t("offerDeclined"));
       await load();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not decline"));
+      toast.error(getApiErrorMessage(err, t("couldNotDecline")));
     } finally {
       setBusy(false);
     }
   }
 
   async function cancelInquiry() {
-    if (!confirm("Withdraw this inquiry? The agency will be notified.")) return;
+    if (!confirm(t("withdrawConfirm"))) return;
     setBusy(true);
     try {
       await api.post(`/inquiries/${id}/cancel`);
-      toast.success("Inquiry withdrawn.");
+      toast.success(t("inquiryWithdrawn"));
       await load();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not cancel"));
+      toast.error(getApiErrorMessage(err, t("couldNotCancel")));
     } finally {
       setBusy(false);
     }
@@ -133,9 +136,9 @@ export default function InquiryDetailPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-[428px] flex-col bg-surface">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-gray-100 bg-white px-4 py-3">
-        <button onClick={() => goBackOr(router, "/inquiries")} aria-label="Back"><ArrowLeft className="h-5 w-5 text-ink" /></button>
+        <button onClick={() => goBackOr(router, "/inquiries")} aria-label={t("back")}><ArrowLeft className="h-5 w-5 text-ink" /></button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-bold text-ink">{inquiry.agency?.name ?? "Agency"}</p>
+          <p className="truncate text-[15px] font-bold text-ink">{inquiry.agency?.name ?? t("agencyFallback")}</p>
           <p className="text-[11px] text-ink-muted">{st.label}</p>
         </div>
         <span className="rounded-full bg-[#EEF8EA] px-2.5 py-1 text-[11px] font-bold text-brand">{st.label}</span>
@@ -147,14 +150,18 @@ export default function InquiryDetailPage() {
           <div className="rounded-2xl border border-[#C8E6C4] bg-[#EEF8EA] p-4">
             <div className="mb-2 flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-brand" />
-              <p className="text-[14px] font-bold text-ink">Placement offer</p>
+              <p className="text-[14px] font-bold text-ink">{t("placementOffer")}</p>
             </div>
             <p className="text-[13px] leading-relaxed text-ink-muted">
-              <span className="font-semibold text-ink">{inquiry.agency?.name}</span> wants to place you with{" "}
-              <span className="font-semibold text-ink">{inquiryPersonName(inquiry.employer)}</span>.
+              {t.rich("wantsToPlaceYouWith", {
+                agency: inquiry.agency?.name ?? t("agencyFallback"),
+                employer: inquiryPersonName(inquiry.employer, tShared),
+                agencyName: (chunks) => <span className="font-semibold text-ink">{chunks}</span>,
+                employerName: (chunks) => <span className="font-semibold text-ink">{chunks}</span>,
+              })}
             </p>
             <div className="mt-3 rounded-xl bg-white/70 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Employer&apos;s note</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("employersNote")}</p>
               <p className="mt-1 text-[13px] text-ink">{inquiry.note}</p>
             </div>
             <div className="mt-4 flex gap-2">
@@ -163,14 +170,14 @@ export default function InquiryDetailPage() {
                 disabled={busy}
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-[14px] font-bold text-white disabled:opacity-60"
               >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Accept</>}
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> {t("accept")}</>}
               </button>
               <button
                 onClick={declineHandover}
                 disabled={busy}
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-gray-200 text-[14px] font-bold text-ink disabled:opacity-60"
               >
-                <XCircle className="h-5 w-5" /> Decline
+                <XCircle className="h-5 w-5" /> {t("decline")}
               </button>
             </div>
           </div>
@@ -179,9 +186,9 @@ export default function InquiryDetailPage() {
         {isHandoverWorker && inquiry.status === "CONVERTED" && (
           <div className="rounded-2xl border border-[#C8E6C4] bg-[#EEF8EA] p-4 text-center">
             <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-brand" />
-            <p className="text-[14px] font-bold text-ink">You accepted this placement</p>
+            <p className="text-[14px] font-bold text-ink">{t("youAcceptedPlacement")}</p>
             <button onClick={() => router.push("/conversations")} className="mt-3 text-[13px] font-semibold text-brand underline">
-              Go to your bookings
+              {t("goToYourBookings")}
             </button>
           </div>
         )}
@@ -190,14 +197,14 @@ export default function InquiryDetailPage() {
         {isEmployer && (
           <>
             <div className="rounded-2xl border border-gray-100 bg-white p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Your inquiry</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("yourInquiry")}</p>
               <p className="mt-1 text-[13px] text-ink">{inquiry.note}</p>
               {inquiry.status === "PENDING" && (
-                <p className="mt-2 text-[12px] text-ink-muted">Waiting for {inquiry.agency?.name} to respond…</p>
+                <p className="mt-2 text-[12px] text-ink-muted">{t("waitingForResponse", { agency: inquiry.agency?.name ?? t("agencyFallback") })}</p>
               )}
               {inquiry.status === "CONVERTED" && (
                 <button onClick={() => router.push("/conversations")} className="mt-2 text-[13px] font-semibold text-brand underline">
-                  Worker confirmed — go to your bookings
+                  {t("workerConfirmedGoToBookings")}
                 </button>
               )}
               {(inquiry.status === "PENDING" || inquiry.status === "TALKING" || inquiry.status === "HANDED_OVER") && (
@@ -206,22 +213,22 @@ export default function InquiryDetailPage() {
                   disabled={busy}
                   className="mt-3 h-10 w-full rounded-xl border-2 border-[#FBD5D5] text-[13px] font-bold text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-60"
                 >
-                  Withdraw inquiry
+                  {t("withdrawInquiry")}
                 </button>
               )}
               {(inquiry.status === "CLOSED" || inquiry.status === "DECLINED") && (
                 <p className="mt-2 text-[12px] text-ink-muted">
-                  This inquiry is {inquiry.status === "CLOSED" ? "withdrawn" : "declined"}.
+                  {inquiry.status === "CLOSED" ? t("inquiryStatusWithdrawn") : t("inquiryStatusDeclined")}
                 </p>
               )}
             </div>
 
             {(inquiry.status === "TALKING" || (inquiry.messages?.length ?? 0) > 0) && (
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="mb-2 text-[13px] font-bold text-ink">Conversation</p>
+                <p className="mb-2 text-[13px] font-bold text-ink">{t("conversation")}</p>
                 <div className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto">
                   {(inquiry.messages ?? []).length === 0 && (
-                    <p className="py-6 text-center text-[13px] text-ink-muted">No messages yet.</p>
+                    <p className="py-6 text-center text-[13px] text-ink-muted">{t("noMessagesYet")}</p>
                   )}
                   {(inquiry.messages ?? []).map((m) => {
                     const mine = m.senderId === meId;
@@ -248,7 +255,7 @@ export default function InquiryDetailPage() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-            placeholder="Type a message…"
+            placeholder={t("typeMessage")}
             className="h-11 flex-1 rounded-xl border border-gray-200 px-3 text-[14px] outline-none focus:border-brand"
           />
           <button onClick={sendMessage} disabled={busy || !draft.trim()} className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white disabled:opacity-50">
