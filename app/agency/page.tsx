@@ -10,6 +10,7 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAgency } from "@/context/agency-context";
 import { AgencyCard, AgencyPageHeader, AgencyLoading, StatusPill } from "@/components/agency/agency-ui";
 
@@ -18,23 +19,24 @@ function formatRWF(n: number) {
 }
 
 export default function AgencyDashboardPage() {
+  const t = useTranslations("agencyDashboard");
   const { org, stats, loading } = useAgency();
 
   if (loading) return <AgencyLoading />;
 
   const cards = [
-    { label: "Total Workers", value: stats?.totalWorkers ?? 0, icon: Users, href: "/agency/workers", tone: "text-brand" },
-    { label: "Active Placements", value: stats?.activePlacements ?? 0, icon: ClipboardList, href: "/agency/placements", tone: "text-brand" },
-    { label: "Pending Requests", value: stats?.pendingRequests ?? 0, icon: Inbox, href: "/agency/requests", tone: "text-[#B45309]" },
-    { label: "Open Issues", value: stats?.openIssues ?? 0, icon: AlertCircle, href: "/agency/issues", tone: "text-[#DC2626]" },
+    { label: t("totalWorkers"), value: stats?.totalWorkers ?? 0, icon: Users, href: "/agency/workers", tone: "text-brand" },
+    { label: t("activePlacements"), value: stats?.activePlacements ?? 0, icon: ClipboardList, href: "/agency/placements", tone: "text-brand" },
+    { label: t("pendingRequests"), value: stats?.pendingRequests ?? 0, icon: Inbox, href: "/agency/requests", tone: "text-[#B45309]" },
+    { label: t("openIssues"), value: stats?.openIssues ?? 0, icon: AlertCircle, href: "/agency/issues", tone: "text-[#DC2626]" },
   ];
 
   return (
     <div>
       <AgencyPageHeader
-        title={`Welcome${org?.name ? `, ${org.name}` : ""}`}
-        subtitle="Here's what's happening across your agency today."
-        badge={org?.verified ? <StatusPill label="Verified" tone="green" /> : <StatusPill label="Unverified" tone="amber" />}
+        title={org?.name ? t("welcomeWithName", { name: org.name }) : t("welcome")}
+        subtitle={t("todaySubtitle")}
+        badge={org?.verified ? <StatusPill label={t("verified")} tone="green" /> : <StatusPill label={t("unverified")} tone="amber" />}
       />
 
       {/* Stat cards */}
@@ -61,18 +63,18 @@ export default function AgencyDashboardPage() {
         <AgencyCard className="p-5">
           <div className="flex items-center gap-2">
             <Coins className="h-5 w-5 text-brand" />
-            <h2 className="text-[14px] font-bold text-ink">Commission Earned</h2>
+            <h2 className="text-[14px] font-bold text-ink">{t("commissionEarned")}</h2>
           </div>
           <p className="mt-3 text-[26px] font-black text-ink">{formatRWF(stats?.totalCommissionEarned ?? 0)}</p>
-          <p className="mt-1 text-[12px] text-ink-muted">Total across all placements</p>
+          <p className="mt-1 text-[12px] text-ink-muted">{t("totalAcrossPlacements")}</p>
         </AgencyCard>
         <AgencyCard className="p-5">
           <div className="flex items-center gap-2">
             <Coins className="h-5 w-5 text-[#B45309]" />
-            <h2 className="text-[14px] font-bold text-ink">Unpaid Commission</h2>
+            <h2 className="text-[14px] font-bold text-ink">{t("unpaidCommission")}</h2>
           </div>
           <p className="mt-3 text-[26px] font-black text-ink">{formatRWF(stats?.unpaidCommission ?? 0)}</p>
-          <p className="mt-1 text-[12px] text-ink-muted">Outstanding on active placements</p>
+          <p className="mt-1 text-[12px] text-ink-muted">{t("outstandingOnActive")}</p>
         </AgencyCard>
       </div>
 
@@ -84,8 +86,8 @@ export default function AgencyDashboardPage() {
               <Inbox className="h-5 w-5 text-[#B45309]" />
             </div>
             <div className="min-w-0">
-              <p className="text-[14px] font-bold text-ink">Review Requests</p>
-              <p className="text-[12px] text-ink-muted">{stats?.pendingRequests ?? 0} awaiting your action</p>
+              <p className="text-[14px] font-bold text-ink">{t("reviewRequests")}</p>
+              <p className="text-[12px] text-ink-muted">{t("awaitingYourAction", { count: stats?.pendingRequests ?? 0 })}</p>
             </div>
           </AgencyCard>
         </Link>
@@ -95,8 +97,8 @@ export default function AgencyDashboardPage() {
               <AlertCircle className="h-5 w-5 text-[#DC2626]" />
             </div>
             <div className="min-w-0">
-              <p className="text-[14px] font-bold text-ink">Resolve Issues</p>
-              <p className="text-[12px] text-ink-muted">{stats?.openIssues ?? 0} open escalations</p>
+              <p className="text-[14px] font-bold text-ink">{t("resolveIssues")}</p>
+              <p className="text-[12px] text-ink-muted">{t("openEscalations", { count: stats?.openIssues ?? 0 })}</p>
             </div>
           </AgencyCard>
         </Link>
@@ -106,8 +108,8 @@ export default function AgencyDashboardPage() {
               <ShieldCheck className="h-5 w-5 text-brand" />
             </div>
             <div className="min-w-0">
-              <p className="text-[14px] font-bold text-ink">Manage Workers</p>
-              <p className="text-[12px] text-ink-muted">{stats?.totalWorkers ?? 0} enrolled</p>
+              <p className="text-[14px] font-bold text-ink">{t("manageWorkers")}</p>
+              <p className="text-[12px] text-ink-muted">{t("enrolled", { count: stats?.totalWorkers ?? 0 })}</p>
             </div>
           </AgencyCard>
         </Link>

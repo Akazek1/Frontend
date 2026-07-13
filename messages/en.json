@@ -496,6 +496,27 @@
     "unpaid": "Unpaid",
     "withName": "with {name}"
   },
+  "agencyDashboard": {
+    "welcome": "Welcome",
+    "welcomeWithName": "Welcome, {name}",
+    "todaySubtitle": "Here's what's happening across your agency today.",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "totalWorkers": "Total Workers",
+    "activePlacements": "Active Placements",
+    "pendingRequests": "Pending Requests",
+    "openIssues": "Open Issues",
+    "commissionEarned": "Commission Earned",
+    "totalAcrossPlacements": "Total across all placements",
+    "unpaidCommission": "Unpaid Commission",
+    "outstandingOnActive": "Outstanding on active placements",
+    "reviewRequests": "Review Requests",
+    "awaitingYourAction": "{count} awaiting your action",
+    "resolveIssues": "Resolve Issues",
+    "openEscalations": "{count} open escalations",
+    "manageWorkers": "Manage Workers",
+    "enrolled": "{count} enrolled"
+  },
   "agencyIssueDetail": {
     "unknownName": "Unknown",
     "issueNotFound": "Issue not found",
