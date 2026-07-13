@@ -1484,5 +1484,28 @@
     "createAccount": "Create account",
     "alreadyHaveAccount": "Already have an account?",
     "signIn": "Sign in"
+  },
+  "feedback": {
+    "pleaseWriteMessage": "Please write a short message before submitting",
+    "thanksForFeedback": "Thanks for your valuable feedback!",
+    "failedToSubmit": "Failed to submit feedback",
+    "shareFeedback": "Share Feedback",
+    "tellUsWhatToImprove": "Tell us what we can improve",
+    "feedbackLabel": "Feedback",
+    "feedbackPlaceholder": "Share what worked well, what felt confusing, or what you need next.",
+    "submitting": "Submitting...",
+    "submit": "Submit"
+  },
+  "savedBookmarks": {
+    "bookmarks": "Bookmarks",
+    "loadingBookmarks": "Loading bookmarks...",
+    "unknownFirstName": "Unknown",
+    "unknownLastName": "Provider",
+    "notAvailable": "N/A",
+    "yearsExperience": "5+ years",
+    "distancePlaceholder": "2.5 miles",
+    "noSavedServicesYet": "No saved services yet",
+    "noSavedServicesDesc": "Bookmark providers you like so you can compare them later and book faster when you are ready.",
+    "browseProviders": "Browse providers"
   }
 }
