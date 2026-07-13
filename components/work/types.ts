@@ -91,43 +91,42 @@ export interface WorkItem {
   createdAt?: string;
 }
 
-export const SECTION_COPY: Record<
-  SectionKey,
-  { title: string; subtitle: string; empty: string }
-> = {
+export const SECTION_COPY = (
+  t: (key: string) => string,
+): Record<SectionKey, { title: string; subtitle: string; empty: string }> => ({
   awaitingReview: {
-    title: "AWAITING YOUR REVIEW",
-    subtitle: "People asking to work with you",
-    empty: "No pending requests need your review.",
+    title: t("sectionAwaitingReviewTitle"),
+    subtitle: t("sectionAwaitingReviewSubtitle"),
+    empty: t("sectionAwaitingReviewEmpty"),
   },
   awaitingReply: {
-    title: "AWAITING THEIR REPLY",
-    subtitle: "Direct requests you sent",
-    empty: "No pending requests sent.",
+    title: t("sectionAwaitingReplyTitle"),
+    subtitle: t("sectionAwaitingReplySubtitle"),
+    empty: t("sectionAwaitingReplyEmpty"),
   },
   expressedInterest: {
-    title: "YOU EXPRESSED INTEREST",
-    subtitle: "Job posts you applied to",
-    empty: "No job applications are waiting yet.",
+    title: t("sectionExpressedInterestTitle"),
+    subtitle: t("sectionExpressedInterestSubtitle"),
+    empty: t("sectionExpressedInterestEmpty"),
   },
   activeDeals: {
-    title: "ACTIVE DEALS",
+    title: t("sectionActiveDealsTitle"),
     subtitle: "",
-    empty: "No active deals yet.",
+    empty: t("sectionActiveDealsEmpty"),
   },
   done: {
-    title: "DONE",
-    subtitle: "Completed or canceled",
-    empty: "No closed work yet.",
+    title: t("sectionDoneTitle"),
+    subtitle: t("sectionDoneSubtitle"),
+    empty: t("sectionDoneEmpty"),
   },
-};
+});
 
-export const FILTER_LABELS: Record<WorkFilter, string> = {
-  all: "All",
-  requests: "Requests",
-  active: "Active",
-  done: "Done",
-};
+export const FILTER_LABELS = (t: (key: string) => string): Record<WorkFilter, string> => ({
+  all: t("filterAll"),
+  requests: t("filterRequests"),
+  active: t("filterActive"),
+  done: t("filterDone"),
+});
 
 export const SECTION_GROUPS: Record<WorkFilter, SectionKey[]> = {
   all: ["awaitingReview", "awaitingReply", "expressedInterest", "activeDeals", "done"],
