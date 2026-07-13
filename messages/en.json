@@ -1530,5 +1530,27 @@
     "submitting": "Submitting...",
     "submitReport": "Submit Report",
     "cancel": "Cancel"
+  },
+  "placementReport": {
+    "typeNoShow": "Worker did not show up",
+    "typeMisconduct": "Misconduct or inappropriate behavior",
+    "typePoorPerformance": "Poor performance or quality of work",
+    "typeSafetyConcern": "Safety concern",
+    "typeOther": "Other",
+    "selectIssueType": "Please select an issue type",
+    "descriptionTooShort": "Please describe the issue in at least 20 characters",
+    "failedToSubmit": "Failed to submit report. Please try again.",
+    "reportSubmitted": "Report Submitted",
+    "reportSubmittedDesc": "The agency has been notified and will follow up with you within 24 hours.",
+    "backToPlacement": "Back to Placement",
+    "reportAnIssue": "Report an Issue",
+    "subtitle": "The agency will be notified and follow up with you",
+    "whatsTheIssue": "What's the issue?",
+    "describeTheIssue": "Describe the issue",
+    "descriptionPlaceholder": "Please provide details about the issue so the agency can respond appropriately...",
+    "characterCount": "{count} / 500",
+    "warningNote": "This report will be sent directly to the staffing agency. For emergencies or safety concerns, please call the agency directly.",
+    "submitting": "Submitting…",
+    "submitReport": "Submit Report"
   }
 }
