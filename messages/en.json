@@ -1573,5 +1573,18 @@
     "ownerActions": "Owner actions",
     "editOrganizationDetails": "Edit organization details",
     "manageWorkers": "Manage workers"
+  },
+  "servicesBrowse": {
+    "services": "Services",
+    "searchPlaceholder": "Search name, service, category, area",
+    "refineResults": "Refine results",
+    "refineResultsDesc": "Service type, area, price, availability",
+    "filter": "Filter",
+    "findingServices": "Finding services...",
+    "fetchError": "Something went wrong while fetching services.",
+    "withinKm": "Within {km} km",
+    "nearby": "Nearby",
+    "noResultsFound": "No results found",
+    "noResultsHint": "Try adjusting your search or filters to find what you're looking for."
   }
 }
