@@ -477,6 +477,25 @@
     "hireConfirmMessage": "This opens a conversation and sends an official offer. The job is only confirmed after {firstName} accepts.",
     "cancel": "Cancel"
   },
+  "agencyPlacements": {
+    "unknownFallback": "Unknown",
+    "statusActive": "Active",
+    "statusTerminated": "Terminated",
+    "statusOptedOut": "Opted Out",
+    "filterAll": "All",
+    "placements": "Placements",
+    "placementsSubtitle": "All workers currently or previously placed with employers.",
+    "noPlacements": "No placements",
+    "noPlacementsHint": "Approved hiring requests become placements.",
+    "worker": "Worker",
+    "employer": "Employer",
+    "status": "Status",
+    "placed": "Placed",
+    "commission": "Commission",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "withName": "with {name}"
+  },
   "agencyIssueDetail": {
     "unknownName": "Unknown",
     "issueNotFound": "Issue not found",
