@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Baby,
   Banknote,
@@ -87,13 +88,17 @@ function isReviewEditable(review?: Review | null): boolean {
   return Date.now() - new Date(review.createdAt).getTime() < REVIEW_EDIT_WINDOW_MS;
 }
 
-function normalizeBookingReviews(reviews: Review[], bookingUpdatedAt?: string): Review[] {
+function normalizeBookingReviews(
+  reviews: Review[],
+  fallbackName: { firstName: string; lastName: string },
+  bookingUpdatedAt?: string,
+): Review[] {
   return reviews.map((review) => ({
     ...review,
     user: review.user || review.author || {
       id: "",
-      firstName: "Previous",
-      lastName: "Partner",
+      firstName: fallbackName.firstName,
+      lastName: fallbackName.lastName,
       profilePicture: "",
     },
     booking: review.booking || {
@@ -104,6 +109,11 @@ function normalizeBookingReviews(reviews: Review[], bookingUpdatedAt?: string): 
 }
 
 export default function WorkPage() {
+  const t = useTranslations("work");
+  const previousReviewerFallback = {
+    firstName: t("previousReviewerFirstName"),
+    lastName: t("previousReviewerLastName"),
+  };
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items, jobPosts, loading, error, isProvider, isDualRole, refetch } = useWorkData();
@@ -151,7 +161,7 @@ export default function WorkPage() {
         ]);
         const received = receivedResponse.data?.data || receivedResponse.data || [];
         const authored = authoredResponse.data?.data || authoredResponse.data || [];
-        setReceivedReviews(Array.isArray(received) ? normalizeBookingReviews(received) : []);
+        setReceivedReviews(Array.isArray(received) ? normalizeBookingReviews(received, previousReviewerFallback) : []);
         const authoredList: Review[] = Array.isArray(authored) ? authored : [];
         setAuthoredReviewBookingIds(
           new Set(
@@ -223,13 +233,13 @@ export default function WorkPage() {
     setActingId(item.id);
     try {
       await api.patch(`/bookings/${item.bookingId}/status`, { status });
-      const message = status === "CONFIRMED" ? "Offer accepted." : "Request rejected.";
+      const message = status === "CONFIRMED" ? t("offerAccepted") : t("requestRejected");
       toast.success(message);
       setLiveMessage(message);
       await refetch();
       if (status === "CONFIRMED") router.push(`/conversations/inbox/${item.bookingId}`);
     } catch {
-      toast.error(status === "CONFIRMED" ? "Could not accept this offer." : "Could not reject this request.");
+      toast.error(status === "CONFIRMED" ? t("couldNotAcceptOffer") : t("couldNotRejectRequest"));
     } finally {
       setActingId(null);
     }
@@ -250,14 +260,14 @@ export default function WorkPage() {
     try {
       const note = acceptChatNote.trim();
       await api.post(`/bookings/${item.bookingId}/accept-chat`, note ? { note } : {});
-      const message = "Chat accepted. The employer has been notified.";
+      const message = t("chatAccepted");
       toast.success(message);
       setLiveMessage(message);
       setAcceptChatTarget(null);
       await refetch();
       router.push(`/conversations/inbox/${item.bookingId}`);
     } catch {
-      toast.error("Could not accept this chat request.");
+      toast.error(t("couldNotAcceptChat"));
     } finally {
       setActingId(null);
     }
@@ -265,7 +275,7 @@ export default function WorkPage() {
 
   const handleReminder = async (item: WorkItem) => {
     if (!item.bookingId) {
-      toast.error("This application does not have a conversation yet.");
+      toast.error(t("noConversationYet"));
       return;
     }
     setActingId(item.id);
@@ -273,10 +283,10 @@ export default function WorkPage() {
       await api.post(`/bookings/${item.bookingId}/messages`, {
         content: `Friendly reminder about "${item.subtitle}".`,
       });
-      toast.success("Reminder sent.");
-      setLiveMessage("Reminder sent.");
+      toast.success(t("reminderSent"));
+      setLiveMessage(t("reminderSent"));
     } catch {
-      toast.error("Could not send reminder.");
+      toast.error(t("couldNotSendReminder"));
     } finally {
       setActingId(null);
     }
@@ -287,11 +297,11 @@ export default function WorkPage() {
     setActingId(item.id);
     try {
       await jobsService.withdrawApplication(item.applicationId);
-      toast.success("Application withdrawn.");
-      setLiveMessage("Application withdrawn.");
+      toast.success(t("applicationWithdrawn"));
+      setLiveMessage(t("applicationWithdrawn"));
       await refetch();
     } catch {
-      toast.error("Could not withdraw this application.");
+      toast.error(t("couldNotWithdraw"));
     } finally {
       setActingId(null);
     }
@@ -330,8 +340,8 @@ export default function WorkPage() {
             comment: payload.comment,
             bookingId: reviewTarget.bookingId,
           });
-      toast.success(editingReview ? "Review updated." : "Review submitted.");
-      setLiveMessage(editingReview ? "Review updated." : "Review submitted.");
+      toast.success(editingReview ? t("reviewUpdated") : t("reviewSubmitted"));
+      setLiveMessage(editingReview ? t("reviewUpdated") : t("reviewSubmitted"));
       setAuthoredReviewBookingIds(prev => new Set(prev).add(reviewTarget.bookingId!));
       const created = response.data?.data || response.data;
       if (created && reviewTarget.bookingId) {
@@ -344,14 +354,14 @@ export default function WorkPage() {
       if (reviewDetails?.item.bookingId === reviewTarget.bookingId && created) {
         setReviewDetails((prev) =>
           prev
-            ? { ...prev, reviews: normalizeBookingReviews([...prev.reviews, created]) }
+            ? { ...prev, reviews: normalizeBookingReviews([...prev.reviews, created], previousReviewerFallback) }
             : prev,
         );
       }
       void refetch();
       return true;
     } catch (error: any) {
-      const message = error?.response?.data?.message || "Could not submit review.";
+      const message = error?.response?.data?.message || t("couldNotSubmitReview");
       toast.error(message);
       return false;
     }
@@ -389,30 +399,30 @@ export default function WorkPage() {
         booking?.service?.category?.name || booking?.job?.category?.name;
       const infoRows: { label: string; value: string }[] = [];
       if (categoryName && categoryName.toLowerCase() !== "other") {
-        infoRows.push({ label: "Category", value: categoryName });
+        infoRows.push({ label: t("infoCategory"), value: categoryName });
       }
       const scheduled = fmtDate(booking?.scheduledFor);
-      if (scheduled) infoRows.push({ label: "Scheduled", value: scheduled });
+      if (scheduled) infoRows.push({ label: t("infoScheduled"), value: scheduled });
       if (booking?.agreedPrice) {
-        infoRows.push({ label: "Agreed price", value: formatPrice(booking.agreedPrice) });
+        infoRows.push({ label: t("infoAgreedPrice"), value: formatPrice(booking.agreedPrice) });
       }
       const closedOn = fmtDate(booking?.updatedAt);
       if (booking?.status === "COMPLETED" && closedOn) {
-        infoRows.push({ label: "Completed", value: closedOn });
+        infoRows.push({ label: t("infoCompleted"), value: closedOn });
       } else if (booking?.status === "CANCELLED" && closedOn) {
-        infoRows.push({ label: "Cancelled", value: closedOn });
+        infoRows.push({ label: t("infoCancelled"), value: closedOn });
       }
 
       setReviewDetails({
         item,
-        reviews: normalizeBookingReviews(reviews, booking?.updatedAt),
+        reviews: normalizeBookingReviews(reviews, previousReviewerFallback, booking?.updatedAt),
         loading: false,
         hireHref,
         infoRows,
       });
     } catch {
       setReviewDetails((prev) => prev ? { ...prev, loading: false } : prev);
-      toast.error("Could not load reviews for this job.");
+      toast.error(t("couldNotLoadReviews"));
     }
   };
 
@@ -453,14 +463,14 @@ export default function WorkPage() {
       setReceivedReviews((prev) =>
         prev.map((review) =>
           review.id === reviewId
-            ? normalizeBookingReviews([{ ...review, ...updated }], review.booking?.updatedAt)[0]
+            ? normalizeBookingReviews([{ ...review, ...updated }], previousReviewerFallback, review.booking?.updatedAt)[0]
             : review,
         ),
       );
       return true;
     } catch (error) {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(message || "Could not post reply");
+      toast.error(message || t("couldNotPostReply"));
       return false;
     }
   };
@@ -480,18 +490,18 @@ export default function WorkPage() {
         <div className="flex min-h-[62vh] items-center">
           <EmptyState
             icon={Briefcase}
-            title="No work yet"
+            title={t("noWorkYet")}
             description={
               isProvider
-                ? "Find a job post or complete your service profile so employers can reach you."
-                : "Post your first job or book a provider to start managing work here."
+                ? t("noWorkProviderDesc")
+                : t("noWorkEmployerDesc")
             }
             action={
               <button
                 onClick={() => router.push(isProvider ? "/" : "/post-job")}
                 className="h-12 w-full rounded-xl bg-brand px-5 text-[13px] font-bold text-white"
               >
-                {isProvider ? "Find jobs" : "Post your first job"}
+                {isProvider ? t("findJobs") : t("postFirstJob")}
               </button>
             }
           />
@@ -589,7 +599,7 @@ export default function WorkPage() {
 
       <BookingReviewsDialog
         open={Boolean(reviewDetails)}
-        title={reviewDetails?.item.subtitle || reviewDetails?.item.title || "Completed job"}
+        title={reviewDetails?.item.subtitle || reviewDetails?.item.title || t("completedJobFallback")}
         reviews={reviewDetails?.reviews || []}
         loading={reviewDetails?.loading}
         infoRows={reviewDetails?.infoRows}
@@ -620,8 +630,8 @@ export default function WorkPage() {
         subject={reviewTarget ? getReviewSubject(reviewTarget) : null}
         rehireQuestion={
           reviewTarget?.role === "provider"
-            ? "Would you work with this person again?"
-            : "Would you hire this person again?"
+            ? t("rehireQuestionProvider")
+            : t("rehireQuestionEmployer")
         }
         initialRehire={editingReview?.wouldRehire ?? null}
         initialComment={editingReview?.comment ?? ""}
@@ -639,22 +649,22 @@ export default function WorkPage() {
           <SheetOverlay onClick={() => setAcceptChatTarget(null)} aria-hidden="true" />
           <SheetPanel className="max-w-sm rounded-t-[28px]" onClose={() => setAcceptChatTarget(null)}>
             <SheetHeader
-              title={`Chat with ${acceptChatTarget.title}`}
-              subtitle="Add a note to start the conversation (optional)"
+              title={t("chatWithTitle", { name: acceptChatTarget.title })}
+              subtitle={t("chatNoteSubtitle")}
               onClose={() => setAcceptChatTarget(null)}
               className="border-b-0 pb-2"
             />
             <SheetBody className="space-y-4 pt-2">
               {acceptChatTarget.requestNote && (
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-ink-subtle">Their request</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-ink-subtle">{t("theirRequest")}</p>
                   <p className="mt-1 text-[13px] text-ink">{acceptChatTarget.requestNote}</p>
                 </div>
               )}
               <textarea
                 value={acceptChatNote}
                 onChange={(e) => setAcceptChatNote(e.target.value)}
-                placeholder="e.g. Hi! Yes, I'm available — when would you like to start?"
+                placeholder={t("chatNotePlaceholder")}
                 rows={3}
                 className={cn(appTextareaClass, "min-h-[88px]")}
               />
@@ -665,7 +675,7 @@ export default function WorkPage() {
                 onClick={() => setAcceptChatTarget(null)}
                 className="flex-1"
               >
-                Cancel
+                {t("cancel")}
               </AppButton>
               <AppButton
                 onClick={() => void confirmAcceptChat()}
@@ -675,7 +685,7 @@ export default function WorkPage() {
                 {actingId === acceptChatTarget.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Accept & open chat"
+                  t("acceptAndOpenChat")
                 )}
               </AppButton>
             </SheetFooter>
@@ -687,7 +697,8 @@ export default function WorkPage() {
 }
 
 function WorkHeader() {
-  return <PageHeader title="My Work" />;
+  const t = useTranslations("work");
+  return <PageHeader title={t("myWork")} />;
 }
 
 function WorkFilterChips({
@@ -699,9 +710,11 @@ function WorkFilterChips({
   filter: WorkFilter;
   onChange: (filter: WorkFilter) => void;
 }) {
+  const t = useTranslations("work");
+  const filterLabels = FILTER_LABELS(t);
   return (
     <div className="flex gap-1.5">
-      {(Object.keys(FILTER_LABELS) as WorkFilter[]).map((key) => {
+      {(Object.keys(filterLabels) as WorkFilter[]).map((key) => {
         const active = filter === key;
         const muted = counts[key] === 0;
         return (
@@ -717,7 +730,7 @@ function WorkFilterChips({
               muted && !active && "text-gray-400",
             )}
           >
-            {FILTER_LABELS[key]}
+            {filterLabels[key]}
             <span
               className={cn(
                 "flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
@@ -740,6 +753,7 @@ function MyJobPostsEntry({
   activePostCount: number;
   totalApplicants: number;
 }) {
+  const t = useTranslations("work");
   return (
     <Link
       href="/work/job-posts"
@@ -749,9 +763,9 @@ function MyJobPostsEntry({
         <ClipboardList className="h-7 w-7 text-[#6D28D9]" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-black text-ink">My Job Posts</p>
+        <p className="text-[15px] font-black text-ink">{t("myJobPosts")}</p>
         <p className="mt-1 text-[12px] font-medium text-ink-muted">
-          {activePostCount} active posts <span className="mx-1">•</span> {totalApplicants} total applicants
+          {t("activePostsCount", { count: activePostCount })} <span className="mx-1">•</span> {t("totalApplicantsCount", { count: totalApplicants })}
         </p>
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-ink" />
@@ -772,7 +786,8 @@ function WorkSection({
   expanded: boolean;
   children: React.ReactNode;
 }) {
-  const copy = SECTION_COPY[section];
+  const t = useTranslations("work");
+  const copy = SECTION_COPY(t)[section];
   const accent = section === "awaitingReview" ? "orange" : section === "awaitingReply" ? "slate" : section === "expressedInterest" ? "purple" : section === "activeDeals" ? "green" : "gray";
 
   return (
@@ -791,7 +806,7 @@ function WorkSection({
             onClick={onViewAll}
             className={cn("min-h-8 text-[12px] font-black", accentClasses[accent].title)}
           >
-            {expanded ? "Show less" : "View all"}
+            {expanded ? t("showLess") : t("viewAll")}
           </button>
         )}
       </div>
@@ -826,6 +841,7 @@ function DealCard({
   onReminder: (item: WorkItem) => void;
   onWithdraw: (item: WorkItem) => void;
 }) {
+  const t = useTranslations("work");
   // Per design: incoming hire requests in AWAITING YOUR REVIEW do NOT show
   // a status badge ("From Employer") — the section header already conveys the
   // direction. The clickable name handles profile access (no View Profile button).
@@ -873,7 +889,7 @@ function DealCard({
               {needsReview ? (
                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10px] font-black text-[#C2630B]">
                   <Star className="h-3 w-3 fill-[#C2630B] stroke-[#C2630B]" />
-                  Review owed
+                  {t("reviewOwed")}
                 </span>
               ) : (
                 !hideStatusBadge && (
@@ -913,7 +929,7 @@ function DealCard({
               <p className="mt-1.5 text-[11px] text-[#9CA3AF]">
                 {item.secondaryMeta}
                 {isDualRole && item.secondaryMeta && " · "}
-                {isDualRole && (item.role === "provider" ? "As Provider" : "As Employer")}
+                {isDualRole && (item.role === "provider" ? t("asProvider") : t("asEmployer"))}
               </p>
             )}
             {item.requestNote && (
@@ -966,6 +982,7 @@ function DealCardActions({
   onReminder: (item: WorkItem) => void;
   onWithdraw: (item: WorkItem) => void;
 }) {
+  const t = useTranslations("work");
   // Section: AWAITING YOUR REVIEW — grouped applicants on the user's own job post.
   if (item.section === "awaitingReview" && item.kind === "jobApplicants") {
     return (
@@ -974,7 +991,7 @@ function DealCardActions({
         onClick={() => onPrimary(item)}
         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
       >
-        View Applicants
+        {t("viewApplicants")}
         <ChevronRight className="h-4 w-4" />
       </button>
     );
@@ -994,7 +1011,7 @@ function DealCardActions({
             className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand text-[12px] font-black text-white disabled:opacity-60"
           >
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
-            Accept Chat
+            {t("acceptChat")}
           </button>
           <button
             type="button"
@@ -1002,7 +1019,7 @@ function DealCardActions({
             onClick={() => onReject(item)}
             className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
           >
-            Reject
+            {t("reject")}
           </button>
         </div>
       );
@@ -1019,7 +1036,7 @@ function DealCardActions({
             className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#C17A5D] text-[12px] font-black text-white disabled:opacity-60"
           >
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
-            Accept Job
+            {t("acceptJob")}
           </button>
           <button
             type="button"
@@ -1027,7 +1044,7 @@ function DealCardActions({
             onClick={() => onReject(item)}
             className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
           >
-            Reject
+            {t("reject")}
           </button>
         </div>
       </div>
@@ -1043,13 +1060,13 @@ function DealCardActions({
         <RevokeButton
           isActing={isActing}
           onClick={() => onReject(item)}
-          label="Revoke"
+          label={t("revoke")}
         />
         {item.chatOpened ? (
           <MessageButton bookingId={item.bookingId} />
         ) : (
           <span className="flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-center text-[12px] font-black text-ink-muted">
-            Waiting for chat
+            {t("waitingForChat")}
           </span>
         )}
       </div>
@@ -1065,7 +1082,7 @@ function DealCardActions({
         <RevokeButton
           isActing={isActing}
           onClick={() => onWithdraw(item)}
-          label="Revoke"
+          label={t("revoke")}
         />
         <SendReminderButton item={item} onReminder={onReminder} />
       </div>
@@ -1080,7 +1097,7 @@ function DealCardActions({
         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
       >
         <MessageCircleMore className="h-4 w-4" />
-        Open Chat
+        {t("openChat")}
       </Link>
     );
   }
@@ -1101,7 +1118,7 @@ function DealCardActions({
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[12px] font-black text-white"
           >
             <Star className="h-4 w-4 fill-white stroke-white" />
-            Leave a Review
+            {t("leaveAReview")}
           </button>
           <button
             type="button"
@@ -1111,7 +1128,7 @@ function DealCardActions({
             }}
             className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
           >
-            View Details
+            {t("viewDetails")}
           </button>
         </div>
       );
@@ -1137,7 +1154,7 @@ function DealCardActions({
               className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand/30 bg-white text-[12px] font-black text-brand"
             >
               <Star className="h-4 w-4" />
-              Edit review
+              {t("editReview")}
             </button>
             <button
               type="button"
@@ -1147,7 +1164,7 @@ function DealCardActions({
               }}
               className="flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
             >
-              View Details
+              {t("viewDetails")}
             </button>
           </div>
         </div>
@@ -1165,7 +1182,7 @@ function DealCardActions({
             }}
             className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
           >
-            View Details
+            {t("viewDetails")}
           </button>
         </div>
       );
@@ -1179,7 +1196,7 @@ function DealCardActions({
         }}
         className="flex min-h-11 w-full items-center justify-center rounded-lg bg-brand text-[12px] font-black text-white"
       >
-        View Details
+        {t("viewDetails")}
       </button>
     );
   }
@@ -1191,7 +1208,7 @@ function DealCardActions({
       onClick={() => onPrimary(item)}
       className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
     >
-      View Details
+      {t("viewDetails")}
     </button>
   );
 }
@@ -1199,12 +1216,13 @@ function DealCardActions({
 function RevokeButton({
   isActing,
   onClick,
-  label = "Revoke",
+  label,
 }: {
   isActing: boolean;
   onClick: () => void;
   label?: string;
 }) {
+  const t = useTranslations("work");
   return (
     <button
       type="button"
@@ -1213,12 +1231,13 @@ function RevokeButton({
       className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
     >
       {isActing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-      {label}
+      {label ?? t("revoke")}
     </button>
   );
 }
 
 function HireAgainButton({ href }: { href: string }) {
+  const t = useTranslations("work");
   return (
     <Link
       href={href}
@@ -1226,12 +1245,13 @@ function HireAgainButton({ href }: { href: string }) {
       className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-brand text-[12px] font-black text-white"
     >
       <UserPlus className="h-4 w-4" />
-      Hire Again
+      {t("hireAgain")}
     </Link>
   );
 }
 
 function MessageButton({ bookingId, className }: { bookingId?: string; className?: string }) {
+  const t = useTranslations("work");
   const href = bookingId ? `/conversations/inbox/${bookingId}` : "/conversations";
   return (
     <Link
@@ -1242,7 +1262,7 @@ function MessageButton({ bookingId, className }: { bookingId?: string; className
       )}
     >
       <MessageCircleMore className="h-3.5 w-3.5" />
-      Message
+      {t("message")}
     </Link>
   );
 }
@@ -1254,6 +1274,7 @@ function SendReminderButton({
   item: WorkItem;
   onReminder: (item: WorkItem) => void;
 }) {
+  const t = useTranslations("work");
   return (
     <button
       type="button"
@@ -1261,7 +1282,7 @@ function SendReminderButton({
       className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-white text-[12px] font-black text-[#1155FF]"
     >
       <Send className="h-3.5 w-3.5" />
-      Send Reminder
+      {t("sendReminder")}
     </button>
   );
 }
@@ -1296,12 +1317,13 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 }
 
 function InlineEmpty({ filter }: { filter: WorkFilter }) {
+  const t = useTranslations("work");
   const text =
     filter === "requests"
-      ? "No pending requests right now."
+      ? t("noPendingRequests")
       : filter === "active"
-        ? "No active deals right now."
-        : "No closed work right now.";
+        ? t("noActiveDeals")
+        : t("noClosedWork");
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white px-4 py-5 text-center text-[13px] font-semibold text-ink-subtle">
@@ -1311,6 +1333,7 @@ function InlineEmpty({ filter }: { filter: WorkFilter }) {
 }
 
 export function JobPostsPage() {
+  const t = useTranslations("work");
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1321,7 +1344,7 @@ export function JobPostsPage() {
       .getMyJobs()
       .then((data) => setJobs(Array.isArray(data) ? data : []))
       .catch(() => {
-        toast.error("Could not load job posts.");
+        toast.error(t("couldNotLoadJobPosts"));
         setJobs([]);
       })
       .finally(() => setLoading(false));
@@ -1352,24 +1375,25 @@ export function JobPostsPage() {
             <button
               type="button"
               onClick={() => router.push("/work")}
-              aria-label="Back to work"
+              aria-label={t("backToWork")}
               className="flex h-10 w-10 items-center justify-center rounded-full text-ink"
             >
               <ChevronRight className="h-5 w-5 rotate-180" />
             </button>
-            <h1 className="truncate text-[20px] font-black text-[#101828]">My Job Posts</h1>
+            <h1 className="truncate text-[20px] font-black text-[#101828]">{t("myJobPosts")}</h1>
           </div>
           <Link
             href="/post-job"
             className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-brand/30 bg-white px-3 text-[12px] font-black text-brand"
           >
             <Plus className="h-4 w-4" />
-            Post Job
+            {t("postJob")}
           </Link>
         </header>
         <div className="flex gap-1.5">
           {(["all", "open", "filled", "closed"] as const).map((key) => {
             const active = filter === key;
+            const jobFilterLabels = { all: t("filterAll"), open: t("filterOpen"), filled: t("filterFilled"), closed: t("filterClosed") };
             return (
               <button
                 key={key}
@@ -1382,7 +1406,7 @@ export function JobPostsPage() {
                     : "border-gray-200 bg-white text-ink",
                 )}
               >
-                {key}
+                {jobFilterLabels[key]}
                 <span
                   className={cn(
                     "flex min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold",
@@ -1405,8 +1429,8 @@ export function JobPostsPage() {
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center">
             <ClipboardList className="mx-auto h-8 w-8 text-gray-300" />
-            <p className="mt-3 text-[14px] font-black text-ink">No job posts here</p>
-            <p className="mt-1 text-[12px] text-ink-subtle">Post a new job to find help.</p>
+            <p className="mt-3 text-[14px] font-black text-ink">{t("noJobPostsHere")}</p>
+            <p className="mt-1 text-[12px] text-ink-subtle">{t("postNewJobToFindHelp")}</p>
           </div>
         ) : (
           <>
@@ -1434,6 +1458,7 @@ function JobPostsSummary({
   activePosts: number;
   totalApplicants: number;
 }) {
+  const t = useTranslations("work");
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[#F1F4FA] px-4 py-3.5">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white">
@@ -1441,12 +1466,12 @@ function JobPostsSummary({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-black text-ink">
-          {activePosts} active post{activePosts === 1 ? "" : "s"}
+          {t("activePostsSummary", { count: activePosts })}
           <span className="mx-1.5 text-ink-subtle">•</span>
-          {totalApplicants} total applicants
+          {t("totalApplicantsCount", { count: totalApplicants })}
         </p>
         <p className="mt-0.5 text-[12px] text-ink-subtle">
-          Manage your job posts and review applicants.
+          {t("manageJobPostsDesc")}
         </p>
       </div>
       <ChevronRight className="h-5 w-5 shrink-0 text-ink-subtle" />
@@ -1455,6 +1480,7 @@ function JobPostsSummary({
 }
 
 function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
+  const t = useTranslations("work");
   const isOpen = job.status === "OPEN";
   const isFilled = job.status === "AWARDED";
   const accent = isOpen
@@ -1464,9 +1490,9 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
       : { bg: "bg-gray-100", fg: "text-gray-500", pill: "bg-gray-100 text-gray-500" };
 
   const statusLabel = isFilled
-    ? "Filled"
+    ? t("filled")
     : isOpen
-      ? "Open"
+      ? t("open")
       : job.status[0] + job.status.slice(1).toLowerCase();
 
   const location = formatJobLocation(job);
@@ -1515,7 +1541,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
             </div>
             <p className="mt-1.5 inline-flex items-center gap-1 text-[12px] text-ink-muted">
               <Banknote className="h-3.5 w-3.5 text-ink-subtle" />
-              Budget: {formatPrice(job.budgetMin, job.budgetMax)}
+              {t("budgetPrefix", { amount: formatPrice(job.budgetMin, job.budgetMax) })}
             </p>
           </div>
         </div>
@@ -1526,14 +1552,14 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[13px] font-black text-ink">1</span>
-              <span className="text-[13px] text-ink-muted">Hired</span>
+              <span className="text-[13px] text-ink-muted">{t("hired")}</span>
               {hiredAvatar?.worker && <AvatarChip person={hiredAvatar.worker} />}
             </div>
             <Link
               href={`/jobs/${job.id}`}
               className="inline-flex items-center gap-1 text-[13px] font-black text-[#6D28D9]"
             >
-              View Details
+              {t("viewDetails")}
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -1541,7 +1567,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <span className="text-[13px] font-black text-brand">
-                {applicants} Interested
+                {t("interestedCount", { count: applicants })}
               </span>
               {previewAvatars.length > 0 && (
                 <div className="flex -space-x-2">
@@ -1560,7 +1586,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
               href={`/jobs/${job.id}`}
               className="inline-flex shrink-0 items-center gap-1 text-[13px] font-black text-brand"
             >
-              View Applicants
+              {t("viewApplicants")}
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -1568,7 +1594,7 @@ function JobPostCard({ job, onTap }: { job: Job; onTap: () => void }) {
       </div>
 
       <p className="px-4 pb-3 text-[11px] text-ink-subtle">
-        {isFilled ? "Filled" : "Posted"} {getTimeAgo(job.createdAt) || "recently"}
+        {isFilled ? t("filled") : t("posted")} {getTimeAgo(job.createdAt) || t("recently")}
       </p>
     </article>
   );
@@ -1579,7 +1605,8 @@ function AvatarChip({
 }: {
   person: { firstName?: string; lastName?: string; profilePicture?: string | null };
 }) {
-  const fullName = `${person.firstName || ""} ${person.lastName || ""}`.trim() || "User";
+  const t = useTranslations("work");
+  const fullName = `${person.firstName || ""} ${person.lastName || ""}`.trim() || t("userFallback");
   if (person.profilePicture) {
     return (
       <span className="relative inline-block h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-gray-100">
@@ -1598,6 +1625,7 @@ function AvatarChip({
 }
 
 function NeedToHireAgainCard({ onPostNew }: { onPostNew: () => void }) {
+  const t = useTranslations("work");
   return (
     <div className="rounded-2xl border-2 border-dashed border-[#D6BCFA] bg-[#F5F3FF] px-4 py-4">
       <div className="flex items-start gap-3">
@@ -1605,9 +1633,9 @@ function NeedToHireAgainCard({ onPostNew }: { onPostNew: () => void }) {
           <Plus className="h-5 w-5 text-[#6D28D9]" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-black text-ink">Need to hire again?</p>
+          <p className="text-[14px] font-black text-ink">{t("needToHireAgain")}</p>
           <p className="mt-0.5 text-[12px] text-ink-muted">
-            Post a new job and find the right help.
+            {t("needToHireAgainDesc")}
           </p>
         </div>
       </div>
@@ -1616,22 +1644,23 @@ function NeedToHireAgainCard({ onPostNew }: { onPostNew: () => void }) {
         onClick={onPostNew}
         className="mt-3 flex min-h-10 w-full items-center justify-center rounded-xl border border-[#6D28D9] bg-white text-[13px] font-black text-[#6D28D9]"
       >
-        Post New Job
+        {t("postNewJob")}
       </button>
     </div>
   );
 }
 
 function SafeAndSecureCard() {
+  const t = useTranslations("work");
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E7F4E2]">
         <ShieldCheck className="h-5 w-5 text-brand" />
       </div>
       <div className="min-w-0">
-        <p className="text-[13px] font-black text-ink">Safe &amp; Secure</p>
+        <p className="text-[13px] font-black text-ink">{t("safeAndSecure")}</p>
         <p className="mt-0.5 text-[12px] text-ink-muted">
-          We review all applications and keep your information protected.
+          {t("safeAndSecureDesc")}
         </p>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
     AlertTriangle,
     Calendar,
@@ -48,28 +49,29 @@ function getDaysRemaining(placedAt: string) {
     return diff;
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG = (t: (key: string) => string) => ({
     ACTIVE: {
-        label: "Active Placement",
+        label: t("statusActive"),
         icon: CheckCircle2,
         color: "#145B10",
         bg: "#EEF8EA",
     },
     TERMINATED: {
-        label: "Terminated",
+        label: t("statusTerminated"),
         icon: XCircle,
         color: "#DC2626",
         bg: "#FEF2F2",
     },
     OPTED_OUT: {
-        label: "Worker Opted Out",
+        label: t("statusOptedOut"),
         icon: AlertTriangle,
         color: "#D97706",
         bg: "#FFFBEB",
     },
-} as const;
+} as const);
 
 export default function PlacementDetailPage() {
+    const t = useTranslations("placementDetail");
     const params = useParams();
     const router = useRouter();
     const placementId = params.id as string;
@@ -87,7 +89,7 @@ export default function PlacementDetailPage() {
                 const res = await api.get(`/placements/${placementId}`);
                 setPlacement(res.data?.data || res.data);
             } catch (err) {
-                setError(getApiErrorMessage(err, "Placement not found"));
+                setError(getApiErrorMessage(err, t("placementNotFound")));
             } finally {
                 setLoading(false);
             }
@@ -108,13 +110,13 @@ export default function PlacementDetailPage() {
     if (error || !placement) {
         return (
             <PageShell bottomNav={false}>
-                <PageHeader title="Placement" onBack={() => router.back()} />
-                <div className="mt-8 text-center text-[14px] text-ink-muted">{error || "Placement not found"}</div>
+                <PageHeader title={t("placement")} onBack={() => router.back()} />
+                <div className="mt-8 text-center text-[14px] text-ink-muted">{error || t("placementNotFound")}</div>
             </PageShell>
         );
     }
 
-    const status = STATUS_CONFIG[placement.status];
+    const status = STATUS_CONFIG(t)[placement.status];
     const StatusIcon = status.icon;
     const daysRemaining = placement.status === "ACTIVE" ? getDaysRemaining(placement.placedAt) : 0;
     const coverageEnd = getCoverageEndDate(placement.placedAt);
@@ -127,7 +129,7 @@ export default function PlacementDetailPage() {
     return (
         <PageShell bottomNav={false} padded>
             <PageHeader
-                title="Placement Details"
+                title={t("placementDetails")}
                 onBack={() => router.back()}
                 compact
             />
@@ -143,13 +145,13 @@ export default function PlacementDetailPage() {
                         {status.label}
                     </span>
                     <span className="ml-auto text-[12px] font-medium text-ink-muted">
-                        Since {formatDate(placement.placedAt)}
+                        {t("sinceDate", { date: formatDate(placement.placedAt) })}
                     </span>
                 </div>
 
                 {/* Worker card */}
                 <div>
-                    <AppSectionHeader title="Worker" className="mb-2" />
+                    <AppSectionHeader title={t("worker")} className="mb-2" />
                     <Card>
                         <div className="flex items-center gap-3 p-4">
                             <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-full">
@@ -177,7 +179,7 @@ export default function PlacementDetailPage() {
                                     <span className="text-[12px] font-semibold text-ink">
                                         {placement.worker.trustScore?.toFixed(1) ?? "—"}
                                     </span>
-                                    <span className="text-[12px] text-ink-muted">Trust Score</span>
+                                    <span className="text-[12px] text-ink-muted">{t("trustScore")}</span>
                                 </div>
                             </div>
                             {workerHandle && (
@@ -186,7 +188,7 @@ export default function PlacementDetailPage() {
                                     className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
                                     style={{ borderColor: colors.primary, color: colors.primary }}
                                 >
-                                    View Profile
+                                    {t("viewProfile")}
                                 </Link>
                             )}
                         </div>
@@ -195,7 +197,7 @@ export default function PlacementDetailPage() {
 
                 {/* Agency card */}
                 <div>
-                    <AppSectionHeader title="Staffing Agency" className="mb-2" />
+                    <AppSectionHeader title={t("staffingAgency")} className="mb-2" />
                     <Card>
                         <div className="flex items-start gap-3 p-4">
                             {placement.agency.logoUrl ? (
@@ -227,7 +229,7 @@ export default function PlacementDetailPage() {
                                 </div>
                                 {placement.agency._count && (
                                     <p className="mt-0.5 text-[12px] text-ink-muted">
-                                        {placement.agency._count.workers} Workers · {placement.agency._count.placements} Placements
+                                        {t("workersAndPlacements", { workers: placement.agency._count.workers, placements: placement.agency._count.placements })}
                                     </p>
                                 )}
                                 {placement.agency.phone && (
@@ -246,7 +248,7 @@ export default function PlacementDetailPage() {
                                 className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold"
                                 style={{ borderColor: colors.primary, color: colors.primary }}
                             >
-                                Profile
+                                {t("profile")}
                             </Link>
                         </div>
 
@@ -255,7 +257,7 @@ export default function PlacementDetailPage() {
                             className="flex items-center gap-4 border-t px-4 py-3 flex-wrap"
                             style={{ borderColor: colors.border }}
                         >
-                            {["ID Verified", "Police Checked", "Replacement Guaranteed"].map((badge) => (
+                            {[t("badgeIdVerified"), t("badgePoliceChecked"), t("badgeReplacementGuaranteed")].map((badge) => (
                                 <span key={badge} className="flex items-center gap-1 text-[11px] font-medium" style={{ color: colors.primary }}>
                                     <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
                                     {badge}
@@ -267,7 +269,7 @@ export default function PlacementDetailPage() {
 
                 {/* Coverage / Hiring Protection */}
                 <div>
-                    <AppSectionHeader title="Hiring Protection" className="mb-2" />
+                    <AppSectionHeader title={t("hiringProtection")} className="mb-2" />
                     <Card className={isCovered ? "border-[#C8E6C4] bg-[#EEF8EA]" : ""}>
                         <div className="flex items-start gap-3 p-4">
                             <div
@@ -283,17 +285,17 @@ export default function PlacementDetailPage() {
                                 {isCovered ? (
                                     <>
                                         <p className="text-[13px] font-bold text-ink">
-                                            Your placement is covered
+                                            {t("placementCovered")}
                                         </p>
                                         <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">
-                                            If this worker doesn&apos;t work out, {placement.agency.name} will provide a free replacement.
+                                            {t("coveredDesc", { agency: placement.agency.name })}
                                         </p>
                                     </>
                                 ) : (
                                     <>
-                                        <p className="text-[13px] font-bold text-ink">Coverage expired</p>
+                                        <p className="text-[13px] font-bold text-ink">{t("coverageExpired")}</p>
                                         <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">
-                                            The 30-day replacement guarantee has ended.
+                                            {t("coverageExpiredDesc")}
                                         </p>
                                     </>
                                 )}
@@ -301,10 +303,10 @@ export default function PlacementDetailPage() {
                             {isCovered && (
                                 <div className="flex-shrink-0 text-right">
                                     <p className="text-[11px] font-bold" style={{ color: colors.primary }}>
-                                        {daysRemaining} days left
+                                        {t("daysLeft", { days: daysRemaining })}
                                     </p>
                                     <p className="text-[10px] text-ink-muted">
-                                        Until {formatDate(coverageEnd.toISOString())}
+                                        {t("untilDate", { date: formatDate(coverageEnd.toISOString()) })}
                                     </p>
                                 </div>
                             )}
@@ -314,12 +316,12 @@ export default function PlacementDetailPage() {
 
                 {/* Placement timeline */}
                 <div>
-                    <AppSectionHeader title="Timeline" className="mb-2" />
+                    <AppSectionHeader title={t("timeline")} className="mb-2" />
                     <Card>
                         <div className="flex flex-col divide-y" style={{ borderColor: colors.border }}>
                             <div className="flex items-center gap-3 p-4">
                                 <Calendar className="h-4 w-4 flex-shrink-0 text-brand" />
-                                <span className="text-[13px] text-ink-muted">Placement Date</span>
+                                <span className="text-[13px] text-ink-muted">{t("placementDate")}</span>
                                 <span className="ml-auto text-[13px] font-semibold text-ink">
                                     {formatDate(placement.placedAt)}
                                 </span>
@@ -327,7 +329,7 @@ export default function PlacementDetailPage() {
                             {placement.endedAt && (
                                 <div className="flex items-center gap-3 p-4">
                                     <Clock className="h-4 w-4 flex-shrink-0 text-ink-muted" />
-                                    <span className="text-[13px] text-ink-muted">Ended</span>
+                                    <span className="text-[13px] text-ink-muted">{t("ended")}</span>
                                     <span className="ml-auto text-[13px] font-semibold text-ink">
                                         {formatDate(placement.endedAt)}
                                     </span>
@@ -346,7 +348,7 @@ export default function PlacementDetailPage() {
                             style={{ borderColor: "#DC2626", color: "#DC2626" }}
                         >
                             <AlertTriangle className="h-5 w-5" />
-                            Report an Issue
+                            {t("reportAnIssue")}
                         </Link>
                     </div>
                 )}

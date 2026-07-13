@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
 import jobsService, { Job } from "@/services/jobs-service";
@@ -98,15 +99,15 @@ interface ApplicationSummary {
   jobId: string;
 }
 
-const SERVICE_TYPES: Array<{ label: string; value: ServiceTypeFilter }> = [
-  { label: "Individual", value: "INDIVIDUAL" },
-  { label: "Staffing Agency", value: "STAFFING_AGENCY" },
-  { label: "Company", value: "COMPANY" },
+const SERVICE_TYPES = (t: (key: string) => string): Array<{ label: string; value: ServiceTypeFilter }> => [
+  { label: t("serviceTypeIndividual"), value: "INDIVIDUAL" },
+  { label: t("serviceTypeAgency"), value: "STAFFING_AGENCY" },
+  { label: t("serviceTypeCompany"), value: "COMPANY" },
 ];
 
-const AVAILABILITY_OPTIONS: Array<{ label: string; value: AvailabilityFilter }> = [
-  { label: "Available", value: "available" },
-  { label: "Unavailable", value: "unavailable" },
+const AVAILABILITY_OPTIONS = (t: (key: string) => string): Array<{ label: string; value: AvailabilityFilter }> => [
+  { label: t("availabilityAvailable"), value: "available" },
+  { label: t("availabilityUnavailable"), value: "unavailable" },
 ];
 
 const DISTANCE_OPTIONS = [2, 5, 10, 25];
@@ -124,6 +125,7 @@ const buildSearchCacheKey = (type: "jobs" | "services", query: string, filters: 
 };
 
 const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger = 0, onExitPanel }: SearchResultsProps) => {
+  const t = useTranslations("searchResult");
   const [services, setServices] = useState<Service[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -156,9 +158,9 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const popularSearches = useMemo(
     () =>
       mode === "provider"
-        ? ["House Cleaning", "Nanny", "Driver", "Cook", "Plumber", "Gardening", "Security Guard", "Electrician"]
-        : ["Electrician", "House Cleaning", "Nanny / Childcare", "Plumber", "Painter", "Carpenter", "Gardening", "Cook", "Driver", "Laundry", "Security Guard", "AC Repair"],
-    [mode]
+        ? [t("popularProvider1"), t("popularProvider2"), t("popularProvider3"), t("popularProvider4"), t("popularProvider5"), t("popularProvider6"), t("popularProvider7"), t("popularProvider8")]
+        : [t("popularEmployer1"), t("popularEmployer2"), t("popularEmployer3"), t("popularEmployer4"), t("popularEmployer5"), t("popularEmployer6"), t("popularEmployer7"), t("popularEmployer8"), t("popularEmployer9"), t("popularEmployer10"), t("popularEmployer11"), t("popularEmployer12")],
+    [mode, t]
   );
 
   const activeFilterCount = mode === "provider"
@@ -312,7 +314,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setJobs(data);
     } catch {
       if (requestId !== searchRequestRef.current) return;
-      setError("Something went wrong while fetching jobs.");
+      setError(t("errorFetchJobs"));
       setJobs([]);
     } finally {
       if (requestId !== searchRequestRef.current) return;
@@ -374,7 +376,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setServices(data);
     } catch {
       if (requestId !== searchRequestRef.current) return;
-      setError("Something went wrong while fetching services.");
+      setError(t("errorFetchServices"));
       setServices([]);
     } finally {
       if (requestId !== searchRequestRef.current) return;
@@ -427,7 +429,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         comment: payload.comment,
         bookingId: reviewModal.bookingId,
       });
-      toast.success("Review submitted.");
+      toast.success(t("reviewSubmitted"));
       // Card returns to "Request to Hire".
       setReviewableByService((prev) => {
         const next = new Map(prev);
@@ -436,18 +438,18 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       });
       return true;
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not submit your review."));
+      toast.error(getApiErrorMessage(err, t("couldNotSubmitReview")));
       return false;
     }
   };
 
   const openHireModal = (service: Service) => {
     const providerName = service.provider
-      ? `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || "Provider"
-      : service.company?.name || "Company";
+      ? `${service.provider.firstName || ""} ${service.provider.lastName || ""}`.trim() || t("providerFallback")
+      : service.company?.name || t("companyFallback");
 
     if (currentUserId && service.provider?.id === currentUserId) {
-      toast.error("You can't book your own service.");
+      toast.error(t("cantBookOwnService"));
       return;
     }
 
@@ -476,7 +478,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         serviceId: hireModal.serviceId,
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       });
-      toast.success(`Booking request sent to ${hireModal.providerName}!`);
+      toast.success(t("bookingRequestSentTo", { name: hireModal.providerName }));
       setRequestedServiceIds((prev) => {
         const next = new Set(prev);
         next.add(hireModal.serviceId);
@@ -484,7 +486,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       });
       closeHireModal();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
+      toast.error(getApiErrorMessage(err, t("failedSendRequest")));
     } finally {
       setSubmittingHire(false);
     }
@@ -495,11 +497,11 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
     setIsApplyingJob(jobId);
     try {
-      await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
+      await jobsService.applyToJob(jobId, { message: t("interestedMessage") });
       setAppliedJobIds((prev) => new Set([...prev, jobId]));
-      toast.success("Interest sent! The employer will be notified.");
+      toast.success(t("interestSent"));
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to send interest."));
+      toast.error(getApiErrorMessage(err, t("failedSendInterest")));
     } finally {
       setIsApplyingJob(null);
     }
@@ -516,30 +518,30 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const serviceFilterLabels = [
     filters.serviceType && {
       key: "serviceType" as const,
-      label: SERVICE_TYPES.find((type) => type.value === filters.serviceType)?.label,
+      label: SERVICE_TYPES(t).find((type) => type.value === filters.serviceType)?.label,
       onRemove: () => removeServiceFilter("serviceType"),
     },
     filters.availability && {
       key: "availability" as const,
-      label: AVAILABILITY_OPTIONS.find((option) => option.value === filters.availability)?.label,
+      label: AVAILABILITY_OPTIONS(t).find((option) => option.value === filters.availability)?.label,
       onRemove: () => removeServiceFilter("availability"),
     },
     filters.location && { key: "location" as const, label: filters.location, onRemove: () => removeServiceFilter("location") },
-    filters.distanceKm && { key: "distanceKm" as const, label: `${filters.distanceKm} km`, onRemove: () => removeServiceFilter("distanceKm") },
-    filters.minPrice && { key: "minPrice" as const, label: `From ${filters.minPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("minPrice") },
-    filters.maxPrice && { key: "maxPrice" as const, label: `Up to ${filters.maxPrice.toLocaleString()} RWF`, onRemove: () => removeServiceFilter("maxPrice") },
+    filters.distanceKm && { key: "distanceKm" as const, label: t("kmSuffix", { km: filters.distanceKm }), onRemove: () => removeServiceFilter("distanceKm") },
+    filters.minPrice && { key: "minPrice" as const, label: t("fromAmountRwf", { amount: filters.minPrice.toLocaleString() }), onRemove: () => removeServiceFilter("minPrice") },
+    filters.maxPrice && { key: "maxPrice" as const, label: t("upToAmountRwf", { amount: filters.maxPrice.toLocaleString() }), onRemove: () => removeServiceFilter("maxPrice") },
   ].filter(Boolean) as Array<{ key: string; label?: string; onRemove: () => void }>;
 
   const jobFilterLabels = [
-    jobFilters.minBudget && { key: "minBudget", label: `From ${jobFilters.minBudget.toLocaleString()} RWF`, onRemove: () => removeJobFilter("minBudget") },
-    jobFilters.maxBudget && { key: "maxBudget", label: `Up to ${jobFilters.maxBudget.toLocaleString()} RWF`, onRemove: () => removeJobFilter("maxBudget") },
+    jobFilters.minBudget && { key: "minBudget", label: t("fromAmountRwf", { amount: jobFilters.minBudget.toLocaleString() }), onRemove: () => removeJobFilter("minBudget") },
+    jobFilters.maxBudget && { key: "maxBudget", label: t("upToAmountRwf", { amount: jobFilters.maxBudget.toLocaleString() }), onRemove: () => removeJobFilter("maxBudget") },
     jobFilters.location && { key: "location", label: jobFilters.location, onRemove: () => removeJobFilter("location") },
   ].filter(Boolean) as Array<{ key: string; label: string; onRemove: () => void }>;
 
   const activeFilterLabels = mode === "provider" ? jobFilterLabels : serviceFilterLabels;
 
   const showDiscovery = !hasSearchInput && !hasActiveFilters;
-  const resultLabel = hasSearchInput ? ` for "${query.trim()}"` : " for your filters";
+  const resultLabel = hasSearchInput ? t("forQuery", { query: query.trim() }) : t("forYourFilters");
   const resultCount = mode === "provider" ? jobs.length : services.length;
   const hasResults = resultCount > 0;
 
@@ -566,7 +568,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {mode !== "provider" && (
         <div className="flex items-center gap-1.5 text-[12px] text-[#687268]">
           <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-brand" />
-          <span>Near</span>
+          <span>{t("near")}</span>
           <button
             type="button"
             onClick={() => setShowLocPicker(true)}
@@ -578,10 +580,10 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 : viewerLoc.cell
                   ? `${viewerLoc.cell}, ${viewerLoc.sector}`
                   : `${viewerLoc.sector}, ${viewerLoc.district}`
-              : "Set your location"}
+              : t("setYourLocation")}
           </button>
           {viewerLoc && (
-            <span className="text-[#bbb]">· distances shown on cards</span>
+            <span className="text-[#bbb]">{t("distancesShownHint")}</span>
           )}
         </div>
       )}
@@ -603,7 +605,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       {isLoading && (
         <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-6 text-sm text-[#687268]">
           <Loader2 className="h-4 w-4 animate-spin text-brand" />
-          {mode === "provider" ? "Finding matching jobs..." : "Finding matching services..."}
+          {mode === "provider" ? t("findingJobs") : t("findingServices")}
         </div>
       )}
 
@@ -617,10 +619,10 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         <div className="space-y-4">
           <div>
             <h2 className="text-[16px] font-bold text-ink">
-              {mode === "provider" ? "Matching Jobs" : "Matching Services"}
+              {mode === "provider" ? t("matchingJobs") : t("matchingServices")}
             </h2>
             <p className="text-[12px] text-[#687268]">
-              {resultCount} {resultCount === 1 ? "match" : "matches"}{resultLabel}
+              {t("matchCount", { count: resultCount })}{resultLabel}
             </p>
           </div>
 
@@ -632,7 +634,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                   job={{
                     id: job.id,
                     title: job.title,
-                    category: job.category?.name || "Other",
+                    category: job.category?.name || t("otherCategory"),
                     description: job.description,
                     location: job.address?.city || "Kigali",
                     budgetMin: job.budgetMin,
@@ -686,12 +688,12 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
             )}
           </div>
           <h3 className="text-[15px] font-bold text-ink">
-            {mode === "provider" ? "No jobs found" : "No services found"}
+            {mode === "provider" ? t("noJobsFound") : t("noServicesFound")}
           </h3>
           <p className="mx-auto mt-1 max-w-[260px] text-[13px] leading-5 text-[#687268]">
             {mode === "provider"
-              ? "Try a different keyword or check back later for new postings."
-              : "Try a broader search, a different area, or fewer filters."}
+              ? t("tryDifferentKeyword")
+              : t("tryBroaderSearch")}
           </p>
 
           {/* Employers who can't find a match can post a job instead — the
@@ -699,10 +701,10 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           {mode !== "provider" && (
             <div className="mt-5 rounded-xl border border-brand/20 bg-[#F1F8F1] p-4 text-center">
               <p className="text-[13px] font-bold text-ink">
-                Can&apos;t find what you need?
+                {t("cantFindWhatYouNeed")}
               </p>
               <p className="mx-auto mt-1 max-w-[240px] text-[12px] leading-5 text-[#687268]">
-                Post a job and verified providers will come to you.
+                {t("postJobAndProvidersComeToYou")}
               </p>
               <button
                 type="button"
@@ -711,7 +713,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 }
                 className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[13px] font-bold text-white transition-colors hover:bg-[#0f4a0c]"
               >
-                Post a Job
+                {t("postAJob")}
                 <span aria-hidden>→</span>
               </button>
             </div>
@@ -721,7 +723,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
 
       {showDiscovery && (
         <div className="space-y-3">
-          <h2 className="text-[16px] font-bold leading-5 text-ink">Popular Searches</h2>
+          <h2 className="text-[16px] font-bold leading-5 text-ink">{t("popularSearches")}</h2>
           <div className="flex flex-wrap items-center gap-2">
             {popularSearches.map((search, index) => (
               <button
@@ -747,7 +749,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               }
             : null
         }
-        rehireQuestion="Would you hire this person again?"
+        rehireQuestion={t("rehireQuestion")}
         onOpenChange={(open) => {
           if (!open) setReviewModal(null);
         }}
@@ -765,18 +767,18 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               className="border-b-0 pb-2"
               leading={
                 <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
-                  Request
+                  {t("request")}
                 </span>
               }
             />
 
             <SheetBody className="space-y-5 pt-2">
-              <FormField label="Message" hint="Optional">
+              <FormField label={t("message")} hint={t("optional")}>
                 <textarea
                   autoFocus
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Describe what you need, preferred schedule, or any specific requirements..."
+                  placeholder={t("hireNotesPlaceholder")}
                   rows={3}
                   className={cn(appTextareaClass, "min-h-[96px]")}
                 />
@@ -789,14 +791,14 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 onClick={closeHireModal}
                 className="flex-1"
               >
-                Cancel
+                {t("cancel")}
               </AppButton>
               <AppButton
                 onClick={handleHireSubmit}
                 disabled={submittingHire}
                 className="flex-1"
               >
-                {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Request"}
+                {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sendRequest")}
               </AppButton>
             </SheetFooter>
           </SheetPanel>
@@ -808,30 +810,30 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           <SheetOverlay zIndexClassName="z-[80]" onClick={() => setIsFilterOpen(false)} aria-hidden="true" />
           <SheetPanel zIndexClassName="z-[81]" className="max-w-md sm:rounded-3xl" onClose={() => setIsFilterOpen(false)}>
             <SheetHeader
-              title="Filters"
-              subtitle={mode === "provider" ? "Narrow down job results." : "Choose what should appear in the cards."}
+              title={t("filters")}
+              subtitle={mode === "provider" ? t("narrowDownJobResults") : t("chooseWhatAppearsInCards")}
               onClose={() => setIsFilterOpen(false)}
             />
 
             <SheetBody className="max-h-[70vh] space-y-5">
               {mode === "provider" ? (
                 <>
-                  <FilterGroup title="Budget range (RWF)">
+                  <FilterGroup title={t("budgetRangeRwf")}>
                     <div className="grid grid-cols-2 gap-3">
                       <NumberInput
-                        label="Min"
+                        label={t("min")}
                         value={draftJobFilters.minBudget}
                         onChange={(value) => setDraftJobFilters((c) => ({ ...c, minBudget: value }))}
                       />
                       <NumberInput
-                        label="Max"
+                        label={t("max")}
                         value={draftJobFilters.maxBudget}
                         onChange={(value) => setDraftJobFilters((c) => ({ ...c, maxBudget: value }))}
                       />
                     </div>
                   </FilterGroup>
 
-                  <FilterGroup title="Area">
+                  <FilterGroup title={t("area")}>
                     <div className="grid grid-cols-2 gap-2">
                       {LOCATION_OPTIONS.map((location) => (
                         <OptionButton
@@ -849,23 +851,23 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 </>
               ) : (
                 <>
-                  <FilterGroup title="Service type">
+                  <FilterGroup title={t("serviceType")}>
                     <SegmentedOptions
-                      options={SERVICE_TYPES}
+                      options={SERVICE_TYPES(t)}
                       value={draftFilters.serviceType}
                       onChange={(value) => setDraftFilters((c) => ({ ...c, serviceType: value as ServiceTypeFilter }))}
                     />
                   </FilterGroup>
 
-                  <FilterGroup title="Availability">
+                  <FilterGroup title={t("availability")}>
                     <SegmentedOptions
-                      options={AVAILABILITY_OPTIONS}
+                      options={AVAILABILITY_OPTIONS(t)}
                       value={draftFilters.availability}
                       onChange={(value) => setDraftFilters((c) => ({ ...c, availability: value as AvailabilityFilter }))}
                     />
                   </FilterGroup>
 
-                  <FilterGroup title="Area">
+                  <FilterGroup title={t("area")}>
                     <div className="grid grid-cols-2 gap-2">
                       {LOCATION_OPTIONS.map((location) => (
                         <OptionButton
@@ -881,12 +883,12 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                     </div>
                   </FilterGroup>
 
-                  <FilterGroup title="Distance">
+                  <FilterGroup title={t("distance")}>
                     <div className="grid grid-cols-4 gap-2">
                       {DISTANCE_OPTIONS.map((distance) => (
                         <OptionButton
                           key={distance}
-                          label={`${distance} km`}
+                          label={t("kmSuffix", { km: distance })}
                           selected={draftFilters.distanceKm === distance}
                           onClick={() => setDraftFilters((c) => ({
                             ...c,
@@ -897,15 +899,15 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                     </div>
                   </FilterGroup>
 
-                  <FilterGroup title="Price range (RWF)">
+                  <FilterGroup title={t("priceRangeRwf")}>
                     <div className="grid grid-cols-2 gap-3">
                       <NumberInput
-                        label="Min"
+                        label={t("min")}
                         value={draftFilters.minPrice}
                         onChange={(value) => setDraftFilters((c) => ({ ...c, minPrice: value }))}
                       />
                       <NumberInput
-                        label="Max"
+                        label={t("max")}
                         value={draftFilters.maxPrice}
                         onChange={(value) => setDraftFilters((c) => ({ ...c, maxPrice: value }))}
                       />
@@ -923,14 +925,14 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
                 appVariant="secondary"
                 className="flex-1"
               >
-                Reset
+                {t("reset")}
               </AppButton>
               <AppButton
                 type="button"
                 onClick={applyFilters}
                 className="flex-1"
               >
-                Apply
+                {t("apply")}
               </AppButton>
             </SheetFooter>
           </SheetPanel>
@@ -999,18 +1001,21 @@ const NumberInput = ({
   label: string;
   value?: number;
   onChange: (value?: number) => void;
-}) => (
-  <label className="space-y-1">
-    <span className="text-[11px] font-bold uppercase text-[#687268]">{label}</span>
-    <input
-      type="number"
-      min={0}
-      value={value || ""}
-      onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
-      className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-      placeholder="RWF"
-    />
-  </label>
-);
+}) => {
+  const t = useTranslations("searchResult");
+  return (
+    <label className="space-y-1">
+      <span className="text-[11px] font-bold uppercase text-[#687268]">{label}</span>
+      <input
+        type="number"
+        min={0}
+        value={value || ""}
+        onChange={(event) => onChange(event.target.value ? Number(event.target.value) : undefined)}
+        className="h-11 w-full rounded-2xl border border-gray-200 px-3 text-[13px] font-semibold text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+        placeholder={t("rwfPlaceholder")}
+      />
+    </label>
+  );
+};
 
 export default SearchResults;

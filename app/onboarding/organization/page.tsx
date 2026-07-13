@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Building2, Briefcase, ChevronLeft, CheckCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
@@ -33,11 +34,12 @@ function OrgTypeStep({
   selected: OrgType | null
   onSelect: (t: OrgType) => void
 }) {
+  const t = useTranslations("orgOnboarding")
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">What type of business?</h1>
-        <p className="text-gray-500 text-sm">Choose the option that best describes your business.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("whatTypeOfBusiness")}</h1>
+        <p className="text-gray-500 text-sm">{t("chooseOptionDesc")}</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -57,10 +59,9 @@ function OrgTypeStep({
               <Building2 className={`w-6 h-6 ${selected === "SERVICE_COMPANY" ? "text-white" : "text-brand"}`} />
             </div>
             <div>
-              <h3 className="font-bold text-base mb-1">Service Company</h3>
+              <h3 className="font-bold text-base mb-1">{t("serviceCompany")}</h3>
               <p className="text-sm opacity-80">
-                You offer services directly — pest control, deep cleaning, moving, repairs.
-                Your staff are managed internally.
+                {t("serviceCompanyDesc")}
               </p>
             </div>
           </div>
@@ -82,9 +83,9 @@ function OrgTypeStep({
               <Briefcase className={`w-6 h-6 ${selected === "STAFFING_AGENCY" ? "text-white" : "text-brand"}`} />
             </div>
             <div>
-              <h3 className="font-bold text-base mb-1">Placement Agency</h3>
+              <h3 className="font-bold text-base mb-1">{t("placementAgency")}</h3>
               <p className="text-sm opacity-80">
-                You recruit, train, and place workers with families. Commission paid once at placement.
+                {t("placementAgencyDesc")}
               </p>
             </div>
           </div>
@@ -101,29 +102,30 @@ function OrgDetailsStep({
   data: OrgFormData
   onChange: (field: keyof OrgFormData, value: string) => void
 }) {
+  const t = useTranslations("orgOnboarding")
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Business details</h1>
-        <p className="text-gray-500 text-sm">Tell clients a bit about your company.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("businessDetails")}</h1>
+        <p className="text-gray-500 text-sm">{t("tellClientsDesc")}</p>
       </div>
 
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Company name <span className="text-red-500">*</span>
+            {t("companyName")} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={data.name}
             onChange={(e) => onChange("name", e.target.value)}
-            placeholder="e.g. CleanPro Rwanda Ltd."
+            placeholder={t("companyNamePlaceholder")}
             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("phoneNumber")}</label>
           <input
             type="tel"
             value={data.phone}
@@ -134,7 +136,7 @@ function OrgDetailsStep({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Business email</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("businessEmail")}</label>
           <input
             type="email"
             value={data.email}
@@ -145,7 +147,7 @@ function OrgDetailsStep({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t("address")}</label>
           <input
             type="text"
             value={data.address}
@@ -160,16 +162,19 @@ function OrgDetailsStep({
 }
 
 function SuccessStep({ orgName }: { orgName: string }) {
+  const t = useTranslations("orgOnboarding")
   return (
     <div className="flex flex-col items-center gap-6 text-center py-8">
       <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center">
         <CheckCircle className="w-10 h-10 text-brand" />
       </div>
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re all set!</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("youreAllSet")}</h1>
         <p className="text-gray-500 text-sm">
-          <span className="font-semibold text-gray-700">{orgName}</span> has been registered.
-          Clients can now discover and book your services.
+          {t.rich("orgRegisteredDesc", {
+            orgName,
+            name: (chunks) => <span className="font-semibold text-gray-700">{chunks}</span>,
+          })}
         </p>
       </div>
     </div>
@@ -177,6 +182,7 @@ function SuccessStep({ orgName }: { orgName: string }) {
 }
 
 export default function OrgOnboardingPage() {
+  const t = useTranslations("orgOnboarding")
   const router = useRouter()
   const [step, setStep] = useState<Step>("type")
   const [selectedType, setSelectedType] = useState<OrgType | null>(null)
@@ -197,7 +203,7 @@ export default function OrgOnboardingPage() {
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast.error("Company name is required")
+      toast.error(t("companyNameRequired"))
       return
     }
 
@@ -219,7 +225,7 @@ export default function OrgOnboardingPage() {
       setCreatedOrgId(orgId)
       setStep("success")
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to register business. Please try again."))
+      toast.error(getApiErrorMessage(error, t("failedRegisterBusiness")))
     } finally {
       setIsLoading(false)
     }
@@ -248,9 +254,9 @@ export default function OrgOnboardingPage() {
   }
 
   const buttonLabel =
-    step === "type" ? "Continue" :
-    step === "details" ? (isLoading ? "Registering..." : "Register Business") :
-    "View your profile"
+    step === "type" ? t("continueLabel") :
+    step === "details" ? (isLoading ? t("registering") : t("registerBusiness")) :
+    t("viewYourProfile")
 
   const canProceed =
     step === "type" ? canProceedType :
@@ -272,7 +278,7 @@ export default function OrgOnboardingPage() {
         <div className="flex-1" />
         {step !== "success" && (
           <span className="text-xs text-gray-400 font-medium">
-            {step === "type" ? "1 / 2" : "2 / 2"}
+            {step === "type" ? t("stepOneOfTwo") : t("stepTwoOfTwo")}
           </span>
         )}
       </div>
@@ -314,9 +320,9 @@ export default function OrgOnboardingPage() {
 
         {step === "type" && (
           <p className="text-center text-xs text-gray-400 mt-3">
-            Looking to hire or offer services personally?{" "}
+            {t("lookingToHirePersonally")}{" "}
             <Link href="/onboarding" className="text-brand underline">
-              Sign up as an individual
+              {t("signUpAsIndividual")}
             </Link>
           </p>
         )}

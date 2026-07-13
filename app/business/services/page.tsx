@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Building2,
   Loader2,
@@ -40,11 +41,11 @@ interface Category {
   name: string;
 }
 
-const STATUS_STYLES: Record<ApprovalStatus, { label: string; cls: string }> = {
-  PENDING: { label: "Pending review", cls: "bg-[#FFF8EC] text-[#B45309]" },
-  APPROVED: { label: "Approved", cls: "bg-[#ECFDF3] text-[#067647]" },
-  REJECTED: { label: "Rejected", cls: "bg-[#FEF3F2] text-[#B42318]" },
-};
+const STATUS_STYLES = (t: (key: string) => string): Record<ApprovalStatus, { label: string; cls: string }> => ({
+  PENDING: { label: t("statusPending"), cls: "bg-[#FFF8EC] text-[#B45309]" },
+  APPROVED: { label: t("statusApproved"), cls: "bg-[#ECFDF3] text-[#067647]" },
+  REJECTED: { label: t("statusRejected"), cls: "bg-[#FEF3F2] text-[#B42318]" },
+});
 
 const emptyForm = {
   title: "",
@@ -57,6 +58,7 @@ const emptyForm = {
 };
 
 export default function CompanyServicesPage() {
+  const t = useTranslations("companyServices");
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const org = user as unknown as
@@ -94,11 +96,11 @@ export default function CompanyServicesPage() {
       setServices(svcRes.data?.data ?? svcRes.data ?? []);
       setCategories(catRes.data?.data ?? catRes.data ?? []);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not load your services"));
+      toast.error(getApiErrorMessage(err, t("couldNotLoadServices")));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (isCompany) load();
@@ -126,12 +128,12 @@ export default function CompanyServicesPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) return toast.error("Enter a service title");
-    if (!editingId && !form.categoryId) return toast.error("Choose a category");
+    if (!form.title.trim()) return toast.error(t("enterServiceTitle"));
+    if (!editingId && !form.categoryId) return toast.error(t("chooseCategory"));
     const min = form.priceMin ? Number(form.priceMin) : undefined;
     const max = form.priceMax ? Number(form.priceMax) : undefined;
     if (min !== undefined && max !== undefined && min > max) {
-      return toast.error("Minimum price cannot exceed maximum price");
+      return toast.error(t("minExceedsMax"));
     }
 
     const payload: Record<string, unknown> = {
@@ -151,15 +153,15 @@ export default function CompanyServicesPage() {
     try {
       if (editingId) {
         await api.patch(`/services/${editingId}`, payload);
-        toast.success("Service updated.");
+        toast.success(t("serviceUpdated"));
       } else {
         await api.post("/services", payload);
-        toast.success("Service submitted for approval.");
+        toast.success(t("serviceSubmitted"));
       }
       setFormOpen(false);
       await load();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not save the service"));
+      toast.error(getApiErrorMessage(err, t("couldNotSaveService")));
     } finally {
       setSaving(false);
     }
@@ -174,7 +176,7 @@ export default function CompanyServicesPage() {
       }
       await load();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not update the service"));
+      toast.error(getApiErrorMessage(err, t("couldNotUpdateService")));
     }
   }
 
@@ -207,15 +209,15 @@ export default function CompanyServicesPage() {
               <Building2 className="h-5 w-5" style={{ color: colors.primary }} />
             </div>
             <div>
-              <p className="text-[15px] font-black text-ink">{org?.name || "Your company"}</p>
-              <p className="text-[12px] text-ink-muted">Service listings</p>
+              <p className="text-[15px] font-black text-ink">{org?.name || t("yourCompanyFallback")}</p>
+              <p className="text-[12px] text-ink-muted">{t("serviceListings")}</p>
             </div>
           </div>
           <button
             onClick={logout}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-[13px] font-semibold text-ink hover:bg-gray-50"
           >
-            <LogOut className="h-4 w-4" /> Sign out
+            <LogOut className="h-4 w-4" /> {t("signOut")}
           </button>
         </div>
       </header>
@@ -226,25 +228,24 @@ export default function CompanyServicesPage() {
             <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#B45309]" />
             <div>
               <p className="text-[14px] font-bold text-[#B45309]">
-                Your company is awaiting verification
+                {t("awaitingVerification")}
               </p>
               <p className="mt-0.5 text-[13px] text-[#92400E]">
-                You can explore the console now, but you can only publish service
-                cards once an admin verifies your company.
+                {t("awaitingVerificationDesc")}
               </p>
             </div>
           </div>
         )}
 
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-[20px] font-black text-ink">Your services</h1>
+          <h1 className="text-[20px] font-black text-ink">{t("yourServices")}</h1>
           <button
             onClick={openCreate}
             disabled={!isVerified}
             className="flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[14px] font-bold text-white hover:bg-brand-dark disabled:opacity-50"
-            title={isVerified ? "" : "Available once your company is verified"}
+            title={isVerified ? "" : t("availableOnceVerified")}
           >
-            <Plus className="h-4 w-4" /> New service
+            <Plus className="h-4 w-4" /> {t("newService")}
           </button>
         </div>
 
@@ -254,17 +255,17 @@ export default function CompanyServicesPage() {
           </div>
         ) : services.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center">
-            <p className="text-[15px] font-bold text-ink">No services yet</p>
+            <p className="text-[15px] font-bold text-ink">{t("noServicesYet")}</p>
             <p className="mt-1 text-[13px] text-ink-muted">
               {isVerified
-                ? "Add your first service card to appear in the marketplace."
-                : "Once verified, add service cards here."}
+                ? t("addFirstServiceVerified")
+                : t("addFirstServiceUnverified")}
             </p>
           </div>
         ) : (
           <ul className="space-y-3">
             {services.map((s) => {
-              const status = STATUS_STYLES[s.approvalStatus];
+              const status = STATUS_STYLES(t)[s.approvalStatus];
               return (
                 <li
                   key={s.id}
@@ -279,7 +280,7 @@ export default function CompanyServicesPage() {
                         </span>
                         {!s.isActive && (
                           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500">
-                            Inactive
+                            {t("inactive")}
                           </span>
                         )}
                       </div>
@@ -300,14 +301,14 @@ export default function CompanyServicesPage() {
                       <button
                         onClick={() => openEdit(s)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-ink hover:bg-gray-50"
-                        aria-label="Edit"
+                        aria-label={t("edit")}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => toggleActive(s)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-ink hover:bg-gray-50"
-                        aria-label={s.isActive ? "Deactivate" : "Reactivate"}
+                        aria-label={s.isActive ? t("deactivate") : t("reactivate")}
                       >
                         {s.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                       </button>
@@ -315,7 +316,7 @@ export default function CompanyServicesPage() {
                   </div>
                   {s.approvalStatus === "REJECTED" && (
                     <p className="mt-2 rounded-lg bg-[#FEF3F2] px-3 py-2 text-[12px] text-[#B42318]">
-                      This card was rejected. Edit it to resubmit for review.
+                      {t("rejectedNotice")}
                     </p>
                   )}
                 </li>
@@ -330,7 +331,7 @@ export default function CompanyServicesPage() {
           <div className="w-full max-w-[480px] rounded-t-3xl bg-white p-5 sm:rounded-3xl sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-[18px] font-black text-ink">
-                {editingId ? "Edit service" : "New service"}
+                {editingId ? t("editService") : t("newService")}
               </h2>
               <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-ink">
                 <X className="h-5 w-5" />
@@ -339,24 +340,24 @@ export default function CompanyServicesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-ink">Title</label>
+                <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("title")}</label>
                 <input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g. Commercial office cleaning"
+                  placeholder={t("titlePlaceholder")}
                   className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand"
                 />
               </div>
 
               {!editingId && (
                 <div>
-                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">Category</label>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("category")}</label>
                   <select
                     value={form.categoryId}
                     onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                     className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] outline-none focus:border-brand"
                   >
-                    <option value="">Select a category…</option>
+                    <option value="">{t("selectCategoryPlaceholder")}</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -367,19 +368,19 @@ export default function CompanyServicesPage() {
               )}
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-semibold text-ink">Description</label>
+                <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("description")}</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
-                  placeholder="What does this service include?"
+                  placeholder={t("descriptionPlaceholder")}
                   className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-[14px] outline-none focus:border-brand"
                 />
               </div>
 
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">Price min (RWF)</label>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("priceMin")}</label>
                   <input
                     type="number"
                     value={form.priceMin}
@@ -388,7 +389,7 @@ export default function CompanyServicesPage() {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">Price max (RWF)</label>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("priceMax")}</label>
                   <input
                     type="number"
                     value={form.priceMax}
@@ -400,20 +401,20 @@ export default function CompanyServicesPage() {
 
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">Price type</label>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("priceType")}</label>
                   <select
                     value={form.priceType}
                     onChange={(e) => setForm({ ...form, priceType: e.target.value })}
                     className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-[14px] outline-none focus:border-brand"
                   >
-                    <option value="negotiable">Negotiable</option>
-                    <option value="hourly">Hourly</option>
-                    <option value="daily">Daily</option>
-                    <option value="fixed">Fixed</option>
+                    <option value="negotiable">{t("priceTypeNegotiable")}</option>
+                    <option value="hourly">{t("priceTypeHourly")}</option>
+                    <option value="daily">{t("priceTypeDaily")}</option>
+                    <option value="fixed">{t("priceTypeFixed")}</option>
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">Service areas</label>
+                  <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("serviceAreas")}</label>
                   <input
                     value={form.serviceAreas}
                     onChange={(e) => setForm({ ...form, serviceAreas: e.target.value })}
@@ -431,9 +432,9 @@ export default function CompanyServicesPage() {
                 {saving ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : editingId ? (
-                  "Save changes"
+                  t("saveChanges")
                 ) : (
-                  "Submit for approval"
+                  t("submitForApproval")
                 )}
               </button>
             </form>

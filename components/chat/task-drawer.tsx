@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { BOOKING_STATUS } from "@/constant";
@@ -78,10 +79,15 @@ function fmtDateTime(value?: string | null) {
 }
 
 /** Resolve an actor id to its booking role for captions / activity. */
-function roleOf(id: string | null | undefined, employerId: string, workerId: string): string {
-  if (id && id === employerId) return "Employer";
-  if (id && id === workerId) return "Worker";
-  return "Someone";
+function roleOf(
+  id: string | null | undefined,
+  employerId: string,
+  workerId: string,
+  labels: { employer: string; worker: string; someone: string },
+): string {
+  if (id && id === employerId) return labels.employer;
+  if (id && id === workerId) return labels.worker;
+  return labels.someone;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +105,8 @@ interface TaskDetailViewProps {
 }
 
 function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, onBack, onUpdate }: TaskDetailViewProps) {
+  const t = useTranslations("taskDrawer");
+  const roleLabels = { employer: t("roleEmployer"), worker: t("roleWorker"), someone: t("roleSomeone") };
   const [isSaving, setIsSaving] = useState(false);
   const [isActing, setIsActing] = useState<"cancel" | null>(null);
   const [title, setTitle] = useState(task.title);
@@ -117,9 +125,9 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
         description: description.trim(),
       });
       onUpdate(res.data.data);
-      toast.success("Task updated");
+      toast.success(t("taskUpdated"));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to update task"));
+      toast.error(getApiErrorMessage(error, t("failedToUpdateTask")));
     } finally {
       setIsSaving(false);
     }
@@ -133,22 +141,20 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
         isCanceled: !task.isCanceled,
       });
       onUpdate(res.data.data);
-      toast.success(task.isCanceled ? "Task restored" : "Task canceled");
+      toast.success(task.isCanceled ? t("taskRestored") : t("taskCanceled"));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to update task"));
+      toast.error(getApiErrorMessage(error, t("failedToUpdateTask")));
     } finally {
       setIsActing(null);
     }
   };
 
-  const statusLabel = task.isCanceled ? "Canceled" : task.isCompleted ? "Completed" : "Active";
-
   return (
     <div className="flex h-full flex-col">
       <SheetHeader
-        title="Task Detail"
+        title={t("detailTitle")}
         leading={
-          <button onClick={onBack} className="rounded-full p-1.5 text-ink transition-colors hover:bg-gray-100" aria-label="Back to tasks">
+          <button onClick={onBack} className="rounded-full p-1.5 text-ink transition-colors hover:bg-gray-100" aria-label={t("backToTasks")}>
             <ArrowLeft className="h-5 w-5" />
           </button>
         }
@@ -170,7 +176,7 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
               {task.title}
             </p>
             <p className="mt-0.5 text-[11px] font-medium text-brand">
-              Added by {roleOf(task.createdById, employerId, workerId)}
+              {t("addedBy", { role: roleOf(task.createdById, employerId, workerId, roleLabels) })}
             </p>
           </div>
         </div>
@@ -178,17 +184,15 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
         {/* Status hint */}
         <div className={cn("flex items-center gap-2 rounded-xl px-3 py-2 text-[12px]", task.isCanceled ? "bg-red-50 text-red-600" : "bg-surface text-brand")}>
           <ShieldCheck className="h-4 w-4 flex-shrink-0" />
-          {task.isCanceled
-            ? "This task is canceled. It stays here as a record for both sides."
-            : "This task is active and visible to both you and the worker."}
+          {task.isCanceled ? t("canceledNotice") : t("activeNotice")}
         </div>
 
         {/* Details — read-only for worker, editable for employer on an active task */}
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">Details</p>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("details")}</p>
           {canEdit ? (
             <div className={cn(appCardClass, "space-y-3")}>
-              <FormField label="Task title">
+              <FormField label={t("taskTitleLabel")}>
                 <input
                   type="text"
                   value={title}
@@ -196,11 +200,11 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
                   className={cn(appInputClass, "mt-2")}
                 />
               </FormField>
-              <FormField label="Notes" hint="Optional">
+              <FormField label={t("notes")} hint={t("optional")}>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="No additional notes."
+                  placeholder={t("noAdditionalNotes")}
                   className={cn(appTextareaClass, "mt-2 min-h-[88px]")}
                 />
               </FormField>
@@ -209,16 +213,16 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
                 disabled={!title.trim() || isSaving}
                 className={cn(appPrimaryButtonClass, "flex w-full items-center justify-center")}
               >
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save changes"}
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("saveChanges")}
               </button>
             </div>
           ) : (
             <div className="rounded-xl bg-surface px-4 py-3">
               <p className="text-[13px] leading-relaxed text-ink">
-                {task.description || <span className="italic text-gray-400">No additional notes.</span>}
+                {task.description || <span className="italic text-gray-400">{t("noAdditionalNotes")}</span>}
               </p>
               {!isEmployer && isActive && (
-                <p className="mt-2 text-[11px] text-gray-400">Only the employer can edit a task.</p>
+                <p className="mt-2 text-[11px] text-gray-400">{t("employerOnlyEdit")}</p>
               )}
             </div>
           )}
@@ -226,14 +230,14 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
 
         {/* Activity log — derived from stored fields */}
         <div>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">Activity</p>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("activity")}</p>
           <ul className="space-y-3">
-            <ActivityRow icon={<Plus className="h-3.5 w-3.5" />} tone="neutral" when={fmtDateTime(task.createdAt)} label="Task created" by={roleOf(task.createdById, employerId, workerId)} />
+            <ActivityRow icon={<Plus className="h-3.5 w-3.5" />} tone="neutral" when={fmtDateTime(task.createdAt)} label={t("taskCreated")} by={roleOf(task.createdById, employerId, workerId, roleLabels)} />
             {task.isCompleted && (
-              <ActivityRow icon={<CheckCircle2 className="h-3.5 w-3.5" />} tone="green" when={fmtDateTime(task.completedAt)} label="Marked complete" by={roleOf(task.completedById, employerId, workerId)} />
+              <ActivityRow icon={<CheckCircle2 className="h-3.5 w-3.5" />} tone="green" when={fmtDateTime(task.completedAt)} label={t("markedComplete")} by={roleOf(task.completedById, employerId, workerId, roleLabels)} />
             )}
             {task.isCanceled && (
-              <ActivityRow icon={<Ban className="h-3.5 w-3.5" />} tone="red" when={fmtDateTime(task.canceledAt)} label="Task canceled" by={roleOf(task.canceledById, employerId, workerId)} />
+              <ActivityRow icon={<Ban className="h-3.5 w-3.5" />} tone="red" when={fmtDateTime(task.canceledAt)} label={t("taskCanceled")} by={roleOf(task.canceledById, employerId, workerId, roleLabels)} />
             )}
           </ul>
         </div>
@@ -258,10 +262,10 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
             ) : (
               <Ban className="h-4 w-4" />
             )}
-            {task.isCanceled ? "Restore Task" : "Cancel Task"}
+            {task.isCanceled ? t("restoreTask") : t("cancelTask")}
           </button>
           <p className="mt-3 text-center text-[11px] text-gray-500">
-            {task.isCanceled ? "Restoring moves it back to To-Do." : "Canceling keeps a record for both sides."}
+            {task.isCanceled ? t("restoreHint") : t("cancelHint")}
           </p>
         </SheetFooter>
       )}
@@ -270,6 +274,7 @@ function TaskDetailView({ task, employerId, workerId, isEmployer, jobEditable, o
 }
 
 function ActivityRow({ icon, tone, label, by, when }: { icon: React.ReactNode; tone: "neutral" | "green" | "red"; label: string; by: string; when: string }) {
+  const t = useTranslations("taskDrawer");
   const toneClass =
     tone === "green" ? "bg-brand/10 text-brand" : tone === "red" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-500";
   return (
@@ -277,7 +282,7 @@ function ActivityRow({ icon, tone, label, by, when }: { icon: React.ReactNode; t
       <span className={cn("mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full", toneClass)}>{icon}</span>
       <div className="min-w-0">
         <p className="text-[13px] font-semibold text-ink">{label}</p>
-        <p className="text-[11px] text-gray-500">by {by}{when ? ` · ${when}` : ""}</p>
+        <p className="text-[11px] text-gray-500">{t("byPrefix", { name: by })}{when ? ` · ${when}` : ""}</p>
       </div>
     </li>
   );
@@ -295,6 +300,7 @@ interface AddTaskViewProps {
 }
 
 function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewProps) {
+  const t = useTranslations("taskDrawer");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -312,7 +318,7 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
       setDescription("");
       onBack();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to add task"));
+      toast.error(getApiErrorMessage(error, t("failedToAddTask")));
     } finally {
       setIsAdding(false);
     }
@@ -321,21 +327,21 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
   return (
     <div className="flex h-full flex-col">
       <SheetHeader
-        title="Add Task"
+        title={t("addTaskTitle")}
         onClose={onClose}
         leading={
-          <button onClick={onBack} className="rounded-full p-1.5 text-ink transition-colors hover:bg-gray-100" aria-label="Back to tasks">
+          <button onClick={onBack} className="rounded-full p-1.5 text-ink transition-colors hover:bg-gray-100" aria-label={t("backToTasks")}>
             <ArrowLeft className="h-5 w-5" />
           </button>
         }
       />
       <SheetBody>
-        <FormField label="Task Title">
+        <FormField label={t("taskTitleFieldLabel")}>
           <input
             autoFocus
             type="text"
             maxLength={80}
-            placeholder="What needs to be done?"
+            placeholder={t("taskTitlePlaceholder")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleAddTask(); }}
@@ -343,10 +349,10 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
           />
           <p className="mt-2 text-right text-[11px] text-gray-400">{title.trim().length}/80</p>
         </FormField>
-        <FormField label="Details" hint="Optional" className="mt-5">
+        <FormField label={t("detailsFieldLabel")} hint={t("optional")} className="mt-5">
           <textarea
             maxLength={200}
-            placeholder="Add notes or instructions..."
+            placeholder={t("detailsPlaceholder")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className={cn(appTextareaClass, "mt-3 min-h-[120px]")}
@@ -356,11 +362,11 @@ function AddTaskView({ bookingId, onBack, onClose, onTaskAdded }: AddTaskViewPro
       </SheetBody>
       <SheetFooter>
         <AppButton onClick={handleAddTask} disabled={!title.trim() || isAdding} className="flex w-full items-center justify-center">
-          {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Task"}
+          {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : t("addTask")}
         </AppButton>
         <p className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-500">
           <LockKeyhole className="h-3.5 w-3.5" />
-          Visible to both you and the other party
+          {t("visibleToBoth")}
         </p>
       </SheetFooter>
     </div>
@@ -398,6 +404,8 @@ export function TaskDrawer({
   onTasksChange,
   onStatusChange,
 }: TaskDrawerProps) {
+  const t = useTranslations("taskDrawer");
+  const roleLabels = { employer: t("roleEmployer"), worker: t("roleWorker"), someone: t("roleSomeone") };
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -421,16 +429,19 @@ export function TaskDrawer({
     onClose();
   };
 
-  const handleStatusChange = async (newStatus: string, actionName: string) => {
+  // Stable keys for isActionLoading comparisons; translated only when displayed.
+  const actionLabels = { completeJob: t("markJobComplete"), cancelJob: t("cancelJob") } as const;
+
+  const handleStatusChange = async (newStatus: string, actionKey: keyof typeof actionLabels) => {
     if (isActionLoading) return;
-    setIsActionLoading(actionName);
+    setIsActionLoading(actionKey);
     try {
       await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
-      toast.success(`Booking ${newStatus.toLowerCase()} successfully`);
+      toast.success(t("bookingUpdated", { status: newStatus.toLowerCase() }));
       onStatusChange?.(newStatus);
       onClose();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, `Failed to ${actionName.toLowerCase()}`));
+      toast.error(getApiErrorMessage(error, t("failedAction", { action: actionLabels[actionKey].toLowerCase() })));
     } finally {
       setIsActionLoading(null);
     }
@@ -438,15 +449,15 @@ export function TaskDrawer({
 
   const handleCompleteJob = () => {
     if (activeCount > 0) {
-      toast.error(`Finish or cancel the ${activeCount} remaining ${activeCount === 1 ? "task" : "tasks"} first.`);
+      toast.error(t("remainingTasksWarning", { count: activeCount }));
       return;
     }
-    handleStatusChange(BOOKING_STATUS.COMPLETED, "Complete Job");
+    handleStatusChange(BOOKING_STATUS.COMPLETED, "completeJob");
   };
 
   const handleCancelJob = () => {
-    if (confirm("Are you sure you want to cancel this job? This action cannot be undone.")) {
-      handleStatusChange(BOOKING_STATUS.CANCELLED, "Cancel Job");
+    if (confirm(t("confirmCancelJob"))) {
+      handleStatusChange(BOOKING_STATUS.CANCELLED, "cancelJob");
     }
   };
 
@@ -463,8 +474,8 @@ export function TaskDrawer({
     }
   };
 
-  const handleToggleComplete = (task: Task) => patchTask(task, { isCompleted: !task.isCompleted }, "Failed to update task");
-  const handleToggleCancel = (task: Task) => patchTask(task, { isCanceled: !task.isCanceled }, "Failed to update task");
+  const handleToggleComplete = (task: Task) => patchTask(task, { isCompleted: !task.isCompleted }, t("failedToUpdateTask"));
+  const handleToggleCancel = (task: Task) => patchTask(task, { isCanceled: !task.isCanceled }, t("failedToUpdateTask"));
 
   const handleTaskAdded = (task: Task) => {
     onTasksChange(tasks.some((t) => t.id === task.id) ? tasks : [...tasks, task]);
@@ -494,7 +505,7 @@ export function TaskDrawer({
       const res = await api.patch<{ data: Task[] }>(`/bookings/${bookingId}/tasks/reorder`, { orderedIds });
       onTasksChange(res.data.data);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to reorder tasks"));
+      toast.error(getApiErrorMessage(error, t("failedToReorderTasks")));
     }
   };
 
@@ -519,20 +530,20 @@ export function TaskDrawer({
           />
         ) : (
           <>
-            <SheetHeader title="Tasks" onClose={handleClose} />
+            <SheetHeader title={t("tasksTitle")} onClose={handleClose} />
 
             {/* Provenance / read-only banner */}
             {isReadOnly ? (
               <div className="mx-5 mb-5 flex items-center gap-3 rounded-xl bg-gray-100 px-4 py-3 text-gray-600">
                 <LockKeyhole className="h-5 w-5 flex-shrink-0" />
-                <p className="text-[12px] font-medium">This job is {status.toLowerCase()} — tasks are read-only.</p>
+                <p className="text-[12px] font-medium">{t("readOnlyNotice", { status: status.toLowerCase() })}</p>
               </div>
             ) : (
               <div className="mx-5 mb-5 flex items-center gap-3 rounded-xl bg-surface px-4 py-3 text-brand">
                 <ShieldCheck className="h-5 w-5 flex-shrink-0" />
                 <div>
-                  <p className="text-[12px] font-bold">{activeCount > 0 ? `${activeCount} remaining` : "Nothing left to do"}</p>
-                  <p className="mt-0.5 text-[11px] text-current/70">Nothing is ever deleted — canceled tasks stay for reference.</p>
+                  <p className="text-[12px] font-bold">{t("remaining", { count: activeCount })}</p>
+                  <p className="mt-0.5 text-[11px] text-current/70">{t("neverDeletedNotice")}</p>
                 </div>
               </div>
             )}
@@ -541,16 +552,16 @@ export function TaskDrawer({
               {/* TO DO */}
               <section>
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">To Do ({activeCount})</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("todoSection", { count: activeCount })}</p>
                   {jobEditable && activeCount > 1 && (
-                    <span className="text-[10px] font-medium text-gray-400">Drag to reorder</span>
+                    <span className="text-[10px] font-medium text-gray-400">{t("dragToReorder")}</span>
                   )}
                 </div>
 
                 {todo.length === 0 ? (
                   <div className={cn(appCardClass, "flex flex-col items-center justify-center px-4 py-7 text-center")}>
                     <CheckCircle2 className="h-10 w-10 text-brand" strokeWidth={1.8} />
-                    <p className="mt-3 text-[13px] font-bold text-ink">No pending tasks</p>
+                    <p className="mt-3 text-[13px] font-bold text-ink">{t("noPendingTasks")}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -575,7 +586,7 @@ export function TaskDrawer({
                           onClick={() => handleToggleComplete(task)}
                           disabled={!jobEditable || togglingId === task.id}
                           className="flex-shrink-0 disabled:opacity-50"
-                          aria-label="Mark complete"
+                          aria-label={t("markComplete")}
                         >
                           {togglingId === task.id ? (
                             <Loader2 className="h-5 w-5 animate-spin text-brand" />
@@ -585,13 +596,13 @@ export function TaskDrawer({
                         </button>
                         <button onClick={() => setSelectedTask(task)} className="min-w-0 flex-1 text-left">
                           <span className="block truncate text-[13px] font-medium leading-snug text-ink">{task.title}</span>
-                          <span className="text-[10px] text-gray-400">Added by {roleOf(task.createdById, employerId, workerId)}</span>
+                          <span className="text-[10px] text-gray-400">{t("addedBy", { role: roleOf(task.createdById, employerId, workerId, roleLabels) })}</span>
                         </button>
                         {isEmployer && jobEditable && (
                           <button
                             onClick={() => setSelectedTask(task)}
                             className="flex-shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-                            aria-label="Edit task"
+                            aria-label={t("editTask")}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -599,7 +610,7 @@ export function TaskDrawer({
                         <button
                           onClick={() => setSelectedTask(task)}
                           className="flex-shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-                          aria-label="View task details"
+                          aria-label={t("viewTaskDetails")}
                         >
                           <ChevronRight className="h-4 w-4" />
                         </button>
@@ -614,7 +625,7 @@ export function TaskDrawer({
                     className="mt-4 flex items-center gap-2 px-1 text-[13px] font-bold text-brand transition-colors hover:text-brand-dark"
                   >
                     <Plus className="h-4 w-4" />
-                    Add Task
+                    {t("addTask")}
                   </button>
                 )}
               </section>
@@ -622,14 +633,14 @@ export function TaskDrawer({
               {/* COMPLETED & CANCELED */}
               <section className="mt-6 border-t border-gray-100 pt-4">
                 <button onClick={() => setShowDone((v) => !v)} className="flex w-full items-center justify-between text-left">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Completed &amp; Canceled ({done.length})</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-gray-500">{t("completedCanceledSection", { count: done.length })}</span>
                   <ChevronDown className={cn("h-4 w-4 text-gray-500 transition-transform", showDone && "rotate-180")} />
                 </button>
 
                 {showDone && (
                   <div className="mt-3 space-y-2">
                     {done.length === 0 ? (
-                      <p className="text-[12px] text-gray-500">Nothing here yet.</p>
+                      <p className="text-[12px] text-gray-500">{t("nothingHereYet")}</p>
                     ) : (
                       done.map((task) => (
                         <div key={task.id} className="flex items-center gap-3 rounded-2xl border border-[#DCE8D9] bg-white px-3 py-3 shadow-sm">
@@ -637,7 +648,7 @@ export function TaskDrawer({
                             onClick={() => (task.isCanceled ? handleToggleCancel(task) : handleToggleComplete(task))}
                             disabled={!jobEditable || togglingId === task.id}
                             className="flex-shrink-0 disabled:opacity-50"
-                            aria-label={task.isCanceled ? "Restore task" : "Mark incomplete"}
+                            aria-label={task.isCanceled ? t("restoreTaskAria") : t("markIncomplete")}
                           >
                             {togglingId === task.id ? (
                               <Loader2 className="h-5 w-5 animate-spin text-brand" />
@@ -651,17 +662,17 @@ export function TaskDrawer({
                             <span className={cn("block truncate text-[13px] font-medium leading-snug text-gray-500", task.isCanceled && "line-through")}>{task.title}</span>
                             <span className="text-[10px] text-gray-400">
                               {task.isCanceled
-                                ? `Canceled by ${roleOf(task.canceledById, employerId, workerId)}`
-                                : `Completed by ${roleOf(task.completedById, employerId, workerId)}`}
+                                ? t("canceledByPrefix", { name: roleOf(task.canceledById, employerId, workerId, roleLabels) })
+                                : t("completedByPrefix", { name: roleOf(task.completedById, employerId, workerId, roleLabels) })}
                             </span>
                           </button>
                           {task.isCanceled && (
-                            <span className="flex-shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-500">Canceled</span>
+                            <span className="flex-shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-500">{t("canceledBadge")}</span>
                           )}
                           <button
                             onClick={() => setSelectedTask(task)}
                             className="flex-shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-                            aria-label="View task details"
+                            aria-label={t("viewTaskDetails")}
                           >
                             <ChevronRight className="h-4 w-4" />
                           </button>
@@ -676,7 +687,7 @@ export function TaskDrawer({
             {/* Job actions */}
             {!isReadOnly && (
               <div className="border-t border-[#EDF1EC] px-5 pb-6 pt-4">
-                <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">Job Actions</p>
+                <p className="mb-3 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400">{t("jobActions")}</p>
                 <div className="space-y-2">
                   <button
                     onClick={handleCompleteJob}
@@ -684,11 +695,11 @@ export function TaskDrawer({
                     className="flex w-full items-center gap-3 rounded-xl border border-brand/20 bg-brand px-4 py-3 text-left text-white shadow-sm disabled:opacity-50"
                   >
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/80">
-                      {isActionLoading === "Complete Job" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {isActionLoading === "completeJob" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                     </div>
                     <div>
-                      <p className="text-[13px] font-bold">Mark Job as Complete</p>
-                      <p className="text-[10px] text-white/80">{activeCount > 0 ? "Finish or cancel remaining tasks first." : "All tasks resolved."}</p>
+                      <p className="text-[13px] font-bold">{t("markJobComplete")}</p>
+                      <p className="text-[10px] text-white/80">{activeCount > 0 ? t("finishRemainingFirst") : t("allTasksResolved")}</p>
                     </div>
                   </button>
 
@@ -697,18 +708,18 @@ export function TaskDrawer({
                       <ShieldAlert className="h-4 w-4 text-gray-500" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-bold text-ink">Report Issue</p>
-                      <p className="text-[10px] text-gray-400">Something not right? Let us know.</p>
+                      <p className="text-[13px] font-bold text-ink">{t("reportIssue")}</p>
+                      <p className="text-[10px] text-gray-400">{t("reportIssueHint")}</p>
                     </div>
                   </button>
 
                   <button onClick={handleCancelJob} disabled={!!isActionLoading} className="flex w-full items-center gap-3 rounded-xl border border-red-200 bg-white px-4 py-3 text-left disabled:opacity-50">
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
-                      {isActionLoading === "Cancel Job" ? <Loader2 className="h-4 w-4 animate-spin text-red-500" /> : <X className="h-4 w-4 text-red-500" />}
+                      {isActionLoading === "cancelJob" ? <Loader2 className="h-4 w-4 animate-spin text-red-500" /> : <X className="h-4 w-4 text-red-500" />}
                     </div>
                     <div>
-                      <p className="text-[13px] font-bold text-red-600">Cancel Job</p>
-                      <p className="text-[10px] text-red-500/70">Cancel this booking.</p>
+                      <p className="text-[13px] font-bold text-red-600">{t("cancelJob")}</p>
+                      <p className="text-[10px] text-red-500/70">{t("cancelJobHint")}</p>
                     </div>
                   </button>
                 </div>

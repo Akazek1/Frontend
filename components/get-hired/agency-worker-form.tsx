@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -32,6 +33,7 @@ interface AgencyWorker {
 }
 
 const AgencyWorkerManagement: React.FC = () => {
+    const t = useTranslations("agencyWorkerForm")
     const [agencyWorker, setAgencyWorker] = useState<AgencyWorker>({
         firstName: "",
         lastName: "",
@@ -54,18 +56,18 @@ const AgencyWorkerManagement: React.FC = () => {
 
     // Validate form data
     const validateForm = (workerData: AgencyWorker, file: File | null): string | null => {
-        if (!workerData.firstName.trim()) return "First name is required"
-        if (!workerData.lastName.trim()) return "Last name is required"
-        if (!workerData.phoneNumber.trim()) return "Phone number is required"
-        if (!workerData.email.trim()) return "Email is required"
-        if (!workerData.dateOfBirth) return "Date of birth is required"
-        if (workerData.languages.length === 0) return "At least one language is required"
+        if (!workerData.firstName.trim()) return t("firstNameRequired")
+        if (!workerData.lastName.trim()) return t("lastNameRequired")
+        if (!workerData.phoneNumber.trim()) return t("phoneRequired")
+        if (!workerData.email.trim()) return t("emailRequired")
+        if (!workerData.dateOfBirth) return t("dobRequired")
+        if (workerData.languages.length === 0) return t("languageRequired")
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(workerData.email.trim())) return "Invalid email format"
+        if (!emailRegex.test(workerData.email.trim())) return t("invalidEmailFormat")
 
         const phoneRegex = /^\+?[\d\s-]{10,}$/
-        if (!phoneRegex.test(workerData.phoneNumber.trim())) return "Invalid phone number format"
+        if (!phoneRegex.test(workerData.phoneNumber.trim())) return t("invalidPhoneFormat")
 
         const dob = new Date(workerData.dateOfBirth)
         const today = new Date()
@@ -75,10 +77,10 @@ const AgencyWorkerManagement: React.FC = () => {
         const adjustedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age
 
         if (isNaN(dob.getTime()) || adjustedAge <= 18) {
-            return "Worker must be older than 18 years"
+            return t("mustBeOlder18")
         }
 
-        if (!editingWorkerId && !file) return "National ID file is required"
+        if (!editingWorkerId && !file) return t("nationalIdRequired")
 
         return null
     }
@@ -111,7 +113,7 @@ const AgencyWorkerManagement: React.FC = () => {
                 formData.append("file", file)
             }
 
-            toast.success("Worker management coming soon!");
+            toast.success(t("comingSoon"));
 
             setAgencyWorker({
                 firstName: "",
@@ -138,7 +140,7 @@ const AgencyWorkerManagement: React.FC = () => {
                     )
                         ? (error as { response: { data: { message: string[] } } }).response.data.message.join(", ")
                         : (error as { response: { data: { message: string } } }).response.data.message
-                    : "Failed to update worker";
+                    : t("failedUpdateWorker");
             console.error("Error:", message);
             toast.error(message);
         } finally {
@@ -150,10 +152,10 @@ const AgencyWorkerManagement: React.FC = () => {
     const handleDeleteWorker = async (workerId: string) => {
         try {
             setIsLoading(true)
-            toast.success("Worker management coming soon!");
+            toast.success(t("comingSoon"));
             void workerId;
         } catch {
-            toast.error("Failed to delete worker");
+            toast.error(t("failedDeleteWorker"));
         } finally {
             setIsLoading(false)
         }
@@ -191,75 +193,75 @@ const AgencyWorkerManagement: React.FC = () => {
             {/* Worker Form */}
             <form onSubmit={handleSubmit} className="space-y-6 flex flex-col items-center mb-5">
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s First Name</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("firstNameLabel")}</Label>
                     <Input
                         id="firstName"
                         value={agencyWorker.firstName}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, firstName: e.target.value }))}
                         className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
-                        placeholder="Worker's First Name"
+                        placeholder={t("firstNameLabel")}
                         required
                     />
                 </div>
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Last Name</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("lastNameLabel")}</Label>
                     <Input
                         id="lastName"
                         value={agencyWorker.lastName}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, lastName: e.target.value }))}
                         className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
-                        placeholder="Worker's Last Name"
+                        placeholder={t("lastNameLabel")}
                         required
                     />
                 </div>
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Email</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("emailLabel")}</Label>
                     <Input
                         id="email"
                         type="email"
                         value={agencyWorker.email}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, email: e.target.value }))}
                         className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
-                        placeholder="Worker's Email"
+                        placeholder={t("emailLabel")}
                         required
                     />
                 </div>
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Phone Number</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("phoneLabel")}</Label>
                     <Input
                         id="phoneNumber"
                         type="tel"
                         value={agencyWorker.phoneNumber}
                         onChange={(e) => setAgencyWorker((prev) => ({ ...prev, phoneNumber: e.target.value }))}
                         className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border-none focus:ring-brand"
-                        placeholder="Worker's Phone Number"
+                        placeholder={t("phoneLabel")}
                         required
                     />
                 </div>
                 <MultiSelectLanguage
                     selectedLanguages={agencyWorker.languages}
                     onChange={(langs) => setAgencyWorker((prev) => ({ ...prev, languages: langs }))}
-                    label="Worker's Languages"
+                    label={t("languagesLabel")}
                 />
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Gender</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("genderLabel")}</Label>
                     <Select
                         value={agencyWorker.gender}
                         onValueChange={(value) => setAgencyWorker((prev) => ({ ...prev, gender: value }))}
                     >
                         <SelectTrigger className="relative bg-white text-sm font-semibold rounded-lg px-5 py-[18px] focus:outline-none border focus:ring-brand">
-                            <SelectValue placeholder="Select gender" />
+                            <SelectValue placeholder={t("selectGender")} />
                             <ChevronDown className="w-5 h-5 text-black fill-black absolute right-5 transition" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="MALE">Male</SelectItem>
-                            <SelectItem value="FEMALE">Female</SelectItem>
-                            <SelectItem value="OTHER">Other</SelectItem>
+                            <SelectItem value="MALE">{t("male")}</SelectItem>
+                            <SelectItem value="FEMALE">{t("female")}</SelectItem>
+                            <SelectItem value="OTHER">{t("other")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s Date of Birth()</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("dobLabel")}</Label>
                     {/* Native picker stays interactive (opacity-0, tap opens the OS
                         date picker) but its own text render — which overflows on
                         iOS and always follows device locale — is hidden. The
@@ -270,19 +272,19 @@ const AgencyWorkerManagement: React.FC = () => {
                             type="date"
                             value={agencyWorker.dateOfBirth}
                             onChange={(e) => setAgencyWorker((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                            aria-label="Worker's date of birth"
+                            aria-label={t("dobAriaLabel")}
                             className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                         />
                         <div className="bg-white text-sm font-semibold rounded-lg px-5 py-[18px] border pointer-events-none overflow-hidden">
                             <span className={agencyWorker.dateOfBirth ? "" : "text-secondary-foreground/50"}>
-                                {agencyWorker.dateOfBirth ? formatDateDMY(agencyWorker.dateOfBirth) : "DD/MM/YYYY"}
+                                {agencyWorker.dateOfBirth ? formatDateDMY(agencyWorker.dateOfBirth) : t("dobPlaceholder")}
                             </span>
                         </div>
                     </div>
-                    <span className="text-[10px] text-secondary-foreground/50">Must be older than 18</span>
+                    <span className="text-[10px] text-secondary-foreground/50">{t("mustBeOlderHint")}</span>
                 </div>
                 <div className="space-y-0.5 w-full">
-                    <Label className="text-xs font-semibold text-secondary-foreground/50">Worker&apos;s National ID</Label>
+                    <Label className="text-xs font-semibold text-secondary-foreground/50">{t("nationalIdLabel")}</Label>
                     <Input
                         id="nationalId"
                         type="file"
@@ -297,18 +299,18 @@ const AgencyWorkerManagement: React.FC = () => {
                     disabled={isLoading}
                     className="w-full bg-[#167021] text-white rounded-full font-bold leading-6 h-14 hover:bg-brand-dark transition-colors disabled:opacity-50"
                 >
-                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : editingWorkerId ? "Update Worker" : "Add Worker"}
+                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : editingWorkerId ? t("updateWorker") : t("addWorker")}
                 </Button>
             </form>
 
             {/* Worker List as Cards */}
             <div className="pb-5">
-                <Label className="text-lg font-semibold">Your Workers</Label>
+                <Label className="text-lg font-semibold">{t("yourWorkers")}</Label>
                 {/* Status Messages */}
                 {isLoading && (
                     <div className="flex justify-center items-center p-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                        <span className="text-gray-600">Loading workers...</span>
+                        <span className="text-gray-600">{t("loadingWorkers")}</span>
                     </div>
                 )}
 
@@ -374,17 +376,17 @@ const AgencyWorkerManagement: React.FC = () => {
                                         </div>
                                         <div className="flex items-center text-sm text-gray-600">
                                             <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                                            <span>{worker.phoneNumber || 'Not provided'}</span>
+                                            <span>{worker.phoneNumber || t("notProvided")}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center text-sm text-gray-600">
                                             <Languages className="w-4 h-4 mr-2 text-gray-400" />
-                                            <span>{worker.languages?.join(", ") || "None"}</span>
+                                            <span>{worker.languages?.join(", ") || t("none")}</span>
                                         </div>
                                         <div className="flex items-center text-sm text-gray-600">
                                             <VenusAndMars className="w-4 h-4 mr-2 text-gray-400" />
-                                            <span>{worker.gender || "Not specified"}</span>
+                                            <span>{worker.gender || t("notSpecified")}</span>
                                         </div>
                                     </div>
                                 </div>

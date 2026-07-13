@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   AlertCircle,
   Calendar,
@@ -58,8 +59,8 @@ interface IssueDetail {
   };
 }
 
-function name(p: { firstName: string | null; lastName: string | null }) {
-  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown";
+function name(p: { firstName: string | null; lastName: string | null }, fallback: string) {
+  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || fallback;
 }
 
 function fmt(iso: string | null) {
@@ -68,6 +69,7 @@ function fmt(iso: string | null) {
 }
 
 export default function IssueDetailPage() {
+  const t = useTranslations("agencyIssueDetail");
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -86,7 +88,7 @@ export default function IssueDetailPage() {
         const res = await api.get(`/agency/issues/${id}`);
         setIssue(res.data?.data || res.data);
       } catch (err) {
-        setError(getApiErrorMessage(err, "Issue not found"));
+        setError(getApiErrorMessage(err, t("issueNotFound")));
       } finally {
         setLoading(false);
       }
@@ -99,11 +101,11 @@ export default function IssueDetailPage() {
     try {
       const res = await api.patch(`/agency/issues/${id}/resolve`, { resolution: note || undefined });
       setIssue((prev) => (prev ? { ...prev, ...res.data?.data, ...res.data } : prev));
-      toast.success("Issue marked as resolved");
+      toast.success(t("issueResolved"));
       setResolveOpen(false);
       setResolution("");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not resolve issue"));
+      toast.error(getApiErrorMessage(err, t("couldNotResolve")));
     } finally {
       setBusy(false);
     }
@@ -113,8 +115,8 @@ export default function IssueDetailPage() {
   if (error || !issue) {
     return (
       <div>
-        <AgencyPageHeader title="Issue Detail" backHref="/agency/issues" />
-        <p className="text-[14px] text-ink-muted">{error || "Issue not found"}</p>
+        <AgencyPageHeader title={t("issueDetailTitle")} backHref="/agency/issues" />
+        <p className="text-[14px] text-ink-muted">{error || t("issueNotFound")}</p>
       </div>
     );
   }
@@ -124,16 +126,16 @@ export default function IssueDetailPage() {
   const st = ISSUE_STATUS[issue.status] ?? ISSUE_STATUS.REPORTED;
 
   const trail = [
-    { label: "Reported", at: issue.createdAt, done: true, tone: "red" as const },
-    { label: "Agency Notified", at: issue.agencyNotifiedAt, done: Boolean(issue.agencyNotifiedAt), tone: "amber" as const },
-    { label: "Resolved", at: issue.resolvedAt, done: isResolved, tone: "green" as const },
+    { label: t("trailReported"), at: issue.createdAt, done: true, tone: "red" as const },
+    { label: t("trailAgencyNotified"), at: issue.agencyNotifiedAt, done: Boolean(issue.agencyNotifiedAt), tone: "amber" as const },
+    { label: t("trailResolved"), at: issue.resolvedAt, done: isResolved, tone: "green" as const },
   ];
 
   return (
     <div className="pb-6">
       <AgencyPageHeader
-        title="Issue Detail"
-        subtitle={`Reported on ${fmt(issue.createdAt)}`}
+        title={t("issueDetailTitle")}
+        subtitle={t("reportedOn", { date: fmt(issue.createdAt) as string })}
         backHref="/agency/issues"
         badge={
           <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 font-mono text-[12px] font-bold text-ink-muted">
@@ -148,17 +150,17 @@ export default function IssueDetailPage() {
         <div className="flex flex-col gap-4 lg:col-span-2">
           {/* Issue information */}
           <AgencyCard className="p-5">
-            <h2 className="mb-3 text-[15px] font-bold text-ink">Issue Information</h2>
-            <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">Issue Type</p>
+            <h2 className="mb-3 text-[15px] font-bold text-ink">{t("issueInformation")}</h2>
+            <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("issueType")}</p>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEECEC] px-3 py-1.5 text-[13px] font-bold text-[#DC2626]">
               <AlertCircle className="h-4 w-4" />
               {ISSUE_TYPE_LABEL[issue.issueType] ?? issue.issueType}
             </span>
-            <p className="mb-1.5 mt-4 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">Description (from employer)</p>
+            <p className="mb-1.5 mt-4 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("descriptionFromEmployer")}</p>
             <p className="whitespace-pre-line text-[14px] leading-relaxed text-ink">{issue.description}</p>
             {issue.resolution && (
               <div className="mt-4 rounded-xl bg-[#EEF8EA] p-3">
-                <p className="mb-1 text-[12px] font-semibold text-brand">Resolution</p>
+                <p className="mb-1 text-[12px] font-semibold text-brand">{t("resolution")}</p>
                 <p className="text-[13px] text-ink">{issue.resolution}</p>
               </div>
             )}
@@ -166,55 +168,55 @@ export default function IssueDetailPage() {
 
           {/* Placement details */}
           <AgencyCard className="p-5">
-            <h2 className="mb-4 text-[15px] font-bold text-ink">Placement Details</h2>
+            <h2 className="mb-4 text-[15px] font-bold text-ink">{t("placementDetails")}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">Worker</p>
+                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("worker")}</p>
                 <div className="flex items-center gap-3">
-                  <Avatar src={worker.profilePicture} name={name(worker)} size={44} />
+                  <Avatar src={worker.profilePicture} name={name(worker, t("unknownName"))} size={44} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="truncate text-[14px] font-bold text-ink">{name(worker)}</p>
+                      <p className="truncate text-[14px] font-bold text-ink">{name(worker, t("unknownName"))}</p>
                       {worker.isVerified && <VerifiedBadge size={13} />}
                     </div>
                     <p className="truncate text-[12px] text-ink-muted">
                       {worker.services[0]?.category?.name ?? worker.services[0]?.title ?? "—"}
                     </p>
-                    <StatusPill label={issue.placement.status === "ACTIVE" ? "Active" : issue.placement.status} tone={issue.placement.status === "ACTIVE" ? "green" : "gray"} className="mt-1" />
-                    {worker.phoneNumber && <p className="mt-1 text-[11px] text-ink-muted">Phone: {worker.phoneNumber}</p>}
+                    <StatusPill label={issue.placement.status === "ACTIVE" ? t("active") : issue.placement.status} tone={issue.placement.status === "ACTIVE" ? "green" : "gray"} className="mt-1" />
+                    {worker.phoneNumber && <p className="mt-1 text-[11px] text-ink-muted">{t("phonePrefix", { phone: worker.phoneNumber })}</p>}
                   </div>
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">Employer</p>
+                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-muted">{t("employer")}</p>
                 <div className="flex items-center gap-3">
-                  <Avatar src={issue.reportedBy.profilePicture} name={name(issue.reportedBy)} size={44} />
+                  <Avatar src={issue.reportedBy.profilePicture} name={name(issue.reportedBy, t("unknownName"))} size={44} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="truncate text-[14px] font-bold text-ink">{name(issue.reportedBy)}</p>
+                      <p className="truncate text-[14px] font-bold text-ink">{name(issue.reportedBy, t("unknownName"))}</p>
                       {issue.reportedBy.isVerified && <VerifiedBadge size={13} />}
                     </div>
                     {issue.reportedBy.createdAt && (
                       <p className="text-[12px] text-ink-muted">
-                        Member since {new Date(issue.reportedBy.createdAt).toLocaleDateString("en-RW", { month: "short", year: "numeric" })}
+                        {t("memberSince", { date: new Date(issue.reportedBy.createdAt).toLocaleDateString("en-RW", { month: "short", year: "numeric" }) })}
                       </p>
                     )}
-                    {issue.reportedBy.phoneNumber && <p className="mt-1 text-[11px] text-ink-muted">Phone: {issue.reportedBy.phoneNumber}</p>}
+                    {issue.reportedBy.phoneNumber && <p className="mt-1 text-[11px] text-ink-muted">{t("phonePrefix", { phone: issue.reportedBy.phoneNumber })}</p>}
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-2 border-t border-gray-50 pt-4 sm:grid-cols-3">
-              <Meta icon={Calendar} label="Placement Start" value={new Date(issue.placement.placedAt).toLocaleDateString("en-RW", { day: "numeric", month: "short", year: "numeric" })} />
-              <Meta icon={Clock} label="Status" value={issue.placement.status === "ACTIVE" ? "Active" : issue.placement.status} />
-              <Meta icon={Coins} label="Rate" value={issue.placement.commissionAmount ? `${new Intl.NumberFormat("en-RW").format(issue.placement.commissionAmount)} RWF` : "—"} />
+              <Meta icon={Calendar} label={t("placementStart")} value={new Date(issue.placement.placedAt).toLocaleDateString("en-RW", { day: "numeric", month: "short", year: "numeric" })} />
+              <Meta icon={Clock} label={t("status")} value={issue.placement.status === "ACTIVE" ? t("active") : issue.placement.status} />
+              <Meta icon={Coins} label={t("rate")} value={issue.placement.commissionAmount ? `${new Intl.NumberFormat("en-RW").format(issue.placement.commissionAmount)} RWF` : "—"} />
             </div>
           </AgencyCard>
 
           {/* Status trail */}
           <AgencyCard className="p-5">
-            <h2 className="mb-5 text-[15px] font-bold text-ink">Status Trail</h2>
+            <h2 className="mb-5 text-[15px] font-bold text-ink">{t("statusTrail")}</h2>
             <div className="flex items-start justify-between">
               {trail.map((node, i) => (
                 <div key={node.label} className="relative flex flex-1 flex-col items-center text-center">
@@ -236,7 +238,7 @@ export default function IssueDetailPage() {
                     {node.tone === "red" ? <AlertCircle className="h-4 w-4" /> : node.done ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                   </span>
                   <p className="mt-2 text-[12px] font-bold text-ink">{node.label}</p>
-                  <p className="text-[11px] text-ink-muted">{node.at ? fmt(node.at) : "Pending"}</p>
+                  <p className="text-[11px] text-ink-muted">{node.at ? fmt(node.at) : t("pending")}</p>
                 </div>
               ))}
             </div>
@@ -246,32 +248,32 @@ export default function IssueDetailPage() {
         {/* RIGHT: take action */}
         <div className="flex flex-col gap-4">
           <AgencyCard className="p-5">
-            <h2 className="text-[15px] font-bold text-ink">Take Action</h2>
-            <p className="mt-0.5 text-[12px] text-ink-muted">Choose how you want to resolve this issue.</p>
+            <h2 className="text-[15px] font-bold text-ink">{t("takeAction")}</h2>
+            <p className="mt-0.5 text-[12px] text-ink-muted">{t("chooseHowToResolve")}</p>
 
             <div className="mt-4 flex flex-col gap-3">
               <ActionButton
                 disabled={isResolved || busy}
-                onClick={() => resolveIssue("Replacement offered to the employer")}
+                onClick={() => resolveIssue(t("replacementOfferedNote"))}
                 tone="green"
                 icon={<Users className="h-5 w-5" />}
-                title="Offer Replacement"
-                desc="Suggest a different worker to replace this one."
+                title={t("offerReplacement")}
+                desc={t("offerReplacementDesc")}
               />
               <ActionButton
                 onClick={() => router.push("/agency/messages")}
                 tone="blue"
                 icon={<MessageSquare className="h-5 w-5" />}
-                title="Message Employer"
-                desc="Open chat to communicate with the employer."
+                title={t("messageEmployer")}
+                desc={t("messageEmployerDesc")}
               />
               <ActionButton
                 disabled={isResolved || busy}
                 onClick={() => setResolveOpen(true)}
                 tone="amber"
                 icon={<CheckCircle2 className="h-5 w-5" />}
-                title={isResolved ? "Resolved" : "Mark as Resolved"}
-                desc="Mark this issue as resolved once it's been handled."
+                title={isResolved ? t("resolved") : t("markAsResolved")}
+                desc={t("markAsResolvedDesc")}
               />
             </div>
           </AgencyCard>
@@ -279,7 +281,7 @@ export default function IssueDetailPage() {
           <div className="flex items-start gap-2.5 rounded-2xl border border-[#CFE3FB] bg-[#EFF6FF] p-4">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#1D4ED8]" />
             <p className="text-[12px] leading-snug text-[#1E40AF]">
-              <span className="font-bold">Need Help?</span> You can contact the employer or offer a replacement to resolve this issue quickly.
+              <span className="font-bold">{t("needHelp")}</span> {t("needHelpDesc")}
             </p>
           </div>
         </div>
@@ -290,17 +292,17 @@ export default function IssueDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[16px] font-bold text-ink">Mark as Resolved</h3>
+              <h3 className="text-[16px] font-bold text-ink">{t("markAsResolved")}</h3>
               <button onClick={() => setResolveOpen(false)} className="text-gray-400 hover:text-ink">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <p className="mb-3 text-[13px] text-ink-muted">Add an optional note about how this was handled.</p>
+            <p className="mb-3 text-[13px] text-ink-muted">{t("resolveNotePrompt")}</p>
             <textarea
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               rows={4}
-              placeholder="e.g. Spoke with worker, issue addressed; or replacement assigned."
+              placeholder={t("resolveNotePlaceholder")}
               className="w-full rounded-xl border border-gray-200 p-3 text-[13px] outline-none focus:border-brand"
             />
             <div className="mt-4 flex gap-3">
@@ -308,14 +310,14 @@ export default function IssueDetailPage() {
                 onClick={() => setResolveOpen(false)}
                 className="h-11 flex-1 rounded-xl border-2 border-gray-100 text-[14px] font-bold text-gray-500 hover:bg-gray-50"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 onClick={() => resolveIssue(resolution)}
                 disabled={busy}
                 className="h-11 flex-1 rounded-xl bg-brand text-[14px] font-bold text-white hover:bg-brand-dark disabled:opacity-60"
               >
-                {busy ? "Saving…" : "Mark Resolved"}
+                {busy ? t("saving") : t("markResolved")}
               </button>
             </div>
           </div>

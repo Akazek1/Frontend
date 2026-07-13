@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Home, Plus, Loader2, Trash2, Edit3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,6 +52,7 @@ interface FormData {
 const ADDRESSES_KEY = ["addresses"] as const;
 
 const AddressBook = () => {
+  const t = useTranslations("addressBook");
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<FormData>({
     street: "",
@@ -107,21 +109,21 @@ const AddressBook = () => {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.street.trim()) {
-      newErrors.street = "Street is required";
+      newErrors.street = t("streetRequired");
     }
     if (!formData.city.trim()) {
-      newErrors.city = "City is required";
+      newErrors.city = t("cityRequired");
     }
     if (!formData.state.trim()) {
-      newErrors.state = "State is required";
+      newErrors.state = t("stateRequired");
     }
     if (!formData.postalCode.trim()) {
-      newErrors.postalCode = "Postal code is required";
+      newErrors.postalCode = t("postalCodeRequired");
     } else if (!/^\d{5,}$/.test(formData.postalCode)) {
-      newErrors.postalCode = "Invalid postal code";
+      newErrors.postalCode = t("invalidPostalCode");
     }
     if (!formData.country) {
-      newErrors.country = "Country is required";
+      newErrors.country = t("countryRequired");
     }
 
     setErrors(newErrors);
@@ -133,7 +135,7 @@ const AddressBook = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Please fix the form errors");
+      toast.error(t("fixFormErrors"));
       return;
     }
 
@@ -158,12 +160,12 @@ const AddressBook = () => {
             addr.id === editingAddressId ? { ...addr, ...response.data.data } : addr
           )
         );
-        toast.success("Address updated successfully");
+        toast.success(t("addressUpdated"));
       } else {
         // Create new address
         const response = await api.post("/address-book", payload);
         setAddresses((prev) => [...prev, response.data.data]);
-        toast.success("Address added successfully");
+        toast.success(t("addressAdded"));
       }
 
       // Reset form and hide it
@@ -179,7 +181,7 @@ const AddressBook = () => {
       setEditingAddressId(null);
       queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
     } catch (err: unknown) {
-      const errorMessage = getApiErrorMessage(err, `Failed to ${editingAddressId ? "update" : "add"} address`);
+      const errorMessage = getApiErrorMessage(err, editingAddressId ? t("failedUpdateAddress") : t("failedAddAddress"));
       console.error(`Error ${editingAddressId ? "updating" : "adding"} address:`, err);
       setErrors({ form: errorMessage });
       toast.error(errorMessage);
@@ -195,9 +197,9 @@ const AddressBook = () => {
       await api.delete(`/address-book/${addressId}`);
       setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
       queryClient.invalidateQueries({ queryKey: ADDRESSES_KEY });
-      toast.success("Address deleted successfully");
+      toast.success(t("addressDeleted"));
     } catch (err: unknown) {
-      const errorMessage = getApiErrorMessage(err, "Failed to delete address");
+      const errorMessage = getApiErrorMessage(err, t("failedDeleteAddress"));
       console.error("Error deleting address:", err);
       toast.error(errorMessage);
     } finally {
@@ -237,7 +239,7 @@ const AddressBook = () => {
 
   return (
     <PageShell className="gap-5">
-      <BackButtonHeader text="Address Book" backHref="/more" />
+      <BackButtonHeader text={t("addressBook")} backHref="/more" />
 
       {/* Add Address Button */}
       <button
@@ -247,7 +249,7 @@ const AddressBook = () => {
       >
         <Plus className="h-4 w-4" />
         <span className="text-base font-semibold leading-5">
-          {isFormVisible ? "Cancel" : "Add another address"}
+          {isFormVisible ? t("cancel") : t("addAnotherAddress")}
         </span>
       </button>
 
@@ -256,55 +258,55 @@ const AddressBook = () => {
         <Card>
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Street */}
-          <FormField label="Street" error={errors.street}>
+          <FormField label={t("street")} error={errors.street}>
             <Input
               id="street"
               name="street"
               value={formData.street}
               onChange={handleChange}
               className={cn(appInputClass, errors.street && "border-red-500")}
-              placeholder="Enter street address"
+              placeholder={t("enterStreetAddress")}
             />
           </FormField>
 
           {/* City */}
-          <FormField label="City" error={errors.city}>
+          <FormField label={t("city")} error={errors.city}>
             <Input
               id="city"
               name="city"
               value={formData.city}
               onChange={handleChange}
               className={cn(appInputClass, errors.city && "border-red-500")}
-              placeholder="Enter city"
+              placeholder={t("enterCity")}
             />
           </FormField>
 
           {/* State */}
-          <FormField label="State" error={errors.state}>
+          <FormField label={t("state")} error={errors.state}>
             <Input
               id="state"
               name="state"
               value={formData.state}
               onChange={handleChange}
               className={cn(appInputClass, errors.state && "border-red-500")}
-              placeholder="Enter state"
+              placeholder={t("enterState")}
             />
           </FormField>
 
           {/* Postal Code */}
-          <FormField label="Postal Code" error={errors.postalCode}>
+          <FormField label={t("postalCode")} error={errors.postalCode}>
             <Input
               id="postalCode"
               name="postalCode"
               value={formData.postalCode}
               onChange={handleChange}
               className={cn(appInputClass, errors.postalCode && "border-red-500")}
-              placeholder="Enter postal code"
+              placeholder={t("enterPostalCode")}
             />
           </FormField>
 
           {/* Country */}
-          <FormField label="Country" error={errors.country}>
+          <FormField label={t("country")} error={errors.country}>
             <Select
               value={formData.country}
               onValueChange={(value) => handleSelectChange("country", value)}
@@ -313,7 +315,7 @@ const AddressBook = () => {
                 id="country"
                 className={cn(appInputClass, "relative", errors.country && "border-red-500")}
               >
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder={t("selectCountry")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Rwanda">Rwanda</SelectItem>
@@ -335,7 +337,7 @@ const AddressBook = () => {
               htmlFor="isDefault"
               className="text-sm font-semibold text-[#161616]"
             >
-              Set as default address
+              {t("setAsDefaultAddress")}
             </label>
           </div>
 
@@ -350,10 +352,10 @@ const AddressBook = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {editingAddressId ? "Updating..." : "Adding..."}
+                  {editingAddressId ? t("updating") : t("adding")}
                 </>
               ) : (
-                editingAddressId ? "Update Address" : "Add Address"
+                editingAddressId ? t("updateAddress") : t("addAddress")
               )}
             </AppButton>
             {/* Cancel Button */}
@@ -364,7 +366,7 @@ const AddressBook = () => {
               className="w-full"
               onClick={toggleFormVisibility}
             >
-              Cancel
+              {t("cancel")}
             </AppButton>
           </div>
         </form>
@@ -382,15 +384,15 @@ const AddressBook = () => {
             addresses.length === 0 ? (
               <EmptyState
                 icon={Home}
-                title="No addresses found"
-                description="Add an address above so bookings can use your saved locations."
+                title={t("noAddressesFound")}
+                description={t("noAddressesDesc")}
               />
             ) : (
               addresses.map((address, index) => (
                 <Card key={address.id} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <h1 className="text-[#161616] text-base leading-5 font-semibold">
-                      {address.isDefault ? "Default Address" : `Address ${index + 1}`}
+                      {address.isDefault ? t("defaultAddress") : t("addressNumber", { number: index + 1 })}
                     </h1>
                     <div className="flex">
                       <button
@@ -398,7 +400,7 @@ const AddressBook = () => {
                         className="rounded-full p-2 hover:bg-surface"
                         onClick={() => handleEdit(address)}
                         disabled={isLoading}
-                        aria-label="Edit address"
+                        aria-label={t("editAddress")}
                       >
                         <Edit3 className="h-4 w-4 text-[#167021]" />
                       </button>
@@ -407,7 +409,7 @@ const AddressBook = () => {
                         className="rounded-full p-2 hover:bg-red-50"
                         onClick={() => handleDelete(address.id)}
                         disabled={isLoading}
-                        aria-label="Delete address"
+                        aria-label={t("deleteAddress")}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </button>
