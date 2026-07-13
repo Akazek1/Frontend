@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import { AgencyCard, AgencyEmpty, AgencyLoading, AgencyPageHeader, Avatar, StatusPill } from "@/components/agency/agency-ui";
 import { cn } from "@/lib/utils";
-import { ISSUE_STATUS, ISSUE_TYPE_LABEL } from "@/constant/agency-issues";
+import { issueStatusMap, issueTypeLabelMap } from "@/constant/agency-issues";
 
 interface IssueListItem {
   id: string;
@@ -21,21 +22,24 @@ interface IssueListItem {
   };
 }
 
-function name(p: { firstName: string | null; lastName: string | null }) {
-  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown";
+function name(p: { firstName: string | null; lastName: string | null }, t: (key: string) => string) {
+  return `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || t("unknownName");
 }
 
-const FILTERS = [
-  { key: "open", label: "Open" },
-  { key: "all", label: "All" },
-  { key: "RESOLVED", label: "Resolved" },
-] as const;
+type FilterKey = "open" | "all" | "RESOLVED";
 
 export default function AgencyIssuesPage() {
+  const t = useTranslations("agencyIssues");
+  const tShared = useTranslations("issueShared");
+  const FILTERS = [
+    { key: "open" as const, label: t("filterOpen") },
+    { key: "all" as const, label: t("filterAll") },
+    { key: "RESOLVED" as const, label: t("filterResolved") },
+  ];
   const router = useRouter();
   const [issues, setIssues] = useState<IssueListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("open");
+  const [filter, setFilter] = useState<FilterKey>("open");
 
   useEffect(() => {
     async function load() {
@@ -64,9 +68,9 @@ export default function AgencyIssuesPage() {
   return (
     <div>
       <AgencyPageHeader
-        title="Issues & Escalations"
-        subtitle="Problems reported by employers on your placements."
-        badge={openCount > 0 ? <StatusPill label={`${openCount} open`} tone="red" /> : undefined}
+        title={t("issuesAndEscalations")}
+        subtitle={t("issuesSubtitle")}
+        badge={openCount > 0 ? <StatusPill label={t("openCount", { count: openCount })} tone="red" /> : undefined}
       />
 
       <div className="mb-4 flex gap-1 rounded-xl border border-gray-100 bg-white p-1">
@@ -85,11 +89,11 @@ export default function AgencyIssuesPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <AgencyEmpty title="No issues here" hint="Reported issues will appear here." />
+        <AgencyEmpty title={t("noIssuesHere")} hint={t("noIssuesHint")} />
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           {filtered.map((issue) => {
-            const st = ISSUE_STATUS[issue.status] ?? ISSUE_STATUS.REPORTED;
+            const st = issueStatusMap(tShared)[issue.status] ?? issueStatusMap(tShared).REPORTED;
             return (
               <AgencyCard
                 key={issue.id}
@@ -99,18 +103,18 @@ export default function AgencyIssuesPage() {
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FEECEC] px-2.5 py-1 text-[12px] font-bold text-[#DC2626]">
                     <AlertCircle className="h-3.5 w-3.5" />
-                    {ISSUE_TYPE_LABEL[issue.issueType] ?? issue.issueType}
+                    {issueTypeLabelMap(tShared)[issue.issueType] ?? issue.issueType}
                   </span>
                   <StatusPill label={st.label} tone={st.tone} />
                 </div>
                 <p className="line-clamp-2 text-[13px] text-ink-muted">{issue.description}</p>
                 <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
                   <div className="flex items-center gap-2">
-                    <Avatar src={issue.placement.worker.profilePicture} name={name(issue.placement.worker)} size={32} />
+                    <Avatar src={issue.placement.worker.profilePicture} name={name(issue.placement.worker, tShared)} size={32} />
                     <div>
-                      <p className="text-[12px] font-semibold text-ink">{name(issue.placement.worker)}</p>
+                      <p className="text-[12px] font-semibold text-ink">{name(issue.placement.worker, tShared)}</p>
                       <p className="text-[11px] text-ink-muted">
-                        Reported by {name(issue.reportedBy)} · {new Date(issue.createdAt).toLocaleDateString("en-RW", { day: "numeric", month: "short" })}
+                        {t("reportedBy", { name: name(issue.reportedBy, tShared), date: new Date(issue.createdAt).toLocaleDateString("en-RW", { day: "numeric", month: "short" }) })}
                       </p>
                     </div>
                   </div>
