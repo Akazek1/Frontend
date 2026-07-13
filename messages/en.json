@@ -1387,5 +1387,20 @@
     "conversation": "Conversation",
     "noMessagesYet": "No messages yet.",
     "typeMessage": "Type a message…"
+  },
+  "offline": {
+    "title": "You're offline",
+    "description": "We'll reload automatically once you're back online. Pages you've opened before still work — use the navigation below.",
+    "tryAgain": "Try again"
+  },
+  "servicesTipsHelp": {
+    "title": "Tips for great services",
+    "comingSoon": "Coming soon",
+    "description": "A guide with photo, copy, and pricing tips for getting more hire requests is on the way."
+  },
+  "businessForgotPassword": {
+    "passwordReset": "Password reset",
+    "description": "Self-service password reset is coming with the full agency accounts release. For now, please contact support to reset your password.",
+    "backToSignIn": "Back to sign in"
   }
 }

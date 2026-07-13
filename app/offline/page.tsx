@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function OfflinePage() {
+  const t = useTranslations("offline");
   useEffect(() => {
     const reload = () => window.location.reload();
     window.addEventListener("online", reload);
@@ -23,17 +25,16 @@ export default function OfflinePage() {
             className="h-10 w-10 object-contain"
           />
         </div>
-        <h1 className="text-xl font-bold text-[#111827]">You're offline</h1>
+        <h1 className="text-xl font-bold text-[#111827]">{t("title")}</h1>
         <p className="mt-2 text-sm leading-6 text-[#4B5563]">
-          We'll reload automatically once you're back online. Pages you've
-          opened before still work — use the navigation below.
+          {t("description")}
         </p>
         <button
           type="button"
           className="mt-5 rounded-[10px] bg-[#145B10] px-7 py-3 text-sm font-bold text-white active:bg-[#0f4a0c]"
           onClick={() => window.location.reload()}
         >
-          Try again
+          {t("tryAgain")}
         </button>
       </div>
     </main>
