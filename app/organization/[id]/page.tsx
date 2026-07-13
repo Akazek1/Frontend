@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Building2, Phone, Mail, MapPin, CheckCircle, Users, Edit2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
 import { getApiErrorMessage } from "@/lib/error-handler"
@@ -45,11 +46,6 @@ interface OrganizationResponse {
   createdAt?: string
 }
 
-const ORG_TYPE_LABEL: Record<string, string> = {
-  SERVICE_COMPANY: "Service Company",
-  STAFFING_AGENCY: "Staffing Agency",
-}
-
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
   if (!value) return null
   return (
@@ -64,11 +60,17 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 }
 
 export default function OrgProfilePage() {
+  const t = useTranslations("organizationProfile")
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [org, setOrg] = useState<Organization | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
+
+  const ORG_TYPE_LABEL: Record<string, string> = {
+    SERVICE_COMPANY: t("serviceCompany"),
+    STAFFING_AGENCY: t("staffingAgency"),
+  }
 
   useEffect(() => {
     const fetchOrg = async () => {
@@ -85,7 +87,7 @@ export default function OrgProfilePage() {
           setIsOwner(user.id === data.ownerId)
         }
       } catch (error) {
-        toast.error(getApiErrorMessage(error, "Failed to load organization"))
+        toast.error(getApiErrorMessage(error, t("failedToLoad")))
       } finally {
         setIsLoading(false)
       }
@@ -107,11 +109,11 @@ export default function OrgProfilePage() {
       <PageShell className="justify-center">
         <EmptyState
           icon={Building2}
-          title="Organization not found"
-          description="This organization profile could not be loaded."
+          title={t("organizationNotFound")}
+          description={t("couldNotBeLoaded")}
           action={
             <AppButton appVariant="secondary" onClick={() => router.back()} className="w-full">
-              Go back
+              {t("goBack")}
             </AppButton>
           }
         />
@@ -122,7 +124,7 @@ export default function OrgProfilePage() {
   return (
     <PageShell padded={false} className="gap-0">
       <PageHeader
-        title="Organization Profile"
+        title={t("organizationProfileTitle")}
         compact
         onBack={() => router.back()}
         className={appStickyHeaderClass}
@@ -131,7 +133,7 @@ export default function OrgProfilePage() {
             <button
               onClick={() => router.push(`/organization/${id}/edit`)}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm transition-colors hover:bg-[#E8F7E5] hover:text-brand"
-              aria-label="Edit organization"
+              aria-label={t("editOrganization")}
             >
               <Edit2 className="w-5 h-5" />
             </button>
@@ -170,7 +172,7 @@ export default function OrgProfilePage() {
             </span>
             {!org.verified && (
               <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block">
-                Pending verification — we&apos;ll review your account shortly.
+                {t("pendingVerification")}
               </p>
             )}
           </div>
@@ -178,42 +180,41 @@ export default function OrgProfilePage() {
 
         {/* Contact details */}
         <Card className="flex flex-col gap-4">
-          <AppSectionHeader title="Contact & Location" />
-          <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone" value={org.phone} />
-          <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={org.email} />
-          <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={org.address} />
+          <AppSectionHeader title={t("contactAndLocation")} />
+          <InfoRow icon={<Phone className="w-4 h-4" />} label={t("phone")} value={org.phone} />
+          <InfoRow icon={<Mail className="w-4 h-4" />} label={t("email")} value={org.email} />
+          <InfoRow icon={<MapPin className="w-4 h-4" />} label={t("address")} value={org.address} />
 
           {!org.phone && !org.email && !org.address && (
-            <p className="text-sm text-gray-400 italic">No contact details added yet.</p>
+            <p className="text-sm text-gray-400 italic">{t("noContactDetails")}</p>
           )}
         </Card>
 
         {org.type === "SERVICE_COMPANY" && (
           <Card>
-            <AppSectionHeader title="How it works" />
+            <AppSectionHeader title={t("howItWorks")} />
             <p className="mt-3 text-sm text-gray-500 leading-relaxed">
-              Clients book services directly with {org.name}. Your team handles the work —
-              Akazek doesn&apos;t track individual staff members for service companies.
+              {t("howItWorksDesc", { name: org.name })}
             </p>
           </Card>
         )}
 
         {isOwner && (
           <Card className="space-y-3">
-            <AppSectionHeader title="Owner actions" />
+            <AppSectionHeader title={t("ownerActions")} />
             <button
               onClick={() => router.push(`/organization/${id}/edit`)}
               className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-brand")}
             >
               <Edit2 className="w-4 h-4" />
-              Edit organization details
+              {t("editOrganizationDetails")}
             </button>
             <button
               onClick={() => router.push(`/organization/${id}/workers`)}
               className={cn(appActionCardClass, "flex w-full items-center gap-3 p-3 text-left text-sm text-gray-700 shadow-none hover:text-brand")}
             >
               <Users className="w-4 h-4" />
-              Manage workers
+              {t("manageWorkers")}
             </button>
           </Card>
         )}

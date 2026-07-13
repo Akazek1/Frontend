@@ -1552,5 +1552,26 @@
     "warningNote": "This report will be sent directly to the staffing agency. For emergencies or safety concerns, please call the agency directly.",
     "submitting": "Submitting…",
     "submitReport": "Submit Report"
+  },
+  "organizationProfile": {
+    "serviceCompany": "Service Company",
+    "staffingAgency": "Staffing Agency",
+    "failedToLoad": "Failed to load organization",
+    "organizationNotFound": "Organization not found",
+    "couldNotBeLoaded": "This organization profile could not be loaded.",
+    "goBack": "Go back",
+    "organizationProfileTitle": "Organization Profile",
+    "editOrganization": "Edit organization",
+    "pendingVerification": "Pending verification — we'll review your account shortly.",
+    "contactAndLocation": "Contact & Location",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "noContactDetails": "No contact details added yet.",
+    "howItWorks": "How it works",
+    "howItWorksDesc": "Clients book services directly with {name}. Your team handles the work — Akazek doesn't track individual staff members for service companies.",
+    "ownerActions": "Owner actions",
+    "editOrganizationDetails": "Edit organization details",
+    "manageWorkers": "Manage workers"
   }
 }
