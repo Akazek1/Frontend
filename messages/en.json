@@ -1507,5 +1507,28 @@
     "noSavedServicesYet": "No saved services yet",
     "noSavedServicesDesc": "Bookmark providers you like so you can compare them later and book faster when you are ready.",
     "browseProviders": "Browse providers"
+  },
+  "reportIssue": {
+    "categorySafetyConcern": "Safety concern",
+    "categoryInappropriateBehavior": "Inappropriate behavior",
+    "categoryContractDispute": "Contract dispute",
+    "categoryTechnicalIssue": "Technical issue",
+    "categoryOther": "Other",
+    "selectCategoryError": "Please select an issue category",
+    "describeIssueError": "Please describe the issue",
+    "descriptionTooShort": "Description must be at least 10 characters",
+    "fixFormErrors": "Please fix the form errors",
+    "issueReportedSuccess": "Issue reported successfully. Thank you for helping us improve!",
+    "failedToReport": "Failed to report issue",
+    "thankYou": "Thank you!",
+    "issueReportedDesc": "Your issue has been reported and our team will review it shortly.",
+    "reportAnIssue": "Report an Issue",
+    "issueCategory": "Issue Category",
+    "selectIssueCategory": "Select issue category",
+    "description": "Description",
+    "descriptionPlaceholder": "Please describe the issue in detail, including what happened and when",
+    "submitting": "Submitting...",
+    "submitReport": "Submit Report",
+    "cancel": "Cancel"
   }
 }

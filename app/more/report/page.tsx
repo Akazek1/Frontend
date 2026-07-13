@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ interface FormData {
 }
 
 const ReportIssue = () => {
+  const t = useTranslations("reportIssue");
   const [formData, setFormData] = useState<FormData>({
     category: "",
     description: "",
@@ -39,11 +41,11 @@ const ReportIssue = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const categories = [
-    { value: "safety-concern", label: "Safety concern" },
-    { value: "inappropriate-behavior", label: "Inappropriate behavior" },
-    { value: "contract-dispute", label: "Contract dispute" },
-    { value: "technical-issue", label: "Technical issue" },
-    { value: "other", label: "Other" },
+    { value: "safety-concern", label: t("categorySafetyConcern") },
+    { value: "inappropriate-behavior", label: t("categoryInappropriateBehavior") },
+    { value: "contract-dispute", label: t("categoryContractDispute") },
+    { value: "technical-issue", label: t("categoryTechnicalIssue") },
+    { value: "other", label: t("categoryOther") },
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -61,12 +63,12 @@ const ReportIssue = () => {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.category) {
-      newErrors.category = "Please select an issue category";
+      newErrors.category = t("selectCategoryError");
     }
     if (!formData.description.trim()) {
-      newErrors.description = "Please describe the issue";
+      newErrors.description = t("describeIssueError");
     } else if (formData.description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters";
+      newErrors.description = t("descriptionTooShort");
     }
 
     setErrors(newErrors);
@@ -77,7 +79,7 @@ const ReportIssue = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Please fix the form errors");
+      toast.error(t("fixFormErrors"));
       return;
     }
 
@@ -90,13 +92,13 @@ const ReportIssue = () => {
       });
 
       setIsSubmitted(true);
-      toast.success("Issue reported successfully. Thank you for helping us improve!");
+      toast.success(t("issueReportedSuccess"));
 
       setTimeout(() => {
         window.history.back();
       }, 2000);
     } catch (err: unknown) {
-      const errorMessage = getApiErrorMessage(err, "Failed to report issue");
+      const errorMessage = getApiErrorMessage(err, t("failedToReport"));
       console.error("Error reporting issue:", err);
       setErrors({ form: errorMessage });
       toast.error(errorMessage);
@@ -124,9 +126,9 @@ const ReportIssue = () => {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-brand">Thank you!</h2>
+          <h2 className="text-2xl font-bold text-brand">{t("thankYou")}</h2>
           <p className="text-ink-subtle text-base">
-            Your issue has been reported and our team will review it shortly.
+            {t("issueReportedDesc")}
           </p>
         </div>
       </div>
@@ -135,16 +137,16 @@ const ReportIssue = () => {
 
   return (
     <PageShell className="gap-5">
-      <BackButtonHeader text="Report an Issue" backHref="/more" />
+      <BackButtonHeader text={t("reportAnIssue")} backHref="/more" />
 
       <form onSubmit={handleSubmit} className={cn(appContentClass, "gap-5")}>
         {/* Category */}
-        <FormField label="Issue Category" required error={errors.category}>
+        <FormField label={t("issueCategory")} required error={errors.category}>
           <Select value={formData.category} onValueChange={handleSelectChange}>
             <SelectTrigger
               className={cn(appInputClass, errors.category && "border-red-500")}
             >
-              <SelectValue placeholder="Select issue category" />
+              <SelectValue placeholder={t("selectIssueCategory")} />
             </SelectTrigger>
             <SelectContent>
               {categories.map((cat) => (
@@ -157,13 +159,13 @@ const ReportIssue = () => {
         </FormField>
 
         {/* Description */}
-        <FormField label="Description" required error={errors.description}>
+        <FormField label={t("description")} required error={errors.description}>
           <Textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             className={cn(appTextareaClass, "h-32", errors.description && "border-red-500")}
-            placeholder="Please describe the issue in detail, including what happened and when"
+            placeholder={t("descriptionPlaceholder")}
           />
         </FormField>
 
@@ -180,10 +182,10 @@ const ReportIssue = () => {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                {t("submitting")}
               </>
             ) : (
-              "Submit Report"
+              t("submitReport")
             )}
           </AppButton>
           <AppButton
@@ -194,7 +196,7 @@ const ReportIssue = () => {
             onClick={() => window.history.back()}
             disabled={isLoading}
           >
-            Cancel
+            {t("cancel")}
           </AppButton>
         </div>
       </form>
