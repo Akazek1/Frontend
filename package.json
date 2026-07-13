@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint && npm run lint:colors",
     "lint:colors": "node scripts/check-colors.mjs",
+    "i18n:sync": "node scripts/i18n-sync-rw.mjs",
+    "i18n:progress": "node scripts/i18n-check-progress.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
