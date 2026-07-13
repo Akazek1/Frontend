@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ interface Address {
 }
 
 const BookingSummary = () => {
+    const t = useTranslations("bookingSummary");
     const router = useRouter();
     const searchParams = useSearchParams();
     const params = useParams();
@@ -63,13 +65,13 @@ const BookingSummary = () => {
         const time = searchParams.get("time");
 
         if (!serviceId) {
-            toast.error("Invalid service ID");
+            toast.error(t("invalidServiceId"));
             setIsLoadingService(false);
             return;
         }
 
         if (!date || !time) {
-            toast.error("Missing date or time");
+            toast.error(t("missingDateOrTime"));
             setIsLoadingService(false);
             return;
         }
@@ -88,12 +90,12 @@ const BookingSummary = () => {
                     image: service.serviceImage || "/default-service.svg",
                     name: service.provider
                         ? `${service.provider.firstName} ${service.provider.lastName}`
-                        : service.company?.name || "Company",
+                        : service.company?.name || t("companyFallback"),
                     handle: service.provider
                         ? `${service.provider.firstName.toLowerCase()}${service.provider.lastName.toLowerCase()}`
                         : undefined,
                     title: getServiceDisplayName(service),
-                    experience: service.description || "No experience provided",
+                    experience: service.description || t("noExperienceProvided"),
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
                     location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
                     price: formatPrice(service.priceMin, service.priceMax, service.priceType),
@@ -108,7 +110,7 @@ const BookingSummary = () => {
                 setProvider(mappedProvider);
             } catch (error) {
                 console.error("Failed to fetch service data:", error);
-                toast.error("Failed to load service details");
+                toast.error(t("failedLoadServiceDetails"));
             } finally {
                 setIsLoadingService(false);
             }
@@ -129,7 +131,7 @@ const BookingSummary = () => {
                 setSelectedAddressId(defaultAddress ? defaultAddress.id : addressesData[0]?.id || null);
             } catch (err) {
                 console.error("Error fetching addresses:", err);
-                toast.error("Failed to fetch addresses");
+                toast.error(t("failedFetchAddresses"));
             } finally {
                 setIsLoadingAddresses(false);
             }
@@ -147,7 +149,7 @@ const BookingSummary = () => {
                 setAdditionalServices(services.filter((s: Service) => s.id !== params.id)); // Exclude the main service
             } catch (err) {
                 console.error("Error fetching additional services:", err);
-                toast.error("Failed to fetch additional services");
+                toast.error(t("failedFetchAdditionalServices"));
             }
         };
         fetchAdditionalServices();
@@ -175,11 +177,11 @@ const BookingSummary = () => {
     // Handle proceed to checkout
    const handleProceedToCheckout = async () => {
     if (!selectedAddressId) {
-        toast.error("Please select a service address");
+        toast.error(t("selectServiceAddress"));
         return;
     }
     if (!provider || !selectedDate || !selectedTime) {
-        toast.error("Booking details are incomplete");
+        toast.error(t("bookingDetailsIncomplete"));
         return;
     }
 
@@ -222,14 +224,14 @@ const BookingSummary = () => {
         const response = await api.post("/bookings", payload);
         if (response.status === 201) {
             const booking = response.data.data || response.data;
-            toast.success("Booking request sent successfully");
+            toast.success(t("bookingRequestSent"));
             router.push(`/conversations/inbox/${booking.id}`);
         }
     } catch (err) {
         console.error("Error creating booking:", err);
-        const errorMessage = err instanceof Error 
-            ? err.message 
-            : "Failed to create booking";
+        const errorMessage = err instanceof Error
+            ? err.message
+            : t("failedCreateBooking");
         toast.error(errorMessage);
     } finally {
         setIsSubmitting(false);
@@ -256,7 +258,7 @@ const BookingSummary = () => {
 
     return (
         <PageShell className="gap-4 touch-pan-y">
-                <BackButtonHeader text="Booking Summary" backHref={`/book/${provider.type}/${provider.id}`} />
+                <BackButtonHeader text={t("headerTitle")} backHref={`/book/${provider.type}/${provider.id}`} />
 
                 {/* Main Provider */}
                 <Card className="space-y-3">
@@ -271,12 +273,12 @@ const BookingSummary = () => {
                         </div>
                     </div>
                     <p className="text-ink-muted text-sm font-semibold">
-                        <strong className="font-bold text-ink text-base">Description</strong>
+                        <strong className="font-bold text-ink text-base">{t("description")}</strong>
                         <br />
                         {provider.experience}
                     </p>
                     <div className="flex items-center justify-between">
-                        <span className="text-brand font-bold text-sm sm:text-base">{provider.price} RWF/day</span>
+                        <span className="text-brand font-bold text-sm sm:text-base">{t("rwfPerDay", { price: provider.price })}</span>
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="outline"
@@ -337,12 +339,12 @@ const BookingSummary = () => {
 
                 {/* Booking Details */}
                 <Card className="space-y-3">
-                    <AppSectionHeader title="Booking Details" />
+                    <AppSectionHeader title={t("bookingDetails")} />
                     {/* Address Selection */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-ink" />
-                            <span className="text-brand font-medium text-sm">Service Address</span>
+                            <span className="text-brand font-medium text-sm">{t("serviceAddress")}</span>
                         </div>
                         {isLoadingAddresses ? (
                             <div className="bg-surface flex items-center justify-center">
@@ -350,20 +352,20 @@ const BookingSummary = () => {
                             </div>
                         ) : addresses.length === 0 ? (
                             <p className="text-ink-muted text-sm font-medium">
-                                No addresses found.{" "}
+                                {t("noAddressesFound")}{" "}
                                 <Link href="/more/addresses" className="text-brand underline">
-                                    Add an address
+                                    {t("addAnAddress")}
                                 </Link>
                             </p>
                         ) : (
                             <Select value={selectedAddressId || undefined} onValueChange={handleAddressChange}>
                                 <SelectTrigger className={`${appInputClass} w-full touch-manipulation`}>
-                                    <SelectValue placeholder="Select an address" />
+                                    <SelectValue placeholder={t("selectAnAddress")} />
                                 </SelectTrigger>
                                 <SelectContent className="w-[--radix-select-trigger-width] max-w-full">
                                     {addresses.map((address) => (
                                         <SelectItem key={address.id} value={address.id}>
-                                            {`${address.street}, ${address.city}, ${address.state}, ${address.postalCode}, ${address.country}${address.isDefault ? " (Default)" : ""}`}
+                                            {`${address.street}, ${address.city}, ${address.state}, ${address.postalCode}, ${address.country}${address.isDefault ? t("defaultSuffix") : ""}`}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -375,34 +377,34 @@ const BookingSummary = () => {
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Calendar className="w-4 h-4 stroke-black" />
                         <span className="text-brand font-medium text-sm">
-                            {selectedDate} at {selectedTime}
+                            {t("dateAtTime", { date: selectedDate, time: selectedTime })}
                         </span>
                     </div>
 
                     {/* Coupon */}
                     <div className="flex items-center gap-2 rounded-lg bg-white">
                         <Ticket className="w-4 h-4 stroke-black" />
-                        <span className="text-brand font-medium text-sm">Apply Coupons</span>
+                        <span className="text-brand font-medium text-sm">{t("applyCoupons")}</span>
                     </div>
                 </Card>
 
                 {/* Pricing Breakdown */}
                 <Card className="space-y-3">
-                    <AppSectionHeader title="Pricing" />
+                    <AppSectionHeader title={t("pricing")} />
                     <div className="flex justify-between text-ink-muted font-medium text-sm">
-                        <span>Item Totals</span>
+                        <span>{t("itemTotals")}</span>
                         <span>{itemTotal} RWF</span>
                     </div>
                     <div className="flex justify-between text-ink-muted font-medium text-sm">
-                        <span>Discounts</span>
+                        <span>{t("discounts")}</span>
                         <span>{discount} RWF</span>
                     </div>
                     <div className="flex justify-between text-ink-muted font-medium text-sm">
-                        <span>Delivery Fee</span>
+                        <span>{t("deliveryFee")}</span>
                         <span>{deliveryFee} RWF</span>
                     </div>
                     <div className="flex justify-between text-ink font-bold text-sm">
-                        <span>Grand Total</span>
+                        <span>{t("grandTotal")}</span>
                         <span>{grandTotal} RWF</span>
                     </div>
                 </Card>
@@ -415,10 +417,10 @@ const BookingSummary = () => {
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
+                                {t("processing")}
                             </>
                         ) : (
-                            "Proceed To Checkout"
+                            t("proceedToCheckout")
                         )}
                     </AppButton>
                 </div>
