@@ -1692,5 +1692,21 @@
     "statusOn": "On",
     "statusOff": "Off",
     "criticalNotice": "Important account, safety, and booking-critical notifications may still be sent when needed to keep your account and active bookings secure."
+  },
+  "handleProfile": {
+    "invalidHandle": "Invalid handle",
+    "profileNotFound": "Profile not found",
+    "userFallback": "User",
+    "workerFallback": "Worker",
+    "serviceFallback": "Service",
+    "recentHires": "Recent Hires",
+    "noHiresYet": "No hires yet",
+    "statusCompleted": "Completed",
+    "statusConfirmed": "Confirmed",
+    "statusPending": "Pending",
+    "statusCancelled": "Cancelled",
+    "reviews": "Reviews",
+    "reviewsWithCount": "Reviews ({count})",
+    "reportName": "Report {name}"
   }
 }

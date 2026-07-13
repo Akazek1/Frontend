@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, notFound } from "next/navigation";
 import { Loader2, Flag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Service } from "@/types";
@@ -78,7 +79,18 @@ const hireStatusClass = (status: string) => {
   }
 };
 
+const hireStatusLabel = (status: string, t: (key: string) => string) => {
+  switch (status) {
+    case "COMPLETED": return t("statusCompleted");
+    case "CONFIRMED": return t("statusConfirmed");
+    case "PENDING": return t("statusPending");
+    case "CANCELLED": return t("statusCancelled");
+    default: return status.charAt(0) + status.slice(1).toLowerCase();
+  }
+};
+
 export function HandleProfileClient() {
+  const t = useTranslations("handleProfile");
   const params = useParams<{ handle: string }>();
   const handle = (params?.handle as string) || "";
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -99,7 +111,7 @@ export function HandleProfileClient() {
 
     async function load() {
       if (!handle) {
-        setError("Invalid handle");
+        setError(t("invalidHandle"));
         setLoading(false);
         return;
       }
@@ -142,7 +154,7 @@ export function HandleProfileClient() {
         if (e?.response?.status === 404) {
           if (!cancelled) setIsUserNotFound(true);
         } else {
-          const message = e?.response?.data?.message || e?.message || "Profile not found";
+          const message = e?.response?.data?.message || e?.message || t("profileNotFound");
           if (!cancelled) {
             setError(message);
             toast.error(message);
@@ -218,12 +230,12 @@ export function HandleProfileClient() {
   if (error || !profile) {
     return (
       <div className="bg-surface min-h-screen p-6">
-        <p className="text-center text-red-500 py-12">{error || "Profile not found"}</p>
+        <p className="text-center text-red-500 py-12">{error || t("profileNotFound")}</p>
       </div>
     );
   }
 
-  const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || "User";
+  const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || t("userFallback");
   const addr = profile.addresses?.[0];
   const homeLocation = formatAddressLocation(addr, { includeCountry: true });
 
@@ -265,23 +277,23 @@ export function HandleProfileClient() {
       {/* Recent Hires — visible only to the profile owner */}
       {isOwner && (
         <section className="mx-4 mt-4 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="text-lg font-bold text-ink mb-4">Recent Hires</h2>
+          <h2 className="text-lg font-bold text-ink mb-4">{t("recentHires")}</h2>
           {hiresLoading ? (
             <div className="flex justify-center py-4">
               <Loader2 className="w-5 h-5 animate-spin text-brand" />
             </div>
           ) : recentHires.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-2">No hires yet</p>
+            <p className="text-sm text-gray-400 text-center py-2">{t("noHiresYet")}</p>
           ) : (
             <div className="space-y-4">
               {recentHires.map((hire) => {
                 const worker = hire.partner;
                 const workerName = worker
-                  ? `${worker.firstName || ""} ${worker.lastName || ""}`.trim() || worker.username || "Worker"
-                  : "Worker";
+                  ? `${worker.firstName || ""} ${worker.lastName || ""}`.trim() || worker.username || t("workerFallback")
+                  : t("workerFallback");
                 const initials = workerName.charAt(0).toUpperCase();
                 const serviceLabel =
-                  hire.service?.category?.name || "Service";
+                  hire.service?.category?.name || t("serviceFallback");
                 const dateLabel = hire.createdAt
                   ? new Date(hire.createdAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -303,7 +315,7 @@ export function HandleProfileClient() {
                       <span
                         className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${hireStatusClass(hire.status)}`}
                       >
-                        {hire.status.charAt(0) + hire.status.slice(1).toLowerCase()}
+                        {hireStatusLabel(hire.status, t)}
                       </span>
                       {dateLabel && (
                         <span className="text-[11px] text-gray-400">{dateLabel}</span>
@@ -321,7 +333,7 @@ export function HandleProfileClient() {
       {reviews.length > 0 && (
         <section className="mx-4 mt-4 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-ink mb-4">
-            Reviews{reviews.length > 0 ? ` (${reviews.length})` : ""}
+            {reviews.length > 0 ? t("reviewsWithCount", { count: reviews.length }) : t("reviews")}
           </h2>
           <div className="space-y-4">
             {reviews.map((review) => (
@@ -344,7 +356,7 @@ export function HandleProfileClient() {
             className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-red-500 transition-colors"
           >
             <Flag className="w-3.5 h-3.5" />
-            Report {displayName}
+            {t("reportName", { name: displayName })}
           </button>
         </div>
       )}
