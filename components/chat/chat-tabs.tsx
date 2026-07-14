@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import from shadcn/ui
 import type { InboxCounts } from "./index";
 
@@ -14,6 +15,7 @@ const triggerClass =
   "group flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-brand data-[state=active]:text-white data-[state=inactive]:text-gray-500";
 
 const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
+  const t = useTranslations("chatInbox");
   const router = useRouter();
   const searchParams = useSearchParams();
   const validTabs = ["All", "Read", "Unread", "Archive"];
@@ -32,7 +34,7 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
       <Tabs value={currentTab} onValueChange={setTab} className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-4 rounded-full bg-white p-1 shadow-sm">
           <TabsTrigger value="All" className={triggerClass}>
-            All
+            {t("tabAll")}
             {counts && counts.all > 0 ? (
               <span className="min-w-[18px] rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 group-data-[state=active]:bg-white group-data-[state=active]:text-brand">
                 {counts.all}
@@ -40,10 +42,10 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
             ) : null}
           </TabsTrigger>
           <TabsTrigger value="Read" className={triggerClass}>
-            Read
+            {t("tabRead")}
           </TabsTrigger>
           <TabsTrigger value="Unread" className={triggerClass}>
-            Unread
+            {t("tabUnread")}
             {counts && counts.unread > 0 ? (
               <span className="min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {counts.unread}
@@ -51,7 +53,7 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
             ) : null}
           </TabsTrigger>
           <TabsTrigger value="Archive" className={triggerClass}>
-            Archive
+            {t("tabArchive")}
             {counts && counts.archiveReviewPending > 0 ? (
               <span className="min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {counts.archiveReviewPending}

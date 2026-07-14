@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Icons } from "@/components/icons";
-import { navItems as defaultNavItems } from "@/constant"; // Keep this immutable
+import { navItems as getNavItems } from "@/constant";
 import Link from "next/link";
 import { NavItem } from "@/types";
 import { colors } from "@/constant/colors";
@@ -10,10 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthGate } from "@/context/auth-gate-context";
 
 const Navigation = () => {
+  const t = useTranslations("appNavigation");
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const { openAuthGate } = useAuthGate();
-  const navItems = defaultNavItems;
+  const navItems = getNavItems(t);
 
   const isActive = (item: NavItem): boolean => {
     if (item.matchPattern) {

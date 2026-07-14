@@ -1,16 +1,18 @@
 import { NavItem } from "@/types";
 
-export const navItems: NavItem[] = [
-  { title: "Home", url: "/", icon: "HomeIcon" },
-  { title: "Work", url: "/work", icon: "BriefcaseBusiness", matchPattern: "/work/*" },
-  { title: "Message", url: "/conversations", icon: "MessageIcon" },
-  {
-    title: "More",
-    url: "/more",
-    icon: "SettingIcon",
-    matchPattern: "/more/*",
-  },
-];
+export function navItems(t: (key: string) => string): NavItem[] {
+  return [
+    { title: t("home"), url: "/", icon: "HomeIcon" },
+    { title: t("work"), url: "/work", icon: "BriefcaseBusiness", matchPattern: "/work/*" },
+    { title: t("message"), url: "/conversations", icon: "MessageIcon" },
+    {
+      title: t("more"),
+      url: "/more",
+      icon: "SettingIcon",
+      matchPattern: "/more/*",
+    },
+  ];
+}
 
 export const BOOKING_STATUS = {
   PENDING: "PENDING",
