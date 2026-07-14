@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Briefcase,
   ChevronRight,
@@ -78,6 +79,7 @@ const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => 
 );
 
 const ProfileScreen = () => {
+  const t = useTranslations("profileScreen");
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -85,25 +87,25 @@ const ProfileScreen = () => {
   const isWorker = Boolean(user?.isProvider);
 
   const mainActions = [
-    { name: "Edit Profile", description: "Update your personal details", Icon: User, href: "/profile" },
-    { name: "My Services", description: "Create and manage service cards", Icon: Briefcase, href: "/more/services" },
+    { name: t("editProfile"), description: t("editProfileDesc"), Icon: User, href: "/profile" },
+    { name: t("myServices"), description: t("myServicesDesc"), Icon: Briefcase, href: "/more/services" },
     // Agency inquiry flow — workers see hand-over offers, others see inquiries they sent.
     isWorker
-      ? { name: "Placement Offers", description: "Agency placement offers for you", Icon: Building2, href: "/inquiries" }
-      : { name: "Agency Inquiries", description: "Requests you sent to agencies", Icon: Building2, href: "/inquiries" },
-    { name: "Saved Profiles", description: "View providers you bookmarked", Icon: Bookmark, href: "/more/saved" },
-    { name: "Notifications", description: "Control alerts and reminders", Icon: Bell, href: "/more/notifications" },
+      ? { name: t("placementOffers"), description: t("placementOffersDesc"), Icon: Building2, href: "/inquiries" }
+      : { name: t("agencyInquiries"), description: t("agencyInquiriesDesc"), Icon: Building2, href: "/inquiries" },
+    { name: t("savedProfiles"), description: t("savedProfilesDesc"), Icon: Bookmark, href: "/more/saved" },
+    { name: t("notifications"), description: t("notificationsDesc"), Icon: Bell, href: "/more/notifications" },
   ];
 
   const supportItems = [
-    { name: "Help & Support", description: "Get answers or contact support", Icon: HelpingHand, href: "/more/help" },
-    { name: "Report an Issue", description: "Tell us what needs attention", Icon: AlertTriangle, href: "/more/report" },
-    { name: "Share Feedback", description: "Help improve Akazek", Icon: MessageSquare, href: "/more/feedback" },
+    { name: t("helpAndSupport"), description: t("helpAndSupportDesc"), Icon: HelpingHand, href: "/more/help" },
+    { name: t("reportAnIssue"), description: t("reportAnIssueDesc"), Icon: AlertTriangle, href: "/more/report" },
+    { name: t("shareFeedback"), description: t("shareFeedbackDesc"), Icon: MessageSquare, href: "/more/feedback" },
   ];
 
   const legalItems = [
-    { name: "Privacy Policy", description: "How your information is handled", Icon: Lock, href: "/privacy" },
-    { name: "Terms & Conditions", description: "Service rules and responsibilities", Icon: ShieldX, href: "/terms" },
+    { name: t("privacyPolicy"), description: t("privacyPolicyDesc"), Icon: Lock, href: "/privacy" },
+    { name: t("termsConditions"), description: t("termsConditionsDesc"), Icon: ShieldX, href: "/terms" },
   ];
 
   const handleLogout = async () => {
@@ -125,7 +127,7 @@ const ProfileScreen = () => {
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">
             <AkazekLogo variant="mark" markClassName="h-5 w-5" />
           </span>
-          More
+          {t("more")}
         </h1>
       </div>
 
@@ -137,19 +139,19 @@ const ProfileScreen = () => {
         <div className="rounded-md p-2" style={{ backgroundColor: colors.backgroundSecondary }}>
           <div>
             <p className="text-[11px] font-semibold leading-3" style={{ color: colors.text }}>
-              Keep your profile current
+              {t("keepProfileCurrent")}
             </p>
             <p className="mt-0.5 text-[10px] leading-2.5" style={{ color: colors.borderMuted }}>
-              A complete profile helps build trust.
+              {t("keepProfileCurrentDesc")}
             </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-3.5">
-        <MenuSection title="Account" items={mainActions} />
-        <MenuSection title="Support" items={supportItems} />
-        <MenuSection title="Legal" items={legalItems} />
+        <MenuSection title={t("account")} items={mainActions} />
+        <MenuSection title={t("support")} items={supportItems} />
+        <MenuSection title={t("legal")} items={legalItems} />
 
         <button
           type="button"
@@ -157,7 +159,7 @@ const ProfileScreen = () => {
           className="flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-lg border border-red-100 bg-white px-4 py-2.5 text-sm font-semibold text-red-500 shadow-[0_4px_12px_rgba(247,85,85,0.06)] transition-colors hover:bg-red-50 active:bg-red-100"
         >
           <LogOut className="h-4.5 w-4.5" />
-          Logout
+          {t("logout")}
         </button>
       </div>
     </div>

@@ -1,13 +1,15 @@
 "use client";
 import React from "react";
+import { useTranslations } from "next-intl";
 import { useViewMode } from "@/context/view-mode-context";
 import { Briefcase, User } from "lucide-react";
 
 const ViewModeToggle: React.FC = () => {
+  const t = useTranslations("viewModeToggle");
   const { viewMode, toggleViewMode } = useViewMode();
   const labels = {
-    employer: { title: "Hire help" },
-    provider: { title: "Find work" },
+    employer: { title: t("hireHelp") },
+    provider: { title: t("findWork") },
   };
 
   return (

@@ -16,8 +16,8 @@
     "location": {
       "aria": "Reba cyangwa uhindure aho uherereye",
       "title": "Aho uherereye",
-      "subtitle": "Bikoreshwa mu kukwereka serivisi ziri hafi no gufasha abakiriya kukubona.",
-      "empty": "Nta hantu warabitse.",
+      "subtitle": "Byifashishwa mu ukubona imirimo cyangwa abakozi.",
+      "empty": "Aho uherereye ntihatanzwe.",
       "change": "Hindura aho uherereye",
       "set": "Shyiraho aho uherereye",
       "sector": "Umurenge",
@@ -28,7 +28,7 @@
     "notifications": {
       "aria": "Reba amatangazo",
       "title": "Amatangazo",
-      "newBadge": "{count} nshya",
+      "newBadge": "{count, plural, one {# rishya} other {# mashya}}",
       "empty": "Nta amatangazo arahari.",
       "viewAll": "Reba amatangazo yose"
     }
@@ -40,17 +40,17 @@
     "changeLater": "Ushobora kubihindura igihe icyo ari cyo cyose.",
     "employer": {
       "title": "Shaka abakozi bizewe",
-      "desc": "Shaka kandi uhe akazi abakozi bizewe murugo n'umuryango wawe.",
-      "badge": "Umutekano • Byemejwe • Byizewe"
+      "desc": "Shaka kandi uhe akazi abo iwawe n'umuryango wawe bakwizera.",
+      "badge": "Umutekano • Gushishoza • Kwizera"
     },
     "worker": {
       "title": "Nshaka akazi",
-      "desc": "Tanga serivisi, shaka akazi kandi winjize amafaranga.",
-      "badge": "Akazi kenshi • Amafaranga menshi"
+      "desc": "Tanga serivisi, shaka akazi kandi wunguke.",
+      "badge": "Imirimo myinshi • Inyungu nyinshi"
     },
     "business": {
       "title": "Mpagarariye ubucuruzi",
-      "desc": "Andikisha ikigo cyawe maze uhuze n'abakiriya benshi.",
+      "desc": "Andikisha ikigo cyawe maze uhure n'abakiriya benshi.",
       "cta": "Iyandikishe ubu"
     },
     "haveAccount": "Usanzwe ufite konti?",
@@ -165,7 +165,7 @@
     "taskRestored": "Umurimo wasubijweho"
   },
   "filterModal": {
-    "title": "Muyungurura",
+    "title": "Yungurura",
     "subtitle": "Gabanya ibisubizo by'akazi.",
     "budgetRange": "Ingengo y'amafaranga (RWF)",
     "min": "Amacye",
@@ -394,7 +394,7 @@
     "placementHistory": "Amateka yo gushyirwa mu kazi",
     "noPlacementHistoryYet": "Nta mateka yo gushyirwa mu kazi arahari.",
     "current": "Ubu",
-    "ended": "Byarangiye",
+    "ended": "Yarangiye",
     "present": "Kugeza ubu",
     "outcomePrefix": "Icyavuyemo: "
   },
@@ -994,7 +994,7 @@
     "hireNotesPlaceholder": "Sobanura ibyo ukeneye, gahunda wifuza, cyangwa ibisabwa byihariye...",
     "cancel": "Hagarika",
     "sendRequest": "Ohereza ubusabe",
-    "filters": "Muyungurura",
+    "filters": "Yungurura",
     "narrowDownJobResults": "Gabanya ibisubizo by'akazi.",
     "chooseWhatAppearsInCards": "Hitamo ibigomba kugaragara ku makarita.",
     "budgetRangeRwf": "Ingengo y'amafaranga (RWF)",
@@ -1278,7 +1278,7 @@
     "pageTitle": "Abakozi",
     "pageSubtitle": "Cunga kandi ukurikirane abakozi bose bo mu kigo cyawe.",
     "searchPlaceholder": "Shaka abakozi ukoresheje izina cyangwa ubumenyi...",
-    "filters": "Muyungurura",
+    "filters": "Yungurura",
     "export": "Sohora",
     "tableName": "Izina",
     "tableSkill": "Ubumenyi",
@@ -1579,7 +1579,7 @@
     "searchPlaceholder": "Shakisha izina, serivisi, icyiciro, agace",
     "refineResults": "Ongera Unonosore Ibisubizo",
     "refineResultsDesc": "Ubwoko bwa serivisi, agace, igiciro, uko kuboneka",
-    "filter": "Muyungurura",
+    "filter": "Yungurura",
     "findingServices": "Birimo gushakisha serivisi...",
     "fetchError": "Hari ikitagenze neza mu gushakisha serivisi.",
     "withinKm": "Mu birometero {km}",
@@ -1592,7 +1592,7 @@
     "searchProvidersPlaceholder": "Shakisha ukoresheje izina ry'utanga serivisi, serivisi, icyiciro...",
     "clearSearch": "Siba ishakisha",
     "openFilters": "Fungura muyungurura",
-    "filter": "Muyungurura"
+    "filter": "Yungurura"
   },
   "postJob": {
     "fillRequiredFields": "Uzuza imyanya yose isabwa.",

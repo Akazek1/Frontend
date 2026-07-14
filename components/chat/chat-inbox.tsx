@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
 import type { RootState } from "@/store";
@@ -24,18 +25,18 @@ const isArchived = (status: string) => ARCHIVED_STATUSES.includes(status);
 const isUnreadByMe = (latest: Message | undefined, myId?: string) =>
   Boolean(latest && latest.senderId !== myId && !latest.isRead);
 
-const getStatusConfig = (status: string): { label: string; pill: string; bar: string } => {
+const getStatusConfig = (status: string, t: (key: string) => string): { label: string; pill: string; bar: string } => {
   switch (status) {
     case BOOKING_STATUS.PENDING:
-      return { label: "Pending", pill: "bg-orange-50 text-orange-600", bar: "bg-orange-400" };
+      return { label: t("statusPending"), pill: "bg-orange-50 text-orange-600", bar: "bg-orange-400" };
     case BOOKING_STATUS.CONFIRMED:
-      return { label: "Confirmed", pill: "bg-blue-50 text-blue-600", bar: "bg-blue-500" };
+      return { label: t("statusConfirmed"), pill: "bg-blue-50 text-blue-600", bar: "bg-blue-500" };
     case BOOKING_STATUS.IN_PROGRESS:
-      return { label: "Active", pill: "bg-amber-50 text-amber-600", bar: "bg-amber-400" };
+      return { label: t("statusActive"), pill: "bg-amber-50 text-amber-600", bar: "bg-amber-400" };
     case BOOKING_STATUS.COMPLETED:
-      return { label: "Completed", pill: "bg-gray-100 text-gray-600", bar: "bg-[#9C8BD6]" };
+      return { label: t("statusCompleted"), pill: "bg-gray-100 text-gray-600", bar: "bg-[#9C8BD6]" };
     case BOOKING_STATUS.CANCELLED:
-      return { label: "Cancelled", pill: "bg-red-50 text-red-600", bar: "bg-red-400" };
+      return { label: t("statusCancelled"), pill: "bg-red-50 text-red-600", bar: "bg-red-400" };
     default:
       return { label: status, pill: "bg-gray-100 text-gray-600", bar: "bg-gray-300" };
   }
@@ -109,6 +110,7 @@ async function fetchConversations(): Promise<Booking[]> {
 }
 
 export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
+  const t = useTranslations("chatInbox");
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "All";
   const router = useRouter();
@@ -327,13 +329,13 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
     const diffMs = Date.now() - date.getTime();
     const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return "now";
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 1) return t("justNow");
+    if (minutes < 60) return t("minutesAgo", { minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return t("hoursAgo", { hours });
     const days = Math.floor(hours / 24);
-    if (days === 1) return "Yesterday";
-    if (days < 7) return `${days}d ago`;
+    if (days === 1) return t("yesterday");
+    if (days < 7) return t("daysAgo", { days });
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 
@@ -352,16 +354,16 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
             const partner = booking.partner;
             if (!partner) return null;
 
-            const displayName = `${partner.firstName || "Unknown"} ${partner.lastName || ""}`.trim();
+            const displayName = `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim();
             const initials = `${partner.firstName?.[0] || ""}${partner.lastName?.[0] || ""}` || "AK";
             const isUnreadByMe = Boolean(msg && msg.senderId !== user?.id && !msg.isRead);
-            const status = getStatusConfig(booking.status);
+            const status = getStatusConfig(booking.status, t);
             const fallbackTime = booking.updatedAt || booking.createdAt || new Date().toISOString();
             const previewText =
               msg?.content ||
               (booking.status === BOOKING_STATUS.COMPLETED
-                ? "Job completed. Conversation is read-only."
-                : "Booking closed. Conversation is read-only.");
+                ? t("jobCompletedReadOnly")
+                : t("bookingClosedReadOnly"));
             return (
               <button
                 key={booking.bookingId}
@@ -395,7 +397,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
                   <span className="mt-0.5 flex items-center justify-between gap-2">
                     <span className="block truncate text-[12.5px] font-semibold text-brand">
-                      {booking.service?.category?.name || "Booking"}
+                      {booking.service?.category?.name || t("bookingFallback")}
                     </span>
                     <span className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${status.pill}`}>
                       {status.label}
@@ -422,7 +424,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
                       ) : booking.reviewPending ? (
                         <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
                           <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                          Review
+                          {t("review")}
                         </span>
                       ) : null}
                     </span>
@@ -440,12 +442,12 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
             <MessageCircle className="h-7 w-7 text-brand" />
           </span>
           <h3 className="mt-4 text-[15px] font-bold text-ink">
-            {currentTab === "Archive" ? "Nothing archived yet" : "No messages found"}
+            {currentTab === "Archive" ? t("nothingArchivedYet") : t("noMessagesFound")}
           </h3>
           <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-ink-muted">
             {currentTab === "Archive"
-              ? "Completed and cancelled conversations will appear here."
-              : "Try a different search term or switch to another message filter."}
+              ? t("archiveEmptyDesc")
+              : t("searchEmptyDesc")}
           </p>
         </div>
       )}

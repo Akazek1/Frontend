@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import ChatHeader from "./chat-header";
 import CustomSearch from "../search/custom-search";
 import ChatTabs from "./chat-tabs";
@@ -16,6 +17,7 @@ export interface InboxCounts {
 }
 
 const Chat = () => {
+  const t = useTranslations("chatInbox");
   const [searchQuery, setSearchQuery] = useState("");
   const [counts, setCounts] = useState<InboxCounts>({ all: 0, read: 0, unread: 0, archive: 0, archiveReviewPending: 0 });
 
@@ -30,7 +32,7 @@ const Chat = () => {
         <ChatHeader />
         <CustomSearch
           onSearch={handleSearch}
-          placeholder="Search employers, workers or jobs"
+          placeholder={t("searchPlaceholder")}
         />
         <ChatTabs counts={counts} />
       </div>
