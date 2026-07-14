@@ -5,12 +5,14 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { LogIn, Users, ChevronRight } from "lucide-react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
 
 const OTP_LENGTH = 6
 
 export function LoginForm() {
+  const t = useTranslations("login")
   const {
     phoneNumber, handlePhoneChange,
     handleSendOtp, handleVerifyOtp, handleResendOtp,
@@ -36,7 +38,7 @@ export function LoginForm() {
     if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
     if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
     if (cleaned.length !== 9) {
-      setPhoneError("Please enter a valid 9-digit phone number")
+      setPhoneError(t("invalidPhoneNumber"))
       return
     }
 
@@ -48,19 +50,19 @@ export function LoginForm() {
       const res = await api.get(`/auth/check-user/${formatted}`)
       const { exists, blocked } = res.data?.data || res.data
       if (!exists) {
-        setPhoneError("No account found with this number. Please sign up instead.")
+        setPhoneError(t("noAccountFound"))
         setChecking(false)
         return
       }
       if (blocked) {
-        setPhoneError("This account has been suspended. Please contact support if you believe this is a mistake.")
+        setPhoneError(t("accountSuspended"))
         setChecking(false)
         return
       }
     } catch {
       // In dev, allow continuing even if the check endpoint fails
       if (process.env.NODE_ENV !== "development") {
-        setPhoneError("Could not verify number. Please try again.")
+        setPhoneError(t("couldNotVerifyNumber"))
         setChecking(false)
         return
       }
@@ -80,8 +82,8 @@ export function LoginForm() {
           <LogIn className="w-8 h-8 text-brand" strokeWidth={1.5} />
         </div>
         <div className="text-center">
-          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-1">Welcome back</h2>
-          <p className="text-sm text-gray-500">Enter your phone number to log in</p>
+          <h2 className="font-bold text-2xl sm:text-3xl text-ink mb-1">{t("welcomeBack")}</h2>
+          <p className="text-sm text-gray-500">{t("enterPhoneToLogIn")}</p>
         </div>
       </div>
 
@@ -91,7 +93,7 @@ export function LoginForm() {
           phoneError ? "border-red-400" : otpSent ? "border-gray-200 opacity-60" : "border-gray-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20"
         }`}>
           <div className="flex items-center gap-2 pl-3 pr-4 py-3 sm:py-4 border-r border-gray-300 shrink-0">
-            <Image height={40} width={40} src="https://flagcdn.com/w40/rw.png" alt="Rwanda" className="w-6 h-4 object-cover rounded-sm" />
+            <Image height={40} width={40} src="https://flagcdn.com/w40/rw.png" alt={t("rwandaFlagAlt")} className="w-6 h-4 object-cover rounded-sm" />
             <span className="text-gray-700 font-semibold text-sm">+250</span>
           </div>
           <input
@@ -99,7 +101,7 @@ export function LoginForm() {
             name="phone"
             autoComplete="tel-national"
             inputMode="numeric"
-            placeholder="Phone number"
+            placeholder={t("phoneNumberPlaceholder")}
             value={phoneNumber}
             onChange={(e) => { setPhoneError(""); handlePhoneChange(e.target.value) }}
             onKeyDown={(e) => { if (e.key === "Enter" && !otpSent) handleLogin() }}
@@ -124,7 +126,10 @@ export function LoginForm() {
           >
             <div className="space-y-4 pt-2 border-t border-gray-100">
               <p className="text-sm text-gray-600 text-center">
-                We sent a code to <span className="font-semibold text-gray-900">+250 {phoneNumber}</span>
+                {t.rich("otpSentTo", {
+                  phone: phoneNumber,
+                  b: (chunks) => <span className="font-semibold text-gray-900">{chunks}</span>,
+                })}
               </p>
 
               <div
@@ -148,7 +153,7 @@ export function LoginForm() {
                   onFocus={(e) => e.target.scrollIntoView({ behavior: "smooth", block: "center" })}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   style={{ fontSize: "16px" }}
-                  aria-label="Verification code"
+                  aria-label={t("verificationCode")}
                 />
                 {Array.from({ length: OTP_LENGTH }).map((_, i) => {
                   const isFilled = !!code[i]
@@ -168,10 +173,10 @@ export function LoginForm() {
 
               <div className="text-center">
                 {resendCooldown > 0 ? (
-                  <p className="text-sm text-gray-400">Resend code in {resendCooldown}s</p>
+                  <p className="text-sm text-gray-400">{t("resendCodeIn", { seconds: resendCooldown })}</p>
                 ) : (
                   <button type="button" onClick={handleResendOtp} className="text-sm text-brand font-medium underline underline-offset-2">
-                    Resend code
+                    {t("resendCode")}
                   </button>
                 )}
               </div>
@@ -188,7 +193,7 @@ export function LoginForm() {
           disabled={isLoading || checking || !phoneNumber}
           className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
         >
-          {checking ? "Checking..." : isLoading ? "Sending code..." : "Log In"}
+          {checking ? t("checking") : isLoading ? t("sendingCode") : t("logIn")}
         </button>
       ) : (
         <button
@@ -200,7 +205,7 @@ export function LoginForm() {
           disabled={isLoading || code.join("").length < OTP_LENGTH}
           className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
         >
-          {isLoading ? "Verifying..." : "Log In"}
+          {isLoading ? t("verifying") : t("logIn")}
         </button>
       )}
 
@@ -210,7 +215,7 @@ export function LoginForm() {
           onClick={() => { setOtpSent(false); setCode(Array(OTP_LENGTH).fill("")) }}
           className="w-full text-sm text-gray-500 underline underline-offset-2 text-center"
         >
-          Change phone number
+          {t("changePhoneNumber")}
         </button>
       )}
 
@@ -219,7 +224,7 @@ export function LoginForm() {
         <>
           <div className="flex items-center gap-3 pt-1">
             <span className="h-px flex-1 bg-gray-200" />
-            <span className="text-xs text-gray-400">or</span>
+            <span className="text-xs text-gray-400">{t("or")}</span>
             <span className="h-px flex-1 bg-gray-200" />
           </div>
           <Link
@@ -230,8 +235,8 @@ export function LoginForm() {
               <Users className="h-5 w-5 text-brand" />
             </span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold text-ink">Agency or company?</span>
-              <span className="block text-xs text-gray-500">Sign in with email and password</span>
+              <span className="block text-sm font-semibold text-ink">{t("agencyOrCompany")}</span>
+              <span className="block text-xs text-gray-500">{t("signInWithEmailPassword")}</span>
             </span>
             <ChevronRight className="h-5 w-5 text-gray-400" />
           </Link>
@@ -241,9 +246,9 @@ export function LoginForm() {
       {/* Sign-up escape hatch */}
       {!otpSent && (
         <p className="text-center text-sm text-gray-500 pt-2">
-          Don&apos;t have an account?{" "}
+          {t("dontHaveAccount")}{" "}
           <Link href="/onboarding" className="text-brand font-semibold underline underline-offset-2">
-            Sign up
+            {t("signUp")}
           </Link>
         </p>
       )}
