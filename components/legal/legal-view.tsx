@@ -105,7 +105,7 @@ export default function LegalView({ type, heading, fallbackIntro, fallbackSectio
 
       <Card className="space-y-2">
         <p className="text-ink-muted font-normal text-xs tracking-[0.2px] font-urbanist">
-          For questions, contact: support@akazek.rw
+          For questions, contact: support@huza.app
         </p>
       </Card>
     </PageShell>

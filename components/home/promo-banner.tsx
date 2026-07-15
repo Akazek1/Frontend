@@ -29,27 +29,10 @@ interface ApiBanner {
   sortOrder: number;
 }
 
-const defaultSlides: HeroSlide[] = [
-  {
-    id: "default",
-    trustBadges: ["Trusted", "Verified", "Reliable"],
-    headlineBefore: "Find ",
-    headlineHighlight: "trusted",
-    headlineAfter: " help,\nget things done.",
-    subtitle: "Verified professionals for your\nhome and daily needs.",
-    primaryCta: { label: "Browse Services", href: "/service?category=all" },
-    secondaryCta: { label: "How it works", href: "/onboarding" },
-    image: "/images/Banner.png",
-    mediaType: "IMAGE",
-    bgColor: "#F0FAF0",
-  },
-];
-
 function apiBannersToSlides(banners: ApiBanner[]): HeroSlide[] {
   const active = banners
     .filter((b) => b.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder);
-  if (!active.length) return defaultSlides;
   return active.map((b) => ({
     id: b.id,
     trustBadges: [],
@@ -66,7 +49,7 @@ function apiBannersToSlides(banners: ApiBanner[]): HeroSlide[] {
 }
 
 function useDynamicBanners(): HeroSlide[] {
-  const [slides, setSlides] = useState<HeroSlide[]>(defaultSlides);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
   useEffect(() => {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
     // Public endpoint (no auth required) — returns active banners only
@@ -75,7 +58,7 @@ function useDynamicBanners(): HeroSlide[] {
       .then((json) => {
         if (!json) return;
         const banners: ApiBanner[] = json?.data ?? json;
-        if (Array.isArray(banners) && banners.length) {
+        if (Array.isArray(banners)) {
           setSlides(apiBannersToSlides(banners));
         }
       })
@@ -120,6 +103,8 @@ const PromoBanner: React.FC<PromoBannerProps> = ({ slides: propSlides }) => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [activeIndex, paused, slides.length, next]);
+
+  if (slides.length === 0) return null;
 
   const slide = slides[activeIndex];
 

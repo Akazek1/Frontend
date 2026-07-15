@@ -97,7 +97,7 @@ try {
     // shape in case an outdated backend is still deployed.
     const data = payload.data;
     const notificationTitle =
-      data?.title || payload.notification?.title || "Akazek";
+      data?.title || payload.notification?.title || "Huza";
     // Collapse notifications from the same conversation into one OS entry
     // instead of stacking one per message: reuse a per-booking `tag` so a new
     // message replaces the previous, and `renotify` so it still alerts.

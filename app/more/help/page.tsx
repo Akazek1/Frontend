@@ -37,13 +37,13 @@ const HelpAndSupport = () => {
         </p>
         <div className="space-y-3 flex flex-col">
           <AppButton asChild className="w-full">
-            <a href="mailto:support@akazek.rw">
+            <a href="mailto:support@huza.app">
               <Mail className="h-4 w-4" />
               {t("emailSupport")}
             </a>
           </AppButton>
           <div className="text-center text-sm text-gray-600">
-            <p>support@akazek.rw</p>
+            <p>support@huza.app</p>
             <p className="text-xs text-gray-500 mt-1">{t("emailResponseTime")}</p>
           </div>
         </div>

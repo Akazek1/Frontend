@@ -123,7 +123,7 @@ describe("toBookingItem", () => {
   it("falls back to a default name when the other party is missing", () => {
     const noEmployer = makeBooking({ employer: null });
     const item = toBookingItem(noEmployer, "provider", "awaitingReview", "orange");
-    expect(item.title).toBe("Akazek user");
+    expect(item.title).toBe("Huza user");
   });
 });
 

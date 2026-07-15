@@ -21,7 +21,7 @@ export default function OfflinePage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/akazek-mark-dark-tight.png"
-            alt="Akazek"
+            alt="Huza"
             className="h-10 w-10 object-contain"
           />
         </div>

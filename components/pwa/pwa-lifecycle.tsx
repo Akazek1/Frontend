@@ -9,7 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-const DISMISSED_INSTALL_KEY = "akazek-install-dismissed";
+const DISMISSED_INSTALL_KEY = "huza-install-dismissed";
 
 function isIosInstallCandidate() {
   if (typeof window === "undefined") return false;
@@ -116,7 +116,7 @@ export function PwaLifecycle() {
           {showIosHint ? <Share2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#111827]">Add Akazek</p>
+          <p className="text-sm font-semibold text-[#111827]">Add Huza</p>
           <p className="mt-0.5 text-xs leading-5 text-[#4B5563]">
             {showIosHint ? "Use Share, then Add to Home Screen." : "Install it for faster access."}
           </p>

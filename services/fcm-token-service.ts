@@ -9,7 +9,7 @@ import { getAppServiceWorkerRegistration } from "@/lib/service-worker-registrati
 // /more/notifications. Checked here, at the single place tokens are minted, so
 // no auto-registration path (e.g. the silent re-register on login in
 // usePushNotifications) can undo the user's choice on the next app launch.
-export const DEVICE_PUSH_KEY = "akazek-device-push";
+export const DEVICE_PUSH_KEY = "huza-device-push";
 
 export function isDevicePushOptedOut() {
   return (

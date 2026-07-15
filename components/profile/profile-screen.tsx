@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 import ProfileImageUploader from "./profile-img-uloader";
 import { persistor } from "@/store";
 import { colors } from "@/constant/colors";
-import { AkazekLogo } from "@/components/brand/akazek-logo";
+import { HuzaLogo } from "@/components/brand/huza-logo";
 import { useAuth } from "@/hooks/useAuth";
 
 type MenuItem = {
@@ -125,7 +125,7 @@ const ProfileScreen = () => {
       <div className="mb-3 flex items-center justify-between">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%]" style={{ color: colors.text }}>
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">
-            <AkazekLogo variant="mark" markClassName="h-5 w-5" />
+            <HuzaLogo variant="mark" markClassName="h-5 w-5" />
           </span>
           {t("more")}
         </h1>

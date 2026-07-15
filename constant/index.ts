@@ -25,7 +25,7 @@ export const BOOKING_STATUS = {
 export const CHAT_WINDOW_HOURS = 72;
 
 // After this many messages on a still-PENDING booking, surface a gentle,
-// non-blocking nudge encouraging users to confirm the work through Akazek
+// non-blocking nudge encouraging users to confirm the work through Huza
 // instead of arranging it informally in chat.
 export const PENDING_NUDGE_MESSAGE_THRESHOLD = 6;
 
@@ -62,7 +62,7 @@ export const PrivacyPolicyData = [
     id: 1,
     title: "Information We Collect",
     content:
-      "Akazek collects personal information to provide, maintain, and improve our marketplace services. This includes: (1) Account Information: name, phone number, email address, profile picture, and gender when you create an account; (2) Verification Information: government-issued ID documents for workers to verify their identity and qualifications; (3) Service Information: for workers, we collect details about services offered, pricing, availability, and service areas; (4) Booking Information: dates, times, locations, and notes related to service bookings; (5) Communication Data: messages exchanged between employers and workers; (6) Payment Information: transaction history and payment method details (processed securely through payment processors); (7) Device Information: IP address, browser type, device type, and usage patterns to improve user experience; (8) Location Data: with your permission, we collect location information to help match employers with nearby workers.",
+      "Huza collects personal information to provide, maintain, and improve our marketplace services. This includes: (1) Account Information: name, phone number, email address, profile picture, and gender when you create an account; (2) Verification Information: government-issued ID documents for workers to verify their identity and qualifications; (3) Service Information: for workers, we collect details about services offered, pricing, availability, and service areas; (4) Booking Information: dates, times, locations, and notes related to service bookings; (5) Communication Data: messages exchanged between employers and workers; (6) Payment Information: transaction history and payment method details (processed securely through payment processors); (7) Device Information: IP address, browser type, device type, and usage patterns to improve user experience; (8) Location Data: with your permission, we collect location information to help match employers with nearby workers.",
   },
   {
     id: 2,
@@ -74,37 +74,37 @@ export const PrivacyPolicyData = [
     id: 3,
     title: "Data Security",
     content:
-      "We implement industry-standard security measures to protect your personal information, including encryption of sensitive data, secure server infrastructure, and restricted access controls. However, no method of transmission over the Internet is 100% secure. While we strive to protect your information, we cannot guarantee absolute security. You are responsible for maintaining the confidentiality of your account credentials. If you suspect unauthorized access, please contact support immediately at support@akazek.rw.",
+      "We implement industry-standard security measures to protect your personal information, including encryption of sensitive data, secure server infrastructure, and restricted access controls. However, no method of transmission over the Internet is 100% secure. While we strive to protect your information, we cannot guarantee absolute security. You are responsible for maintaining the confidentiality of your account credentials. If you suspect unauthorized access, please contact support immediately at support@huza.app.",
   },
   {
     id: 4,
     title: "Sharing Your Information",
     content:
-      "We do not sell your personal information. We share information only in the following circumstances: (1) With Service Providers: payment processors, SMS providers, and hosting services that assist us in operating the platform; (2) Between Users: employers and workers exchange necessary information to complete bookings (name, phone, location); (3) With Law Enforcement: when required by law or to comply with legal processes; (4) Business Transfers: if Akazek is acquired or merged, user information may be transferred as part of that transaction; (5) Aggregated Data: we may share anonymized, aggregated analytics with partners and researchers.",
+      "We do not sell your personal information. We share information only in the following circumstances: (1) With Service Providers: payment processors, SMS providers, and hosting services that assist us in operating the platform; (2) Between Users: employers and workers exchange necessary information to complete bookings (name, phone, location); (3) With Law Enforcement: when required by law or to comply with legal processes; (4) Business Transfers: if Huza is acquired or merged, user information may be transferred as part of that transaction; (5) Aggregated Data: we may share anonymized, aggregated analytics with partners and researchers.",
   },
   {
     id: 5,
     title: "Your Rights & Choices",
     content:
-      "You have the right to: (1) Access Your Data: request a copy of personal information we hold about you; (2) Correct Information: update or correct inaccurate information in your profile; (3) Delete Data: request deletion of your account and associated data (subject to legal retention requirements); (4) Opt-Out: decline marketing communications and non-essential notifications; (5) Data Portability: request your data in a portable format. To exercise these rights, contact support@akazek.rw with your request. We will respond within 30 days.",
+      "You have the right to: (1) Access Your Data: request a copy of personal information we hold about you; (2) Correct Information: update or correct inaccurate information in your profile; (3) Delete Data: request deletion of your account and associated data (subject to legal retention requirements); (4) Opt-Out: decline marketing communications and non-essential notifications; (5) Data Portability: request your data in a portable format. To exercise these rights, contact support@huza.app with your request. We will respond within 30 days.",
   },
   {
     id: 6,
     title: "Third-Party Links",
     content:
-      "Akazek may contain links to third-party websites and services. We are not responsible for the privacy practices of these external sites. Please review their privacy policies before providing personal information.",
+      "Huza may contain links to third-party websites and services. We are not responsible for the privacy practices of these external sites. Please review their privacy policies before providing personal information.",
   },
   {
     id: 7,
     title: "Policy Updates",
     content:
-      "We may update this Privacy Policy periodically to reflect changes in our practices, technology, or legal requirements. We will notify you of significant changes via email or through the app. Your continued use of Akazek after changes constitutes acceptance of the updated policy.",
+      "We may update this Privacy Policy periodically to reflect changes in our practices, technology, or legal requirements. We will notify you of significant changes via email or through the app. Your continued use of Huza after changes constitutes acceptance of the updated policy.",
   },
   {
     id: 8,
     title: "Contact Us",
     content:
-      "If you have questions about this Privacy Policy or our privacy practices, please contact us at: Akazek Rwanda Ltd, Kigali, Rwanda. Email: support@akazek.rw. Phone: +250788000000. We are committed to resolving any privacy concerns.",
+      "If you have questions about this Privacy Policy or our privacy practices, please contact us at: Huza.app LTD, Kigali, Rwanda. Email: support@huza.app. Phone: +250788000000. We are committed to resolving any privacy concerns.",
   },
 ];
 
@@ -113,37 +113,37 @@ export const TermsAndConditionsData = [
     id: 1,
     title: "Acceptance of Terms",
     content:
-      "By accessing and using Akazek, you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, you may not use our services. Akazek reserves the right to modify these terms at any time. Changes will be effective immediately upon posting to the platform.",
+      "By accessing and using Huza, you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, you may not use our services. Huza reserves the right to modify these terms at any time. Changes will be effective immediately upon posting to the platform.",
   },
   {
     id: 2,
     title: "User Accounts & Eligibility",
     content:
-      "To use Akazek, you must be at least 18 years old and a resident of Rwanda. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account. You agree to provide accurate, complete, and current information during registration. Akazek reserves the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.",
+      "To use Huza, you must be at least 18 years old and a resident of Rwanda. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account. You agree to provide accurate, complete, and current information during registration. Huza reserves the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.",
   },
   {
     id: 3,
     title: "User Roles: Employers & Workers",
     content:
-      "Akazek allows users to be both employers (hiring workers) and workers (offering services). As an Employer: you agree to provide accurate service details, fair compensation, and respectful treatment of workers. As a Worker: you agree to provide quality services as described, maintain professional conduct, and be available during agreed times. You are responsible for your own conduct and the accuracy of information you provide.",
+      "Huza allows users to be both employers (hiring workers) and workers (offering services). As an Employer: you agree to provide accurate service details, fair compensation, and respectful treatment of workers. As a Worker: you agree to provide quality services as described, maintain professional conduct, and be available during agreed times. You are responsible for your own conduct and the accuracy of information you provide.",
   },
   {
     id: 4,
     title: "Verification & Background Checks",
     content:
-      "Workers are required to provide government-issued ID verification. Akazek may conduct background checks or additional verification as deemed necessary for safety. Employers and workers agree to comply with Akazek's verification procedures. Verification does not guarantee safety—users remain responsible for assessing whether to proceed with transactions.",
+      "Workers are required to provide government-issued ID verification. Huza may conduct background checks or additional verification as deemed necessary for safety. Employers and workers agree to comply with Huza's verification procedures. Verification does not guarantee safety—users remain responsible for assessing whether to proceed with transactions.",
   },
   {
     id: 5,
     title: "Booking & Payment",
     content:
-      "When you book a service, you agree to pay the quoted amount. Payments are processed securely through our payment processor. Payment is due before or at the time of service completion. Cancellations must be made with reasonable notice (minimum 24 hours recommended). Late cancellations may incur fees as outlined in the booking details. Akazek is not responsible for disputes between employers and workers regarding pricing or service quality.",
+      "When you book a service, you agree to pay the quoted amount. Payments are processed securely through our payment processor. Payment is due before or at the time of service completion. Cancellations must be made with reasonable notice (minimum 24 hours recommended). Late cancellations may incur fees as outlined in the booking details. Huza is not responsible for disputes between employers and workers regarding pricing or service quality.",
   },
   {
     id: 6,
     title: "Service Quality & Disputes",
     content:
-      "Agazek provides the platform to connect users but does not employ workers or guarantee service quality. Akazek is not responsible for: incomplete or poor quality services, delays, cancellations by workers, or workplace injuries. Disputes between employers and workers are to be resolved directly when possible. For escalated disputes, contact support@akazek.rw with evidence (messages, photos, booking details). Akazek may mediate but reserves the right to determine outcomes.",
+      "Huza provides the platform to connect users but does not employ workers or guarantee service quality. Huza is not responsible for: incomplete or poor quality services, delays, cancellations by workers, or workplace injuries. Disputes between employers and workers are to be resolved directly when possible. For escalated disputes, contact support@huza.app with evidence (messages, photos, booking details). Huza may mediate but reserves the right to determine outcomes.",
   },
   {
     id: 7,
@@ -155,25 +155,25 @@ export const TermsAndConditionsData = [
     id: 8,
     title: "Safety & Liability",
     content:
-      "Employers and workers use Akazek at their own risk. Akazek does not guarantee the safety, reliability, or background of any user. We recommend: meeting in safe public locations, informing others of your whereabouts, verifying worker credentials, and trusting your instincts. Akazek is not liable for personal injury, theft, fraud, or other harm resulting from transactions between users. Users assume all risk associated with using the platform.",
+      "Employers and workers use Huza at their own risk. Huza does not guarantee the safety, reliability, or background of any user. We recommend: meeting in safe public locations, informing others of your whereabouts, verifying worker credentials, and trusting your instincts. Huza is not liable for personal injury, theft, fraud, or other harm resulting from transactions between users. Users assume all risk associated with using the platform.",
   },
   {
     id: 9,
     title: "Intellectual Property",
     content:
-      "All content on Akazek, including logos, text, images, and design, is owned by or licensed to Akazek Rwanda Ltd and protected by copyright law. You may not reproduce, distribute, or use this content without permission. User-generated content (profiles, service descriptions) remains your property, but you grant Akazek a license to use it on the platform.",
+      "All content on Huza, including logos, text, images, and design, is owned by or licensed to Huza.app LTD and protected by copyright law. You may not reproduce, distribute, or use this content without permission. User-generated content (profiles, service descriptions) remains your property, but you grant Huza a license to use it on the platform.",
   },
   {
     id: 10,
     title: "Limitation of Liability",
     content:
-      "TO THE MAXIMUM EXTENT PERMITTED BY LAW, AKAZEK AND ITS OWNERS, EMPLOYEES, AND PARTNERS ARE NOT LIABLE FOR: indirect damages, lost profits, lost data, or incidental damages arising from platform use; errors or omissions in content; or unauthorized access to your information. Akazek's total liability is limited to the amount you paid Akazek in the past 12 months.",
+      "TO THE MAXIMUM EXTENT PERMITTED BY LAW, HUZA AND ITS OWNERS, EMPLOYEES, AND PARTNERS ARE NOT LIABLE FOR: indirect damages, lost profits, lost data, or incidental damages arising from platform use; errors or omissions in content; or unauthorized access to your information. Huza's total liability is limited to the amount you paid Huza in the past 12 months.",
   },
   {
     id: 11,
     title: "Termination",
     content:
-      "Akazek may suspend or terminate your account for: violation of these terms, fraudulent activity, unpaid fees, or at our sole discretion. Upon termination, your right to use the platform ends immediately. You remain liable for any outstanding fees or damages. Termination does not relieve you of obligations incurred before termination.",
+      "Huza may suspend or terminate your account for: violation of these terms, fraudulent activity, unpaid fees, or at our sole discretion. Upon termination, your right to use the platform ends immediately. You remain liable for any outstanding fees or damages. Termination does not relieve you of obligations incurred before termination.",
   },
   {
     id: 12,
@@ -185,6 +185,6 @@ export const TermsAndConditionsData = [
     id: 13,
     title: "Contact & Support",
     content:
-      "For questions about these Terms & Conditions or to report violations, contact: support@akazek.rw, Phone: +250788000000. We aim to respond to inquiries within 24-48 hours. This agreement constitutes the entire terms between you and Akazek.",
+      "For questions about these Terms & Conditions or to report violations, contact: support@huza.app, Phone: +250788000000. We aim to respond to inquiries within 24-48 hours. This agreement constitutes the entire terms between you and Huza.",
   },
 ];

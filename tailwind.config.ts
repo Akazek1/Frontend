@@ -50,7 +50,7 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			// ── Akazek brand palette ────────────────────────────────────────
+  			// ── Huza brand palette ────────────────────────────────────────
   			// Plain hex (not CSS vars) so Tailwind v3 keeps the /opacity
   			// modifier working (e.g. bg-brand/30, ring-brand/20). Single
   			// source of truth for a rebrand. Names chosen to avoid colliding

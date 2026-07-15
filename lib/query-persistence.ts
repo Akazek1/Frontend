@@ -3,7 +3,7 @@ import type { PersistedClient, Persister } from "@tanstack/react-query-persist-c
 import { del, get, set } from "idb-keyval";
 import { clearAppQueryClient } from "@/lib/query-client";
 
-const QUERY_CACHE_KEY = "akazek-react-query-cache";
+const QUERY_CACHE_KEY = "huza-react-query-cache";
 const PERSISTED_QUERY_MAX_AGE = 24 * 60 * 60 * 1000;
 
 export const queryPersistenceBuster =
