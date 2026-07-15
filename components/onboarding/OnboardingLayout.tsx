@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react"
 import { motion } from "framer-motion"
-import { AkazekLogo } from "@/components/brand/akazek-logo"
+import { HuzaLogo } from "@/components/brand/huza-logo"
 import BubbleLoader from "@/components/loader/Bubble-Loader"
 import LanguageSwitcher from "@/components/header/language-switcher"
 import { useOnboarding, loadSignupProgress } from "@/context/onboarding-context"
@@ -104,7 +104,7 @@ export function OnboardingLayout({ children }: OnboardingLayoutProps) {
     return (
       <div className="relative h-full bg-gradient-to-l from-brand to-[#729D70] flex items-center justify-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 1 }}>
-          <AkazekLogo variant="mark" tone="light" markClassName="h-24 w-24 drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]" />
+          <HuzaLogo variant="mark" tone="light" markClassName="h-24 w-24 drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]" />
         </motion.div>
         <motion.div
           initial={{ opacity: 0 }}

@@ -9,9 +9,9 @@ export const getBookingId = (booking: BookingRecord): string =>
   booking.bookingId || booking.id || "";
 
 export const getPersonName = (person?: Person | null): string => {
-  if (!person) return "Akazek user";
+  if (!person) return "Huza user";
   const fullName = `${person.firstName || ""} ${person.lastName || ""}`.trim();
-  return fullName || person.username || "Akazek user";
+  return fullName || person.username || "Huza user";
 };
 
 export const getInitials = (name: string): string =>

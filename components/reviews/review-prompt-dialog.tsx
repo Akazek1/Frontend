@@ -123,7 +123,7 @@ export function ReviewPromptDialog({
                 </div>
                 <h3 className="text-lg font-bold text-ink">Job Completed!</h3>
                 <p className="mt-2 text-sm text-ink-muted">
-                  Thank you! Your feedback helps build trust in the Akazek community.
+                  Thank you! Your feedback helps build trust in the Huza community.
                 </p>
               </div>
 

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
 import LanguageSwitcher from "@/components/header/language-switcher"
-import { AkazekLogo } from "@/components/brand/akazek-logo"
+import { HuzaLogo } from "@/components/brand/huza-logo"
 import type { OnboardingRole } from "@/services/auth-service"
 
 export function RoleSelection() {
@@ -36,7 +36,7 @@ export function RoleSelection() {
           {/* Title + tagline */}
           <div className="pb-5 pr-2">
             <p className="text-lg font-semibold text-gray-800">{t("welcome")}</p>
-            <AkazekLogo markClassName="h-9 w-9" wordClassName="text-[32px] text-brand-strong" />
+            <HuzaLogo markClassName="h-9 w-9" wordClassName="text-[32px] text-brand-strong" />
             <p className="text-sm text-gray-500 mt-2 max-w-[170px] leading-snug">
               {t("tagline")}
             </p>

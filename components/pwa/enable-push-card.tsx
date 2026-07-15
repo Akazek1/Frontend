@@ -18,8 +18,8 @@ import {
 // prompt. Dismissing the card is free: it snoozes on an escalating schedule
 // (1 day after the first dismissal, then 2, 3, … capped at 7 days) — gentle
 // early on, and never more than weekly for someone who keeps saying no.
-const SNOOZE_KEY = "akazek-push-ask-snoozed-until";
-const DISMISS_COUNT_KEY = "akazek-push-ask-dismissals";
+const SNOOZE_KEY = "huza-push-ask-snoozed-until";
+const DISMISS_COUNT_KEY = "huza-push-ask-dismissals";
 const MAX_SNOOZE_DAYS = 7;
 // The install card (PwaLifecycle) appears after 3 interactions; waiting for a
 // few more keeps the two from stacking on top of each other.

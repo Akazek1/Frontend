@@ -3,15 +3,15 @@ import { PrivacyPolicyData } from "@/constant";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Akazek",
-  description: "Read how Akazek collects, uses, and protects personal information.",
+  title: "Privacy Policy - Huza",
+  description: "Read how Huza collects, uses, and protects personal information.",
   alternates: {
     canonical: "/privacy",
   },
 };
 
 const PRIVACY_INTRO =
-  "This Privacy Policy explains how Akazek collects, uses, and protects your personal information when you use our platform.";
+  "This Privacy Policy explains how Huza collects, uses, and protects your personal information when you use our platform.";
 
 // Public, auth-free page so it is readable from the signup screen (where the
 // user is not yet authenticated) as well as from the in-app More menu.

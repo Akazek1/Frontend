@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { colors } from "@/constant/colors";
-import { AkazekLogo } from "@/components/brand/akazek-logo";
+import { HuzaLogo } from "@/components/brand/huza-logo";
 
 type OrgType = "SERVICE_COMPANY" | "STAFFING_AGENCY";
 
@@ -78,7 +78,7 @@ export default function BusinessRegisterPage() {
     <div className="flex min-h-dvh items-center justify-center bg-[#F4F7F3] px-4 py-10">
       <div className="w-full max-w-[460px]">
         <div className="mb-6 flex items-center justify-center">
-          <AkazekLogo markClassName="h-8 w-8" wordClassName="text-[22px]" />
+          <HuzaLogo markClassName="h-8 w-8" wordClassName="text-[22px]" />
         </div>
 
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">

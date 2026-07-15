@@ -5,7 +5,7 @@
     "subtitle": "Switch the app language. Translations are filled in per language."
   },
   "header": {
-    "subtitle": "Find jobs, earn and grow with Akazek.",
+    "subtitle": "Find jobs, earn and grow with Huza.",
     "profileAlt": "Profile",
     "greeting": {
       "morning": "Good Morning",
@@ -684,7 +684,7 @@
     "termsConditions": "Terms & Conditions",
     "termsConditionsDesc": "Our terms of service and user agreement",
     "sendFeedback": "Send Feedback",
-    "sendFeedbackDesc": "Tell us how we can improve Akazek",
+    "sendFeedbackDesc": "Tell us how we can improve Huza",
     "proTips": "Pro Tips",
     "tip1": "Always verify worker credentials before booking",
     "tip2": "Communicate details clearly in messages before the appointment",
@@ -693,7 +693,7 @@
     "faq": {
       "1": {
         "question": "How do I create an account?",
-        "answer": "Open Akazek and enter your phone number. You'll receive a 6-digit code by SMS — enter it to verify, then add your name and date of birth to finish onboarding. Email is optional and can be added later from your profile. There's no password to set or remember."
+        "answer": "Open Huza and enter your phone number. You'll receive a 6-digit code by SMS — enter it to verify, then add your name and date of birth to finish onboarding. Email is optional and can be added later from your profile. There's no password to set or remember."
       },
       "2": {
         "question": "How do I hire a service worker?",
@@ -709,7 +709,7 @@
       },
       "5": {
         "question": "How is payment handled?",
-        "answer": "Akazek doesn't process payment in the app — hiring requests and messaging are free to use. Agree on price and scope with the worker in chat before the job starts, and pay them directly once it's done."
+        "answer": "Huza doesn't process payment in the app — hiring requests and messaging are free to use. Agree on price and scope with the worker in chat before the job starts, and pay them directly once it's done."
       },
       "6": {
         "question": "How do I cancel a booking?",
@@ -741,7 +741,7 @@
       },
       "13": {
         "question": "What if I can't sign in / forget my password?",
-        "answer": "Akazek doesn't use passwords — you always sign in with your phone number and a fresh SMS code. If you've changed your phone number, contact support@akazek.rw; registering with a new number on its own would create a separate account."
+        "answer": "Huza doesn't use passwords — you always sign in with your phone number and a fresh SMS code. If you've changed your phone number, contact support@akazek.rw; registering with a new number on its own would create a separate account."
       },
       "14": {
         "question": "Is my personal information safe?",
@@ -1119,11 +1119,11 @@
     "acceptOffer": "Accept Offer",
     "bookingDetails": "Booking Details",
     "workNotConfirmedYet": "This work isn't confirmed yet. Confirm here before starting so your pay and reviews are protected.",
-    "keepCommunicationsInApp": "Keep all communications within Akazek to ensure your safety and protection.",
+    "keepCommunicationsInApp": "Keep all communications within Huza to ensure your safety and protection.",
     "readyToStart": "Ready to start?",
     "waitingForPartner": "Waiting for {name}",
     "tapAcceptToStart": "Tap Accept to start the job. Your pay and reviews are protected here.",
-    "partnerNotAcceptedYet": "{name} has not accepted yet. Do not pay or start outside Akazek — you are protected once they accept here.",
+    "partnerNotAcceptedYet": "{name} has not accepted yet. Do not pay or start outside Huza — you are protected once they accept here.",
     "theProviderFallback": "the provider",
     "theProviderFallbackCapitalized": "The provider",
     "providerFallback": "provider",
@@ -1569,7 +1569,7 @@
     "address": "Address",
     "noContactDetails": "No contact details added yet.",
     "howItWorks": "How it works",
-    "howItWorksDesc": "Clients book services directly with {name}. Your team handles the work — Akazek doesn't track individual staff members for service companies.",
+    "howItWorksDesc": "Clients book services directly with {name}. Your team handles the work — Huza doesn't track individual staff members for service companies.",
     "ownerActions": "Owner actions",
     "editOrganizationDetails": "Edit organization details",
     "manageWorkers": "Manage workers"
@@ -1651,19 +1651,19 @@
     "loadMore": "Load more"
   },
   "notificationSettings": {
-    "deviceUnsupported": "Open the installed Akazek app (Add to Home Screen) to enable notifications.",
+    "deviceUnsupported": "Open the installed Huza app (Add to Home Screen) to enable notifications.",
     "notificationsBlocked": "Notifications are blocked. Enable them in your device settings.",
     "notificationsEnabledDevice": "Notifications enabled on this device",
     "couldNotEnable": "Couldn't finish enabling notifications. Please try again.",
     "notificationsTurnedOff": "Notifications turned off on this device",
     "deviceDescUnsupported": "Open the installed app (Add to Home Screen) to turn on notifications.",
-    "deviceDescDenied": "Blocked — allow notifications for Akazek in your device settings.",
+    "deviceDescDenied": "Blocked — allow notifications for Huza in your device settings.",
     "deviceDescEnabled": "You'll get booking, message, and review alerts on this phone.",
     "deviceDescDisabled": "Turn on to get booking, message, and review alerts on this phone.",
     "preferencesUpdated": "Notification preferences updated",
     "failedToUpdate": "Failed to update preferences",
     "notificationSettingsTitle": "Notification Settings",
-    "chooseUpdatesSubtitle": "Choose the Akazek updates you want to receive.",
+    "chooseUpdatesSubtitle": "Choose the Huza updates you want to receive.",
     "notificationHistory": "Notification history",
     "reviewRecentAlerts": "Review recent alerts",
     "notificationsThisDevice": "Notifications on this device",
@@ -1833,7 +1833,7 @@
     "reportAnIssue": "Report an Issue",
     "reportAnIssueDesc": "Tell us what needs attention",
     "shareFeedback": "Share Feedback",
-    "shareFeedbackDesc": "Help improve Akazek",
+    "shareFeedbackDesc": "Help improve Huza",
     "privacyPolicy": "Privacy Policy",
     "privacyPolicyDesc": "How your information is handled",
     "termsConditions": "Terms & Conditions",

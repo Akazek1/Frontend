@@ -4,7 +4,7 @@
  */
 
 export const APP_CONFIG = {
-  name: "Akazek",
+  name: "Huza",
   tagline: "Connect with Trusted Service Professionals",
   description: "Rwanda's domestic work marketplace connecting households with verified service workers",
 
@@ -36,9 +36,9 @@ export const APP_CONFIG = {
 
   // Contact & Support
   contact: {
-    email: "support@akazek.rw",
+    email: "support@huza.app",
     phone: "+250788335947", // Update with actual support number
-    website: "https://akazek.rw",
+    website: "https://www.huza.app",
   },
 
   // Social Media
@@ -56,7 +56,7 @@ export const APP_CONFIG = {
 
   // Company Info
   company: {
-    name: "Akazek Rwanda Ltd",
+    name: "Huza.app LTD",
     registrationNumber: "RC/HQU/2024/XXXXX", // Update with actual registration
     address: "Kigali, Rwanda",
   },

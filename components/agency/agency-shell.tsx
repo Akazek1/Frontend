@@ -9,7 +9,7 @@ import { AgencyNotificationBell } from "@/components/agency/agency-notification-
 import { AGENCY_NAV, type AgencyNavItem } from "@/constant/agency-nav";
 import { useAgency } from "@/context/agency-context";
 import { cn } from "@/lib/utils";
-import { AkazekLogo } from "@/components/brand/akazek-logo";
+import { HuzaLogo } from "@/components/brand/huza-logo";
 
 function badgeCount(item: AgencyNavItem, counts: Record<string, number>): number {
   if (!item.badgeKey) return 0;
@@ -98,7 +98,7 @@ function SidebarContent({
               <span className="text-[15px] font-black">A</span>
             )}
           </div>
-          <AkazekLogo tone="light" markClassName="h-7 w-7" wordClassName="text-[20px]" />
+          <HuzaLogo tone="light" markClassName="h-7 w-7" wordClassName="text-[20px]" />
         </div>
         <button className="mt-4 flex w-full items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-left transition-colors hover:bg-white/10">
           <span className="truncate text-[13px] font-semibold text-white/90">{orgName}</span>
@@ -200,7 +200,7 @@ export function AgencyShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <AkazekLogo markClassName="h-6 w-6" wordClassName="text-[16px]" className="lg:hidden" />
+          <HuzaLogo markClassName="h-6 w-6" wordClassName="text-[16px]" className="lg:hidden" />
           <div className="hidden lg:block" />
           <div className="flex items-center gap-3">
             <AgencyNotificationBell />
