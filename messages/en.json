@@ -1,8 +1,4 @@
 {
-  "orientationLock": {
-    "title": "Please rotate back",
-    "description": "Huza works best in portrait mode. Turn your phone back to continue."
-  },
   "languageSwitcher": {
     "ariaLabel": "Change language",
     "title": "Choose language",
