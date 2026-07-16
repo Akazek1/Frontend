@@ -1,8 +1,12 @@
 {
+  "orientationLock": {
+    "title": "Please rotate back",
+    "description": "Huza works best in portrait mode. Turn your phone back to continue."
+  },
   "languageSwitcher": {
     "ariaLabel": "Change language",
     "title": "Choose language",
-    "subtitle": "Switch the app language. Translations are filled in per language."
+    "subtitle": "Switch the app language."
   },
   "header": {
     "subtitle": "Find jobs, earn and grow with Huza.",
@@ -1104,7 +1108,6 @@
     "employer": "Employer",
     "rehireQuestionProvider": "Would you work with this person again?",
     "rehireQuestionEmployer": "Would you hire this person again?",
-    "online": "Online",
     "viewJobTasks": "View job tasks",
     "jobCompleteReadOnly": "This job is complete. Messages remain visible, but chat is read-only.",
     "viewReview": "View Review",

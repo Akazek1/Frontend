@@ -3,6 +3,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
 import { EnablePushCard } from "@/components/pwa/enable-push-card";
+import { OrientationLock } from "@/components/pwa/orientation-lock";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSocketConnection } from "@/hooks/useSocketConnection";
 import { useSelector } from "react-redux";
@@ -82,7 +83,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }, [isAuthenticated, pathname, router]);
 
-  const usesStandaloneChrome = pathname.startsWith("/agency") || pathname.startsWith("/business");
+  // Full-width surfaces that break out of the phone-width app shell and the
+  // bottom nav: the agency console, the business auth screens, and the public
+  // marketing site (/welcome) which has its own header + footer.
+  const usesStandaloneChrome =
+    pathname.startsWith("/agency") ||
+    pathname.startsWith("/business") ||
+    pathname.startsWith("/welcome");
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
@@ -152,6 +159,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-dvh overflow-hidden pt-[env(safe-area-inset-top)]">
+      <OrientationLock />
       {/* Main content area with scrolling */}
       <main
         ref={mainRef}
