@@ -1,6 +1,7 @@
 import type React from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Urbanist } from "next/font/google";
+import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
@@ -14,6 +15,7 @@ import { AuthGateProvider } from "@/context/auth-gate-context";
 import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
 import { APP_CONFIG } from "@/constant/app.config";
 import { PwaLifecycle } from "@/components/pwa/pwa-lifecycle";
+import { isMarketingHost } from "@/lib/marketing-host";
 
 // Load Geist fonts
 const geistSans = Geist({
@@ -119,6 +121,8 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   // Locale comes from the cookie via i18n/request.ts (no URL routing).
   const locale = await getLocale();
+  const host = (await headers()).get("host") || "";
+  const onMarketingHost = isMarketingHost(host);
   return (
     <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
       <body className="antialiased">
@@ -128,7 +132,7 @@ export default async function RootLayout({
             <ViewModeProvider>
               <BookmarkProvider>
                 <AuthGateProvider>
-                  <Layout>
+                  <Layout isMarketingHost={onMarketingHost}>
                     <Toaster position="top-center" />
                     <PwaLifecycle />
                     {children}

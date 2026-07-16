@@ -8,11 +8,16 @@ import { useTranslations } from "next-intl";
 // it does nothing in a browser tab and iOS Safari ignores it outright. This
 // CSS-only overlay (landscape: is a Tailwind orientation media-query variant)
 // covers every context without needing JS to detect anything.
+//
+// Gated on pointer-coarse (touch) as well as landscape via the
+// .orientation-lock-overlay rule in globals.css — Tailwind has no built-in
+// pointer-coarse variant, and `landscape:` alone matches any viewport wider
+// than tall, which is true of almost every desktop browser window.
 export function OrientationLock() {
   const t = useTranslations("orientationLock");
 
   return (
-    <div className="fixed inset-0 z-[100] hidden flex-col items-center justify-center bg-[#F4F7F3] px-6 text-center landscape:flex">
+    <div className="orientation-lock-overlay fixed inset-0 z-[100] flex-col items-center justify-center bg-[#F4F7F3] px-6 text-center">
       <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
         <RotateCcw className="h-8 w-8 text-[#145B10]" />
       </div>

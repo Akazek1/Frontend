@@ -6,6 +6,20 @@ html {
   overscroll-behavior: none;
 }
 
+/* Used by OrientationLock. `orientation: landscape` alone matches any
+   desktop window wider than tall, so it's paired with `pointer: coarse`
+   (touch) to only ever fire for an actually-rotated phone/tablet. Tailwind
+   has no built-in pointer-coarse variant, hence plain CSS here. */
+.orientation-lock-overlay {
+  display: none;
+}
+
+@media (orientation: landscape) and (pointer: coarse) {
+  .orientation-lock-overlay {
+    display: flex;
+  }
+}
+
 body {
   background-color: #F1FCEF;
   font-family: Arial, Helvetica, sans-serif;

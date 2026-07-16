@@ -11,7 +11,19 @@ import type { RootState } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import api from "@/lib/axios";
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+const Layout = ({
+  children,
+  isMarketingHost = false,
+}: {
+  children: React.ReactNode;
+  // True when the request came in on huza.app / www.huza.app. The middleware
+  // rewrites "/" to "/welcome" on those hosts, but that rewrite is invisible
+  // to the client — usePathname() still reports "/", so pathname alone can't
+  // tell this apart from the real app's home page on app.huza.app. Passed
+  // down from the server so it's correct on first render, no client-only
+  // hostname check that would flash the phone-shell before correcting itself.
+  isMarketingHost?: boolean;
+}) => {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -89,7 +101,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const usesStandaloneChrome =
     pathname.startsWith("/agency") ||
     pathname.startsWith("/business") ||
-    pathname.startsWith("/welcome");
+    pathname.startsWith("/welcome") ||
+    (isMarketingHost && pathname === "/");
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||

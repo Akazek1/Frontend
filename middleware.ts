@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
+import { isMarketingHost } from "@/lib/marketing-host";
 
 export function middleware(request: NextRequest) {
+  // Host-based split: the apex domain (huza.app / www.huza.app) is the public
+  // marketing site; the app lives on app.huza.app. On the apex, serve the
+  // marketing homepage at "/" (rewrite keeps the clean URL — no /welcome shown).
+  const host = request.headers.get("host") || "";
+  if (isMarketingHost(host) && request.nextUrl.pathname === "/") {
+    return NextResponse.rewrite(new URL("/welcome", request.url));
+  }
+
   if (request.nextUrl.pathname === "/bookings" || request.nextUrl.pathname === "/jobs") {
     const workUrl = new URL("/work", request.url);
     workUrl.search = request.nextUrl.search;
@@ -82,6 +91,7 @@ export function middleware(request: NextRequest) {
 // See "Matching Paths" below to learn more
 export const config = {
   matcher: [
+    "/",
     "/profile/:path*",
     "/more/:path*",
     "/book/:path*",
