@@ -2,7 +2,7 @@
   "languageSwitcher": {
     "ariaLabel": "Hindura ururimi",
     "title": "Hitamo ururimi",
-    "subtitle": "Hindura ururimi rwa porogaramu. Ibisobanuro byuzuzwa kuri buri rurimi."
+    "subtitle": "Hindura ururimi rwa porogaramu."
   },
   "header": {
     "subtitle": "Shaka akazi, unguka kandi utere imbere na Akazek.",
@@ -16,7 +16,7 @@
     "location": {
       "aria": "Reba cyangwa uhindure aho uherereye",
       "title": "Aho uherereye",
-      "subtitle": "Byifashishwa mu ukubona imirimo cyangwa abakozi.",
+      "subtitle": "Byifashishwa mu ukubona imirimo cyangwa abakozi hafi yawe.",
       "empty": "Aho uherereye ntihatanzwe.",
       "change": "Hindura aho uherereye",
       "set": "Shyiraho aho uherereye",
@@ -1104,7 +1104,6 @@
     "employer": "Umukoresha",
     "rehireQuestionProvider": "Wakongera gukorana n'uyu muntu?",
     "rehireQuestionEmployer": "Wakongera guha uyu muntu akazi?",
-    "online": "Ari kuri murandasi",
     "viewJobTasks": "Reba imirimo y'akazi",
     "jobCompleteReadOnly": "Aka kazi kararangiye. Ubutumwa bukomeza kugaragara, ariko ikiganiro ntigishobora guhindurwa.",
     "viewReview": "Reba igitekerezo",
@@ -1710,7 +1709,7 @@
     "reportName": "Tanga ikibazo kuri {name}"
   },
   "serviceDetailShared": {
-    "availableToday": "Araboneka Uyu Munsi",
+    "availableToday": "Araboneka",
     "verified": "Byemejwe",
     "priceLabel": "Igiciro",
     "priceCaption": "Igiciro gihindagurika bitewe n'akazi n'ingano yako",
@@ -1785,7 +1784,7 @@
     "providerFallback": "Utanga Serivisi"
   },
   "serviceCard": {
-    "availableToday": "Araboneka Uyu Munsi",
+    "availableToday": "Araboneka",
     "unavailable": "Ntaboneka",
     "unknownProvider": "Utanga Serivisi Utazwi",
     "bookmarkUnavailableOwn": "Ntushobora kubika serivisi yawe bwite",

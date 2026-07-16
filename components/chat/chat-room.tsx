@@ -1321,10 +1321,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
-            {partnerOnline && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">{t("online")}</span>}
-          </div>
+          <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
           <p className="truncate text-[11px] text-ink-subtle font-medium">{partnerRoleLabel}</p>
         </div>
 
