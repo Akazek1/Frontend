@@ -3,7 +3,6 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/layout/app-navigation";
 import { EnablePushCard } from "@/components/pwa/enable-push-card";
-import { OrientationLock } from "@/components/pwa/orientation-lock";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useSocketConnection } from "@/hooks/useSocketConnection";
 import { useSelector } from "react-redux";
@@ -172,7 +171,6 @@ const Layout = ({
 
   return (
     <div className="bg-surface max-w-[428px] mx-auto relative flex flex-col h-dvh overflow-hidden pt-[env(safe-area-inset-top)]">
-      <OrientationLock />
       {/* Main content area with scrolling */}
       <main
         ref={mainRef}
