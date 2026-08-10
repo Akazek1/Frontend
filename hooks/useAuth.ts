@@ -26,6 +26,7 @@ import { getAuthToken } from "@/lib/auth-utils";
 // page load, even though many components call useAuth. Reset naturally on reload
 // (module re-evaluates).
 let sessionRevalidated = false;
+let resumeListenerRegistered = false;
 
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,9 +49,31 @@ export const useAuth = () => {
   // one trips the axios 401 handler which clears the session and drops to the
   // guest home. Guarded to fire once per page load (not per useAuth consumer).
   useEffect(() => {
-    if (!effectiveIsAuthenticated || sessionRevalidated) return;
-    sessionRevalidated = true;
-    dispatch(getCurrentUser());
+    if (!effectiveIsAuthenticated) return;
+
+    // Validate once per app load. Reset the guard on failure so a transient
+    // error can retry — the session is no longer wiped on failure (see the
+    // getCurrentUser.rejected reducer), so this just refreshes stale data.
+    if (!sessionRevalidated) {
+      sessionRevalidated = true;
+      dispatch(getCurrentUser())
+        .unwrap()
+        .catch(() => {
+          sessionRevalidated = false;
+        });
+    }
+
+    // Re-validate whenever the app returns to the foreground, so a session that
+    // went stale while backgrounded refreshes without needing a full restart.
+    // Registered once globally, not per useAuth consumer.
+    if (!resumeListenerRegistered && typeof document !== "undefined") {
+      resumeListenerRegistered = true;
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && getAuthToken()) {
+          dispatch(getCurrentUser());
+        }
+      });
+    }
   }, [dispatch, effectiveIsAuthenticated]);
 
   // Send OTP function

@@ -38,7 +38,7 @@ export function SetPinStep() {
     <div className="mx-auto flex min-h-full w-full max-w-sm flex-col justify-center px-6 py-10">
       <h1 className="text-2xl font-bold text-ink">Create a PIN</h1>
       <p className="mt-1 text-sm text-ink-subtle">
-        Set a 5-digit PIN to sign in next time — it’s faster, and no SMS code needed.
+        Set a 5-digit PIN to sign in next time.
       </p>
 
       <div className="mt-8 space-y-4">
