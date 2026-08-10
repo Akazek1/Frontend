@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { Verified } from "lucide-react";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
@@ -28,6 +29,7 @@ type ProfileImageUploaderProps = {
 const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
     className = "",
 }) => {
+    const t = useTranslations("imageUpload");
     const dispatch = useDispatch<AppDispatch>();
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -41,15 +43,15 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !user?.id) {
-            setError("No file selected or user not authenticated");
-            toast.error("Please select an image and ensure you are logged in");
+            setError(t("noFileSelectedError"));
+            toast.error(t("selectImageLoggedInToast"));
             return;
         }
 
         // Validate file
         const validation = validateImageFile(file);
         if (!validation.valid) {
-            toast.error(validation.error || "Invalid image file");
+            toast.error(validation.error || t("invalidImageToast"));
             return;
         }
 
@@ -58,7 +60,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 
         try {
             // Optimize image before showing cropper (resize to max 800x800, compress)
-            toast.loading("Optimizing image...", { id: "optimizing" });
+            toast.loading(t("optimizingImageToast"), { id: "optimizing" });
             const optimizedFile = await optimizeImage(file, {
                 maxWidth: 800,
                 maxHeight: 800,
@@ -79,8 +81,8 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
         } catch (err) {
             console.error("Error processing image:", err);
             toast.dismiss("optimizing");
-            toast.error(err instanceof Error ? err.message : "Failed to process image");
-            setError(err instanceof Error ? err.message : "Failed to process image");
+            toast.error(err instanceof Error ? err.message : t("failedProcessImageToast"));
+            setError(err instanceof Error ? err.message : t("failedProcessImageToast"));
         } finally {
             setIsUploading(false);
             // Reset input so same file can be selected again
@@ -95,13 +97,13 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 
     const handleCroppedImage = async (croppedImageBlob: Blob) => {
         if (!user?.id) {
-            toast.error("User not authenticated");
+            toast.error(t("userNotAuthenticatedToast"));
             return;
         }
 
         // Validate blob
         if (!croppedImageBlob || croppedImageBlob.size === 0) {
-            toast.error("Invalid image. Please try again.");
+            toast.error(t("invalidImageRetryToast"));
             return;
         }
 
@@ -117,7 +119,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             });
 
             // Further optimize the cropped image (should already be small, but ensure it's optimal)
-            toast.loading("Finalizing image...", { id: "finalizing" });
+            toast.loading(t("finalizingImageToast"), { id: "finalizing" });
             const finalFile = await optimizeImage(croppedFile, {
                 maxWidth: 800,
                 maxHeight: 800,
@@ -141,7 +143,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                 reduction: `${Math.round((1 - finalFile.size / croppedImageBlob.size) * 100)}%`,
             });
 
-            toast.loading("Uploading image...", { id: "uploading" });
+            toast.loading(t("uploadingImageToast"), { id: "uploading" });
 
             // Don't set Content-Type header - let axios set it automatically with boundary
             const response = await api.patch("/users/profile/image", formData);
@@ -156,7 +158,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 
             if (profilePicture) {
                 dispatch(updateUser({ profilePicture }));
-                toast.success("Profile image updated successfully");
+                toast.success(t("profileImageUpdatedToast"));
             } else {
                 console.error("Unexpected response structure:", response.data);
                 throw new Error("No image URL returned from server");
@@ -166,7 +168,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
             toast.dismiss("uploading");
             toast.dismiss("finalizing");
             
-            const errorMessage = getApiErrorMessage(err, "Failed to update profile image");
+            const errorMessage = getApiErrorMessage(err, t("failedUpdateProfileImageToast"));
             
             setError(errorMessage);
             toast.error(errorMessage);
@@ -264,7 +266,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                 )}
             </div>
             <p className="text-sm text-center text-ink font-bold leading-[140%]">
-                @{user?.username || "username"}
+                @{user?.username || t("usernameFallback")}
             </p>
 
             {/* Image Source Selector */}

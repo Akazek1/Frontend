@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronRight, HelpCircle, Pencil, Search } from "lucide-react";
 import { AppButton } from "@/components/ui/app-primitives";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
@@ -39,6 +39,7 @@ export function WizardStep2ChooseService({
   ownedServiceIds,
 }: WizardStep2ChooseServiceProps) {
   const locale = useLocale();
+  const t = useTranslations("serviceWizard");
   const [search, setSearch] = useState("");
 
   const visible: WizardJobType[] = useMemo(() => {
@@ -70,7 +71,7 @@ export function WizardStep2ChooseService({
           onClick={onChangeCategory}
           className="flex shrink-0 items-center gap-1.5 text-[13px] font-bold text-brand"
         >
-          Change
+          {t("change")}
           <Pencil className="h-4 w-4" />
         </button>
       </div>
@@ -81,15 +82,15 @@ export function WizardStep2ChooseService({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search services in ${grouping.name}`}
+          placeholder={t("searchServicesIn", { category: grouping.name })}
           className="h-12 w-full rounded-2xl border border-[#DCE8D9] bg-white pl-12 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </div>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-black text-ink">All Services</h2>
+        <h2 className="text-[15px] font-black text-ink">{t("allServices")}</h2>
         <span className="flex items-center gap-1 text-[13px] font-semibold text-brand">
-          Need help?
+          {t("needHelp")}
           <HelpCircle className="h-4 w-4" />
         </span>
       </div>
@@ -134,8 +135,8 @@ export function WizardStep2ChooseService({
         {visible.length === 0 && (
           <p className="py-8 text-center text-[13px] text-ink-muted">
             {search.trim()
-              ? "No services match your search."
-              : "You already offer every service in this category."}
+              ? t("noServicesMatch")
+              : t("alreadyOfferEveryService")}
           </p>
         )}
       </div>
@@ -149,14 +150,14 @@ export function WizardStep2ChooseService({
         >
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-bold text-ink">
-              Can&apos;t find your service?
+              {t("cantFindService")}
             </span>
             <span className="mt-0.5 block text-[12px] text-ink-muted">
-              Browse all services across all categories.
+              {t("browseAllCategoriesDesc")}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 text-[13px] font-bold text-brand">
-            View All Services
+            {t("viewAllServices")}
             <ChevronRight className="h-4 w-4" />
           </span>
         </button>
@@ -170,7 +171,7 @@ export function WizardStep2ChooseService({
           disabled={!isValid}
           onClick={onContinue}
         >
-          Continue
+          {t("continue")}
         </AppButton>
       </div>
     </div>

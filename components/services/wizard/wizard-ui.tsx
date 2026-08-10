@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Baby,
@@ -99,6 +100,7 @@ export function WizardHeader({
   subtitle?: string;
   onBack?: () => void;
 }) {
+  const t = useTranslations("serviceWizard");
   return (
     <header className="bg-surface sticky top-0 z-20 px-4 pb-3 pt-6">
       <div className="relative flex items-center justify-center">
@@ -106,7 +108,7 @@ export function WizardHeader({
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back"
+            aria-label={t("back")}
             className="absolute left-0 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-sm transition-colors hover:bg-[#E8F7E5]"
           >
             <ArrowLeft className="h-5 w-5" />

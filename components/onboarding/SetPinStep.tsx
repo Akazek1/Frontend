@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
 
 /**
@@ -11,6 +12,7 @@ import { useOnboarding } from "@/context/onboarding-context"
  * which persist the PIN (POST /auth/set-pin) and resume role-specific steps.
  */
 export function SetPinStep() {
+  const t = useTranslations("onboarding.setPin")
   const { handleSubmitPin, handleSkipPin } = useOnboarding()
   const [pin, setPin] = useState("")
   const [confirm, setConfirm] = useState("")
@@ -36,14 +38,14 @@ export function SetPinStep() {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-sm flex-col justify-center px-6 py-10">
-      <h1 className="text-2xl font-bold text-ink">Create a PIN</h1>
+      <h1 className="text-2xl font-bold text-ink">{t("heading")}</h1>
       <p className="mt-1 text-sm text-ink-subtle">
-        Set a 5-digit PIN to sign in next time.
+        {t("subheading")}
       </p>
 
       <div className="mt-8 space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-ink">PIN</label>
+          <label className="text-sm font-medium text-ink">{t("pinLabel")}</label>
           <input
             inputMode="numeric"
             type="password"
@@ -55,7 +57,7 @@ export function SetPinStep() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-ink">Confirm PIN</label>
+          <label className="text-sm font-medium text-ink">{t("confirmLabel")}</label>
           <input
             inputMode="numeric"
             type="password"
@@ -65,7 +67,7 @@ export function SetPinStep() {
             className={inputClass}
           />
         </div>
-        {mismatch && <p className="text-sm text-red-500">PINs don’t match.</p>}
+        {mismatch && <p className="text-sm text-red-500">{t("mismatch")}</p>}
       </div>
 
       <button
@@ -75,7 +77,7 @@ export function SetPinStep() {
         className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-semibold text-white transition-opacity disabled:opacity-50"
       >
         {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-        Set PIN
+        {t("submit")}
       </button>
       <button
         type="button"
@@ -83,7 +85,7 @@ export function SetPinStep() {
         disabled={submitting}
         className="mt-3 w-full py-2 text-sm font-medium text-ink-subtle disabled:opacity-50"
       >
-        Skip for now
+        {t("skip")}
       </button>
     </div>
   )
