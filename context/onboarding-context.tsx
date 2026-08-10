@@ -102,6 +102,7 @@ interface OnboardingContextType {
 
   handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
+  handleLoginWithPin: (pin: string) => Promise<{ ok: boolean; message?: string }>
   handleSubmitPin: (pin: string) => Promise<void>
   handleSkipPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
@@ -480,6 +481,37 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     await finishAfterPin()
   }, [finishAfterPin])
 
+  // Returning-user PIN login (no SMS). On success, establishes the session and
+  // routes exactly like an OTP login: incomplete workers resume onboarding,
+  // everyone else goes home. Errors (wrong PIN / lockout) surface to the form.
+  const handleLoginWithPin = useCallback(async (pin: string): Promise<{ ok: boolean; message?: string }> => {
+    let cleaned = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
+    if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
+    if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
+    const formatted = `250${cleaned}`
+    try {
+      const res = await api.post("/auth/login-pin", { phoneNumber: formatted, pin })
+      const data = res.data?.data || res.data
+      const user = data.user
+      dispatch(setSession({ user, token: data.token }))
+      setVerifiedUser(user)
+
+      const roles = ((user.roles || []) as OnboardingRole[])
+      if (roles.includes("WORKER") && !user.workerOnboardingComplete) {
+        setCurrentStep(3)
+        return { ok: true }
+      }
+      if (roles.includes("EMPLOYER") && !user.employerOnboardingComplete) {
+        await completeRoleOnboarding(["EMPLOYER"])
+        dispatch(updateUser({ employerOnboardingComplete: true }))
+      }
+      redirectHome(false)
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, message: e?.response?.data?.message || "Login failed. Please try again." }
+    }
+  }, [phoneNumber, dispatch, redirectHome, completeRoleOnboarding])
+
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
     if (!firstName.trim()) {
@@ -612,6 +644,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     resendCooldown,
     handleSendOtp,
     handleVerifyOtp,
+    handleLoginWithPin,
     handleSubmitPin,
     handleSkipPin,
     handleSaveBasicInfo,
