@@ -59,6 +59,7 @@ interface DocumentData {
 // 4 = DocumentUploadStep / ID (workers only — no Back, account already created)
 // 5 = ServiceCategorySelector (workers only)
 // 6 = AllSetStep (workers only — offer to add their first service)
+// 8 = SetPinStep (all new accounts — set a login PIN right after signup)
 
 interface OnboardingContextType {
   currentStep: number
@@ -101,6 +102,8 @@ interface OnboardingContextType {
 
   handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
+  handleSubmitPin: (pin: string) => Promise<void>
+  handleSkipPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
   handleCategoriesSelected: (categories: string[]) => Promise<void>
@@ -130,6 +133,10 @@ const isValidEmail = (v: string) => /\S+@\S+\.\S+/.test(v)
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(-1)
+  // After a new account is created we route to the "set PIN" step (8), holding
+  // the roles + real session token so we can finish role-specific onboarding
+  // and authenticate the set-pin call once the PIN (or skip) is chosen.
+  const [postSignup, setPostSignup] = useState<{ roles: OnboardingRole[]; token: string } | null>(null)
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedRoles, setSelectedRoles] = useState<OnboardingRole[]>([])
@@ -363,7 +370,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
       // setSession atomically marks the user as authenticated with the real JWT
       dispatch(setSession({ user: newUser, token: data.token }))
-      return roles
+      return { roles, token: data.token as string }
     }
 
     try {
@@ -408,16 +415,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
 
       if (firstName.trim()) {
-        // New user — we already collected their name at step 1
-        const roles = await completeSignupForNewUser(user)
-        if (roles.includes("WORKER")) {
-          setCurrentStep(3) // profile picture first, then ID
-        } else {
-          await completeRoleOnboarding(["EMPLOYER"])
-          dispatch(updateUser({ employerOnboardingComplete: true }))
-          toast.success("Welcome! Let's get started.")
-          redirectHome(true)
-        }
+        // New user — we already collected their name at step 1. Account is
+        // created; prompt to set a login PIN before role-specific onboarding.
+        const { roles, token } = await completeSignupForNewUser(user)
+        setPostSignup({ roles, token })
+        setCurrentStep(8) // SetPinStep
       } else {
         // Login mode edge case: no name collected → show name step
         setCurrentStep(1)
@@ -442,6 +444,41 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setTimeout(() => inputsRef.current[0]?.focus(), 50)
     }
   }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, selectedRoles, dispatch, redirectHome, completeRoleOnboarding])
+
+  // After the PIN step: resume the role-specific onboarding that would otherwise
+  // have run immediately after signup (workers → profile/ID; employers → home).
+  const finishAfterPin = useCallback(async () => {
+    const roles = postSignup?.roles ?? (["EMPLOYER"] as OnboardingRole[])
+    if (roles.includes("WORKER")) {
+      setCurrentStep(3) // profile picture first, then ID
+    } else {
+      await completeRoleOnboarding(["EMPLOYER"])
+      dispatch(updateUser({ employerOnboardingComplete: true }))
+      toast.success("Welcome! Let's get started.")
+      redirectHome(true)
+    }
+  }, [postSignup, completeRoleOnboarding, redirectHome, dispatch])
+
+  const handleSubmitPin = useCallback(async (pin: string) => {
+    try {
+      // Authenticate with the real session token minted at signup. (Passed
+      // explicitly so it works even before the interceptor picks it up.)
+      const token = postSignup?.token
+      await api.post(
+        "/auth/set-pin",
+        { pin },
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+      )
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Could not set PIN. Please try again.")
+      return // stay on the PIN step so they can retry
+    }
+    await finishAfterPin()
+  }, [postSignup, finishAfterPin])
+
+  const handleSkipPin = useCallback(async () => {
+    await finishAfterPin()
+  }, [finishAfterPin])
 
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
@@ -575,6 +612,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     resendCooldown,
     handleSendOtp,
     handleVerifyOtp,
+    handleSubmitPin,
+    handleSkipPin,
     handleSaveBasicInfo,
     handleDocumentUpload,
     handleCategoriesSelected,
