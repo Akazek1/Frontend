@@ -103,8 +103,10 @@ interface OnboardingContextType {
   handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleLoginWithPin: (pin: string) => Promise<{ ok: boolean; message?: string }>
+  setCheckedPin: (info: { hasPin: boolean; pinIsTemporary: boolean } | null) => void
   handleSubmitPin: (pin: string) => Promise<void>
   handleSkipPin: () => Promise<void>
+  handleAcceptPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
   handleCategoriesSelected: (categories: string[]) => Promise<void>
@@ -138,6 +140,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // the roles + real session token so we can finish role-specific onboarding
   // and authenticate the set-pin call once the PIN (or skip) is chosen.
   const [postSignup, setPostSignup] = useState<{ roles: OnboardingRole[]; token: string } | null>(null)
+  // Set by LoginForm from the check-user response, so post-login routing knows
+  // whether to prompt for a PIN (no PIN yet) or to review an admin-assigned one.
+  const [checkedPin, setCheckedPin] = useState<{ hasPin: boolean; pinIsTemporary: boolean } | null>(null)
+  // 'signup' = the PIN step follows a fresh signup (resume role onboarding after).
+  // 'postLogin' = an existing user was prompted after login (just go home after).
+  const [pinPromptMode, setPinPromptMode] = useState<"signup" | "postLogin">("signup")
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedRoles, setSelectedRoles] = useState<OnboardingRole[]>([])
@@ -411,6 +419,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           await completeRoleOnboarding(["EMPLOYER"])
           dispatch(updateUser({ employerOnboardingComplete: true }))
         }
+        // Existing user with no PIN → offer to create one (skippable) so they
+        // can skip the SMS next time. Then straight home.
+        if (checkedPin && !checkedPin.hasPin) {
+          setPinPromptMode("postLogin")
+          setCurrentStep(8) // SetPinStep
+          return
+        }
         redirectHome(false)
         return
       }
@@ -449,6 +464,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // After the PIN step: resume the role-specific onboarding that would otherwise
   // have run immediately after signup (workers → profile/ID; employers → home).
   const finishAfterPin = useCallback(async () => {
+    // Existing user prompted after login → they're already onboarded, just go home.
+    if (pinPromptMode === "postLogin") {
+      redirectHome(false)
+      return
+    }
     const roles = postSignup?.roles ?? (["EMPLOYER"] as OnboardingRole[])
     if (roles.includes("WORKER")) {
       setCurrentStep(3) // profile picture first, then ID
@@ -458,7 +478,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       toast.success("Welcome! Let's get started.")
       redirectHome(true)
     }
-  }, [postSignup, completeRoleOnboarding, redirectHome, dispatch])
+  }, [pinPromptMode, postSignup, completeRoleOnboarding, redirectHome, dispatch])
 
   const handleSubmitPin = useCallback(async (pin: string) => {
     try {
@@ -505,12 +525,29 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         await completeRoleOnboarding(["EMPLOYER"])
         dispatch(updateUser({ employerOnboardingComplete: true }))
       }
+      // Logged in with an admin-assigned (temporary) PIN → ask them to keep it
+      // or set their own before continuing.
+      if (checkedPin?.pinIsTemporary) {
+        setPinPromptMode("postLogin")
+        setCurrentStep(9) // ReviewPinStep
+        return { ok: true }
+      }
       redirectHome(false)
       return { ok: true }
     } catch (e: any) {
       return { ok: false, message: e?.response?.data?.message || "Login failed. Please try again." }
     }
-  }, [phoneNumber, dispatch, redirectHome, completeRoleOnboarding])
+  }, [phoneNumber, dispatch, redirectHome, completeRoleOnboarding, checkedPin])
+
+  // "Keep" an admin-assigned PIN as-is (clears the temporary flag), then home.
+  const handleAcceptPin = useCallback(async () => {
+    try {
+      await api.post("/auth/accept-pin")
+    } catch {
+      /* non-fatal — the PIN still works; just proceed */
+    }
+    redirectHome(false)
+  }, [redirectHome])
 
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
@@ -645,8 +682,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleSendOtp,
     handleVerifyOtp,
     handleLoginWithPin,
+    setCheckedPin,
     handleSubmitPin,
     handleSkipPin,
+    handleAcceptPin,
     handleSaveBasicInfo,
     handleDocumentUpload,
     handleCategoriesSelected,
