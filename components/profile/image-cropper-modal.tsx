@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import Cropper, { Area } from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   onSave,
   aspect = 1, // Square by default for profile pictures
 }) => {
+  const t = useTranslations("imageUpload");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -248,7 +250,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
 
     if (!croppedAreaPixels) {
       console.error("Missing crop area");
-      alert("Please wait a moment and try again.");
+      alert(t("pleaseWaitRetry"));
       return;
     }
 
@@ -294,7 +296,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
       onClose();
     } catch (error) {
       console.error("Error cropping image:", error);
-      alert(error instanceof Error ? error.message : "Failed to crop image. Please try again.");
+      alert(error instanceof Error ? error.message : t("failedCropRetry"));
     } finally {
       setIsProcessing(false);
     }
@@ -313,9 +315,9 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-[95vw] sm:w-[90vw] md:w-[500px] p-0">
         <DialogHeader className="px-4 pt-4 pb-2">
-          <DialogTitle className="text-base sm:text-lg">Edit Profile Picture</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">{t("editProfilePictureTitle")}</DialogTitle>
           <DialogDescription className="text-xs">
-            Adjust, crop, and center your image. Click save when you&apos;re happy with it.
+            {t("editProfilePictureDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -357,7 +359,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <ZoomIn className="w-3.5 h-3.5" />
-                <span>Zoom</span>
+                <span>{t("zoom")}</span>
               </div>
               <span className="text-gray-500 text-xs">{Math.round(zoom * 100)}%</span>
             </div>
@@ -376,7 +378,7 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>Rotation</span>
+                <span>{t("rotation")}</span>
               </div>
               <span className="text-gray-500 text-xs">{rotation}°</span>
             </div>
@@ -398,22 +400,22 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             disabled={isProcessing}
             className="w-full sm:w-auto text-sm"
           >
-            Reset
+            {t("reset")}
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose} 
+          <Button
+            variant="outline"
+            onClick={onClose}
             disabled={isProcessing}
             className="w-full sm:w-auto text-sm"
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isProcessing}
             className="bg-brand hover:bg-brand/90 w-full sm:w-auto text-sm"
           >
-            {isProcessing ? "Processing..." : "Save Changes"}
+            {isProcessing ? t("processing") : t("saveChanges")}
           </Button>
         </DialogFooter>
       </DialogContent>

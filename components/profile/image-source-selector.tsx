@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { Camera, Image as ImageIcon } from "lucide-react";
 import {
   Dialog,
@@ -24,13 +25,14 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
   onSelectCamera,
   onSelectGallery,
 }) => {
+  const t = useTranslations("imageUpload");
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xs w-[90vw] p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg">Select Image Source</DialogTitle>
+          <DialogTitle className="text-lg">{t("selectImageSourceTitle")}</DialogTitle>
           <DialogDescription className="text-sm">
-            Choose how you want to add your profile picture
+            {t("selectImageSourceDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -43,7 +45,7 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
             className="w-full h-14 flex items-center justify-center gap-3 bg-brand hover:bg-brand-dark active:bg-brand-dark transition-colors"
           >
             <Camera className="w-5 h-5" />
-            <span>Take Photo</span>
+            <span>{t("takePhoto")}</span>
           </Button>
 
           <Button
@@ -55,7 +57,7 @@ const ImageSourceSelector: React.FC<ImageSourceSelectorProps> = ({
             className="w-full h-14 flex items-center justify-center gap-3 border-2 hover:bg-gray-50 active:bg-gray-100 transition-colors"
           >
             <ImageIcon className="w-5 h-5" />
-            <span>Choose from Gallery</span>
+            <span>{t("chooseFromGallery")}</span>
           </Button>
         </div>
       </DialogContent>

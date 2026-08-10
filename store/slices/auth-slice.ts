@@ -286,9 +286,12 @@ const authSlice = createSlice({
       })
       .addCase(getCurrentUser.rejected, (state) => {
         state.isLoading = false;
-        state.user = null;
-        state.token = null;
-        state.isAuthenticated = false;
+        // Do NOT clear the session here. A genuinely invalid token (401) is
+        // already handled by the axios interceptor (silent refresh, else
+        // logout + redirect to the guest home). A transient failure — network
+        // blip, 5xx, timeout, service-worker hiccup — must NOT log the user
+        // out; keep the cached session so it self-heals on the next successful
+        // revalidation instead of appearing logged-out until the app restarts.
       });
   },
 });

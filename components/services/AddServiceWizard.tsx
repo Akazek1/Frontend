@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
 import { useAddServiceForm } from "@/hooks/useAddServiceForm";
@@ -34,6 +35,7 @@ type WizardUser = {
 } | null;
 
 export function AddServiceWizard({ service }: AddServiceWizardProps) {
+  const t = useTranslations("serviceWizard");
   const router = useRouter();
   const { user } = useAuth();
   const isEdit = !!service;
@@ -86,12 +88,12 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
         const data = res.data?.data ?? res.data ?? [];
         setTree(Array.isArray(data) ? data : []);
       } catch {
-        toast.error("Could not load categories. Please try again.");
+        toast.error(t("couldNotLoadCategories"));
       } finally {
         setTreeLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   // "View All Services" mode: one synthetic grouping with every job type.
   const allGrouping: WizardGrouping = useMemo(() => {
@@ -101,11 +103,11 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
     }
     return {
       id: ALL_ID,
-      name: "All Services",
+      name: t("allServices"),
       icon: null,
       jobTypes: [...map.values()],
     };
-  }, [tree]);
+  }, [tree, t]);
 
   const selectedGrouping: WizardGrouping | undefined =
     form.groupingId === ALL_ID
@@ -114,12 +116,12 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
 
   const groupingSummary = useMemo(() => {
     if (!selectedGrouping) return "";
-    if (selectedGrouping.id === ALL_ID) return "Every service we support";
+    if (selectedGrouping.id === ALL_ID) return t("everyServiceWeSupport");
     const names = selectedGrouping.jobTypes.map((jt) => jt.name);
     return names.length > 3
-      ? `${names.slice(0, 3).join(", ")} and more`
+      ? t("namesAndMore", { names: names.slice(0, 3).join(", ") })
       : names.join(", ");
-  }, [selectedGrouping]);
+  }, [selectedGrouping, t]);
 
   // The chosen job type — searched across the whole tree so the details
   // banner also works in edit mode (where no grouping was picked).
@@ -143,14 +145,14 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
       const result = await submit();
       setCreatedService(result);
       if (isEdit) {
-        toast.success("Service updated");
+        toast.success(t("serviceUpdatedToast"));
         router.push("/more/services");
       } else {
         setStep(4);
       }
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, "Could not save the service. Please try again."),
+        getApiErrorMessage(err, t("couldNotSaveServiceToast")),
       );
     }
   };
@@ -164,19 +166,19 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   const header = (() => {
     if (step === 1)
       return {
-        title: "Choose Category",
-        subtitle: "Select the main category that best fits your service.",
+        title: t("step1Title"),
+        subtitle: t("step1Subtitle"),
         onBack: () => router.back(),
       };
     if (step === 2)
       return {
-        title: "Choose Service",
-        subtitle: "Select the specific service you offer in this category.",
+        title: t("step2Title"),
+        subtitle: t("step2Subtitle"),
         onBack: () => setStep(1),
       };
     if (step === 3)
       return {
-        title: isEdit ? "Edit Service" : "Service Details",
+        title: isEdit ? t("editServiceTitle") : t("serviceDetailsTitle"),
         subtitle: undefined,
         onBack: isEdit ? () => router.back() : () => setStep(2),
       };
@@ -187,8 +189,8 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
     return (
       <PageShell padded={false} bottomNav={false}>
         <WizardHeader
-          title="Create a service"
-          subtitle="A quick trust check first"
+          title={t("gateTitle")}
+          subtitle={t("gateSubtitle")}
           onBack={() => router.back()}
         />
         <ServicePrerequisiteGate onContinue={() => setPrereqContinued(true)} />
@@ -240,7 +242,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
         {step === 3 && (
           <WizardStep3AddDetails
             form={form}
-            serviceName={selectedJobType?.jobType.name ?? (service ? getServiceDisplayName(service) : "Your service")}
+            serviceName={selectedJobType?.jobType.name ?? (service ? getServiceDisplayName(service) : t("yourServiceFallback"))}
             serviceIcon={selectedJobType?.jobType.icon}
             groupingName={selectedJobType?.grouping.name}
             serviceArea={serviceArea}
@@ -256,7 +258,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
             onSubmit={handleSubmit}
             isValid={isStep3Valid}
             isSubmitting={isSubmitting}
-            submitLabel={isEdit ? "Save Changes" : "Save Service"}
+            submitLabel={isEdit ? t("saveChangesButton") : t("saveServiceButton")}
           />
         )}
 

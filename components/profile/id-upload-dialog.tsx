@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +23,12 @@ interface IdUploadDialogProps {
  * gate, and registration all share one implementation instead of duplicating it.
  */
 export default function IdUploadDialog({ open, onOpenChange, onUploaded }: IdUploadDialogProps) {
+  const t = useTranslations("documentUpload");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="sr-only">Upload your ID</DialogTitle>
+          <DialogTitle className="sr-only">{t("uploadYourId")}</DialogTitle>
         </DialogHeader>
         <DocumentUploadStep
           onCancel={() => onOpenChange(false)}

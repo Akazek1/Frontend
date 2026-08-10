@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react"
 import { Upload, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "react-hot-toast"
 import api from "@/lib/axios"
 import { getApiErrorMessage } from "@/lib/error-handler"
@@ -38,8 +39,9 @@ export const DocumentUploadStep = ({
   onCancel,
   isLoading = false,
   showBack = true,
-  backLabel = "Back",
+  backLabel,
 }: DocumentUploadStepProps) => {
+  const t = useTranslations("documentUpload")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -51,7 +53,7 @@ export const DocumentUploadStep = ({
     // Validate (accepts common image types up to 10MB before optimization).
     const validation = validateImageFile(file)
     if (!validation.valid) {
-      toast.error(validation.error || "Invalid image file")
+      toast.error(validation.error || t("invalidImageToast"))
       return
     }
 
@@ -59,7 +61,7 @@ export const DocumentUploadStep = ({
       // Compress/resize large photos down to a small JPEG before upload — the
       // same approach used for service images and profile pictures. Keeps ID
       // text legible (1600px) while staying well under the 5MB server limit.
-      toast.loading("Optimizing image...", { id: "doc-optimizing" })
+      toast.loading(t("optimizingImageToast"), { id: "doc-optimizing" })
       const optimized = await optimizeImage(file, {
         maxWidth: 1600,
         maxHeight: 1600,
@@ -78,7 +80,7 @@ export const DocumentUploadStep = ({
       reader.readAsDataURL(optimized)
     } catch (err) {
       toast.dismiss("doc-optimizing")
-      toast.error(err instanceof Error ? err.message : "Failed to process image")
+      toast.error(err instanceof Error ? err.message : t("failedProcessImageToast"))
     }
   }
 
@@ -101,11 +103,11 @@ export const DocumentUploadStep = ({
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select a file")
+      toast.error(t("pleaseSelectFileToast"))
       return
     }
     if (!documentNumber.trim()) {
-      toast.error("Please enter your ID / passport number")
+      toast.error(t("pleaseEnterIdNumberToast"))
       return
     }
 
@@ -129,11 +131,11 @@ export const DocumentUploadStep = ({
       if (!payload.document) {
         throw new Error("No document returned from server")
       }
-      toast.success("ID received. Our team will verify within 24 hours.")
+      toast.success(t("idReceivedToast"))
       onUploadSuccess(payload.document)
     } catch (error) {
       console.error("Upload error:", error)
-      toast.error(getApiErrorMessage(error, "Failed to upload document"))
+      toast.error(getApiErrorMessage(error, t("failedUploadDocumentToast")))
     } finally {
       setIsUploading(false)
     }
@@ -151,33 +153,33 @@ export const DocumentUploadStep = ({
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-2">
-          Upload National ID, Passport, or Driver&apos;s License
+          {t("heading")}
         </h1>
         <p className="text-base sm:text-lg text-gray-600">
-          We need to verify your identity to connect you with employers
+          {t("subheading")}
         </p>
       </div>
 
       <div className="mb-6 space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-900">Document type</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-900">{t("documentType")}</label>
           <select
             value={docType}
             onChange={(e) => setDocType(e.target.value as typeof docType)}
             className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 focus:border-brand focus:outline-none"
           >
-            <option value="GOVERNMENT_ID">National ID</option>
-            <option value="PASSPORT">Passport</option>
-            <option value="DRIVER_LICENSE">Driver&apos;s License</option>
+            <option value="GOVERNMENT_ID">{t("nationalId")}</option>
+            <option value="PASSPORT">{t("passport")}</option>
+            <option value="DRIVER_LICENSE">{t("driversLicense")}</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-900">ID / Passport number</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-900">{t("idPassportNumber")}</label>
           <input
             type="text"
             value={documentNumber}
             onChange={(e) => setDocumentNumber(e.target.value)}
-            placeholder="Enter the number on your document"
+            placeholder={t("enterDocumentNumberPlaceholder")}
             className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 focus:border-brand focus:outline-none"
           />
         </div>
@@ -196,10 +198,10 @@ export const DocumentUploadStep = ({
             </div>
           </div>
           <p className="text-gray-900 font-semibold mb-1">
-            Tap to upload or drag and drop
+            {t("tapToUpload")}
           </p>
           <p className="text-sm text-gray-600 mb-4">
-            PNG or JPG (up to 5MB)
+            {t("pngJpgUpTo5mb")}
           </p>
           <input
             ref={fileInputRef}
@@ -240,7 +242,7 @@ export const DocumentUploadStep = ({
             className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-gray-400 transition-colors disabled:opacity-50"
             disabled={isUploading || isLoading}
           >
-            {backLabel}
+            {backLabel ?? t("back")}
           </button>
         )}
         <button
@@ -249,7 +251,7 @@ export const DocumentUploadStep = ({
           disabled={!selectedFile || !documentNumber.trim() || isUploading || isLoading}
           className="flex-1 px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isUploading ? "Uploading..." : "Continue"}
+          {isUploading ? t("uploading") : t("continue")}
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronRight, LayoutGrid, Loader2, Search } from "lucide-react";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
 import { localizedName } from "@/lib/taxonomy-i18n";
@@ -22,11 +22,11 @@ export interface WizardJobType {
 }
 
 /** "House help, housekeeping, laundry and more" style summary line. */
-function summarize(g: WizardGrouping): string {
+function summarize(g: WizardGrouping, t: (key: string, values?: Record<string, string>) => string): string {
   const names = g.jobTypes.map((jt) => jt.name);
   if (names.length === 0) return g.nameKn ?? "";
   if (names.length <= 3) return names.join(", ");
-  return `${names.slice(0, 3).join(", ")} and more`;
+  return t("namesAndMore", { names: names.slice(0, 3).join(", ") });
 }
 
 interface WizardStep1ChooseCategoryProps {
@@ -43,6 +43,7 @@ export function WizardStep1ChooseCategory({
   onViewAll,
 }: WizardStep1ChooseCategoryProps) {
   const locale = useLocale();
+  const t = useTranslations("serviceWizard");
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -63,12 +64,12 @@ export function WizardStep1ChooseCategory({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search categories"
+          placeholder={t("searchCategories")}
           className="h-12 w-full rounded-2xl border border-[#DCE8D9] bg-white pl-12 pr-4 text-[14px] text-ink outline-none placeholder:text-ink-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </div>
 
-      <h2 className="text-[15px] font-black text-ink">All Categories</h2>
+      <h2 className="text-[15px] font-black text-ink">{t("allCategories")}</h2>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -89,7 +90,7 @@ export function WizardStep1ChooseCategory({
                   {localizedName(g, locale)}
                 </span>
                 <span className="mt-0.5 block truncate text-[12.5px] text-ink-muted">
-                  {summarize(g)}
+                  {summarize(g, t)}
                 </span>
               </span>
               <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" />
@@ -98,7 +99,7 @@ export function WizardStep1ChooseCategory({
 
           {filtered.length === 0 && (
             <p className="py-8 text-center text-[13px] text-ink-muted">
-              No categories match your search.
+              {t("noCategoriesMatch")}
             </p>
           )}
         </div>
@@ -116,14 +117,14 @@ export function WizardStep1ChooseCategory({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-bold text-ink">
-              Can&apos;t find the right category?
+              {t("cantFindCategory")}
             </span>
             <span className="mt-0.5 block text-[12px] text-ink-muted">
-              Browse all services to see everything available.
+              {t("browseAllServicesDesc")}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 text-[13px] font-bold text-brand">
-            View All Services
+            {t("viewAllServices")}
             <ChevronRight className="h-4 w-4" />
           </span>
         </button>

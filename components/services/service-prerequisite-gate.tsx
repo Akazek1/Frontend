@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, IdCard, Loader2, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import api from "@/lib/axios";
@@ -23,6 +24,7 @@ interface ServicePrerequisiteGateProps {
  * upload flows used elsewhere so behaviour and image compression stay consistent.
  */
 export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequisiteGateProps) {
+  const t = useTranslations("servicePrerequisiteGate");
   const { user } = useSelector((state: RootState) => state.auth);
   const [idStatus, setIdStatus] = useState<IdStatus>("NONE");
   const [showIdUpload, setShowIdUpload] = useState(false);
@@ -76,23 +78,23 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
   return (
     <div className="mx-auto w-full max-w-md space-y-6 px-4 py-8">
       <div className="text-center">
-        <h1 className="text-xl font-black text-ink">Before you list a service</h1>
+        <h1 className="text-xl font-black text-ink">{t("title")}</h1>
         <p className="mt-1 text-sm text-ink-subtle">
-          Clients hire people they can trust. Add a clear profile picture and your ID to stand out.
+          {t("subtitle")}
         </p>
       </div>
 
       {/* Profile picture — required */}
       <div className="rounded-2xl border border-[#E1EBDD] bg-white p-4">
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-[13px] font-black text-ink">Profile picture</span>
+          <span className="text-[13px] font-black text-ink">{t("profilePicture")}</span>
           {hasPhoto ? (
             <span className="inline-flex items-center gap-1 text-[11px] font-black text-brand">
-              <CheckCircle2 className="h-4 w-4" /> Added
+              <CheckCircle2 className="h-4 w-4" /> {t("added")}
             </span>
           ) : (
             <span className="rounded-md bg-[#FFF4E5] px-2 py-0.5 text-[11px] font-black text-[#C2630B]">
-              Required
+              {t("required")}
             </span>
           )}
         </div>
@@ -106,22 +108,22 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
             <IdCard className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-black text-ink">Identity verification</p>
+            <p className="text-[13px] font-black text-ink">{t("identityVerification")}</p>
             <p className="text-[11px] text-ink-subtle">
               {idStatus === "PENDING_VERIFICATION"
-                ? "Submitted — under review."
+                ? t("idPendingReview")
                 : idStatus === "APPROVED"
-                  ? "Verified."
+                  ? t("idVerified")
                   : idStatus === "REJECTED"
-                    ? "Previous ID was rejected. Please re-upload."
-                    : "Required — add your ID or passport to list a service."}
+                    ? t("idRejected")
+                    : t("idRequiredDesc")}
             </p>
           </div>
           {loadingId ? (
             <Loader2 className="h-4 w-4 animate-spin text-ink-subtle" />
           ) : hasId ? (
             <span className="inline-flex items-center gap-1 text-[11px] font-black text-brand">
-              <ShieldCheck className="h-4 w-4" /> Done
+              <ShieldCheck className="h-4 w-4" /> {t("done")}
             </span>
           ) : (
             <button
@@ -129,7 +131,7 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
               onClick={() => setShowIdUpload(true)}
               className="rounded-md border border-[#BFD9BA] px-3 py-1.5 text-[11px] font-black text-brand hover:bg-[#EEF8EA]"
             >
-              {idStatus === "REJECTED" ? "Re-upload" : "Upload ID"}
+              {idStatus === "REJECTED" ? t("reupload") : t("uploadId")}
             </button>
           )}
         </div>
@@ -138,14 +140,14 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
       <div className="space-y-2">
         <AppButton onClick={onContinue} disabled={!hasPhoto || !hasId} className="w-full">
           {!hasPhoto
-            ? "Add a profile picture to continue"
+            ? t("addPhotoToContinue")
             : !hasId
-              ? "Add your ID to continue"
-              : "Continue to create service"}
+              ? t("addIdToContinue")
+              : t("continueToCreateService")}
         </AppButton>
         {hasPhoto && !hasId && (
           <p className="text-center text-[11px] text-ink-subtle">
-            A verified ID or passport is required to list a service.
+            {t("verifiedIdRequiredNote")}
           </p>
         )}
       </div>
