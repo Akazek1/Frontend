@@ -5,7 +5,7 @@
     "subtitle": "Hindura ururimi rwa porogaramu."
   },
   "header": {
-    "subtitle": "Shaka akazi, unguka kandi utere imbere na Akazek.",
+    "subtitle": "Shaka akazi, unguka kandi utere imbere na Huza.",
     "profileAlt": "Umwirondoro",
     "greeting": {
       "morning": "Mwaramutse",
@@ -684,7 +684,7 @@
     "termsConditions": "Amabwiriza n'Amategeko",
     "termsConditionsDesc": "Amabwiriza yacu ya serivisi n'amasezerano y'ukoresha",
     "sendFeedback": "Ohereza igitekerezo",
-    "sendFeedbackDesc": "Tubwire uko twanoza Akazek",
+    "sendFeedbackDesc": "Tubwire uko twanoza Huza",
     "proTips": "Inama z'ingirakamaro",
     "tip1": "Buri gihe banza wemeze ibyangombwa by'umukozi mbere yo gufata serivisi",
     "tip2": "Sobanura neza ibyo ukeneye mu butumwa mbere y'isaha y'akazi",
@@ -693,7 +693,7 @@
     "faq": {
       "1": {
         "question": "Nafungura konti nte?",
-        "answer": "Fungura Akazek winjize nimero ya telefoni. Uzakira kode y'imibare 6 muri SMS - yinjize kugira ngo wemeze, hanyuma wongereho izina n'itariki y'amavuko urangize kwiyandikisha. Imeyili si itegeko kandi ushobora kuyongeraho nyuma mu mwirondoro wawe. Nta jambo ry'ibanga ushyiraho cyangwa wibuka."
+        "answer": "Fungura Huza winjize nimero ya telefoni. Uzakira kode y'imibare 6 muri SMS - yinjize kugira ngo wemeze, hanyuma wongereho izina n'itariki y'amavuko urangize kwiyandikisha. Imeyili si itegeko kandi ushobora kuyongeraho nyuma mu mwirondoro wawe. Nta jambo ry'ibanga ushyiraho cyangwa wibuka."
       },
       "2": {
         "question": "Naha akazi umukozi utanga serivisi nte?",
@@ -709,7 +709,7 @@
       },
       "5": {
         "question": "Kwishyura bikorwa gute?",
-        "answer": "Akazek ntitunganya ubwishyu muri porogaramu - gusaba guha akazi no kohererezanya ubutumwa ni ubuntu. Muganire ku giciro n'ibikubiye mu kazi n'umukozi mu kiganiro mbere y'uko akazi gatangira, hanyuma umwishyure mubonanye akazi karangiye."
+        "answer": "Huza ntitunganya ubwishyu muri porogaramu - gusaba guha akazi no kohererezanya ubutumwa ni ubuntu. Muganire ku giciro n'ibikubiye mu kazi n'umukozi mu kiganiro mbere y'uko akazi gatangira, hanyuma umwishyure mubonanye akazi karangiye."
       },
       "6": {
         "question": "Nahagarika ifatabuguzi nte?",
@@ -741,7 +741,7 @@
       },
       "13": {
         "question": "Byagenda bite niba ntashoboye kwinjira cyangwa nibagiwe ijambo ry'ibanga?",
-        "answer": "Akazek ntikoresha amagambo y'ibanga - winjira buri gihe ukoresheje nimero ya telefoni na kode nshya ya SMS. Niba warahinduye nimero ya telefoni, vugana na support@akazek.rw; kwiyandikisha ukoresheje nimero nshya byakora konti itandukanye."
+        "answer": "Huza ntikoresha amagambo y'ibanga - winjira buri gihe ukoresheje nimero ya telefoni na kode nshya ya SMS. Niba warahinduye nimero ya telefoni, vugana na support@huza.app; kwiyandikisha ukoresheje nimero nshya byakora konti itandukanye."
       },
       "14": {
         "question": "Amakuru yanjye bwite afite umutekano?",
@@ -749,7 +749,7 @@
       },
       "15": {
         "question": "Nasiba konti yanjye nte?",
-        "answer": "Kugeza ubu nta buryo bwo gusiba konti muri porogaramu - ohereza imeyili kuri support@akazek.rw urimo amakuru ya konti yawe, tuzayisiba mu minsi 30. Ibi ntibisubizwa inyuma: serivisi zawe, amafatabuguzi n'ibitekerezo byose bizakurwaho."
+        "answer": "Kugeza ubu nta buryo bwo gusiba konti muri porogaramu - ohereza imeyili kuri support@huza.app urimo amakuru ya konti yawe, tuzayisiba mu minsi 30. Ibi ntibisubizwa inyuma: serivisi zawe, amafatabuguzi n'ibitekerezo byose bizakurwaho."
       }
     }
   },
@@ -1118,11 +1118,11 @@
     "acceptOffer": "Emera icyifuzo",
     "bookingDetails": "Ibisobanuro by'ifatabuguzi",
     "workNotConfirmedYet": "Aka kazi ntikarahamywa. Banza ukemeze hano mbere yo gutangira kugira ngo ubwishyu n'ibitekerezo byawe birindwe.",
-    "keepCommunicationsInApp": "Komeza ibiganiro byose muri Akazek kugira ngo umutekano n'uburinzi bwawe byubahirizwe.",
+    "keepCommunicationsInApp": "Komeza ibiganiro byose muri Huza kugira ngo umutekano n'uburinzi bwawe byubahirizwe.",
     "readyToStart": "Witeguye gutangira?",
     "waitingForPartner": "Gutegereza {name}",
     "tapAcceptToStart": "Kanda Emera kugira ngo utangire akazi. Ubwishyu n'ibitekerezo byawe birindirwa hano.",
-    "partnerNotAcceptedYet": "{name} ntaremera. Ntukishyure cyangwa ngo utangire hanze ya Akazek - urakingirwa namara kwemera hano.",
+    "partnerNotAcceptedYet": "{name} ntaremera. Ntukishyure cyangwa ngo utangire hanze ya Huza - urakingirwa namara kwemera hano.",
     "theProviderFallback": "utanga serivisi",
     "theProviderFallbackCapitalized": "Utanga serivisi",
     "providerFallback": "utanga serivisi",
@@ -1568,7 +1568,7 @@
     "address": "Aderesi",
     "noContactDetails": "Nta makuru yo kuvugana yongewemo.",
     "howItWorks": "Uko Bikorwa",
-    "howItWorksDesc": "Abakiriya bafata serivisi ako kanya na {name}. Itsinda ryawe ni ryo rikora akazi — Akazek ntigenzura buri mukozi ku giti cye ku masosiyete atanga serivisi.",
+    "howItWorksDesc": "Abakiriya bafata serivisi ako kanya na {name}. Itsinda ryawe ni ryo rikora akazi — Huza ntigenzura buri mukozi ku giti cye ku masosiyete atanga serivisi.",
     "ownerActions": "Ibikorwa bya Nyir'Ikigo",
     "editOrganizationDetails": "Hindura amakuru y'ikigo",
     "manageWorkers": "Gucunga abakozi"
@@ -1650,19 +1650,19 @@
     "loadMore": "Zana ibindi"
   },
   "notificationSettings": {
-    "deviceUnsupported": "Fungura porogaramu ya Akazek yashyizwe (Add to Home Screen) kugira ngo wemeze amatangazo.",
+    "deviceUnsupported": "Fungura porogaramu ya Huza yashyizwe (Add to Home Screen) kugira ngo wemeze amatangazo.",
     "notificationsBlocked": "Amatangazo yarabujijwe. Yemeze mu igenamiterere ya telefoni yawe.",
     "notificationsEnabledDevice": "Amatangazo yemejwe kuri iyi telefoni",
     "couldNotEnable": "Ntibyashobotse kurangiza kwemeza amatangazo. Ongera ugerageze.",
     "notificationsTurnedOff": "Amatangazo yazimishijwe kuri iyi telefoni",
     "deviceDescUnsupported": "Fungura porogaramu yashyizwe (Add to Home Screen) kugira ngo wemeze amatangazo.",
-    "deviceDescDenied": "Byarabujijwe — emerera amatangazo ya Akazek mu igenamiterere ya telefoni yawe.",
+    "deviceDescDenied": "Byarabujijwe — emerera amatangazo ya Huza mu igenamiterere ya telefoni yawe.",
     "deviceDescEnabled": "Uzabona amatangazo y'amafatabuguzi, ubutumwa, n'ibitekerezo kuri iyi telefoni.",
     "deviceDescDisabled": "Yemeze kugira ngo ubone amatangazo y'amafatabuguzi, ubutumwa, n'ibitekerezo kuri iyi telefoni.",
     "preferencesUpdated": "Ibyo uhitamo ku matangazo byavuguruwe",
     "failedToUpdate": "Ntibyashobotse kuvugurura ibyo uhitamo",
     "notificationSettingsTitle": "Igenamiterere ry'Amatangazo",
-    "chooseUpdatesSubtitle": "Hitamo amakuru ya Akazek ushaka kwakira.",
+    "chooseUpdatesSubtitle": "Hitamo amakuru ya Huza ushaka kwakira.",
     "notificationHistory": "Amateka y'Amatangazo",
     "reviewRecentAlerts": "Reba amatangazo aheruka",
     "notificationsThisDevice": "Amatangazo kuri iyi telefoni",
@@ -1832,7 +1832,7 @@
     "reportAnIssue": "Tanga Ikibazo",
     "reportAnIssueDesc": "Tubwire icyakwiye kwitabwaho",
     "shareFeedback": "Tanga Igitekerezo",
-    "shareFeedbackDesc": "Fasha kunoza Akazek",
+    "shareFeedbackDesc": "Fasha kunoza Huza",
     "privacyPolicy": "Politiki y'Ibanga",
     "privacyPolicyDesc": "Uko amakuru yawe yifashishwa",
     "termsConditions": "Amabwiriza y'Imikoreshereze",

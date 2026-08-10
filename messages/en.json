@@ -741,7 +741,7 @@
       },
       "13": {
         "question": "What if I can't sign in / forget my password?",
-        "answer": "Huza doesn't use passwords — you always sign in with your phone number and a fresh SMS code. If you've changed your phone number, contact support@akazek.rw; registering with a new number on its own would create a separate account."
+        "answer": "Huza doesn't use passwords — you always sign in with your phone number and a fresh SMS code. If you've changed your phone number, contact support@huza.app; registering with a new number on its own would create a separate account."
       },
       "14": {
         "question": "Is my personal information safe?",
@@ -749,7 +749,7 @@
       },
       "15": {
         "question": "How do I delete my account?",
-        "answer": "There's no in-app delete option yet — email support@akazek.rw with your account details and we'll process the deletion within 30 days. This is permanent: your services, bookings, and reviews will all be removed."
+        "answer": "There's no in-app delete option yet — email support@huza.app with your account details and we'll process the deletion within 30 days. This is permanent: your services, bookings, and reviews will all be removed."
       }
     }
   },

@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import toast from "react-hot-toast";
 import { getAuthToken } from "@/lib/auth-utils";
 import { unregisterFcmToken } from "@/services/fcm-token-service";
 import { clearPersistedQueryCache } from "@/lib/query-persistence";
@@ -69,14 +70,21 @@ const authService = {
   // Send OTP to phone number
   sendOtp: async (
     data: SendOtpRequest
-  ): Promise<{ message: string; phoneNumber: string }> => {
+  ): Promise<{ message: string; phoneNumber: string; devCode?: string }> => {
     try {
-      const response = await api.post<{ data: { message: string; phoneNumber: string } }>(
+      const response = await api.post<{ data: { message: string; phoneNumber: string; devCode?: string } }>(
         "/auth/request-otp",
         data
       );
       // Backend wraps response in { data, statusCode, message, timestamp }
-      return response.data.data || response.data;
+      const result = response.data.data || response.data;
+      // Dev convenience: the backend includes `devCode` only outside production
+      // (the noop provider sends no real SMS). Show it so testers can grab the
+      // code. This field never exists in production responses.
+      if (result?.devCode) {
+        toast.success(`Dev OTP: ${result.devCode}`, { duration: 10000, icon: "🔑" });
+      }
+      return result;
     } catch (error) {
       console.error("Error in sendOtp service:", error);
       throw error;
