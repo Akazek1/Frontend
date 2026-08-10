@@ -11,6 +11,7 @@ import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategory
 import { ProfilePictureStep } from "@/components/onboarding/ProfilePictureStep"
 import { AllSetStep } from "@/components/onboarding/AllSetStep"
 import { LocationStep } from "@/components/onboarding/LocationStep"
+import { SetPinStep } from "@/components/onboarding/SetPinStep"
 import { useRouter } from "next/navigation"
 
 // Steps 3-7 manage their own full-screen layout
@@ -62,6 +63,7 @@ function OnboardingContent() {
             onFinish={() => { window.location.href = "/?tutorial=true" }}
           />
         )
+      case 8: return <SetPinStep />
       default: return null
     }
   }

@@ -15,7 +15,7 @@ export function LoginForm() {
   const t = useTranslations("login")
   const {
     phoneNumber, handlePhoneChange,
-    handleSendOtp, handleVerifyOtp, handleResendOtp,
+    handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin,
     code, setCode,
     inputsRef,
     isLoading, resendCooldown,
@@ -24,6 +24,11 @@ export function LoginForm() {
   const [otpSent, setOtpSent] = useState(false)
   const [checking, setChecking] = useState(false)
   const [phoneError, setPhoneError] = useState("")
+  // PIN login (returning users with a PIN): shown instead of the OTP entry.
+  const [pinMode, setPinMode] = useState(false)
+  const [pin, setPin] = useState("")
+  const [pinError, setPinError] = useState("")
+  const [pinSubmitting, setPinSubmitting] = useState(false)
 
   useEffect(() => {
     if (otpSent) {
@@ -44,11 +49,12 @@ export function LoginForm() {
 
     const formatted = `250${cleaned}`
 
-    // Check if account exists before sending OTP
+    // Check if the account exists (and whether it has a PIN) before sending OTP.
+    let usePin = false
     setChecking(true)
     try {
       const res = await api.get(`/auth/check-user/${formatted}`)
-      const { exists, blocked } = res.data?.data || res.data
+      const { exists, blocked, hasPin } = res.data?.data || res.data
       if (!exists) {
         setPhoneError(t("noAccountFound"))
         setChecking(false)
@@ -59,6 +65,7 @@ export function LoginForm() {
         setChecking(false)
         return
       }
+      usePin = !!hasPin
     } catch {
       // In dev, allow continuing even if the check endpoint fails
       if (process.env.NODE_ENV !== "development") {
@@ -70,6 +77,34 @@ export function LoginForm() {
       setChecking(false)
     }
 
+    // Has a PIN → log in with it (no SMS). Otherwise fall back to OTP.
+    if (usePin) {
+      setPinMode(true)
+      return
+    }
+
+    const sent = await handleSendOtp("login")
+    if (sent) setOtpSent(true)
+  }
+
+  const submitPin = async (value: string) => {
+    if (value.length !== 5 || pinSubmitting) return
+    setPinError("")
+    setPinSubmitting(true)
+    const res = await handleLoginWithPin(value)
+    if (!res.ok) {
+      // On success the app redirects away; only handle failures here.
+      setPinError(res.message || t("couldNotVerifyNumber"))
+      setPin("")
+      setPinSubmitting(false)
+    }
+  }
+
+  // "Use a code instead" / forgot PIN → drop back to the OTP flow.
+  const useCodeInstead = async () => {
+    setPinMode(false)
+    setPin("")
+    setPinError("")
     const sent = await handleSendOtp("login")
     if (sent) setOtpSent(true)
   }
@@ -185,17 +220,68 @@ export function LoginForm() {
         )}
       </AnimatePresence>
 
+      {/* Inline PIN — slides in (instead of OTP) when the account has a PIN */}
+      <AnimatePresence>
+        {pinMode && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+              <p className="text-sm text-gray-600 text-center">{t("enterYourPin")}</p>
+
+              <div className="relative flex gap-2 justify-center">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoFocus
+                  maxLength={5}
+                  value={pin}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 5)
+                    setPin(val)
+                    setPinError("")
+                    if (val.length === 5) submitPin(val)
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  style={{ fontSize: "16px" }}
+                  aria-label={t("enterYourPin")}
+                  disabled={pinSubmitting}
+                />
+                {Array.from({ length: 5 }).map((_, i) => {
+                  const isFilled = !!pin[i]
+                  const isActive = i === pin.length || (i === 4 && pin.length === 5)
+                  return (
+                    <div
+                      key={i}
+                      className={`w-11 h-12 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
+                        isActive ? "border-brand ring-2 ring-brand/20" : isFilled ? "border-brand/50" : "border-gray-200"
+                      }`}
+                    >
+                      {isFilled ? "•" : ""}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {pinError && <p className="text-xs text-red-500 text-center">{pinError}</p>}
+
+              <div className="text-center">
+                <button type="button" onClick={useCodeInstead} className="text-sm text-brand font-medium underline underline-offset-2">
+                  {t("useACodeInstead")}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Action button */}
-      {!otpSent ? (
-        <button
-          type="button"
-          onClick={handleLogin}
-          disabled={isLoading || checking || !phoneNumber}
-          className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
-        >
-          {checking ? t("checking") : isLoading ? t("sendingCode") : t("logIn")}
-        </button>
-      ) : (
+      {otpSent ? (
         <button
           type="button"
           onClick={() => {
@@ -207,12 +293,30 @@ export function LoginForm() {
         >
           {isLoading ? t("verifying") : t("logIn")}
         </button>
-      )}
-
-      {otpSent && (
+      ) : pinMode ? (
         <button
           type="button"
-          onClick={() => { setOtpSent(false); setCode(Array(OTP_LENGTH).fill("")) }}
+          onClick={() => submitPin(pin)}
+          disabled={pin.length !== 5 || pinSubmitting}
+          className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
+        >
+          {pinSubmitting ? t("loggingIn") : t("logIn")}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleLogin}
+          disabled={isLoading || checking || !phoneNumber}
+          className="w-full bg-brand-strong text-white py-4 sm:py-5 rounded-[100px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand transition-colors"
+        >
+          {checking ? t("checking") : isLoading ? t("sendingCode") : t("logIn")}
+        </button>
+      )}
+
+      {(otpSent || pinMode) && (
+        <button
+          type="button"
+          onClick={() => { setOtpSent(false); setPinMode(false); setPin(""); setPinError(""); setCode(Array(OTP_LENGTH).fill("")) }}
           className="w-full text-sm text-gray-500 underline underline-offset-2 text-center"
         >
           {t("changePhoneNumber")}
@@ -220,7 +324,7 @@ export function LoginForm() {
       )}
 
       {/* Agency / company sign-in (email + password) */}
-      {!otpSent && (
+      {!otpSent && !pinMode && (
         <>
           <div className="flex items-center gap-3 pt-1">
             <span className="h-px flex-1 bg-gray-200" />
