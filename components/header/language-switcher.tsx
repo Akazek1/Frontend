@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Check, Globe } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { queryPersistenceMaxAge } from "@/lib/query-persistence";
-import { LOCALE_COOKIE } from "@/i18n/config";
+import { persistLanguage } from "@/lib/set-language";
 
 interface ApiLanguage {
   code: string;
@@ -67,8 +67,9 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
   const choose = (code: string) => {
     const next = code.toLowerCase();
     if (next === locale) return;
-    // 1-year cookie; i18n/request.ts reads it to pick messages on the server.
-    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+    // Sets the device cookie and (if signed in) silently syncs to the account,
+    // so the choice follows the user and localizes OTP/push server-side.
+    persistLanguage(next);
     setPending(true);
     // Re-render server components with the new locale, then refetch RSC payload.
     router.refresh();

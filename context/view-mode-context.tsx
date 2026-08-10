@@ -1,7 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 
 export type ViewMode = "provider" | "employer";
 
@@ -36,13 +35,19 @@ export const ViewModeProvider: React.FC<ViewModeProviderProps> = ({ children }) 
     if (typeof window !== "undefined" && !isInitialized) {
       const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
 
-      if (saved === "provider" || saved === "employer") {
+      if (!isAuthenticated) {
+        // Guests always open on "Hire help" — the primary first-time action.
+        // We deliberately ignore any previously stored value here: a stale
+        // default saved in an earlier session must not flip them over to
+        // "Find work" right after the page loads. (Matches the initial state,
+        // so there's no visible flicker either.)
+        setViewModeState("employer");
+      } else if (saved === "provider" || saved === "employer") {
+        // Signed-in users keep their explicit last choice.
         setViewModeState(saved);
-      } else if (!isAuthenticated && isGuestBrowsingEnabled()) {
-        // Guests default to the jobs feed ("Find work") per the redesign.
-        setViewModeState("provider");
-      } else if (isAuthenticated) {
-        // Sole providers land on the provider view; everyone else on employer.
+      } else {
+        // First-time signed-in users: sole workers land on "Find work",
+        // everyone else on "Hire help".
         setViewModeState(onlyWorker ? "provider" : "employer");
       }
       setIsInitialized(true);

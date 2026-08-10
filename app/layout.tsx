@@ -13,6 +13,7 @@ import { BookmarkProvider } from "@/context/bookmark-context"; // Ensure this im
 import { ViewModeProvider } from "@/context/view-mode-context";
 import { AuthGateProvider } from "@/context/auth-gate-context";
 import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
+import LanguageGate from "@/components/language-gate";
 import { APP_CONFIG } from "@/constant/app.config";
 import { PwaLifecycle } from "@/components/pwa/pwa-lifecycle";
 import { isMarketingHost } from "@/lib/marketing-host";
@@ -138,6 +139,7 @@ export default async function RootLayout({
                     {children}
                   </Layout>
                   <AuthGateSheet />
+                  <LanguageGate />
                 </AuthGateProvider>
               </BookmarkProvider>
             </ViewModeProvider>
