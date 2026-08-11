@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -16,40 +16,41 @@ interface SortDropdownProps {
   onChange: (next: ServicesSortKey) => void;
 }
 
-/**
- * View-counter and request-counter sorts depend on backend metrics that
- * aren't tracked yet (see SERVICES_REDESIGN_PROMPT phase "Out of scope").
- * We expose them as disabled options with a tooltip so the affordance
- * exists in the UI but doesn't surprise the user.
- */
-const OPTIONS: Array<{
-  key: ServicesSortKey;
-  label: string;
-  disabled?: boolean;
-  hint?: string;
-}> = [
-  { key: "recent", label: "Recent" },
-  { key: "most_viewed", label: "Most viewed", disabled: true, hint: "Coming soon" },
-  {
-    key: "most_requested",
-    label: "Most requested",
-    disabled: true,
-    hint: "Coming soon",
-  },
-];
-
 export function SortDropdown({ value, onChange }: SortDropdownProps) {
+  const t = useTranslations("servicesListPage");
+
+  /**
+   * View-counter and request-counter sorts depend on backend metrics that
+   * aren't tracked yet (see SERVICES_REDESIGN_PROMPT phase "Out of scope").
+   * We expose them as disabled options with a tooltip so the affordance
+   * exists in the UI but doesn't surprise the user.
+   */
+  const options: Array<{
+    key: ServicesSortKey;
+    label: string;
+    disabled?: boolean;
+    hint?: string;
+  }> = [
+    { key: "recent", label: t("sortRecent") },
+    { key: "most_viewed", label: t("sortMostViewed"), disabled: true, hint: t("sortComingSoon") },
+    {
+      key: "most_requested",
+      label: t("sortMostRequested"),
+      disabled: true,
+      hint: t("sortComingSoon"),
+    },
+  ];
+
   return (
     <Select value={value} onValueChange={(v) => onChange(v as ServicesSortKey)}>
       <SelectTrigger
         className="h-9 w-auto gap-1 border-[#DCEEDD] bg-white text-[13px] text-brand"
-        aria-label="Sort services"
+        aria-label={t("sortAria")}
       >
-        <SelectValue placeholder="Sort" />
-        <ChevronDown className="h-4 w-4 text-brand" />
+        <SelectValue placeholder={t("sortPlaceholder")} />
       </SelectTrigger>
       <SelectContent>
-        {OPTIONS.map((opt) => (
+        {options.map((opt) => (
           <SelectItem
             key={opt.key}
             value={opt.key}

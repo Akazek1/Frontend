@@ -567,7 +567,22 @@
     "tipBody": "Ongeraho amafoto asobanutse n'ibisobanuro kugira ngo ubone abarebera benshi n'ubusabe bwo gukorera.",
     "emptyTitle": "Nta karita ya serivisi ufite kugeza ubu.",
     "emptyDesc": "Ongeraho serivisi ya mbere kugira ngo utangire kubona ubusabe bwo gukorera.",
-    "addFirstService": "Ongeraho Serivisi ya Mbere"
+    "addFirstService": "Ongeraho Serivisi ya Mbere",
+    "availableForWorkTitle": "Uraboneka gukora",
+    "availableForWorkDesc": "Iyo bihagaritswe, amakarita ya serivisi zawe ntazagaragara ku bakoresha.",
+    "availableForWorkNote": "Ibi bikurikizwa ku makarita yawe yose ya serivisi",
+    "toggleAvailabilityAria": "Hindura uko uboneka ku kazi",
+    "editButton": "Hindura",
+    "deactivateButton": "Hagarika gukora",
+    "activateButton": "Ongera ukore",
+    "activeCardAria": "Ikarita ya serivisi ikora",
+    "deactivatedCardAria": "Ikarita ya serivisi yahagaritswe",
+    "sortRecent": "Ibiheruka",
+    "sortMostViewed": "Ibyarebwe cyane",
+    "sortMostRequested": "Ibisabwe cyane",
+    "sortComingSoon": "Biraza vuba",
+    "sortPlaceholder": "Shungura",
+    "sortAria": "Shungura serivisi"
   },
   "jobDetail": {
     "jobNotFound": "Akazi ntikabonetse",

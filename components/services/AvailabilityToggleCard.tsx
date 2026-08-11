@@ -1,6 +1,7 @@
 "use client";
 
 import { ShieldCheck, UserRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Switch } from "@/components/ui/switch";
 
 interface AvailabilityToggleCardProps {
@@ -14,6 +15,7 @@ export function AvailabilityToggleCard({
   isUpdating = false,
   onChange,
 }: AvailabilityToggleCardProps) {
+  const t = useTranslations("servicesListPage");
   return (
     <section
       className="rounded-2xl border border-[#DCEEDD] bg-surface p-4"
@@ -29,10 +31,10 @@ export function AvailabilityToggleCard({
             id="availability-card-title"
             className="text-[15px] font-black text-ink"
           >
-            Available for work
+            {t("availableForWorkTitle")}
           </h2>
           <p className="mt-0.5 text-[12px] text-ink-muted">
-            When turned off, your service cards won&apos;t appear to employers.
+            {t("availableForWorkDesc")}
           </p>
         </div>
 
@@ -40,7 +42,7 @@ export function AvailabilityToggleCard({
           checked={available}
           disabled={isUpdating}
           onCheckedChange={onChange}
-          aria-label="Toggle availability for work"
+          aria-label={t("toggleAvailabilityAria")}
           className="data-[state=checked]:bg-brand"
         />
       </div>
@@ -48,7 +50,7 @@ export function AvailabilityToggleCard({
       <div className="mt-3 flex items-center gap-2 rounded-xl bg-white px-3 py-2">
         <ShieldCheck className="h-4 w-4 text-brand" aria-hidden="true" />
         <p className="text-[12px] text-ink-muted">
-          This applies to all your service cards
+          {t("availableForWorkNote")}
         </p>
       </div>
     </section>
