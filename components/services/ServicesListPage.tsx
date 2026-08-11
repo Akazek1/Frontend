@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ type SortableService = Service & {
 };
 
 export function ServicesListPage() {
+  const t = useTranslations("servicesListPage");
   const router = useRouter();
   const {
     services,
@@ -85,10 +87,10 @@ export function ServicesListPage() {
         nextActive,
       );
       upsertLocal(updated);
-      toast.success(nextActive ? "Service activated" : "Service deactivated");
+      toast.success(nextActive ? t("serviceActivatedToast") : t("serviceDeactivatedToast"));
       setPendingToggle(null);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not update the service. Please try again."));
+      toast.error(getApiErrorMessage(err, t("couldNotUpdateServiceToast")));
     }
   };
 
@@ -98,7 +100,7 @@ export function ServicesListPage() {
     <PageShell padded={false}>
       {/* Header */}
       <PageHeader
-        title="My Services"
+        title={t("title")}
         onBack={() => router.back()}
         className={appStickyHeaderClass}
         action={
@@ -109,7 +111,7 @@ export function ServicesListPage() {
             className="h-10 gap-1 rounded-xl border-brand/30 px-3 text-[13px] font-semibold text-brand hover:bg-surface"
           >
             <Plus className="h-4 w-4" />
-            Add Service
+            {t("addService")}
           </Button>
         }
       />
@@ -128,7 +130,7 @@ export function ServicesListPage() {
         {!isEmpty && (
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-black text-ink">
-              Your Service Cards ({services.length})
+              {t("yourServiceCards", { count: services.length })}
             </h2>
             <SortDropdown value={sort} onChange={setSort} />
           </div>
@@ -137,7 +139,7 @@ export function ServicesListPage() {
         {/* Body */}
         {isLoading && services.length === 0 && (
           <Card variant="list" className="p-6 text-center text-[13px] text-ink-muted">
-            Loading your services…
+            {t("loadingServices")}
           </Card>
         )}
 
@@ -166,8 +168,8 @@ export function ServicesListPage() {
         {/* Tip card */}
         {!isEmpty && (
           <TipCard
-            title="Tip"
-            body="Add clear photos and descriptions to get more views and hire requests."
+            title={t("tipTitle")}
+            body={t("tipBody")}
             persistKey="services_tip"
             href="/more/help/services-tips"
           />

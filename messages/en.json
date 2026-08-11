@@ -555,6 +555,20 @@
     "continue": "Continue",
     "uploading": "Uploading..."
   },
+  "servicesListPage": {
+    "title": "My Services",
+    "addService": "Add Service",
+    "yourServiceCards": "Your Service Cards ({count})",
+    "loadingServices": "Loading your services…",
+    "serviceActivatedToast": "Service activated",
+    "serviceDeactivatedToast": "Service deactivated",
+    "couldNotUpdateServiceToast": "Could not update the service. Please try again.",
+    "tipTitle": "Tip",
+    "tipBody": "Add clear photos and descriptions to get more views and hire requests.",
+    "emptyTitle": "You don't have any service cards yet.",
+    "emptyDesc": "Add your first service to start getting hire requests.",
+    "addFirstService": "Add Your First Service"
+  },
   "jobDetail": {
     "jobNotFound": "Job not found",
     "applicationDeclined": "Application declined.",

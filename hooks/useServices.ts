@@ -24,12 +24,15 @@ export function useServices(): {
   const userId = user?.id;
 
   const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Starts true so the first render shows the loading state instead of
+  // briefly flashing "no services" before the fetch has even started.
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
     if (!isAuthenticated || !userId) {
       setServices([]);
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
