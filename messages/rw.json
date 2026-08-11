@@ -1183,8 +1183,8 @@
     "rejected": "Byanzwe",
     "allApplicants": "Abasabye bose",
     "searchApplicants": "Shaka mu basabye",
-    "newestFirst": "Ibishya mbere",
-    "oldestFirst": "Ibya kera mbere",
+    "newestFirst": "Ibishya imbere",
+    "oldestFirst": "Ibya kera imbere",
     "name": "Izina",
     "hireThisWorker": "Uhe uyu mukozi akazi?",
     "hireConfirmMessage": "Ibi byohereza icyifuzo cyemewe kuri <name>{fullName}</name>. Akazi kemezwa gusa amaze kubyemera.",
@@ -1483,7 +1483,7 @@
     "handOverWorkerButton": "Tanga umukozi"
   },
   "inquiryShared": {
-    "statusNew": "Bishya",
+    "statusNew": "Ni mushya",
     "statusInConversation": "Mu kiganiro",
     "statusAwaitingWorker": "Bitegereje umukozi",
     "statusPlaced": "Yashyizwe mu kazi",
