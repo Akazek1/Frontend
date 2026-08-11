@@ -6,6 +6,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
 
@@ -43,16 +50,45 @@ export function SignupForm() {
   const [phoneError, setPhoneError] = useState("")
   const [checking, setChecking] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
-  const handleDobChange = (raw: string) => {
-    const digits = raw.replace(/\D/g, "").slice(0, 8)
-    const formatted = [
-      digits.slice(0, 4),
-      digits.slice(4, 6),
-      digits.slice(6, 8),
-    ].filter(Boolean).join("-")
-    setDateOfBirth(formatted)
-    if (dobError && isAtLeast18(formatted)) setDobError("")
+
+  // Day/Month/Year pickers instead of a typed field — kept as local parts (not
+  // derived from `dateOfBirth` on every render) so a partial pick (e.g. just
+  // the day) survives until the other two are chosen too; `dateOfBirth` only
+  // gets a value once all three are set.
+  const [dob, setDob] = useState(() => {
+    const [year, month, day] = dateOfBirth ? dateOfBirth.split("-") : ["", "", ""]
+    return { day: day ?? "", month: month ?? "", year: year ?? "" }
+  })
+
+  const daysInMonth = (year: string, month: string) =>
+    new Date(Number(year), Number(month), 0).getDate()
+
+  const updateDob = (part: "day" | "month" | "year", value: string) => {
+    const next = { ...dob, [part]: value }
+    if (next.year && next.month) {
+      const max = daysInMonth(next.year, next.month)
+      if (next.day && Number(next.day) > max) next.day = String(max).padStart(2, "0")
+    }
+    setDob(next)
+
+    const composed = next.year && next.month && next.day
+      ? `${next.year}-${next.month}-${next.day}`
+      : ""
+    setDateOfBirth(composed)
+    if (composed) {
+      setDobError(isAtLeast18(composed) ? "" : t("errors.dobUnder18"))
+    } else {
+      setDobError("")
+    }
   }
+
+  const currentYear = new Date().getFullYear()
+  const dobYears = Array.from({ length: currentYear - 18 - (currentYear - 100) + 1 }, (_, i) => currentYear - 18 - i)
+  const dobMonths = Array.from({ length: 12 }, (_, i) => i + 1)
+  const dobDays = Array.from(
+    { length: dob.year && dob.month ? daysInMonth(dob.year, dob.month) : 31 },
+    (_, i) => i + 1,
+  )
 
   // complete-profile path: user is already authenticated
   const isCompleteProfile = !!verifiedUser?.id
@@ -266,24 +302,52 @@ export function SignupForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             {t("dob")} <span className="text-red-500">*</span>
           </label>
-          <Input
-            type="text"
-            inputMode="numeric"
-            autoComplete="bday"
-            placeholder="YYYY-MM-DD"
-            value={dateOfBirth}
-            maxLength={10}
-            onChange={(e) => handleDobChange(e.target.value)}
-            onBlur={() => {
-              if (dateOfBirth && !isAtLeast18(dateOfBirth)) {
-                setDobError(t("errors.dobUnder18"))
-              } else {
-                setDobError("")
-              }
-            }}
-            className={`block h-14 min-w-0 w-full max-w-full appearance-none rounded-lg border px-4 py-3 text-[16px] leading-none focus:ring-2 focus:ring-brand focus:border-brand ${dobError ? "border-red-400" : "border-gray-300"}`}
-            disabled={otpSent}
-          />
+          <div className="flex gap-2">
+            <Select value={dob.day} onValueChange={(v) => updateDob("day", v)} disabled={otpSent}>
+              <SelectTrigger
+                className={`h-14 flex-1 rounded-lg border px-4 text-[16px] ${dobError ? "border-red-400" : "border-gray-300"}`}
+              >
+                <SelectValue placeholder={t("dobDay")} />
+              </SelectTrigger>
+              <SelectContent>
+                {dobDays.map((d) => (
+                  <SelectItem key={d} value={String(d).padStart(2, "0")}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={dob.month} onValueChange={(v) => updateDob("month", v)} disabled={otpSent}>
+              <SelectTrigger
+                className={`h-14 flex-[1.3] rounded-lg border px-4 text-[16px] ${dobError ? "border-red-400" : "border-gray-300"}`}
+              >
+                <SelectValue placeholder={t("dobMonth")} />
+              </SelectTrigger>
+              <SelectContent>
+                {dobMonths.map((m) => (
+                  <SelectItem key={m} value={String(m).padStart(2, "0")}>
+                    {t(`months.${m}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={dob.year} onValueChange={(v) => updateDob("year", v)} disabled={otpSent}>
+              <SelectTrigger
+                className={`h-14 flex-1 rounded-lg border px-4 text-[16px] ${dobError ? "border-red-400" : "border-gray-300"}`}
+              >
+                <SelectValue placeholder={t("dobYear")} />
+              </SelectTrigger>
+              <SelectContent>
+                {dobYears.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {dobError
             ? <p className="text-xs text-red-500 mt-1">{dobError}</p>
             : <p className="text-xs text-gray-400 mt-1">{t("dobHint")}</p>
