@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -52,6 +52,13 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
   // The admin list uses uppercase codes, so compare case-insensitively.
   const locale = useLocale();
   const [pending, setPending] = useState(false);
+
+  // `pending` disables the options while router.refresh() re-renders server
+  // components with the new locale — it must clear once that lands, or every
+  // button stays disabled after the very first switch (nothing else resets it).
+  useEffect(() => {
+    setPending(false);
+  }, [locale]);
 
   const { data } = useQuery({
     queryKey: ["active-languages"],
