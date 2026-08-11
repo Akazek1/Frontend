@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, PowerOff, Power } from "lucide-react";
+import { useTranslations } from "next-intl";
 import ServiceCard from "@/components/service-card";
 import { Button } from "@/components/ui/button";
 import { mapServiceToProviderCard } from "@/lib/service-display";
@@ -53,6 +54,7 @@ export function OwnerServiceCardRow({
   onToggleActive,
   workerAvailable = true,
 }: OwnerServiceCardRowProps) {
+  const t = useTranslations("servicesListPage");
   const provider = mapServiceToProviderCard(service);
   const isActive = service.isActive !== false;
 
@@ -62,7 +64,7 @@ export function OwnerServiceCardRow({
     <div
       className={`flex flex-col gap-2 ${isActive ? "" : "opacity-70"}`}
       aria-label={
-        isActive ? "Your active service card" : "Your deactivated service card"
+        isActive ? t("activeCardAria") : t("deactivatedCardAria")
       }
     >
       <ServiceCard
@@ -93,7 +95,7 @@ export function OwnerServiceCardRow({
           className="flex-1 border-brand/30 text-brand hover:bg-surface"
         >
           <Pencil className="h-4 w-4" />
-          Edit
+          {t("editButton")}
         </Button>
         {isActive ? (
           <Button
@@ -103,7 +105,7 @@ export function OwnerServiceCardRow({
             className="flex-1 border-[#FF3D00]/30 text-[#FF3D00] hover:bg-[#FFF2EE]"
           >
             <PowerOff className="h-4 w-4" />
-            Deactivate
+            {t("deactivateButton")}
           </Button>
         ) : (
           <Button
@@ -112,7 +114,7 @@ export function OwnerServiceCardRow({
             className="flex-1 bg-brand text-white hover:bg-brand-dark"
           >
             <Power className="h-4 w-4" />
-            Activate
+            {t("activateButton")}
           </Button>
         )}
       </div>

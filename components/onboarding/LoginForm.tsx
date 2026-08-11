@@ -15,7 +15,7 @@ export function LoginForm() {
   const t = useTranslations("login")
   const {
     phoneNumber, handlePhoneChange,
-    handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin,
+    handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin, setCheckedPin,
     code, setCode,
     inputsRef,
     isLoading, resendCooldown,
@@ -54,7 +54,7 @@ export function LoginForm() {
     setChecking(true)
     try {
       const res = await api.get(`/auth/check-user/${formatted}`)
-      const { exists, blocked, hasPin } = res.data?.data || res.data
+      const { exists, blocked, hasPin, pinIsTemporary } = res.data?.data || res.data
       if (!exists) {
         setPhoneError(t("noAccountFound"))
         setChecking(false)
@@ -65,6 +65,8 @@ export function LoginForm() {
         setChecking(false)
         return
       }
+      // Remember for post-login routing (set-a-PIN prompt / keep-or-change).
+      setCheckedPin({ hasPin: !!hasPin, pinIsTemporary: !!pinIsTemporary })
       usePin = !!hasPin
     } catch {
       // In dev, allow continuing even if the check endpoint fails

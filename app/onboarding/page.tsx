@@ -12,6 +12,7 @@ import { ProfilePictureStep } from "@/components/onboarding/ProfilePictureStep"
 import { AllSetStep } from "@/components/onboarding/AllSetStep"
 import { LocationStep } from "@/components/onboarding/LocationStep"
 import { SetPinStep } from "@/components/onboarding/SetPinStep"
+import { ReviewPinStep } from "@/components/onboarding/ReviewPinStep"
 import { useRouter } from "next/navigation"
 
 // Steps 3-7 manage their own full-screen layout
@@ -64,6 +65,7 @@ function OnboardingContent() {
           />
         )
       case 8: return <SetPinStep />
+      case 9: return <ReviewPinStep />
       default: return null
     }
   }
