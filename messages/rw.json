@@ -65,6 +65,12 @@
       "mismatch": "PIN ntizihuye.",
       "submit": "Bika PIN",
       "skip": "Simbuka ubu"
+    },
+    "services": {
+      "title": "Ni izihe serivisi utanga?",
+      "subtitle": "Hitamo ibyiciro bihuye n'ubumenyi bwawe",
+      "selectedCount": "{count, plural, one {icyiciro # cyatoranyijwe} other {ibyiciro # byatoranyijwe}}",
+      "selectAtLeastOne": "Hitamo nibura icyiciro kimwe cya serivisi"
     }
   },
   "signup": {
@@ -335,7 +341,7 @@
     "phoneNumber": "Nimero ya telefoni",
     "emailOptional": "Imeyili (si itegeko)",
     "emailPlaceholder": "wowe@urugero.com",
-    "contactPrivacyNote": "Amakuru yo kukuvugisha ni ibanga kandi asangizwa gusa nyuma y'uko ifatabuguzi ryemejwe.",
+    "contactPrivacyNote": "Telefoni yawe ni ibanga.",
     "locationDescriptionFull": "Hitamo agace usanzwe ubarizwamo - abakiriya bari hafi y'aho ni bo bazakubona mbere.",
     "city": "Umujyi",
     "cityPlaceholder": "Kigali",
@@ -1873,7 +1879,7 @@
     "availabilityCaption": "Igitondo / Nyuma ya Saa Sita",
     "speaks": "Avuga:",
     "aboutPrefix": "Ibyerekeye",
-    "readMore": "Soma byinshi",
+    "readMore": "Komeza Usome",
     "readLess": "Soma bike",
     "servicesOffered": "Serivisi Zitangwa",
     "workPhotos": "Amafoto y'Akazi",
@@ -1948,7 +1954,7 @@
     "service": "Serivisi",
     "jobsDoneCount": "{count, plural, one {akazi kamwe karangiye} other {imirimo # yarangiye}}",
     "wouldRehire": "bakongera kumuha akazi",
-    "new": "Bishya",
+    "new": "Ni mushya",
     "rwanda": "U Rwanda",
     "speaksWith": "Avuga: {languages}",
     "backedByName": "Ishyigikiwe na {name}",
@@ -2005,9 +2011,9 @@
     "messagesTitle": "Ubutumwa",
     "messagesSubtitle": "Ibiganiro byo guha akazi n'amakuru y'akazi",
     "tabAll": "Byose",
-    "tabRead": "Yasomwe",
-    "tabUnread": "Bitarasomwa",
-    "tabArchive": "Ibyabitswe",
+    "tabRead": "Zasomwe",
+    "tabUnread": "Izitasomwe",
+    "tabArchive": "Izishyinguwe",
     "statusPending": "Bitegereje",
     "statusConfirmed": "Byemejwe",
     "statusActive": "Birakora",

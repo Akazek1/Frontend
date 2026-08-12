@@ -65,6 +65,12 @@
       "mismatch": "PINs don’t match.",
       "submit": "Set PIN",
       "skip": "Skip for now"
+    },
+    "services": {
+      "title": "What services do you offer?",
+      "subtitle": "Select the categories that match your skills",
+      "selectedCount": "{count, plural, one {# category selected} other {# categories selected}}",
+      "selectAtLeastOne": "Please select at least one service category"
     }
   },
   "signup": {
@@ -335,7 +341,7 @@
     "phoneNumber": "Phone number",
     "emailOptional": "Email (optional)",
     "emailPlaceholder": "you@example.com",
-    "contactPrivacyNote": "Your contact information is private and only shared after a booking is confirmed.",
+    "contactPrivacyNote": "Your contact information is private.",
     "locationDescriptionFull": "Choose the area you're usually based in — clients near this area will find you first.",
     "city": "City",
     "cityPlaceholder": "Kigali",
