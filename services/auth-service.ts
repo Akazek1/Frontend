@@ -11,6 +11,10 @@ export interface SendOtpRequest {
   phoneNumber: string;
   // 'login' = number must already exist; 'signup' = number must be new.
   purpose?: "login" | "signup";
+  // Current UI locale (e.g. "rw"), so the OTP SMS is sent in the language the
+  // user is viewing the app in — needed at signup, before an account (and its
+  // saved preferredLanguage) exists. The backend falls back to English if absent.
+  locale?: string;
 }
 
 export interface VerifyOtpRequest {

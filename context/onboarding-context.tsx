@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useLocale } from "next-intl"
 import { useAuth } from "@/hooks/useAuth"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
@@ -163,6 +164,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const router = useRouter()
   const searchParams = useSearchParams()
+  const locale = useLocale()
   const dispatch = useDispatch<AppDispatch>()
   const { sendOtp, verifyOtp, isLoading } = useAuth()
 
@@ -296,7 +298,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPhoneNumber(cleaned)
 
     try {
-      const success = await sendOtp({ phoneNumber: formatted, purpose })
+      const success = await sendOtp({ phoneNumber: formatted, purpose, locale })
       if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
@@ -317,7 +319,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       )
       return false
     }
-  }, [phoneNumber, sendOtp])
+  }, [phoneNumber, sendOtp, locale])
 
   const handleResendOtp = useCallback(async () => {
     if (resendCooldown > 0) return
