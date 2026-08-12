@@ -6,14 +6,16 @@ import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
 
 /**
- * Shown right after a new account is created: prompts the user to set a 5-digit
- * login PIN so returning logins skip the OTP/SMS. Skippable — OTP still works as
- * the fallback. Calls the onboarding context's handleSubmitPin / handleSkipPin,
- * which persist the PIN (POST /auth/set-pin) and resume role-specific steps.
+ * Shown right after a new account is created (and to existing PIN-less users
+ * after an OTP login): prompts the user to set a 5-digit login PIN so returning
+ * logins skip the OTP/SMS. Mandatory — there is no skip; a PIN is required to
+ * proceed. Users who later forget it fall back to OTP via "Use a code instead"
+ * on the login screen. Calls the onboarding context's handleSubmitPin, which
+ * persists the PIN (POST /auth/set-pin) and resumes role-specific steps.
  */
 export function SetPinStep() {
   const t = useTranslations("onboarding.setPin")
-  const { handleSubmitPin, handleSkipPin } = useOnboarding()
+  const { handleSubmitPin } = useOnboarding()
   const [pin, setPin] = useState("")
   const [confirm, setConfirm] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -26,11 +28,6 @@ export function SetPinStep() {
     if (!valid || submitting) return
     setSubmitting(true)
     try { await handleSubmitPin(pin) } finally { setSubmitting(false) }
-  }
-  const skip = async () => {
-    if (submitting) return
-    setSubmitting(true)
-    try { await handleSkipPin() } finally { setSubmitting(false) }
   }
 
   const inputClass =
@@ -78,14 +75,6 @@ export function SetPinStep() {
       >
         {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
         {t("submit")}
-      </button>
-      <button
-        type="button"
-        onClick={skip}
-        disabled={submitting}
-        className="mt-3 w-full py-2 text-sm font-medium text-ink-subtle disabled:opacity-50"
-      >
-        {t("skip")}
       </button>
     </div>
   )

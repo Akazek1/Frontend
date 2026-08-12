@@ -106,7 +106,6 @@ interface OnboardingContextType {
   handleLoginWithPin: (pin: string) => Promise<{ ok: boolean; message?: string }>
   setCheckedPin: (info: { hasPin: boolean; pinIsTemporary: boolean } | null) => void
   handleSubmitPin: (pin: string) => Promise<void>
-  handleSkipPin: () => Promise<void>
   handleAcceptPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
@@ -499,10 +498,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     await finishAfterPin()
   }, [postSignup, finishAfterPin])
 
-  const handleSkipPin = useCallback(async () => {
-    await finishAfterPin()
-  }, [finishAfterPin])
-
   // Returning-user PIN login (no SMS). On success, establishes the session and
   // routes exactly like an OTP login: incomplete workers resume onboarding,
   // everyone else goes home. Errors (wrong PIN / lockout) surface to the form.
@@ -686,7 +681,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleLoginWithPin,
     setCheckedPin,
     handleSubmitPin,
-    handleSkipPin,
     handleAcceptPin,
     handleSaveBasicInfo,
     handleDocumentUpload,
