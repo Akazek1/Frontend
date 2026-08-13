@@ -3,6 +3,8 @@ import { OTPVerification } from "@/components/onboarding/OTPVerification"
 import { OnboardingProvider } from "@/context/onboarding-context"
 import { Provider } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
+import { NextIntlClientProvider } from "next-intl"
+import messages from "@/messages/en.json"
 import authReducer from "@/store/slices/auth-slice"
 import { vi, describe, it, expect, beforeEach } from "vitest"
 import React from "react"
@@ -28,7 +30,9 @@ const createMockStore = () => configureStore({
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <Provider store={createMockStore()}>
-      <OnboardingProvider>{ui}</OnboardingProvider>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <OnboardingProvider>{ui}</OnboardingProvider>
+      </NextIntlClientProvider>
     </Provider>
   )
 }

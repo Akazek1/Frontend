@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useLocale } from "next-intl"
 import { useAuth } from "@/hooks/useAuth"
 import { useDispatch } from "react-redux"
 import { AppDispatch } from "@/store"
@@ -105,7 +106,6 @@ interface OnboardingContextType {
   handleLoginWithPin: (pin: string) => Promise<{ ok: boolean; message?: string }>
   setCheckedPin: (info: { hasPin: boolean; pinIsTemporary: boolean } | null) => void
   handleSubmitPin: (pin: string) => Promise<void>
-  handleSkipPin: () => Promise<void>
   handleAcceptPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
   handleDocumentUpload: (document: DocumentData) => void
@@ -163,6 +163,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const router = useRouter()
   const searchParams = useSearchParams()
+  const locale = useLocale()
   const dispatch = useDispatch<AppDispatch>()
   const { sendOtp, verifyOtp, isLoading } = useAuth()
 
@@ -296,7 +297,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPhoneNumber(cleaned)
 
     try {
-      const success = await sendOtp({ phoneNumber: formatted, purpose })
+      const success = await sendOtp({ phoneNumber: formatted, purpose, locale })
       if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
@@ -317,7 +318,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       )
       return false
     }
-  }, [phoneNumber, sendOtp])
+  }, [phoneNumber, sendOtp, locale])
 
   const handleResendOtp = useCallback(async () => {
     if (resendCooldown > 0) return
@@ -496,10 +497,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
     await finishAfterPin()
   }, [postSignup, finishAfterPin])
-
-  const handleSkipPin = useCallback(async () => {
-    await finishAfterPin()
-  }, [finishAfterPin])
 
   // Returning-user PIN login (no SMS). On success, establishes the session and
   // routes exactly like an OTP login: incomplete workers resume onboarding,
@@ -684,7 +681,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleLoginWithPin,
     setCheckedPin,
     handleSubmitPin,
-    handleSkipPin,
     handleAcceptPin,
     handleSaveBasicInfo,
     handleDocumentUpload,

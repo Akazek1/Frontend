@@ -65,6 +65,12 @@
       "mismatch": "PINs don’t match.",
       "submit": "Set PIN",
       "skip": "Skip for now"
+    },
+    "services": {
+      "title": "What services do you offer?",
+      "subtitle": "Select the categories that match your skills",
+      "selectedCount": "{count, plural, one {# category selected} other {# categories selected}}",
+      "selectAtLeastOne": "Please select at least one service category"
     }
   },
   "signup": {
@@ -103,7 +109,7 @@
     "phoneExists": "An account with this number already exists.",
     "logInInstead": "Log in instead",
     "agree": "I have read and agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
-    "otpSentTo": "We sent a code to <b>+250 {phone}</b>",
+    "otpSentTo": "We texted a code to <b>+250 {phone}</b>. Open your Messages app to find it.",
     "otpAriaLabel": "Verification code",
     "resendIn": "Resend code in {seconds}s",
     "resend": "Resend code",
@@ -335,7 +341,7 @@
     "phoneNumber": "Phone number",
     "emailOptional": "Email (optional)",
     "emailPlaceholder": "you@example.com",
-    "contactPrivacyNote": "Your contact information is private and only shared after a booking is confirmed.",
+    "contactPrivacyNote": "Your contact information is private.",
     "locationDescriptionFull": "Choose the area you're usually based in — clients near this area will find you first.",
     "city": "City",
     "cityPlaceholder": "Kigali",
@@ -2037,7 +2043,7 @@
     "couldNotVerifyNumber": "Could not verify number. Please try again.",
     "rwandaFlagAlt": "Rwanda",
     "phoneNumberPlaceholder": "Phone number",
-    "otpSentTo": "We sent a code to <b>+250 {phone}</b>",
+    "otpSentTo": "We texted a code to <b>+250 {phone}</b>. Open your Messages app to find it.",
     "verificationCode": "Verification code",
     "resendCodeIn": "Resend code in {seconds}s",
     "resendCode": "Resend code",

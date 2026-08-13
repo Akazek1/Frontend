@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronRight, LayoutGrid, Loader2, Search } from "lucide-react";
+import { Check, ChevronRight, LayoutGrid, Loader2, Search } from "lucide-react";
 import { IconBadge } from "@/components/services/wizard/wizard-ui";
 import { localizedName } from "@/lib/taxonomy-i18n";
 
@@ -32,8 +32,16 @@ function summarize(g: WizardGrouping, t: (key: string, values?: Record<string, s
 interface WizardStep1ChooseCategoryProps {
   groupings: WizardGrouping[];
   loading: boolean;
-  onSelect: (id: string) => void;
-  onViewAll: () => void;
+  /** Single-select navigation mode (wizard). Drills into the grouping. */
+  onSelect?: (id: string) => void;
+  onViewAll?: () => void;
+  /**
+   * Multi-select mode (onboarding "what services do you offer"). When provided,
+   * cards toggle instead of navigate, show a checkbox, and the "view all"
+   * footer is hidden. `onSelect`/`onViewAll` are ignored in this mode.
+   */
+  selectedIds?: Set<string>;
+  onToggle?: (id: string) => void;
 }
 
 export function WizardStep1ChooseCategory({
@@ -41,10 +49,13 @@ export function WizardStep1ChooseCategory({
   loading,
   onSelect,
   onViewAll,
+  selectedIds,
+  onToggle,
 }: WizardStep1ChooseCategoryProps) {
   const locale = useLocale();
   const t = useTranslations("serviceWizard");
   const [search, setSearch] = useState("");
+  const multiSelect = !!onToggle;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -77,25 +88,45 @@ export function WizardStep1ChooseCategory({
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() => onSelect(g.id)}
-              className="flex items-center gap-3 rounded-2xl border border-[#DCE8D9] bg-white p-4 text-left shadow-[0_8px_24px_rgba(27,36,49,0.05)] transition-colors hover:bg-[#FBFEFA] active:bg-[#E8F7E5]/50"
-            >
-              <IconBadge icon={g.icon} />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-bold text-ink">
-                  {localizedName(g, locale)}
+          {filtered.map((g) => {
+            const isSelected = !!selectedIds?.has(g.id);
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => (multiSelect ? onToggle!(g.id) : onSelect?.(g.id))}
+                aria-pressed={multiSelect ? isSelected : undefined}
+                className={`flex items-center gap-3 rounded-2xl border p-4 text-left shadow-[0_8px_24px_rgba(27,36,49,0.05)] transition-colors ${
+                  isSelected
+                    ? "border-brand bg-surface"
+                    : "border-[#DCE8D9] bg-white hover:bg-[#FBFEFA] active:bg-[#E8F7E5]/50"
+                }`}
+              >
+                <IconBadge icon={g.icon} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-bold text-ink">
+                    {localizedName(g, locale)}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12.5px] text-ink-muted">
+                    {summarize(g, t)}
+                  </span>
                 </span>
-                <span className="mt-0.5 block truncate text-[12.5px] text-ink-muted">
-                  {summarize(g, t)}
-                </span>
-              </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" />
-            </button>
-          ))}
+                {multiSelect ? (
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      isSelected
+                        ? "border-brand bg-brand text-white"
+                        : "border-gray-300 bg-white"
+                    }`}
+                  >
+                    {isSelected && <Check className="h-4 w-4" strokeWidth={3} />}
+                  </span>
+                ) : (
+                  <ChevronRight className="h-5 w-5 shrink-0 text-ink-muted" />
+                )}
+              </button>
+            );
+          })}
 
           {filtered.length === 0 && (
             <p className="py-8 text-center text-[13px] text-ink-muted">
@@ -105,8 +136,8 @@ export function WizardStep1ChooseCategory({
         </div>
       )}
 
-      {/* "Can't find the right category?" footer */}
-      {!loading && (
+      {/* "Can't find the right category?" footer — single-select wizard only. */}
+      {!loading && !multiSelect && onViewAll && (
         <button
           type="button"
           onClick={onViewAll}

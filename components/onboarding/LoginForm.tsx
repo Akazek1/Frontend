@@ -178,6 +178,7 @@ export function LoginForm() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
+                  autoComplete="one-time-code"
                   maxLength={OTP_LENGTH}
                   value={code.join("")}
                   onChange={(e) => {
