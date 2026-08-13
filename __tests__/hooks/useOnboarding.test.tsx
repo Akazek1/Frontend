@@ -3,6 +3,8 @@ import { OnboardingProvider, useOnboarding } from "@/context/onboarding-context"
 import { ReactNode } from "react"
 import { Provider } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
+import { NextIntlClientProvider } from "next-intl"
+import messages from "@/messages/en.json"
 import authReducer from "@/store/slices/auth-slice"
 import { vi, describe, it, expect, beforeEach } from "vitest"
 
@@ -34,7 +36,9 @@ const createMockStore = () => configureStore({
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <Provider store={createMockStore()}>
-    <OnboardingProvider>{children}</OnboardingProvider>
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <OnboardingProvider>{children}</OnboardingProvider>
+    </NextIntlClientProvider>
   </Provider>
 )
 
