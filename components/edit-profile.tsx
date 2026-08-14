@@ -29,6 +29,7 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 
 import api from "@/lib/axios";
+import { saveUserAddress } from "@/lib/save-user-address";
 import { AppDispatch, RootState } from "@/store";
 import { updateUser } from "@/store/slices/auth-slice";
 import { Button } from "@/components/ui/button";
@@ -528,12 +529,12 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
       }
 
       if (activeSection === "location" && nextLocation.city && locationChanged) {
-        await api.post("/users/addresses", {
+        await saveUserAddress({
           city: nextLocation.city,
-          district: nextLocation.district || undefined,
-          sector: nextLocation.sector || undefined,
-          isDefault: true,
-          ...(locationCoords ? { latitude: locationCoords.lat, longitude: locationCoords.lng } : {}),
+          district: nextLocation.district,
+          sector: nextLocation.sector,
+          lat: locationCoords?.lat,
+          lng: locationCoords?.lng,
         });
         setInitialLocation(nextLocation);
       }

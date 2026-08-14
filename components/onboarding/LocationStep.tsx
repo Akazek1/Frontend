@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { toast } from "react-hot-toast";
 import { MapPin, ArrowRight, SkipForward } from "lucide-react";
 import { SectorPicker } from "@/components/ui/sector-picker";
 import {
   type ViewerLocation,
   saveViewerLocation,
 } from "@/constants/rwanda-sectors";
-import api from "@/lib/axios";
+import { saveUserAddress } from "@/lib/save-user-address";
 
 interface Props {
   onContinue: () => void;
 }
 
 export function LocationStep({ onContinue }: Props) {
+  const t = useTranslations("onboarding.location");
   const [loc, setLoc] = useState<ViewerLocation | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -21,19 +24,22 @@ export function LocationStep({ onContinue }: Props) {
     if (!loc) { onContinue(); return; }
     setSaving(true);
     try {
-      await api.post("/users/addresses", {
-        city: loc.district,
+      await saveUserAddress({
+        // `city` holds the province (e.g. "Kigali City") — the top-level area —
+        // rather than duplicating the district. District/sector are their own
+        // fields; the finer cell/village go into `street` (no dedicated columns).
+        city: loc.province || loc.district,
         district: loc.district,
         sector: loc.sector,
-        ...(loc.cell ? { cell: loc.cell } : {}),
-        isDefault: true,
-        latitude: loc.lat,
-        longitude: loc.lng,
+        street: [loc.village, loc.cell].filter(Boolean).join(", ") || undefined,
+        lat: loc.lat,
+        lng: loc.lng,
       });
       // Also persist to localStorage so search picks it up immediately.
       saveViewerLocation(loc);
-    } catch {
-      // Non-fatal — can be set later in profile.
+    } catch (error) {
+      console.error("Failed to save onboarding address:", error);
+      toast.error(t("saveFailed"));
     } finally {
       setSaving(false);
       onContinue();
@@ -56,9 +62,9 @@ export function LocationStep({ onContinue }: Props) {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EEF8EA]">
             <MapPin className="h-8 w-8 text-brand" />
           </div>
-          <h2 className="text-[22px] font-bold leading-tight text-ink">Where are you based?</h2>
+          <h2 className="text-[22px] font-bold leading-tight text-ink">{t("title")}</h2>
           <p className="mt-2 max-w-[280px] text-[13px] leading-5 text-[#687268]">
-            This helps clients near you find your services. You can always change it later.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -66,7 +72,7 @@ export function LocationStep({ onContinue }: Props) {
         <SectorPicker
           value={loc}
           onChange={setLoc}
-          placeholder="Select your area"
+          placeholder={t("placeholder")}
         />
 
         {/* Confirmation preview */}
@@ -89,7 +95,7 @@ export function LocationStep({ onContinue }: Props) {
           disabled={saving}
           className="flex w-full items-center justify-center gap-2 rounded-[100px] bg-brand py-4 text-[15px] font-bold text-white transition disabled:opacity-60 hover:bg-[#0f4a0c]"
         >
-          {saving ? "Saving…" : loc ? "Continue" : "Skip for now"}
+          {saving ? t("saving") : loc ? t("continue") : t("skip")}
           {!saving && <ArrowRight className="h-4 w-4" />}
         </button>
         {loc && (
@@ -99,7 +105,7 @@ export function LocationStep({ onContinue }: Props) {
             className="flex w-full items-center justify-center gap-1.5 py-2 text-[13px] font-semibold text-[#687268] hover:text-ink"
           >
             <SkipForward className="h-3.5 w-3.5" />
-            Skip — add location later
+            {t("skipLater")}
           </button>
         )}
       </div>

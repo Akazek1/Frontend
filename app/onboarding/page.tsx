@@ -7,7 +7,6 @@ import { RoleSelection } from "@/components/onboarding/RoleSelection"
 import { SignupForm } from "@/components/onboarding/SignupForm"
 import { LoginForm } from "@/components/onboarding/LoginForm"
 import { DocumentUploadStep } from "@/components/onboarding/DocumentUploadStep"
-import { ServiceCategorySelector } from "@/components/onboarding/ServiceCategorySelector"
 import { ProfilePictureStep } from "@/components/onboarding/ProfilePictureStep"
 import { AllSetStep } from "@/components/onboarding/AllSetStep"
 import { LocationStep } from "@/components/onboarding/LocationStep"
@@ -16,7 +15,7 @@ import { ReviewPinStep } from "@/components/onboarding/ReviewPinStep"
 import { useRouter } from "next/navigation"
 
 // Steps 3-7 manage their own full-screen layout
-const FULL_SCREEN_STEPS = [3, 4, 5, 6, 7]
+const FULL_SCREEN_STEPS = [3, 4, 5, 7]
 
 function OnboardingContent() {
   const router = useRouter()
@@ -25,7 +24,6 @@ function OnboardingContent() {
     setCurrentStep,
     handleBack,
     handleDocumentUpload,
-    handleCategoriesSelected,
     isLoading,
   } = useOnboarding()
 
@@ -47,14 +45,6 @@ function OnboardingContent() {
             onCancel={handleBack}
             isLoading={isLoading}
             showBack={false}
-          />
-        )
-      case 6:
-        return (
-          <ServiceCategorySelector
-            onContinue={handleCategoriesSelected}
-            onBack={handleBack}
-            isLoading={isLoading}
           />
         )
       case 7:
