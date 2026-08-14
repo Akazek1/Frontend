@@ -108,8 +108,7 @@ interface OnboardingContextType {
   handleSubmitPin: (pin: string) => Promise<void>
   handleAcceptPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
-  handleDocumentUpload: (document: DocumentData) => void
-  handleCategoriesSelected: (categories: string[]) => Promise<void>
+  handleDocumentUpload: (document: DocumentData) => Promise<void>
   handleNext: () => Promise<void>
   handleBack: () => void
   handleResendOtp: () => Promise<void>
@@ -609,20 +608,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   }, [firstName, lastName, email, selectedRoles, verifiedUser, dispatch, redirectHome, completeRoleOnboarding])
 
-  const handleDocumentUpload = useCallback((document: DocumentData) => {
-    setUploadedDocument(document)
-    setCurrentStep(6) // categories step (location is now step 4)
-  }, [])
-
-  const handleCategoriesSelected = useCallback(async (categories: string[]) => {
-    setSelectedCategories(categories)
+  // After the ID upload (the last required worker step) we finish onboarding
+  // right away and send the user to the "Create a service?" prompt (AllSetStep).
+  // Listing an actual service is optional and handled by the existing
+  // /more/services/new wizard — we no longer collect service categories here.
+  const handleDocumentUpload = useCallback(async (doc: DocumentData) => {
+    setUploadedDocument(doc)
     try {
       await api.patch("/users/complete-onboarding", { role: "WORKER" }, { withCredentials: true })
       dispatch(updateUser({ workerOnboardingComplete: true }))
       toast.success("Welcome! You're all set.")
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
       localStorage.setItem("hasSeenTutorial", "true")
-      setCurrentStep(7) // AllSet step (location is now step 4)
+      setCurrentStep(7) // "Create a service?" prompt (AllSetStep)
     } catch {
       toast.error("Failed to complete setup. Please try again.")
     }
@@ -689,7 +687,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleAcceptPin,
     handleSaveBasicInfo,
     handleDocumentUpload,
-    handleCategoriesSelected,
     handleNext,
     handleBack,
     handleResendOtp,

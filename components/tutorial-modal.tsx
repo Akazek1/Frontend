@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { X, User, Briefcase, ArrowRight } from "lucide-react";
 import ViewModeToggle from "./view-mode-toggle";
 import { APP_CONFIG } from "@/constant/app.config";
@@ -12,6 +13,7 @@ interface TutorialModalProps {
 }
 
 const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
+  const t = useTranslations("tutorial");
   if (!isOpen) return null;
 
   return (
@@ -28,10 +30,10 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-2xl p-4 sm:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Welcome to {APP_CONFIG.name}! 🎉</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t("welcome", { appName: APP_CONFIG.name })}</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -43,12 +45,12 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Switch Between Two Views
+                {t("switchViews")}
               </h3>
               <p className="text-gray-600 mb-4">
-                You can switch between being an <strong>Employer</strong> and a <strong>Provider</strong> anytime! Use the toggle above to switch views.
+                {t.rich("description", { b: (chunks) => <strong>{chunks}</strong> })}
               </p>
-              
+
               <div className="flex justify-center mb-4">
                 <ViewModeToggle />
               </div>
@@ -59,9 +61,9 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
                     <User className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Employer Mode</h4>
+                    <h4 className="font-semibold text-gray-900">{t("employerMode.title")}</h4>
                     <p className="text-sm text-gray-600">
-                      Browse and hire service providers for your needs
+                      {t("employerMode.desc")}
                     </p>
                   </div>
                 </div>
@@ -71,9 +73,9 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
                     <Briefcase className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Provider Mode</h4>
+                    <h4 className="font-semibold text-gray-900">{t("providerMode.title")}</h4>
                     <p className="text-sm text-gray-600">
-                      Find job postings and work opportunities
+                      {t("providerMode.desc")}
                     </p>
                   </div>
                 </div>
@@ -85,7 +87,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className="w-full bg-brand text-white py-3 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-brand-strong transition-colors"
               >
-                Got it!
+                {t("gotIt")}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>

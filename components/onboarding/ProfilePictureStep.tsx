@@ -2,6 +2,7 @@
 
 import React from "react"
 import { useSelector } from "react-redux"
+import { useTranslations } from "next-intl"
 import { RootState } from "@/store"
 import ProfileImageUploader from "@/components/profile/profile-img-uloader"
 
@@ -16,6 +17,7 @@ interface ProfilePictureStepProps {
  * already exists at this point.
  */
 export const ProfilePictureStep = ({ onContinue }: ProfilePictureStepProps) => {
+  const t = useTranslations("onboarding.profilePicture")
   const { user } = useSelector((state: RootState) => state.auth)
   const hasPhoto = Boolean(user?.profilePicture)
 
@@ -23,10 +25,10 @@ export const ProfilePictureStep = ({ onContinue }: ProfilePictureStepProps) => {
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-[40px] font-bold leading-tight sm:leading-[48px] text-gray-900 mb-2">
-          Add a profile picture
+          {t("title")}
         </h1>
         <p className="text-base sm:text-lg text-gray-600">
-          A clear photo helps employers trust and recognise you.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -39,7 +41,7 @@ export const ProfilePictureStep = ({ onContinue }: ProfilePictureStepProps) => {
         onClick={onContinue}
         className="w-full px-6 py-3 bg-brand text-white font-semibold rounded-lg hover:bg-[#0f4a0b] transition-colors"
       >
-        {hasPhoto ? "Continue" : "Skip for now"}
+        {hasPhoto ? t("continue") : t("skip")}
       </button>
     </div>
   )

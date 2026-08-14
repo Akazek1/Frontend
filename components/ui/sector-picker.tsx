@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Check, ChevronLeft, Crosshair, Hash, Loader2, MapPin, X } from "lucide-react";
 import {
   RWANDA_PROVINCES,
@@ -41,6 +42,7 @@ export function SectorPicker({
   open: controlledOpen,
   onOpenChange,
 }: Props) {
+  const t = useTranslations("sectorPicker");
   const [internalOpen, setInternalOpen] = useState(false);
   const [step, setStep]               = useState<Step>("province");
   const [selProvince, setSelProvince] = useState<string | null>(null);
@@ -113,7 +115,7 @@ export function SectorPicker({
     setInputMode("gps");
     if (!navigator.geolocation) {
       setGpsStatus("error");
-      setGpsError("Geolocation is not supported by this browser.");
+      setGpsError(t("geoNotSupported"));
       return;
     }
     setGpsStatus("loading");
@@ -125,16 +127,12 @@ export function SectorPicker({
           commit(villageToLoc(nearest));
         } else {
           setGpsStatus("error");
-          setGpsError("Could not match your location to a known area.");
+          setGpsError(t("noMatch"));
         }
       },
       (err) => {
         setGpsStatus("error");
-        setGpsError(
-          err.code === 1
-            ? "Location permission denied. Please allow access in your browser settings."
-            : "Could not get your location. Please try again.",
-        );
+        setGpsError(err.code === 1 ? t("permissionDenied") : t("gpsFailed"));
       },
       { timeout: 10000, maximumAge: 60000 },
     );
@@ -221,19 +219,19 @@ export function SectorPicker({
   };
 
   const stepTitle: Record<Step, string> = {
-    province: "Select province",
-    district: `${selProvince ?? ""} — district`,
-    sector:   `${selDistrict ?? ""} — sector`,
-    cell:     `${selSector?.sector ?? ""} — cell`,
-    village:  `${selCell?.cell ?? ""} — village`,
+    province: t("stepTitle.province"),
+    district: t("stepTitle.district", { province: selProvince ?? "" }),
+    sector:   t("stepTitle.sector", { district: selDistrict ?? "" }),
+    cell:     t("stepTitle.cell", { sector: selSector?.sector ?? "" }),
+    village:  t("stepTitle.village", { cell: selCell?.cell ?? "" }),
   };
 
   const stepHint: Record<Step, string> = {
-    province: "Which province are you based in?",
-    district: "Which district?",
-    sector:   "Which sector?",
-    cell:     "Pick your cell for better accuracy, or use the sector.",
-    village:  "Pick your village for the best accuracy, or use the cell.",
+    province: t("stepHint.province"),
+    district: t("stepHint.district"),
+    sector:   t("stepHint.sector"),
+    cell:     t("stepHint.cell"),
+    village:  t("stepHint.village"),
   };
 
   const displayLabel = value
@@ -270,7 +268,7 @@ export function SectorPicker({
             )}
           </span>
           <span className="ml-2 flex-shrink-0 text-[11px] font-semibold text-brand">
-            {displayLabel ? "Change" : "Select"}
+            {displayLabel ? t("change") : t("select")}
           </span>
         </button>
       )}
@@ -279,7 +277,7 @@ export function SectorPicker({
       {open && (
         <div className="fixed inset-0 z-[120] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div className="relative z-10 max-h-[80vh] w-full overflow-y-auto rounded-t-3xl bg-white px-4 pb-8 pt-4 shadow-xl">
+          <div className="relative z-10 max-h-[80vh] w-full overflow-y-auto rounded-t-3xl bg-white px-5 pb-8 pt-4 shadow-xl">
 
             {/* Header */}
             <div className="mb-3 flex items-center justify-between">
@@ -297,7 +295,7 @@ export function SectorPicker({
                 ) : null}
                 <div>
                   <p className="text-[16px] font-bold text-ink">
-                    {inputMode === "gps" ? "Using GPS" : inputMode === "coords" ? "Enter coordinates" : stepTitle[step]}
+                    {inputMode === "gps" ? t("usingGps") : inputMode === "coords" ? t("enterCoordinates") : stepTitle[step]}
                   </p>
                   <p className="text-[12px] text-[#687268]">
                     {inputMode === "pick" ? stepHint[step] : ""}
@@ -316,12 +314,12 @@ export function SectorPicker({
                 <button type="button" onClick={useGps}
                   className="flex items-center justify-center gap-2 rounded-xl border border-[#E1EBDD] bg-[#F8FBF8] px-3 py-2.5 text-[12px] font-semibold text-ink transition hover:border-brand hover:bg-[#EEF8EA] hover:text-brand">
                   <Crosshair className="h-4 w-4 flex-shrink-0" />
-                  Use GPS location
+                  {t("useGpsLocation")}
                 </button>
                 <button type="button" onClick={switchToCoords}
                   className="flex items-center justify-center gap-2 rounded-xl border border-[#E1EBDD] bg-[#F8FBF8] px-3 py-2.5 text-[12px] font-semibold text-ink transition hover:border-brand hover:bg-[#EEF8EA] hover:text-brand">
                   <Hash className="h-4 w-4 flex-shrink-0" />
-                  Enter coordinates
+                  {t("enterCoordinates")}
                 </button>
               </div>
             )}
@@ -332,8 +330,8 @@ export function SectorPicker({
                 {gpsStatus === "loading" && (
                   <>
                     <Loader2 className="h-8 w-8 animate-spin text-brand" />
-                    <p className="text-[14px] font-semibold text-ink">Getting your location…</p>
-                    <p className="text-[12px] text-[#687268]">Please allow location access if prompted.</p>
+                    <p className="text-[14px] font-semibold text-ink">{t("gettingLocation")}</p>
+                    <p className="text-[12px] text-[#687268]">{t("allowLocationHint")}</p>
                   </>
                 )}
                 {gpsStatus === "error" && (
@@ -341,11 +339,11 @@ export function SectorPicker({
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                       <Crosshair className="h-6 w-6 text-red-500" />
                     </div>
-                    <p className="text-[14px] font-semibold text-ink">Location unavailable</p>
+                    <p className="text-[14px] font-semibold text-ink">{t("locationUnavailable")}</p>
                     <p className="max-w-[260px] text-[12px] leading-5 text-[#687268]">{gpsError}</p>
                     <button type="button" onClick={() => { setGpsStatus("idle"); setInputMode("pick"); }}
                       className="mt-2 rounded-xl bg-brand px-5 py-2 text-[13px] font-bold text-white">
-                      Pick manually instead
+                      {t("pickManually")}
                     </button>
                   </>
                 )}
@@ -356,11 +354,11 @@ export function SectorPicker({
             {inputMode === "coords" && (
               <div className="space-y-4">
                 <p className="text-[12px] text-[#687268]">
-                  Enter WGS-84 decimal coordinates for any point in Rwanda.
+                  {t("coordsHint")}
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="space-y-1">
-                    <span className="text-[11px] font-bold uppercase text-[#687268]">Latitude</span>
+                    <span className="text-[11px] font-bold uppercase text-[#687268]">{t("latitude")}</span>
                     <input
                       ref={latRef}
                       type="number"
@@ -372,7 +370,7 @@ export function SectorPicker({
                     />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[11px] font-bold uppercase text-[#687268]">Longitude</span>
+                    <span className="text-[11px] font-bold uppercase text-[#687268]">{t("longitude")}</span>
                     <input
                       type="number"
                       step="any"
@@ -386,13 +384,13 @@ export function SectorPicker({
 
                 {coordStatus === "error" && (
                   <p className="text-[12px] font-semibold text-red-500">
-                    Enter valid decimal coordinates within Rwanda (lat −4 to 0, lng 28 to 32).
+                    {t("coordsInvalid")}
                   </p>
                 )}
 
                 {coordStatus === "found" && coordPreview && (
                   <div className="rounded-xl border border-brand/30 bg-[#EEF8EA] p-4 space-y-1">
-                    <p className="text-[11px] font-bold uppercase text-brand">Nearest location found</p>
+                    <p className="text-[11px] font-bold uppercase text-brand">{t("nearestFound")}</p>
                     <p className="text-[14px] font-bold text-ink">{coordPreview.village}, {coordPreview.cell}</p>
                     <p className="text-[12px] text-[#687268]">{coordPreview.sector}, {coordPreview.district}</p>
                     <p className="text-[12px] text-[#687268]">{coordPreview.province}</p>
@@ -407,8 +405,8 @@ export function SectorPicker({
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-brand py-3 text-[13px] font-bold text-white transition disabled:opacity-50"
                   >
                     {coordStatus === "loading"
-                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Finding…</>
-                      : "Find location"}
+                      ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("finding")}</>
+                      : t("findLocation")}
                   </button>
                   {coordStatus === "found" && coordPreview && (
                     <button
@@ -416,7 +414,7 @@ export function SectorPicker({
                       onClick={() => commit(coordPreview)}
                       className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-brand bg-white py-3 text-[13px] font-bold text-brand transition hover:bg-[#EEF8EA]"
                     >
-                      <Check className="h-4 w-4" /> Use this
+                      <Check className="h-4 w-4" /> {t("useThis")}
                     </button>
                   )}
                 </div>
@@ -435,9 +433,9 @@ export function SectorPicker({
                         ? "border-brand bg-[#EEF8EA] text-brand"
                         : "border-[#E1EBDD] bg-white text-ink hover:border-brand/50 hover:bg-[#F8FBF8]"
                     }`}>
-                    <span>{p}</span>
+                    <span>{t(`provinces.${p}`)}</span>
                     <span className="text-[11px] font-normal text-ink-muted">
-                      {byProvince.get(p)?.length ?? 0} districts →
+                      {t("districtsCount", { count: byProvince.get(p)?.length ?? 0 })} →
                     </span>
                   </button>
                 ))}
@@ -488,8 +486,8 @@ export function SectorPicker({
               <>
                 <button type="button" onClick={useSector}
                   className="mb-3 flex w-full items-center justify-between rounded-xl border border-dashed border-brand/40 bg-[#F8FBF8] px-3 py-2.5 text-left text-[13px] transition hover:border-brand hover:bg-[#EEF8EA]">
-                  <span className="font-semibold text-brand">Use {selSector.sector} sector</span>
-                  <span className="text-[11px] text-ink-muted">less precise</span>
+                  <span className="font-semibold text-brand">{t("useSector", { sector: selSector.sector })}</span>
+                  <span className="text-[11px] text-ink-muted">{t("lessPrecise")}</span>
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   {cells.map((c) => {
@@ -509,7 +507,7 @@ export function SectorPicker({
                   })}
                 </div>
                 {loadingVillages && (
-                  <p className="mt-3 text-center text-[11px] text-ink-muted">Loading villages…</p>
+                  <p className="mt-3 text-center text-[11px] text-ink-muted">{t("loadingVillages")}</p>
                 )}
               </>
             )}
@@ -519,8 +517,8 @@ export function SectorPicker({
               <>
                 <button type="button" onClick={useCell}
                   className="mb-3 flex w-full items-center justify-between rounded-xl border border-dashed border-brand/40 bg-[#F8FBF8] px-3 py-2.5 text-left text-[13px] transition hover:border-brand hover:bg-[#EEF8EA]">
-                  <span className="font-semibold text-brand">Use {selCell.cell} cell</span>
-                  <span className="text-[11px] text-ink-muted">less precise</span>
+                  <span className="font-semibold text-brand">{t("useCell", { cell: selCell.cell })}</span>
+                  <span className="text-[11px] text-ink-muted">{t("lessPrecise")}</span>
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   {villages.map((v) => {

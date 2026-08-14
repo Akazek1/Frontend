@@ -66,11 +66,27 @@
       "submit": "Set PIN",
       "skip": "Skip for now"
     },
-    "services": {
-      "title": "What services do you offer?",
-      "subtitle": "Select the categories that match your skills",
-      "selectedCount": "{count, plural, one {# category selected} other {# categories selected}}",
-      "selectAtLeastOne": "Please select at least one service category"
+    "allSet": {
+      "title": "You're all set!",
+      "subtitle": "Want to list a service now so employers can find and hire you?",
+      "createService": "Create a service",
+      "maybeLater": "Maybe later"
+    },
+    "profilePicture": {
+      "title": "Add a profile picture",
+      "subtitle": "A clear photo helps employers trust and recognise you.",
+      "continue": "Continue",
+      "skip": "Skip for now"
+    },
+    "location": {
+      "title": "Where are you based?",
+      "subtitle": "This helps clients near you find your services. You can always change it later.",
+      "placeholder": "Select your area",
+      "saving": "Saving…",
+      "continue": "Continue",
+      "skip": "Skip for now",
+      "skipLater": "Skip — add location later",
+      "saveFailed": "Couldn't save your location — you can set it later in your profile."
     }
   },
   "home": {
@@ -2068,5 +2084,68 @@
     "signInWithEmailPassword": "Sign in with email and password",
     "dontHaveAccount": "Don't have an account?",
     "signUp": "Sign up"
+  },
+  "sectorPicker": {
+    "stepTitle": {
+      "province": "Select province",
+      "district": "{province} — district",
+      "sector": "{district} — sector",
+      "cell": "{sector} — cell",
+      "village": "{cell} — village"
+    },
+    "stepHint": {
+      "province": "Which province are you based in?",
+      "district": "Which district?",
+      "sector": "Which sector?",
+      "cell": "Pick your cell for better accuracy, or use the sector.",
+      "village": "Pick your village for the best accuracy, or use the cell."
+    },
+    "provinces": {
+      "Eastern Province": "Eastern Province",
+      "Kigali City": "Kigali City",
+      "Northern Province": "Northern Province",
+      "Southern Province": "Southern Province",
+      "Western Province": "Western Province"
+    },
+    "districtsCount": "{count} districts",
+    "change": "Change",
+    "select": "Select",
+    "usingGps": "Using GPS",
+    "enterCoordinates": "Enter coordinates",
+    "useGpsLocation": "Use GPS location",
+    "gettingLocation": "Getting your location…",
+    "allowLocationHint": "Please allow location access if prompted.",
+    "locationUnavailable": "Location unavailable",
+    "pickManually": "Pick manually instead",
+    "geoNotSupported": "Geolocation is not supported by this browser.",
+    "noMatch": "Could not match your location to a known area.",
+    "permissionDenied": "Location permission denied. Please allow access in your browser settings.",
+    "gpsFailed": "Could not get your location. Please try again.",
+    "coordsHint": "Enter WGS-84 decimal coordinates for any point in Rwanda.",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "coordsInvalid": "Enter valid decimal coordinates within Rwanda (lat −4 to 0, lng 28 to 32).",
+    "nearestFound": "Nearest location found",
+    "findLocation": "Find location",
+    "finding": "Finding…",
+    "useThis": "Use this",
+    "useSector": "Use {sector} sector",
+    "useCell": "Use {cell} cell",
+    "lessPrecise": "less precise",
+    "loadingVillages": "Loading villages…"
+  },
+  "tutorial": {
+    "welcome": "Welcome to {appName}! 🎉",
+    "switchViews": "Switch Between Two Views",
+    "description": "You can switch between being an <b>Employer</b> and a <b>Provider</b> anytime! Use the toggle above to switch views.",
+    "employerMode": {
+      "title": "Employer Mode",
+      "desc": "Browse and hire service providers for your needs"
+    },
+    "providerMode": {
+      "title": "Provider Mode",
+      "desc": "Find job postings and work opportunities"
+    },
+    "gotIt": "Got it!"
   }
 }
