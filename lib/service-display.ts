@@ -34,12 +34,21 @@ export function getProviderName(provider: ServiceProvider) {
 }
 
 /**
- * A listing's display name is always its category name — there is no free-text
- * title. `category` may arrive as the populated object or just its name string.
+ * A listing's display name is always its category (service type) name — there
+ * is no free-text title. `category` may arrive as the populated object or just
+ * its name string. Pass `locale` to show the admin-set Kinyarwanda name
+ * (`nameKn`) when the UI is in Kinyarwanda; falls back to the English `name`
+ * whenever no translation has been entered, so a name never renders blank.
  */
-export function getServiceDisplayName(service?: Partial<Service> | null): string {
+export function getServiceDisplayName(
+  service?: Partial<Service> | null,
+  locale?: string,
+): string {
   const category = service?.category;
-  if (category && typeof category === "object") return category.name || "Service";
+  if (category && typeof category === "object") {
+    if (locale === "rw" && category.nameKn?.trim()) return category.nameKn.trim();
+    return category.name || "Service";
+  }
   if (typeof category === "string" && category) return category;
   return "Service";
 }
@@ -99,7 +108,7 @@ export function getBookingType(service?: Partial<Service> | null) {
   return isEmployer(provider?.roles) ? "STAFFING_AGENCY" : "INDIVIDUAL";
 }
 
-export function mapServiceToProviderCard(service: Service): Provider {
+export function mapServiceToProviderCard(service: Service, locale?: string): Provider {
   const areas = Array.isArray(service.serviceAreas)
     ? service.serviceAreas
     : service.serviceAreas
@@ -121,7 +130,7 @@ export function mapServiceToProviderCard(service: Service): Provider {
       : `${provider?.firstName ?? "Unknown"} ${provider?.lastName ?? "Provider"}`.trim(),
     // Company cards don't link to an individual profile.
     handle: isCompanyCard ? undefined : getProviderHandle(provider),
-    title: getServiceDisplayName(service),
+    title: getServiceDisplayName(service, locale),
     experience: service.description || "",
     languages:
       !isCompanyCard && Array.isArray(provider?.languages)

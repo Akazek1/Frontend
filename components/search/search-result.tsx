@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import ServiceCard from "@/components/service-card";
 import { Service } from "@/types";
 import jobsService, { Job } from "@/services/jobs-service";
@@ -150,6 +150,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const searchCacheRef = useRef<Map<string, { services?: Service[]; jobs?: Job[] }>>(new Map());
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+  const locale = useLocale();
   const { user, isAuthenticated } = useAuth();
   const { requireAuth } = useRequireAuth();
   // Owner detection requires a live session; `user` can persist without a token.
@@ -459,7 +460,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       setHireModal({
         serviceId: service.id,
         providerName,
-        serviceTitle: getServiceDisplayName(service),
+        serviceTitle: getServiceDisplayName(service, locale),
       });
     }, "hire");
   };
@@ -655,7 +656,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           ) : (
             <div className="grid gap-4">
               {services.map((service) => {
-                const card = mapServiceToProviderCard(service);
+                const card = mapServiceToProviderCard(service, locale);
                 const reviewBookingId = reviewableByService.get(service.id);
 
                 return (
@@ -745,7 +746,7 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
           reviewModal
             ? {
                 title: mapServiceToProviderCard(reviewModal.service).name,
-                subtitle: getServiceDisplayName(reviewModal.service),
+                subtitle: getServiceDisplayName(reviewModal.service, locale),
               }
             : null
         }

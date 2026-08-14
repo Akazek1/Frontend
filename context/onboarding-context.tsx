@@ -420,9 +420,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           await completeRoleOnboarding(["EMPLOYER"])
           dispatch(updateUser({ employerOnboardingComplete: true }))
         }
-        // Existing user with no PIN → offer to create one (skippable) so they
-        // can skip the SMS next time. Then straight home.
-        if (checkedPin && !checkedPin.hasPin) {
+        // An existing user only reaches OTP verification via the login flow —
+        // either they have no PIN yet, or they have one but tapped "use a code
+        // instead" because they forgot it. Either way, send them to set a PIN:
+        // a fresh one overwrites any forgotten hash (POST /auth/set-pin), so a
+        // forgetful user gets back to PIN-first login instead of being stuck
+        // needing an SMS every time. Set-PIN is mandatory, so they land in a
+        // good state before reaching home.
+        if (checkedPin) {
           setPinPromptMode("postLogin")
           setCurrentStep(8) // SetPinStep
           return

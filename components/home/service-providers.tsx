@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "next-intl";
 import { Service } from "@/types";
 import { useServiceList } from "@/hooks/useServiceList";
 import { getServiceDetailPath, mapServiceToProviderCard } from "@/lib/service-display";
@@ -63,6 +64,7 @@ type ReviewableEntry = {
 
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
+  const locale = useLocale();
   const { user, isAuthenticated } = useAuth();
   // Only treat someone as the owner when they have a live session — `user` can
   // linger in storage without a valid token.
@@ -215,7 +217,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
           >
             {services.length > 0 ? (
               services.map((service) => {
-                const provider = mapServiceToProviderCard(service);
+                const provider = mapServiceToProviderCard(service, locale);
                 return (
                   <ServiceCard
                     key={provider.id}

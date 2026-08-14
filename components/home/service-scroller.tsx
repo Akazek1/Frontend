@@ -7,6 +7,7 @@ import SectionHeader from "../section-header";
 import { Icons } from "../icons";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { getServiceDetailPath, getServiceDisplayName } from "@/lib/service-display";
 import type { Service } from "@/types";
 
@@ -24,6 +25,7 @@ const PopulerService = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const locale = useLocale();
 
   const handleCardClick = (service: DisplayService) => {
     router.push(service.href);
@@ -47,7 +49,7 @@ const PopulerService = () => {
       const mappedServices: DisplayService[] = data.map((service) => ({
         id: service.id,
         image: service.provider?.profileImg || service.provider?.profilePicture || service.company?.logoUrl || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
-        title: getServiceDisplayName(service),
+        title: getServiceDisplayName(service, locale),
         href: getServiceDetailPath(service),
         type: "service",
       }));

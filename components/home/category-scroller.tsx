@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Scroller from "../scroller";
 import api from "@/lib/axios";
 import { Loader2 } from "lucide-react";
@@ -32,6 +32,7 @@ export default function Categories() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("home");
 
   useEffect(() => {
     fetchCategories();
@@ -67,12 +68,12 @@ export default function Categories() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-ink font-semibold text-[16px]">Service Categories</h2>
+        <h2 className="text-ink font-semibold text-[16px]">{t("serviceCategories")}</h2>
         <button
           onClick={() => router.push("/service?category=all")}
           className="text-[12px] text-brand font-semibold"
         >
-          See all
+          {t("seeAll")}
         </button>
       </div>
 

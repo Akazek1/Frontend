@@ -2,7 +2,7 @@
 import React, { useState, useRef } from "react";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useServiceList } from "@/hooks/useServiceList";
 import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
@@ -14,6 +14,7 @@ import FilterModal, { FilterValues } from "@/components/search/filter-modal";
 
 const ServicePage = () => {
     const t = useTranslations("servicesBrowse");
+    const locale = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
     const category = searchParams.get("category");
@@ -128,7 +129,7 @@ const ServicePage = () => {
                             {services.map((service) => (
                                 <ServiceCard
                                     key={service.id}
-                                    {...mapServiceToProviderCard(service)}
+                                    {...mapServiceToProviderCard(service, locale)}
                                     distance={filters.distanceKm ? t("withinKm", { km: filters.distanceKm }) : t("nearby")}
                                     onClick={() => router.push(getServiceDetailPath(service))}
                                     onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}

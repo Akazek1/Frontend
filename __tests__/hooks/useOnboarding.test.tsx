@@ -27,6 +27,29 @@ vi.mock("react-hot-toast", () => ({
   },
 }))
 
+// Control OTP verification so we can drive the post-login routing directly.
+const { mockVerifyOtp, mockSendOtp } = vi.hoisted(() => ({
+  mockVerifyOtp: vi.fn(),
+  mockSendOtp: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ sendOtp: mockSendOtp, verifyOtp: mockVerifyOtp, isLoading: false }),
+}))
+
+const SET_PIN_STEP = 8
+
+const existingUser = (overrides = {}) => ({
+  id: "u1",
+  firstName: "Sonia",
+  lastName: "",
+  roles: [] as string[],
+  phoneNumber: "250784218120",
+  workerOnboardingComplete: false,
+  employerOnboardingComplete: false,
+  ...overrides,
+})
+
 // Create a mock store for each test
 const createMockStore = () => configureStore({
   reducer: {
@@ -95,5 +118,42 @@ describe("useOnboarding Hook", () => {
     // Simulate starting a cooldown (normally done in handleResendOtp)
     // We can't directly set resendCooldown as it's state, but we can trigger the action
     // Mocking the API call inside handleSendOtp would be needed for a full test
+    vi.useRealTimers()
+  })
+
+  // Regression guard for PIN recovery: an existing user who logs in with an OTP
+  // must always be routed to the Set-PIN step, so a forgotten PIN can be reset.
+  describe("post-OTP-login PIN routing", () => {
+    it("sends a forgot-PIN user (OTP login on an account that HAS a PIN) to Set-PIN", async () => {
+      // They reached OTP only via "use a code instead", so we must let them set
+      // a NEW PIN rather than drop them home with the forgotten one still set.
+      mockVerifyOtp.mockResolvedValue(existingUser())
+      const { result } = renderHook(() => useOnboarding(), { wrapper })
+
+      act(() => {
+        result.current.setPhoneNumber("784218120")
+        result.current.setCheckedPin({ hasPin: true, pinIsTemporary: false })
+      })
+      await act(async () => {
+        await result.current.handleVerifyOtp("123456")
+      })
+
+      expect(result.current.currentStep).toBe(SET_PIN_STEP)
+    })
+
+    it("sends an existing user with NO PIN to Set-PIN after OTP login", async () => {
+      mockVerifyOtp.mockResolvedValue(existingUser())
+      const { result } = renderHook(() => useOnboarding(), { wrapper })
+
+      act(() => {
+        result.current.setPhoneNumber("784218120")
+        result.current.setCheckedPin({ hasPin: false, pinIsTemporary: false })
+      })
+      await act(async () => {
+        await result.current.handleVerifyOtp("123456")
+      })
+
+      expect(result.current.currentStep).toBe(SET_PIN_STEP)
+    })
   })
 })
