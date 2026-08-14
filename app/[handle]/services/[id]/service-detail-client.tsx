@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { goBackOr } from "@/lib/navigation";
 import {
     ArrowLeft,
@@ -97,6 +97,7 @@ interface ExistingBookingSummary {
 export function ServiceDetailClient() {
     const t = useTranslations("serviceDetail");
     const tShared = useTranslations("serviceDetailShared");
+    const locale = useLocale();
     const SERVICE_DETAIL_LABELS = serviceDetailLabels(tShared);
     const PROVIDER_STATS = providerStats(tShared);
     const params = useParams();
@@ -494,7 +495,7 @@ export function ServiceDetailClient() {
                             className="pt-0.5 text-[15px] font-semibold"
                             style={{ color: colors.text }}
                         >
-                            {getServiceDisplayName(service)}
+                            {getServiceDisplayName(service, locale)}
                         </p>
                         {locationText ? (
                             <div
@@ -875,7 +876,7 @@ export function ServiceDetailClient() {
 
             <ReviewPromptDialog
                 open={reviewOpen}
-                subject={{ title: providerName, subtitle: service ? getServiceDisplayName(service) : undefined }}
+                subject={{ title: providerName, subtitle: service ? getServiceDisplayName(service, locale) : undefined }}
                 rehireQuestion={t("rehireQuestion")}
                 onOpenChange={setReviewOpen}
                 onSubmit={submitProviderReview}
@@ -939,7 +940,7 @@ export function ServiceDetailClient() {
                             <div>
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{SERVICE_DETAIL_LABELS.requestToHire}</p>
                                 <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
-                                <p className="text-[13px] text-gray-400">{getServiceDisplayName(service)}</p>
+                                <p className="text-[13px] text-gray-400">{getServiceDisplayName(service, locale)}</p>
                             </div>
                             <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />

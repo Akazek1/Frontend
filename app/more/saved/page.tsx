@@ -1,7 +1,7 @@
 "use client";
 import { useSelector } from "react-redux";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { RootState } from "@/store";
 import { useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ const BOOKMARKS_KEY = ["bookmarks", "services"] as const;
 
 const BookmarksPage = () => {
     const t = useTranslations("savedBookmarks");
+    const locale = useLocale();
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -73,7 +74,7 @@ const BookmarksPage = () => {
                             profileImage={service?.provider?.profilePicture}
                             name={`${service?.provider?.firstName || t("unknownFirstName")} ${service?.provider?.lastName || t("unknownLastName")}`}
                             handle={getProviderHandle(service.provider)}
-                            title={getServiceDisplayName(service)}
+                            title={getServiceDisplayName(service, locale)}
                             experience={t("yearsExperience")}
                             languages={Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : t("notAvailable")}
                             location={Array.isArray(service?.serviceAreas) ? service.serviceAreas.join(", ") : service?.serviceAreas || t("notAvailable")}

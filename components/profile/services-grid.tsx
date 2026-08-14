@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { Service } from "@/types";
 import { getServiceDetailPath, getServiceDisplayName } from "@/lib/service-display";
 import { getCategoryIcon } from "@/constant/category-icons";
 
 export function ServicesGrid({ services }: { services: Service[] }) {
   const router = useRouter();
+  const locale = useLocale();
   if (!services || services.length === 0) return null;
 
   return (
@@ -14,7 +16,7 @@ export function ServicesGrid({ services }: { services: Service[] }) {
       <h2 className="text-lg font-bold text-ink mb-4">Services I Offer</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {services.map((service) => {
-          const categoryName = getServiceDisplayName(service);
+          const categoryName = getServiceDisplayName(service, locale);
           const iconUrl = getCategoryIcon(categoryName);
 
           return (

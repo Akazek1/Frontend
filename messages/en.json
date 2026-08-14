@@ -73,6 +73,14 @@
       "selectAtLeastOne": "Please select at least one service category"
     }
   },
+  "home": {
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "guestTitle": "Find trusted help or your next job 👋",
+    "guestSubtitle": "Browse jobs and service providers across Rwanda.",
+    "serviceCategories": "Service Categories",
+    "seeAll": "See all"
+  },
   "signup": {
     "completeTitle": "Complete your profile",
     "completeSubtitle": "Just your name to finish setting up",
