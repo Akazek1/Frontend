@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import Scroller from "../scroller";
-import api from "@/lib/axios";
 import { Loader2 } from "lucide-react";
 import { getCategoryIcon } from "@/constant/category-icons";
 import { localizedName } from "@/lib/localized-name";
+import { useTaxonomyTree } from "@/hooks/useTaxonomyTree";
 
 interface Category {
   name: string;
@@ -28,38 +27,17 @@ const FALLBACK_CATEGORIES: Category[] = [
 ];
 
 export default function Categories() {
-  const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("home");
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    setIsLoading(true);
-    try {
-      // Broad groupings (ServiceCategory) — the stable top-level browse layer.
-      const response = await api.get("/taxonomy/tree");
-      const groupings: Category[] = (response.data.data || response.data || []).map(
-        (g: { name: string; nameKn?: string | null; nameFr?: string | null; icon?: string | null }) => ({
-          name: g.name,
-          nameKn: g.nameKn,
-          nameFr: g.nameFr,
-          icon: g.icon,
-        })
-      );
-
-      if (groupings.length > 0) setCategories(groupings);
-    } catch (err) {
-      console.error("Failed to fetch groupings", err);
-      // Keep fallback groupings on error
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Cached + persisted: navigating back to home never refetches or spins (see
+  // hooks/useTaxonomyTree). Only the very first ever load shows the spinner.
+  const { data, isLoading } = useTaxonomyTree();
+  const categories: Category[] =
+    data && data.length > 0
+      ? data.map((g) => ({ name: g.name, nameKn: g.nameKn, nameFr: g.nameFr, icon: g.icon }))
+      : FALLBACK_CATEGORIES;
 
   const handleCategoryClick = (grouping: string) => {
     router.push(`/service?grouping=${encodeURIComponent(grouping)}`);

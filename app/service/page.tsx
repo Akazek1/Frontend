@@ -1,9 +1,11 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import ServiceCard from "@/components/service-card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useServiceList } from "@/hooks/useServiceList";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthGate } from "@/context/auth-gate-context";
 import type { BrowseServicesParams } from "@/services/services-service";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { formatPrice } from "@/lib/utils";
@@ -46,7 +48,37 @@ const ServicePage = () => {
 
     // Cached + stale-while-revalidate: revisiting this page shows the previous
     // results instantly instead of a spinner. See hooks/useServiceList.
-    const { data: services = [], isLoading, error } = useServiceList(browseParams);
+    const {
+        services,
+        isLoading,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useServiceList(browseParams);
+
+    const { isAuthenticated } = useAuth();
+    const { openAuthGate } = useAuthGate();
+
+    // Guest wall: signed-in viewers auto-load the next ranked page as they reach
+    // the bottom; guests get the first page and then a sign-in prompt instead.
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const canAutoLoad = isAuthenticated && hasNextPage && !isFetchingNextPage;
+    useEffect(() => {
+        const el = sentinelRef.current;
+        if (!el || !canAutoLoad) return;
+        const io = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting) fetchNextPage();
+            },
+            { rootMargin: "400px" },
+        );
+        io.observe(el);
+        return () => io.disconnect();
+    }, [canAutoLoad, fetchNextPage]);
+
+    const promptSignIn = () =>
+        openAuthGate("browse-more", `/service?${searchParams.toString()}`);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -125,17 +157,46 @@ const ServicePage = () => {
             {!isLoading && !error && (
                 <div className="space-y-4">
                     {services.length > 0 ? (
-                        <div className="grid gap-4">
-                            {services.map((service) => (
-                                <ServiceCard
-                                    key={service.id}
-                                    {...mapServiceToProviderCard(service, locale)}
-                                    distance={filters.distanceKm ? t("withinKm", { km: filters.distanceKm }) : t("nearby")}
-                                    onClick={() => router.push(getServiceDetailPath(service))}
-                                    onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid gap-4">
+                                {services.map((service) => (
+                                    <ServiceCard
+                                        key={service.id}
+                                        {...mapServiceToProviderCard(service, locale)}
+                                        distance={filters.distanceKm ? t("withinKm", { km: filters.distanceKm }) : t("nearby")}
+                                        onClick={() => router.push(getServiceDetailPath(service))}
+                                        onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Pagination footer: infinite scroll for signed-in
+                                viewers, a sign-in wall for guests. */}
+                            {hasNextPage ? (
+                                isAuthenticated ? (
+                                    <div ref={sentinelRef} className="flex justify-center py-6">
+                                        {isFetchingNextPage && (
+                                            <div className="flex items-center gap-2 text-sm text-[#878787]">
+                                                <span className="w-5 h-5 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
+                                                {t("loadingMore")}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={promptSignIn}
+                                        className="w-full rounded-2xl border border-brand/30 bg-brand/5 py-4 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
+                                    >
+                                        {t("signInToSeeMore")}
+                                    </button>
+                                )
+                            ) : (
+                                <p className="py-6 text-center text-xs text-[#B0B0B0]">
+                                    {t("endOfResults")}
+                                </p>
+                            )}
+                        </>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">

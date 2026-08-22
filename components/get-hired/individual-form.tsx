@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import ImagePicker from "../image-picker"
 import ServiceCard from "../service-card"
 import { isEmployer } from "@/lib/roles"
+import { useServiceCategories } from "@/hooks/useServiceCategories"
 
 // Service interface for services fetched from or sent to the backend
 interface Service {
@@ -109,29 +110,11 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [workerList, setWorkerList] = useState<any[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loadingCategories, setLoadingCategories] = useState(false)
+  // Cached + persisted — no refetch on every mount. See hooks/useServiceCategories.
+  const { categories, isLoading: loadingCategories } = useServiceCategories()
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>(initialData.workerId || "")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setLoadingCategories(true)
-        const response = await api.get("/services/categories")
-        const categoryData = response.data?.data || response.data || []
-        setCategories(Array.isArray(categoryData) ? categoryData : [])
-      } catch {
-        toast.error(t("failedLoadCategories"))
-        setCategories([])
-      } finally {
-        setLoadingCategories(false)
-      }
-    }
-
-    loadCategories()
-  }, [])
 
   useEffect(() => {
     const getAgencyWorker = async () => {

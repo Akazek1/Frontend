@@ -1,15 +1,14 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Scroller from "../scroller";
 import { Heart, Loader2 } from "lucide-react";
 import SectionHeader from "../section-header";
 import { Icons } from "../icons";
-import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { getServiceDetailPath, getServiceDisplayName } from "@/lib/service-display";
-import type { Service } from "@/types";
+import { useServiceList } from "@/hooks/useServiceList";
 
 interface DisplayService {
   id: string;
@@ -20,48 +19,30 @@ interface DisplayService {
 }
 
 const PopulerService = () => {
-  const [scrollItems, setScrollItems] = useState<DisplayService[]>([]);
   const [liked, setLiked] = useState<DisplayService[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const locale = useLocale();
 
-  const handleCardClick = (service: DisplayService) => {
-    router.push(service.href);
-  };
+  // Shares the cached marketplace browse query with /service, so returning to
+  // the home page shows the same first page of cards instantly instead of
+  // refetching on every mount. Only the first page is shown here (a teaser);
+  // "View all" links to the fully paginated /service list.
+  const { services, isLoading, isError } = useServiceList();
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const fetchServices = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await api.get(`/services`);
-      if (response.status !== 200) {
-        throw new Error("Failed to fetch services");
-      }
-      const data: Service[] = await response.data.data;
-
-      // Map services to the display format
-      const mappedServices: DisplayService[] = data.map((service) => ({
+  const scrollItems = useMemo<DisplayService[]>(
+    () =>
+      services.map((service) => ({
         id: service.id,
         image: service.provider?.profileImg || service.provider?.profilePicture || service.company?.logoUrl || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
         title: getServiceDisplayName(service, locale),
         href: getServiceDetailPath(service),
         type: "service",
-      }));
+      })),
+    [services, locale],
+  );
 
-      // No need to group by category or add headers; just use the flat list of services
-      setScrollItems(mappedServices);
-    } catch {
-      setError("Something went wrong while fetching services.");
-      setScrollItems([]);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCardClick = (service: DisplayService) => {
+    router.push(service.href);
   };
 
   const handleLike = (service: DisplayService) => {
@@ -90,12 +71,12 @@ const PopulerService = () => {
       )}
 
       {/* Error State */}
-      {error && (
-        <div className="text-center text-red-500">{error}</div>
+      {isError && (
+        <div className="text-center text-red-500">Something went wrong while fetching services.</div>
       )}
 
       {/* Services List */}
-      {!isLoading && !error && scrollItems.length > 0 && (
+      {!isLoading && !isError && scrollItems.length > 0 && (
         <div className="flex items-center">
           <Scroller
             items={scrollItems}
@@ -146,7 +127,7 @@ const PopulerService = () => {
       )}
 
       {/* No Results */}
-      {!isLoading && !error && scrollItems.length === 0 && (
+      {!isLoading && !isError && scrollItems.length === 0 && (
         <div className="text-center text-[#878787]">
           No popular services found.
         </div>

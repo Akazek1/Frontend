@@ -71,8 +71,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const currentUserId = isAuthenticated ? user?.id : undefined;
   const { requireAuth } = useRequireAuth();
   // Cached browse list — no spinner when returning to the home page.
-  const { data: rawServices, isLoading: loading, error } = useServiceList();
-  const services = (rawServices ?? []).filter(
+  const { services: rawServices, isLoading: loading, isError: error } = useServiceList();
+  const services = rawServices.filter(
     (service: Service) =>
       service.id && typeof service.id === "string" && service.id.trim() !== "",
   );

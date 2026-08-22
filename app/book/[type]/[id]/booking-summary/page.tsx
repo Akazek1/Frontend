@@ -145,7 +145,8 @@ const BookingSummary = () => {
             try {
                 const category = "all"; // Adjust category as needed
                 const response = await api.get(`/services?category=${encodeURIComponent(category.toLowerCase())}`);
-                const services = response.data.data || [];
+                const raw = response.data.data;
+                const services: Service[] = Array.isArray(raw) ? raw : raw?.items || [];
                 setAdditionalServices(services.filter((s: Service) => s.id !== params.id)); // Exclude the main service
             } catch (err) {
                 console.error("Error fetching additional services:", err);

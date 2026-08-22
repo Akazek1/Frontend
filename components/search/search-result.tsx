@@ -146,8 +146,15 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [isApplyingJob, setIsApplyingJob] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Pagination for the services list: total matching the current query, the
+  // highest page loaded so far, and whether a "load more" fetch is in flight.
+  const [servicesTotal, setServicesTotal] = useState(0);
+  const [servicesPage, setServicesPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const searchRequestRef = useRef(0);
-  const searchCacheRef = useRef<Map<string, { services?: Service[]; jobs?: Job[] }>>(new Map());
+  const searchCacheRef = useRef<
+    Map<string, { services?: Service[]; servicesTotal?: number; jobs?: Job[] }>
+  >(new Map());
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const locale = useLocale();
@@ -324,28 +331,16 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
     }
   };
 
-  const fetchServices = async (
+  // Page size for the services search list — matches the browse page.
+  const SERVICES_LIMIT = 12;
+
+  /** Builds the query string shared by page-1 and load-more service fetches. */
+  const buildServiceParams = (
     searchQuery: string,
     selectedFilters: SearchFilters,
-    requestId: number
+    page: number,
   ) => {
-    // Include viewer sector in cache key so a location change busts the cache.
     const loc = getViewerLocation();
-    const cacheKey = buildSearchCacheKey("services", searchQuery, {
-      ...selectedFilters,
-      _viewerSector: loc?.sector,
-    });
-    const cached = searchCacheRef.current.get(cacheKey)?.services;
-    if (cached) {
-      setServices(cached);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-
-    scheduleLoadingIndicator();
-    setError(null);
-
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.set("searchTerm", searchQuery.trim());
     if (selectedFilters.serviceType) params.set("serviceType", selectedFilters.serviceType);
@@ -360,7 +355,46 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       params.set("viewerLat", String(loc.lat));
       params.set("viewerLng", String(loc.lng));
     }
-    params.set("limit", "12");
+    params.set("page", String(page));
+    params.set("limit", String(SERVICES_LIMIT));
+    return params;
+  };
+
+  /** Reads one page of services out of the `{ items, total }` envelope. */
+  const parseServicesPage = (payload: unknown): { items: Service[]; total: number } => {
+    const raw = (payload as { data?: unknown })?.data;
+    if (Array.isArray(raw)) return { items: raw as Service[], total: raw.length };
+    const obj = raw as { items?: Service[]; total?: number } | undefined;
+    const items = obj?.items ?? [];
+    return { items, total: obj?.total ?? items.length };
+  };
+
+  const fetchServices = async (
+    searchQuery: string,
+    selectedFilters: SearchFilters,
+    requestId: number
+  ) => {
+    // Include viewer sector in cache key so a location change busts the cache.
+    const loc = getViewerLocation();
+    const cacheKey = buildSearchCacheKey("services", searchQuery, {
+      ...selectedFilters,
+      _viewerSector: loc?.sector,
+    });
+    const cachedEntry = searchCacheRef.current.get(cacheKey);
+    const cached = cachedEntry?.services;
+    if (cached) {
+      setServices(cached);
+      setServicesTotal(cachedEntry?.servicesTotal ?? cached.length);
+      setServicesPage(1);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    scheduleLoadingIndicator();
+    setError(null);
+
+    const params = buildServiceParams(searchQuery, selectedFilters, 1);
 
     try {
       const response = await api.get(`/services?${params.toString()}`);
@@ -369,20 +403,52 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         throw new Error("Failed to fetch services");
       }
 
-      const data: Service[] = Array.isArray(response.data.data)
-        ? response.data.data
-        : [];
+      const { items, total } = parseServicesPage(response.data);
       if (requestId !== searchRequestRef.current) return;
-      searchCacheRef.current.set(cacheKey, { services: data });
-      setServices(data);
+      searchCacheRef.current.set(cacheKey, { services: items, servicesTotal: total });
+      setServices(items);
+      setServicesTotal(total);
+      setServicesPage(1);
     } catch {
       if (requestId !== searchRequestRef.current) return;
       setError(t("errorFetchServices"));
       setServices([]);
+      setServicesTotal(0);
+      setServicesPage(1);
     } finally {
       if (requestId !== searchRequestRef.current) return;
       clearLoadingTimer();
       setIsLoading(false);
+    }
+  };
+
+  /** Appends the next ranked page to the current services list. */
+  const loadMoreServices = async () => {
+    if (isLoadingMore) return;
+    const nextPage = servicesPage + 1;
+    setIsLoadingMore(true);
+    try {
+      const params = buildServiceParams(query, filters, nextPage);
+      const response = await api.get(`/services?${params.toString()}`);
+      const { items, total } = parseServicesPage(response.data);
+      setServices((prev) => {
+        const merged = [...prev, ...items];
+        // Keep the page-1 cache entry in sync so returning to this query shows
+        // the fuller list without a refetch.
+        const loc = getViewerLocation();
+        const cacheKey = buildSearchCacheKey("services", query, {
+          ...filters,
+          _viewerSector: loc?.sector,
+        });
+        searchCacheRef.current.set(cacheKey, { services: merged, servicesTotal: total });
+        return merged;
+      });
+      setServicesTotal(total);
+      setServicesPage(nextPage);
+    } catch {
+      // Swallow — the existing list stays; user can retry.
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -654,27 +720,51 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
               ))}
             </div>
           ) : (
-            <div className="grid gap-4">
-              {services.map((service) => {
-                const card = mapServiceToProviderCard(service, locale);
-                const reviewBookingId = reviewableByService.get(service.id);
+            <>
+              <div className="grid gap-4">
+                {services.map((service) => {
+                  const card = mapServiceToProviderCard(service, locale);
+                  const reviewBookingId = reviewableByService.get(service.id);
 
-                return (
-                  <ServiceCard
-                    key={service.id}
-                    {...card}
-                    hasRequested={requestedServiceIds.has(service.id)}
-                    isOwnService={Boolean(currentUserId && service.provider?.id === currentUserId)}
-                    needsReview={Boolean(reviewBookingId)}
-                    onLeaveReview={() =>
-                      reviewBookingId && setReviewModal({ service, bookingId: reviewBookingId })
-                    }
-                    onClick={() => router.push(getServiceDetailPath(service))}
-                    onHireClick={() => openHireModal(service)}
-                  />
-                );
-              })}
-            </div>
+                  return (
+                    <ServiceCard
+                      key={service.id}
+                      {...card}
+                      hasRequested={requestedServiceIds.has(service.id)}
+                      isOwnService={Boolean(currentUserId && service.provider?.id === currentUserId)}
+                      needsReview={Boolean(reviewBookingId)}
+                      onLeaveReview={() =>
+                        reviewBookingId && setReviewModal({ service, bookingId: reviewBookingId })
+                      }
+                      onClick={() => router.push(getServiceDetailPath(service))}
+                      onHireClick={() => openHireModal(service)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Load-more for signed-in viewers; sign-in wall for guests. */}
+              {services.length < servicesTotal && (
+                isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={loadMoreServices}
+                    disabled={isLoadingMore}
+                    className="mt-4 w-full rounded-2xl border border-[#DDE3DD] bg-white py-3 text-sm font-bold text-brand transition-colors hover:bg-brand/5 disabled:opacity-60"
+                  >
+                    {isLoadingMore ? t("loadingMore") : t("loadMore")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => requireAuth(undefined, "browse-more")}
+                    className="mt-4 w-full rounded-2xl border border-brand/30 bg-brand/5 py-3 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
+                  >
+                    {t("signInToSeeMore")}
+                  </button>
+                )
+              )}
+            </>
           )}
         </div>
       )}

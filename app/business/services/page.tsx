@@ -17,6 +17,7 @@ import {
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { useAuth } from "@/hooks/useAuth";
+import { useServiceCategories } from "@/hooks/useServiceCategories";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { colors } from "@/constant/colors";
 import authService from "@/services/auth-service";
@@ -68,7 +69,8 @@ export default function CompanyServicesPage() {
   const isVerified = Boolean(org?.verified);
 
   const [services, setServices] = useState<CompanyService[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Cached + persisted — no refetch on every visit. See hooks/useServiceCategories.
+  const { categories } = useServiceCategories();
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -89,12 +91,8 @@ export default function CompanyServicesPage() {
 
   const load = useCallback(async () => {
     try {
-      const [svcRes, catRes] = await Promise.all([
-        api.get("/services/company/mine"),
-        api.get("/services/categories"),
-      ]);
+      const svcRes = await api.get("/services/company/mine");
       setServices(svcRes.data?.data ?? svcRes.data ?? []);
-      setCategories(catRes.data?.data ?? catRes.data ?? []);
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotLoadServices")));
     } finally {
