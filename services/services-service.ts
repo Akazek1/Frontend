@@ -55,6 +55,31 @@ interface ApiEnvelope<T> {
   timestamp?: string;
 }
 
+/** Paginated list shape returned by GET /services (inside the API envelope). */
+export interface PaginatedServices {
+  items: Service[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Older callers received a bare `Service[]`; the backend now always returns
+ * `{ items, total, page, limit }`. This tolerates both so a stale cache entry
+ * or an un-migrated endpoint never crashes the list.
+ */
+function toPaginated(payload: PaginatedServices | Service[]): PaginatedServices {
+  if (Array.isArray(payload)) {
+    return { items: payload, total: payload.length, page: 1, limit: payload.length };
+  }
+  return {
+    items: payload.items ?? [],
+    total: payload.total ?? payload.items?.length ?? 0,
+    page: payload.page ?? 1,
+    limit: payload.limit ?? payload.items?.length ?? 0,
+  };
+}
+
 function unwrap<T>(payload: ApiEnvelope<T> | T): T {
   if (payload && typeof payload === "object" && "data" in (payload as any)) {
     const inner = (payload as ApiEnvelope<T>).data;
@@ -122,16 +147,16 @@ const servicesService = {
     limit?: number;
   } = {}): Promise<Service[]> {
     const response = await api.get("/services", { params });
-    return unwrap<Service[]>(response.data);
+    return toPaginated(unwrap<PaginatedServices | Service[]>(response.data)).items;
   },
 
   /**
    * Marketplace browse — the full filter set the public listing pages use.
-   * Returns the personalized/ranked list from GET /services.
+   * Returns one ranked page plus the total count so callers can paginate.
    */
-  async browse(params: BrowseServicesParams = {}): Promise<Service[]> {
+  async browse(params: BrowseServicesParams = {}): Promise<PaginatedServices> {
     const response = await api.get("/services", { params });
-    return unwrap<Service[]>(response.data);
+    return toPaginated(unwrap<PaginatedServices | Service[]>(response.data));
   },
 
   async getById(id: string): Promise<Service> {

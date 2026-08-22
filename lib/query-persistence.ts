@@ -30,7 +30,9 @@ export function shouldPersistQuery(query: Query) {
 
   return (
     (scope === "services" && area === "browse") ||
-    scope === "active-languages"
+    scope === "active-languages" ||
+    scope === "taxonomy-tree" ||
+    scope === "service-categories"
   );
 }
 

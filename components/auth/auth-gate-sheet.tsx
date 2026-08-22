@@ -21,6 +21,7 @@ const INTENT_MESSAGES: Record<string, string> = {
   apply: "Sign in to apply for this job",
   "post-job": "Sign in to post a job",
   message: "Sign in to send a message",
+  "browse-more": "Sign in to see more providers",
 };
 
 export function AuthGateSheet() {

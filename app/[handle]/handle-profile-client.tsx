@@ -123,7 +123,7 @@ export function HandleProfileClient() {
         try {
           const svcResp = await api.get(`/services?providerUsername=${handle}`);
           const raw = svcResp.data?.data;
-          serviceList = Array.isArray(raw) ? raw : raw?.data || [];
+          serviceList = Array.isArray(raw) ? raw : raw?.items || raw?.data || [];
         } catch {
           serviceList = [];
         }

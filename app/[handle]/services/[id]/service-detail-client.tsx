@@ -141,9 +141,10 @@ export function ServiceDetailClient() {
                 const providerId = nextService?.provider?.id || nextService?.providerId;
                 if (providerId) {
                     const servicesRes = await api.get(`/services?providerId=${providerId}`);
-                    const data = Array.isArray(servicesRes.data?.data)
-                        ? servicesRes.data.data
-                        : servicesRes.data?.data?.data || [];
+                    const raw = servicesRes.data?.data;
+                    const data = Array.isArray(raw)
+                        ? raw
+                        : raw?.items || raw?.data || [];
                     setProviderServices(data);
                 }
             } catch (err) {

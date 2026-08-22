@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import api from "@/lib/axios";
 import jobsService from "@/services/jobs-service";
+import { useServiceCategories } from "@/hooks/useServiceCategories";
 import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface Category {
@@ -27,7 +27,8 @@ const PostJobPage: React.FC = () => {
   const t = useTranslations("postJob");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // Cached + persisted — no refetch on every visit. See hooks/useServiceCategories.
+  const { categories } = useServiceCategories();
   const [form, setForm] = useState({
     title: "",
     categoryId: "",
@@ -46,18 +47,6 @@ const PostJobPage: React.FC = () => {
     { value: "monthly", label: t("scheduleMonthly") },
     { value: "live-in", label: t("scheduleLiveIn") },
   ];
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get("/services/categories");
-        setCategories(response.data.data || response.data || []);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));

@@ -1193,7 +1193,10 @@
     "rwfPlaceholder": "RWF",
     "reset": "Reset",
     "apply": "Apply",
-    "otherCategory": "Other"
+    "otherCategory": "Other",
+    "loadMore": "Load more",
+    "loadingMore": "Loading more…",
+    "signInToSeeMore": "Sign in to see more providers"
   },
   "jobOwnerDetail": {
     "back": "Back",
@@ -1769,7 +1772,10 @@
     "withinKm": "Within {km} km",
     "nearby": "Nearby",
     "noResultsFound": "No results found",
-    "noResultsHint": "Try adjusting your search or filters to find what you're looking for."
+    "noResultsHint": "Try adjusting your search or filters to find what you're looking for.",
+    "loadingMore": "Loading more…",
+    "signInToSeeMore": "Sign in to see more providers",
+    "endOfResults": "You've reached the end"
   },
   "homeOverview": {
     "searchJobsPlaceholder": "Search jobs by title, category...",
