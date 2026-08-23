@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Service } from "@/types";
 import { useServiceList } from "@/hooks/useServiceList";
 import { getServiceDetailPath, mapServiceToProviderCard } from "@/lib/service-display";
@@ -65,17 +65,48 @@ type ReviewableEntry = {
 const ServiceProvider: React.FC<ServiceProviderProps> = () => {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("servicesBrowse");
   const { user, isAuthenticated } = useAuth();
   // Only treat someone as the owner when they have a live session — `user` can
   // linger in storage without a valid token.
   const currentUserId = isAuthenticated ? user?.id : undefined;
   const { requireAuth } = useRequireAuth();
   // Cached browse list — no spinner when returning to the home page.
-  const { services: rawServices, isLoading: loading, isError: error } = useServiceList();
+  const {
+    services: rawServices,
+    isLoading: loading,
+    isError: error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useServiceList();
   const services = rawServices.filter(
     (service: Service) =>
       service.id && typeof service.id === "string" && service.id.trim() !== "",
   );
+
+  // Infinite feed: signed-in viewers auto-load the next ranked page as they
+  // approach the bottom; guests get the first page then a sign-in prompt.
+  // A scroll listener on the app's scroll container (<main>) is used rather
+  // than an IntersectionObserver: the app already drives sticky headers off
+  // this same signal, and it fires reliably regardless of tab-visibility
+  // throttling. While a page is loading, canAutoLoad flips false and the
+  // listener detaches, so a fast scroll can't fire duplicate fetches.
+  const canAutoLoad = isAuthenticated && hasNextPage && !isFetchingNextPage;
+  useEffect(() => {
+    if (!canAutoLoad) return;
+    const main = typeof document !== "undefined" ? document.querySelector("main") : null;
+    if (!main) return;
+    const onScroll = () => {
+      if (main.scrollTop + main.clientHeight >= main.scrollHeight - 600) {
+        fetchNextPage();
+      }
+    };
+    main.addEventListener("scroll", onScroll, { passive: true });
+    // Content may already be short enough that the bottom is in view.
+    onScroll();
+    return () => main.removeEventListener("scroll", onScroll);
+  }, [canAutoLoad, fetchNextPage]);
   const [hireModal, setHireModal] = useState<HireModal | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -259,6 +290,28 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
               <p className="text-center text-gray-500 py-4">
                 No providers found.
               </p>
+            )}
+
+            {/* Infinite scroll for signed-in viewers; sign-in wall for guests. */}
+            {services.length > 0 && hasNextPage && (
+              isAuthenticated ? (
+                <div className="flex justify-center py-4">
+                  {isFetchingNextPage && (
+                    <div className="flex items-center gap-2 text-sm text-[#878787]">
+                      <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                      {t("loadingMore")}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => requireAuth(undefined, "browse-more")}
+                  className="mt-2 w-full rounded-2xl border border-brand/30 bg-brand/5 py-3 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
+                >
+                  {t("signInToSeeMore")}
+                </button>
+              )
             )}
           </motion.div>
         )}
