@@ -10,6 +10,18 @@ import type { RootState } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import api from "@/lib/axios";
 
+// Routes that should return the user to where they left off even on a forward
+// (push / tab / link) navigation — not just on browser back/forward. These are
+// the "feed" tabs where re-entering to the top and losing your place is jarring
+// (e.g. the home marketplace feed). Every other route still starts at the top
+// on a fresh push. Keep these to entries the user re-enters as a standing tab.
+const RESTORE_ON_RETURN_ROUTES = new Set<string>(["/"]);
+
+// sessionStorage key for scroll offsets, so a reload (or a SW-update reload)
+// doesn't drop the remembered positions. Session-scoped: cleared when the tab
+// closes, never shared across tabs or persisted to disk.
+const SCROLL_POSITIONS_KEY = "huza:scroll-positions";
+
 const Layout = ({
   children,
   isMarketingHost = false,
@@ -43,41 +55,93 @@ const Layout = ({
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  // Continuously remember the current route's scroll offset.
+  // Hydrate remembered offsets once, so a reload keeps them (see restore below).
   useEffect(() => {
-    const main = mainRef.current;
-    if (!main) return;
-    const save = () => { scrollPositionsRef.current.set(pathname, main.scrollTop); };
-    main.addEventListener("scroll", save, { passive: true });
-    return () => {
-      save();
-      main.removeEventListener("scroll", save);
-    };
+    try {
+      const raw = sessionStorage.getItem(SCROLL_POSITIONS_KEY);
+      if (raw) {
+        const entries = JSON.parse(raw) as [string, number][];
+        scrollPositionsRef.current = new Map(entries);
+      }
+    } catch {
+      // Corrupt/oversized storage — start fresh, never block render.
+    }
+  }, []);
+
+  // Keep the live pathname in a ref so the mount-once snapshot listener below
+  // always attributes a saved offset to the route that is currently on screen.
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
   }, [pathname]);
 
-  // On navigation: restore the saved offset when going back/forward, otherwise
-  // start a freshly-pushed route at the top.
+  // Snapshot the current route's scroll offset the instant *before* a navigation
+  // starts. Reacting to the `scroll` event instead is unreliable: leaving a
+  // route unmounts its tall content, <main> shrinks, and the browser clamps
+  // scrollTop to 0 — a synthetic scroll that overwrites the very position we
+  // want to keep. A capture-phase click fires before React's own handlers (so
+  // before both <Link> navigation and onClick `router.push` card taps) and
+  // before any DOM change, so scrollTop is still the real value here. `pagehide`
+  // covers reloads / tab close.
+  useEffect(() => {
+    const snapshot = () => {
+      const main = mainRef.current;
+      if (!main) return;
+      scrollPositionsRef.current.set(pathnameRef.current, main.scrollTop);
+      try {
+        sessionStorage.setItem(
+          SCROLL_POSITIONS_KEY,
+          JSON.stringify([...scrollPositionsRef.current.entries()]),
+        );
+      } catch {
+        // Storage full/unavailable — the in-memory Map still works this session.
+      }
+    };
+    document.addEventListener("click", snapshot, { capture: true });
+    window.addEventListener("pagehide", snapshot);
+    return () => {
+      document.removeEventListener("click", snapshot, { capture: true });
+      window.removeEventListener("pagehide", snapshot);
+    };
+  }, []);
+
+  // On navigation: restore the saved offset when going back/forward, and also
+  // when returning to a "feed" tab via a forward push (RESTORE_ON_RETURN_ROUTES)
+  // so re-entering Home lands where you left off. Every other fresh push starts
+  // at the top.
   useEffect(() => {
     const main = mainRef.current;
     if (!main) return;
 
-    if (navTypeRef.current === "pop") {
-      const saved = scrollPositionsRef.current.get(pathname) ?? 0;
-      let attempts = 0;
-      const restore = () => {
-        if (!mainRef.current) return;
-        mainRef.current.scrollTop = saved;
-        // Content (e.g. cached lists) may still be growing — retry until it sticks.
-        if (Math.abs(mainRef.current.scrollTop - saved) > 2 && attempts < 20) {
-          attempts += 1;
-          requestAnimationFrame(restore);
-        }
-      };
-      requestAnimationFrame(restore);
-    } else {
-      main.scrollTop = 0;
-    }
+    const shouldRestore =
+      navTypeRef.current === "pop" || RESTORE_ON_RETURN_ROUTES.has(pathname);
+    const saved = shouldRestore ? scrollPositionsRef.current.get(pathname) ?? 0 : 0;
     navTypeRef.current = "push";
+
+    // The effect runs after the new route has committed to the DOM, so a
+    // returned-to feed with cached cards is usually already tall enough here —
+    // apply the offset synchronously first.
+    main.scrollTop = saved;
+    if (saved <= 0 || Math.abs(main.scrollTop - saved) <= 2) return;
+
+    // Otherwise the content is still painting (data/image reflow). Re-apply on a
+    // short timer (not rAF — rAF is paused while the tab is backgrounded) until
+    // <main> is tall enough for the offset to stick, then stop. Time-budgeted so
+    // it never fights a genuinely shorter page.
+    const deadline = Date.now() + 2000;
+    let stopped = false;
+    const retry = () => {
+      if (stopped || !mainRef.current) return;
+      mainRef.current.scrollTop = saved;
+      if (Math.abs(mainRef.current.scrollTop - saved) > 2 && Date.now() < deadline) {
+        setTimeout(retry, 50);
+      }
+    };
+    setTimeout(retry, 50);
+
+    return () => {
+      stopped = true;
+    };
   }, [pathname]);
 
   useEffect(() => {

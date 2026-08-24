@@ -41,6 +41,10 @@ const Navigation = () => {
             <Link
               key={item.title}
               href={isDisabled ? "#" : item.url}
+              // The app owns scroll restoration for its custom <main> scroller
+              // (see pwa-layout). Next's default scroll-to-top would fire after
+              // our restore and yank a returned-to feed back to the top.
+              scroll={false}
               onClick={(e) => { if (isDisabled) { e.preventDefault(); openAuthGate(); } }}
               className="flex flex-col items-center text-[10px] leading-3 w-20"
               style={{
