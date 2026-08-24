@@ -45,7 +45,21 @@ const Navigation = () => {
               // (see pwa-layout). Next's default scroll-to-top would fire after
               // our restore and yank a returned-to feed back to the top.
               scroll={false}
-              onClick={(e) => { if (isDisabled) { e.preventDefault(); openAuthGate(); } }}
+              onClick={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  openAuthGate();
+                  return;
+                }
+                // Re-tapping the tab you're already on (its root, not a
+                // sub-route) scrolls that tab's content back to the top —
+                // pwa-layout owns <main> and the saved offsets, so hand off
+                // to it rather than navigating redundantly.
+                if (pathname === item.url) {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent("huza:scroll-to-top"));
+                }
+              }}
               className="flex flex-col items-center text-[10px] leading-3 w-20"
               style={{
                 color: isDisabled ? colors.textLight + "66" : (isActiveNav ? colors.primaryHover : colors.textLight),

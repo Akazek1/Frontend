@@ -105,6 +105,30 @@ const Layout = ({
     };
   }, []);
 
+  // "Tap the active tab again to scroll to top" — the bottom nav dispatches this
+  // when you re-tap the tab you're already on. Smooth-scroll <main> up and reset
+  // the route's saved offset so a later return doesn't jump back down. (The
+  // capture-phase snapshot above already recorded the pre-tap offset for this
+  // same click, so overwrite it here — this runs synchronously afterwards.)
+  useEffect(() => {
+    const scrollToTop = () => {
+      const main = mainRef.current;
+      if (!main) return;
+      main.scrollTo({ top: 0, behavior: "smooth" });
+      scrollPositionsRef.current.set(pathnameRef.current, 0);
+      try {
+        sessionStorage.setItem(
+          SCROLL_POSITIONS_KEY,
+          JSON.stringify([...scrollPositionsRef.current.entries()]),
+        );
+      } catch {
+        // Storage unavailable — the in-memory Map still reflects the reset.
+      }
+    };
+    window.addEventListener("huza:scroll-to-top", scrollToTop);
+    return () => window.removeEventListener("huza:scroll-to-top", scrollToTop);
+  }, []);
+
   // On navigation: restore the saved offset when going back/forward, and also
   // when returning to a "feed" tab via a forward push (RESTORE_ON_RETURN_ROUTES)
   // so re-entering Home lands where you left off. Every other fresh push starts
