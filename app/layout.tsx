@@ -16,6 +16,7 @@ import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
 import LanguageGate from "@/components/language-gate";
 import { APP_CONFIG } from "@/constant/app.config";
 import { PwaLifecycle } from "@/components/pwa/pwa-lifecycle";
+import { UmamiAnalytics } from "@/components/analytics/umami";
 import { isMarketingHost } from "@/lib/marketing-host";
 
 // Load Geist fonts
@@ -146,6 +147,7 @@ export default async function RootLayout({
           </QueryProvider>
         </Providers>
         </NextIntlClientProvider>
+        <UmamiAnalytics />
       </body>
     </html>
   );

@@ -21,6 +21,7 @@ import type {
 } from "@/services/auth-service";
 import { toast } from "react-hot-toast";
 import { getAuthToken } from "@/lib/auth-utils";
+import { track } from "@/lib/analytics";
 
 // Ensures the session is validated against the backend at most once per full
 // page load, even though many components call useAuth. Reset naturally on reload
@@ -93,9 +94,11 @@ export const useAuth = () => {
       }
 
       await dispatch(sendOtp(data)).unwrap();
+      track("otp_requested"); // funnel: a verification code was sent
       return true;
     } catch (error) {
       console.error("Error sending OTP:", error);
+      track("otp_send_failed"); // couldn't even send the code (SMS/network)
       return false;
     }
   };
@@ -136,12 +139,14 @@ export const useAuth = () => {
       const result = await dispatch(verifyOtp(data)).unwrap();
 
       if (result.token) {
+        track("otp_verified"); // funnel: code accepted, into the app
         return result.user;
       } else {
         toast.error("Invalid OTP please try again.");
       }
     } catch (error) {
       console.error("OTP verification failed:", error);
+      track("otp_failed"); // wrong/expired code — the drop-off point
       const err = error as Error & { response?: { data?: { message?: string } } }
       const errorMessage = err?.response?.data?.message || err?.message || "OTP verification failed"
       toast.error(errorMessage)
