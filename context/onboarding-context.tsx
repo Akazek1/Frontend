@@ -9,6 +9,7 @@ import { AppDispatch } from "@/store"
 import { updateUser, setSession } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
 import { getSignupToken } from "@/lib/auth-utils"
+import { track } from "@/lib/analytics"
 import { toast } from "react-hot-toast"
 import type { AuthResponse, UserRole, OnboardingRole } from "@/services/auth-service"
 
@@ -590,6 +591,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
       dispatch(updateUser(updatedUser))
       localStorage.setItem("user", JSON.stringify(updatedUser))
+      track("signup_completed") // funnel: account fully created
       toast.success("Welcome!")
       if (roles.includes("WORKER")) {
         setCurrentStep(3) // profile picture first
