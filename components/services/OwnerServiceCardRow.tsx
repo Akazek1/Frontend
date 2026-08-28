@@ -83,6 +83,7 @@ export function OwnerServiceCardRow({
         distance={provider.distance}
         available={workerAvailable}
         verified={provider.verified}
+        isCompany={provider.isCompany}
         onClick={handleCardClick}
         isOwnService
       />

@@ -176,7 +176,7 @@ export function RoleSelection() {
         {/* ── Business card ── */}
         <button
           type="button"
-          onClick={() => router.push("/onboarding/organization")}
+          onClick={() => router.push("/business/register")}
           className="w-full text-left rounded-2xl border border-gray-200 bg-white p-3.5 flex items-center gap-3 hover:border-gray-300 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">

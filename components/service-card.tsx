@@ -8,6 +8,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { redactName } from "@/lib/privacy-utils";
 import { serviceImageFallback, shouldUnoptimizeImage } from "@/lib/service-display";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { cn } from "@/lib/utils";
 
 interface AgencyInfo {
   id: string;
@@ -34,6 +35,8 @@ interface ServiceCardProps {
   distance?: string;
   available: boolean;
   verified?: boolean;
+  /** The provider is a business, not a person — tints the card. */
+  isCompany?: boolean;
   tags?: string[];
   agency?: AgencyInfo | null;
   onClick: () => void;
@@ -63,6 +66,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   distance,
   available,
   verified,
+  isCompany = false,
   tags = [],
   agency,
   onClick,
@@ -113,7 +117,14 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-100 shadow-sm hover:shadow-md rounded-2xl overflow-hidden flex cursor-pointer transition-shadow duration-200"
+      className={cn(
+        "border shadow-sm hover:shadow-md rounded-2xl overflow-hidden flex cursor-pointer transition-shadow duration-200",
+        // A business card is tinted so it reads as a company at a glance —
+        // a muted teal that sits beside the brand green without being it.
+        isCompany
+          ? "bg-[#F1F7F6] border-[#D4E7E2]"
+          : "bg-white border-gray-100",
+      )}
     >
       {/* Left image */}
       <div className="relative flex-shrink-0 w-[110px] self-stretch">

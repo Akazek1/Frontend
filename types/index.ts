@@ -161,4 +161,6 @@ export interface Provider {
     logoUrl: string | null;
     verified: boolean;
   } | null;
+  /** True when the provider IS a business (accountType COMPANY), not a person. */
+  isCompany?: boolean;
 }
