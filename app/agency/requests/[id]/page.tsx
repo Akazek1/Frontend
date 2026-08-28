@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   Briefcase,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   Mail,
   MessageSquare,
   Phone,
+  MapPin,
   Send,
   UserCheck,
   Users,
@@ -36,6 +38,7 @@ interface AgencyWorkerLite {
 export default function AgencyInquiryDetailPage() {
   const t = useTranslations("agencyInquiryDetail");
   const tShared = useTranslations("inquiryShared");
+  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
@@ -43,11 +46,10 @@ export default function AgencyInquiryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   const [workers, setWorkers] = useState<AgencyWorkerLite[]>([]);
   const [handoverId, setHandoverId] = useState<string>("");
   const [showEmployer, setShowEmployer] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [openingReply, setOpeningReply] = useState("");
 
   async function load() {
     try {
@@ -74,11 +76,7 @@ export default function AgencyInquiryDetailPage() {
     }).catch(() => setWorkers([]));
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [inquiry?.messages?.length]);
-
-  // Poll for new messages/status while the conversation is live.
+  // Poll for status changes while the inquiry is live.
   useEffect(() => {
     const active = inquiry?.status === "TALKING" || inquiry?.status === "HANDED_OVER";
     if (!active) return;
@@ -86,6 +84,24 @@ export default function AgencyInquiryDetailPage() {
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inquiry?.status]);
+
+  // Accepting posts the agency's opening reply into the room and drops the
+  // agency straight into it — the client gets the same room via their notification.
+  async function acceptToTalk() {
+    setBusy("accept");
+    try {
+      const res = await api.post(`/inquiries/${id}/accept`, { message: openingReply.trim() || undefined });
+      const data: AgencyInquiry = res.data?.data || res.data;
+      toast.success(t("conversationOpened"));
+      const convoId = data?.conversation?.id;
+      if (convoId) router.push(`/agency/messages/${convoId}`);
+      else await load();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("actionFailed")));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function act(path: string, body?: unknown, successMsg?: string) {
     setBusy(path);
@@ -100,19 +116,6 @@ export default function AgencyInquiryDetailPage() {
     }
   }
 
-  async function sendMessage() {
-    if (!draft.trim()) return;
-    setBusy("message");
-    try {
-      await api.post(`/inquiries/${id}/messages`, { content: draft.trim() });
-      setDraft("");
-      await load();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, t("couldNotSendMessage")));
-    } finally {
-      setBusy(null);
-    }
-  }
 
   const availableWorkers = useMemo(
     () => workers.filter((w) => w.status === "AVAILABLE" || w.id === inquiry?.workerOfInterest?.id),
@@ -154,21 +157,35 @@ export default function AgencyInquiryDetailPage() {
                   <p className="text-[16px] font-bold text-ink hover:underline">{inquiryPersonName(inquiry.employer, tShared)}</p>
                   {inquiry.employer.isVerified && <VerifiedBadge size={14} />}
                 </div>
-                {inquiry.employer.phoneNumber && (
-                  <p className="flex items-center gap-1 text-[12px] text-ink-muted"><Phone className="h-3 w-3" /> {inquiry.employer.phoneNumber}</p>
-                )}
+                {(() => {
+                  const a = inquiry.employer.addresses?.[0];
+                  const loc = a ? [a.sector, a.district].filter(Boolean).join(", ") || a.city : null;
+                  return loc ? (
+                    <p className="flex items-center gap-1 text-[12px] text-ink-muted"><MapPin className="h-3 w-3" /> {loc}</p>
+                  ) : null;
+                })()}
               </div>
               <ChevronDown className={cn("h-4 w-4 shrink-0 text-gray-400 transition-transform", showEmployer && "rotate-180")} />
             </button>
             {showEmployer && (
               <div className="mt-3 space-y-1.5 border-t border-gray-50 pt-3 text-[12px] text-ink-muted">
                 {inquiry.employer.email && <p className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {inquiry.employer.email}</p>}
-                {inquiry.employer.createdAt && (
-                  <p className="flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5" /> {t("memberSince", { date: new Date(inquiry.employer.createdAt).toLocaleDateString("en-RW", { month: "short", year: "numeric" }) })}
-                  </p>
-                )}
+                {(() => {
+                  const a = inquiry.employer.addresses?.[0];
+                  const loc = a ? [a.sector, a.district, a.city].filter(Boolean).join(", ") : null;
+                  return loc ? (
+                    <p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {loc}</p>
+                  ) : null;
+                })()}
               </div>
+            )}
+            {inquiry.workerOfInterest && (
+              <p className="mt-4 rounded-xl bg-[#EEF8EA] px-3 py-2 text-[13px] font-semibold text-ink">
+                {t("wouldLikeToWorkWith", {
+                  employer: inquiryPersonName(inquiry.employer, tShared),
+                  worker: inquiryPersonName(inquiry.workerOfInterest, tShared),
+                })}
+              </p>
             )}
             <div className="mt-4">
               <p className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold text-ink"><MessageSquare className="h-4 w-4 text-ink-muted" /> {t("theirNote")}</p>
@@ -235,9 +252,16 @@ export default function AgencyInquiryDetailPage() {
             <AgencyCard className="p-5">
               <h2 className="text-[15px] font-bold text-ink">{t("respond")}</h2>
               <p className="mt-0.5 text-[12px] text-ink-muted">{t("acceptOrDeclineDesc")}</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <textarea
+                value={openingReply}
+                onChange={(e) => setOpeningReply(e.target.value)}
+                rows={3}
+                placeholder={t("openingReplyPlaceholder")}
+                className="mt-3 w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-[13px] text-ink outline-none placeholder:text-gray-400 focus:border-brand"
+              />
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <button
-                  onClick={() => act("accept", undefined, t("conversationOpened"))}
+                  onClick={acceptToTalk}
                   disabled={busy !== null}
                   className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-[14px] font-bold text-white hover:bg-brand-dark disabled:opacity-60"
                 >
@@ -254,45 +278,23 @@ export default function AgencyInquiryDetailPage() {
             </AgencyCard>
           )}
 
-          {/* Conversation (once talking or later) */}
+          {/* Conversation lives in Messages — link to the chat room. */}
           {(isTalking || inquiry.status === "HANDED_OVER" || inquiry.status === "CONVERTED") && (
-            <AgencyCard className="flex flex-col p-5">
-              <h2 className="mb-3 text-[15px] font-bold text-ink">{t("conversation")}</h2>
-              <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
-                {(inquiry.messages ?? []).length === 0 && (
-                  <p className="py-6 text-center text-[13px] text-ink-muted">{t("noMessagesYet")}</p>
-                )}
-                {(inquiry.messages ?? []).map((m) => {
-                  const mine = m.senderId === inquiry.agency?.ownerId;
-                  return (
-                    <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                      <div className={cn("max-w-[78%] rounded-2xl px-3 py-2 text-[13px]", mine ? "bg-brand text-white" : "bg-gray-100 text-ink")}>
-                        {m.content}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
+            <button
+              onClick={() => inquiry.conversation?.id && router.push(`/agency/messages/${inquiry.conversation.id}`)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-sm hover:bg-gray-50"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF8EA]">
+                <MessageSquare className="h-5 w-5 text-brand" />
               </div>
-              {isTalking && (
-                <div className="mt-3 flex items-center gap-2">
-                  <input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-                    placeholder={t("typeMessage")}
-                    className="h-11 flex-1 rounded-xl border border-gray-200 px-3 text-[14px] outline-none focus:border-brand"
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={busy === "message" || !draft.trim()}
-                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white disabled:opacity-50"
-                  >
-                    <Send className="h-5 w-5" />
-                  </button>
-                </div>
-              )}
-            </AgencyCard>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-bold text-ink">{t("openConversation")}</p>
+                <p className="truncate text-[12px] text-ink-muted">
+                  {(inquiry.messages?.length ?? 0) > 0 ? inquiry.messages![inquiry.messages!.length - 1].content : t("startConversation")}
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 shrink-0 text-gray-400" />
+            </button>
           )}
 
           {/* Hand over a worker */}

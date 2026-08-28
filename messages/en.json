@@ -664,7 +664,7 @@
   },
   "agencyPlacements": {
     "unknownFallback": "Unknown",
-    "statusActive": "Active",
+    "statusActive": "On job",
     "statusTerminated": "Terminated",
     "statusOptedOut": "Opted Out",
     "filterAll": "All",
@@ -1320,9 +1320,16 @@
     "cancelEdit": "Cancel edit",
     "cancelReply": "Cancel reply",
     "readOnlyPlaceholder": "This conversation is read-only",
+    "conversationClosed": "This conversation is closed.",
+    "conversationNotYetOpen": "This conversation opens once the agency accepts your request.",
+    "conversationGuaranteeOver": "The replacement guarantee period has ended, so this conversation is now read-only.",
     "editPlaceholder": "Edit your message...",
     "typePlaceholder": "Type a message...",
-    "remindPartner": "Remind {name}"
+    "remindPartner": "Remind {name}",
+    "agency": "Agency",
+    "company": "Company",
+    "client": "Client",
+    "aboutWorker": "{role} · about {worker}"
   },
   "receivedBookingDetails": {
     "failedFetchBooking": "Failed to fetch booking",
@@ -1458,6 +1465,11 @@
     "statusUnavailable": "Unavailable",
     "statusInactive": "Inactive",
     "unnamedWorker": "Unnamed Worker",
+    "cancel": "Keep worker",
+    "removeWorkerTitle": "Remove this worker?",
+    "removeWorkerBody": "{worker} will no longer be affiliated with your agency for {service}. They stop appearing as one of your workers, and you would have to invite them again to undo this.",
+    "withdrawInviteTitle": "Withdraw this invitation?",
+    "withdrawInviteBody": "{worker} will no longer be able to accept your invitation for {service}. You can send a new invitation later.",
     "sinceDays": "{days, plural, one {# day} other {# days}}",
     "sinceWeeks": "{weeks, plural, one {# week} other {# weeks}}",
     "sinceMonths": "{months, plural, one {# month} other {# months}}",
@@ -1482,7 +1494,16 @@
     "actionIssues": "Issues",
     "actionMore": "More",
     "addOrInviteWorker": "Add or Invite Worker",
-    "rowsPerPage": "Rows per page"
+    "rowsPerPage": "Rows per page",
+    "inviteWorker": "Invite worker",
+    "pendingInvitations": "Pending invitations ({count})",
+    "statusInvited": "Invited",
+    "withdraw": "Withdraw",
+    "enrolledServices": "Enrolled services",
+    "noEnrolledServices": "No services affiliated yet.",
+    "remove": "Remove",
+    "enrollmentRemoved": "Enrollment updated.",
+    "enrollmentRemoveError": "Could not update the enrollment."
   },
   "agencyInquiryDetail": {
     "inquiryNotFound": "Inquiry not found",
@@ -1513,7 +1534,12 @@
     "handOverDesc": "When you've agreed, propose a worker. They'll confirm, then a booking is created.",
     "selectWorker": "Select a worker…",
     "sentForConfirmation": "Sent to the worker for confirmation",
-    "handOverWorkerButton": "Hand over worker"
+    "handOverWorkerButton": "Hand over worker",
+    "wouldLikeToWorkWith": "{employer} would like to work with {worker}",
+    "conversationClosed": "This conversation is closed.",
+    "openConversation": "Open conversation",
+    "startConversation": "No messages yet — start the conversation",
+    "openingReplyPlaceholder": "Say something to start the conversation (optional)"
   },
   "inquiryShared": {
     "statusNew": "New",
@@ -1567,13 +1593,16 @@
     "goToYourBookings": "Go to your bookings",
     "yourInquiry": "Your inquiry",
     "waitingForResponse": "Waiting for {agency} to respond…",
+    "workerProposedTitle": "{worker} was proposed",
+    "workerProposedBody": "The agency has notified {worker}. As soon as they accept, you'll be connected and can arrange the work together.",
     "workerConfirmedGoToBookings": "Worker confirmed — go to your bookings",
     "withdrawInquiry": "Withdraw inquiry",
     "inquiryStatusWithdrawn": "This inquiry is withdrawn.",
     "inquiryStatusDeclined": "This inquiry is declined.",
     "conversation": "Conversation",
     "noMessagesYet": "No messages yet.",
-    "typeMessage": "Type a message…"
+    "typeMessage": "Type a message…",
+    "openConversationHint": "Open the chat"
   },
   "offline": {
     "title": "You're offline",
@@ -1759,7 +1788,8 @@
     "howItWorksDesc": "Clients book services directly with {name}. Your team handles the work — Huza doesn't track individual staff members for service companies.",
     "ownerActions": "Owner actions",
     "editOrganizationDetails": "Edit organization details",
-    "manageWorkers": "Manage workers"
+    "manageWorkers": "Manage workers",
+    "ourWorkers": "Our workers"
   },
   "servicesBrowse": {
     "services": "Services",
@@ -2034,7 +2064,9 @@
     "account": "Account",
     "support": "Support",
     "legal": "Legal",
-    "logout": "Logout"
+    "logout": "Logout",
+    "agencyInvitations": "Agency invitations",
+    "agencyInvitationsDesc": "Accept or decline invites to join an agency"
   },
   "chatInbox": {
     "searchPlaceholder": "Search employers, workers or jobs",
@@ -2062,7 +2094,9 @@
     "minutesAgo": "{minutes}m ago",
     "hoursAgo": "{hours}h ago",
     "yesterday": "Yesterday",
-    "daysAgo": "{days}d ago"
+    "daysAgo": "{days}d ago",
+    "agencyConversation": "Agency",
+    "noMessagesYet": "No messages yet"
   },
   "login": {
     "welcomeBack": "Welcome back",
@@ -2153,5 +2187,95 @@
       "desc": "Find job postings and work opportunities"
     },
     "gotIt": "Got it!"
+  },
+  "agencyEnrollments": {
+    "title": "Enrollments",
+    "subtitle": "Invite workers' services into your agency. They accept before they are affiliated.",
+    "inviteBtn": "Invite a worker",
+    "emptyTitle": "No enrollments yet",
+    "emptyHint": "Invite a worker's service to get started. They'll receive an invitation to accept.",
+    "unnamedWorker": "Unnamed worker",
+    "statusActive": "Active",
+    "statusInvited": "Invited",
+    "statusDeclined": "Declined",
+    "statusOptedOut": "Opted out",
+    "statusRevoked": "Revoked",
+    "revokeAction": "Withdraw",
+    "endAction": "Remove",
+    "revokeSuccess": "Invitation withdrawn.",
+    "endSuccess": "Enrollment ended.",
+    "inviteSuccess": "Invitation sent.",
+    "actionError": "Something went wrong. Please try again.",
+    "searchPlaceholder": "Search by name, phone, or username",
+    "searchHint": "Type at least 2 characters to search.",
+    "noResults": "No workers found.",
+    "servicesLabel": "Services",
+    "inviteAction": "Invite",
+    "alreadyInThisAgency": "In your agency",
+    "inAnotherAgency": "In another agency"
+  },
+  "workerEnrollments": {
+    "back": "Back",
+    "title": "Agency invitations",
+    "emptyTitle": "No invitations",
+    "emptyHint": "When an agency invites one of your services, it will appear here for you to accept.",
+    "statusInvited": "Invited",
+    "statusActive": "Active",
+    "statusDeclined": "Declined",
+    "statusOptedOut": "Left",
+    "statusRevoked": "Withdrawn",
+    "inviteExplainer": "{agency} wants to add your {service} service to their agency. Accept to be affiliated.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "leave": "Leave agency",
+    "leaving": "Leaving…",
+    "acceptSuccess": "Invitation accepted.",
+    "declineSuccess": "Invitation declined.",
+    "leaveSuccess": "You have left the agency.",
+    "actionError": "Something went wrong. Please try again."
+  },
+  "agencyReviews": {
+    "title": "Company reviews",
+    "subtitle": "How clients rate your agency as a company.",
+    "emptyTitle": "No reviews yet",
+    "emptyHint": "When clients review your agency, their ratings and comments appear here.",
+    "basedOn": "Based on {count} reviews",
+    "anonymous": "Anonymous",
+    "yourReply": "Your reply",
+    "replyPlaceholder": "Write a reply…",
+    "sendReply": "Send reply",
+    "cancel": "Cancel",
+    "replyAction": "Reply",
+    "replySaved": "Reply saved.",
+    "actionError": "Something went wrong. Please try again.",
+    "wouldUseAgain": "Would use again",
+    "rehireYes": "Would use again",
+    "rehireMaybe": "Might use again",
+    "rehireNo": "Wouldn't use again"
+  },
+  "agencyReviewSubmit": {
+    "rateAgency": "Rate this agency",
+    "rehireQuestion": "Would you use this agency again?",
+    "thanks": "Thanks for rating this agency."
+  },
+  "agencyMessages": {
+    "title": "Messages",
+    "subtitle": "Conversations with clients about their requests.",
+    "emptyTitle": "No conversations yet",
+    "emptyHint": "When you accept an inquiry, the conversation appears here.",
+    "openRequest": "Open request",
+    "aboutWorker": "About {worker}"
+  },
+  "conversation": {
+    "noMessagesYet": "No messages yet",
+    "typeMessage": "Type a message…",
+    "couldNotSend": "Could not send. Please try again.",
+    "title": "Conversation",
+    "back": "Back"
+  },
+  "workPlacementOffers": {
+    "title": "Placement offer",
+    "from": "{agency} wants to place you with {employer}",
+    "agencyFallback": "An agency"
   }
 }

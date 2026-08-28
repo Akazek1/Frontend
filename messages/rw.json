@@ -664,7 +664,7 @@
   },
   "agencyPlacements": {
     "unknownFallback": "Ntizwi",
-    "statusActive": "Birakora",
+    "statusActive": "Ari mukazi",
     "statusTerminated": "Byahagaritswe",
     "statusOptedOut": "Yisubiyeho",
     "filterAll": "Byose",
@@ -1317,9 +1317,16 @@
     "cancelEdit": "Hagarika guhindura",
     "cancelReply": "Hagarika gusubiza",
     "readOnlyPlaceholder": "Iki kiganiro ntigishobora guhindurwa",
+    "conversationClosed": "Iki kiganiro cyarangiye.",
+    "conversationNotYetOpen": "Iki kiganiro gitangira ikigo kimaze kwemera icyifuzo cyawe.",
+    "conversationGuaranteeOver": "Igihe cyo gusimburwa kwarangiye, ubu iki kiganiro gisomwa gusa.",
     "editPlaceholder": "Hindura ubutumwa bwawe...",
     "typePlaceholder": "Andika ubutumwa...",
-    "remindPartner": "Ibutsa {name}"
+    "remindPartner": "Ibutsa {name}",
+    "agency": "Ikigo",
+    "company": "Isosiyete",
+    "client": "Umukiriya",
+    "aboutWorker": "{role} · kuri {worker}"
   },
   "receivedBookingDetails": {
     "failedFetchBooking": "Ntibyashobotse kuzana ifatabuguzi",
@@ -1455,6 +1462,11 @@
     "statusUnavailable": "Ntaba ahari",
     "statusInactive": "Ntibikora",
     "unnamedWorker": "Umukozi utiswe izina",
+    "cancel": "Reka umukozi",
+    "removeWorkerTitle": "Ukuraho uyu mukozi?",
+    "removeWorkerBody": "{worker} ntazaba akiri mu kigo cyawe kuri {service}. Ntazongera kugaragara mu bakozi bawe, kandi wamusubizamo gusa umutumiye bundi bushya.",
+    "withdrawInviteTitle": "Ugukuraho ubu butumire?",
+    "withdrawInviteBody": "{worker} ntazashobora kwemera ubutumire bwawe kuri {service}. Ushobora kongera kubwohereza nyuma.",
     "sinceDays": "{days, plural, one {Umunsi #} other {Iminsi #}}",
     "sinceWeeks": "{weeks, plural, one {Icyumweru #} other {Ibyumweru #}}",
     "sinceMonths": "{months, plural, one {Ukwezi #} other {Amezi #}}",
@@ -1479,7 +1491,16 @@
     "actionIssues": "Ibibazo",
     "actionMore": "Ibindi",
     "addOrInviteWorker": "Ongeraho cyangwa utumire umukozi",
-    "rowsPerPage": "Imirongo kuri buri rupapuro"
+    "rowsPerPage": "Imirongo kuri buri rupapuro",
+    "inviteWorker": "Tumira umukozi",
+    "pendingInvitations": "Ubutumire butegereje ({count})",
+    "statusInvited": "Yatumiwe",
+    "withdraw": "Kuraho",
+    "enrolledServices": "Serivisi zanditswe",
+    "noEnrolledServices": "Nta serivisi iraboneka.",
+    "remove": "Gukura",
+    "enrollmentRemoved": "Iyandikwa ryahinduwe.",
+    "enrollmentRemoveError": "Ntibishoboye guhindura iyandikwa."
   },
   "agencyInquiryDetail": {
     "inquiryNotFound": "Ubusabe ntibwabonetse",
@@ -1510,7 +1531,12 @@
     "handOverDesc": "Nimumara kumvikana, tanga umukozi. Azabyemeza, hanyuma ifatabuguzi rikore.",
     "selectWorker": "Hitamo umukozi...",
     "sentForConfirmation": "Byoherejwe ku mukozi ngo abyemeze",
-    "handOverWorkerButton": "Tanga umukozi"
+    "handOverWorkerButton": "Tanga umukozi",
+    "wouldLikeToWorkWith": "{employer} yishimiye gukorana na {worker}",
+    "conversationClosed": "Iki kiganiro cyafunzwe.",
+    "openConversation": "Fungura ikiganiro",
+    "startConversation": "Nta butumwa buhari — tangira ikiganiro",
+    "openingReplyPlaceholder": "Andika ijambo ryo gutangiza ikiganiro (si itegeko)"
   },
   "inquiryShared": {
     "statusNew": "Ni mushya",
@@ -1564,13 +1590,16 @@
     "goToYourBookings": "Jya ku mafatabuguzi yawe",
     "yourInquiry": "Ubusabe bwawe",
     "waitingForResponse": "Dutegereje ko {agency} isubiza…",
+    "workerProposedTitle": "Hatanzwe {worker}",
+    "workerProposedBody": "Ikigo cyamenyesheje {worker}. Akimara kwemera, muzahuzwa maze mutegure akazi mwembi.",
     "workerConfirmedGoToBookings": "Umukozi yemeye — jya ku mafatabuguzi yawe",
     "withdrawInquiry": "Kuraho ubusabe",
     "inquiryStatusWithdrawn": "Ubu busabe bwakuweho.",
     "inquiryStatusDeclined": "Ubu busabe bwanzwe.",
     "conversation": "Ikiganiro",
     "noMessagesYet": "Nta butumwa burahari.",
-    "typeMessage": "Andika ubutumwa…"
+    "typeMessage": "Andika ubutumwa…",
+    "openConversationHint": "Fungura ikiganiro"
   },
   "offline": {
     "title": "Ntabwo uri kuri interineti",
@@ -1756,7 +1785,8 @@
     "howItWorksDesc": "Abakiriya bafata serivisi ako kanya na {name}. Itsinda ryawe ni ryo rikora akazi — Huza ntigenzura buri mukozi ku giti cye ku masosiyete atanga serivisi.",
     "ownerActions": "Ibikorwa bya Nyir'Ikigo",
     "editOrganizationDetails": "Hindura amakuru y'ikigo",
-    "manageWorkers": "Gucunga abakozi"
+    "manageWorkers": "Gucunga abakozi",
+    "ourWorkers": "Abakozi bacu"
   },
   "servicesBrowse": {
     "services": "Serivisi",
@@ -1928,7 +1958,7 @@
     "unavailable": "Ntaboneka",
     "serviceCompany": "Sosiyete itanga serivisi",
     "priceOnRequest": "Igiciro gisabwa",
-    "backedBy": "Ishyigikiwe na",
+    "backedBy": "Atangwa na",
     "activeWorkersAndPlacements": "{workers} Abakozi Bakora · {placements} Bashyizwe mu Kazi",
     "viewProfile": "Reba Umwirondoro",
     "badgeIdVerified": "Indangamuntu Yemejwe",
@@ -1981,7 +2011,7 @@
     "new": "Ni mushya",
     "rwanda": "U Rwanda",
     "speaksWith": "Avuga: {languages}",
-    "backedByName": "Ishyigikiwe na {name}",
+    "backedByName": "Atangwa na {name}",
     "badgeIdVerified": "Indangamuntu Yemejwe",
     "badgePoliceChecked": "Yasuzumwe na Polisi",
     "badgeReplacementGuaranteed": "Gusimbuzwa Byijejwe",
@@ -2028,19 +2058,21 @@
     "account": "Konti",
     "support": "Ubufasha",
     "legal": "Amategeko",
-    "logout": "Sohoka"
+    "logout": "Sohoka",
+    "agencyInvitations": "Ubutumire bw'ibigo",
+    "agencyInvitationsDesc": "Emera cyangwa wange ubutumire bwo kwinjira mu kigo"
   },
   "chatInbox": {
     "searchPlaceholder": "Shakisha abakoresha, abakozi cyangwa akazi",
     "messagesTitle": "Ubutumwa",
     "messagesSubtitle": "Ibiganiro byo guha akazi n'amakuru y'akazi",
-    "tabAll": "Byose",
+    "tabAll": "Zose",
     "tabRead": "Zasomwe",
     "tabUnread": "Izitasomwe",
     "tabArchive": "Izishyinguwe",
     "statusPending": "Bitegereje",
-    "statusConfirmed": "Byemejwe",
-    "statusActive": "Birakora",
+    "statusConfirmed": "Akazi kemejwe",
+    "statusActive": "Akazi karimo",
     "statusCompleted": "Byarangiye",
     "statusCancelled": "Byahagaritswe",
     "unknownFallback": "Ntizwi",
@@ -2056,7 +2088,9 @@
     "minutesAgo": "iminota {minutes} ishize",
     "hoursAgo": "amasaha {hours} ashize",
     "yesterday": "Ejo hashize",
-    "daysAgo": "iminsi {days} ishize"
+    "daysAgo": "iminsi {days} ishize",
+    "agencyConversation": "Ikigo",
+    "noMessagesYet": "Nta butumwa buhari"
   },
   "login": {
     "welcomeBack": "Ikaze",
@@ -2147,5 +2181,95 @@
       "desc": "Shaka amatangazo y'akazi n'amahirwe yo gukora."
     },
     "gotIt": "Byumvikanye!"
+  },
+  "agencyEnrollments": {
+    "title": "Iyandikwa",
+    "subtitle": "Tumira serivisi z'abakozi mu kigo cyawe. Bagomba kwemera mbere yo kwinjizwa.",
+    "inviteBtn": "Tumira umukozi",
+    "emptyTitle": "Nta iyandikwa irahaba",
+    "emptyHint": "Tumira serivisi y'umukozi kugira ngo utangire. Azabona ubutumire bwo kwemera.",
+    "unnamedWorker": "Umukozi utazwi izina",
+    "statusActive": "Birakora",
+    "statusInvited": "Yatumiwe",
+    "statusDeclined": "Yanze",
+    "statusOptedOut": "Yavuyemo",
+    "statusRevoked": "Bwakuweho",
+    "revokeAction": "Kuraho",
+    "endAction": "Gukura",
+    "revokeSuccess": "Ubutumire bwakuweho.",
+    "endSuccess": "Iyandikwa ryarangiye.",
+    "inviteSuccess": "Ubutumire bwoherejwe.",
+    "actionError": "Habaye ikibazo. Ongera ugerageze.",
+    "searchPlaceholder": "Shakisha ukoresheje izina, telefoni, cyangwa username",
+    "searchHint": "Andika byibura inyuguti 2 kugira ngo ushakishe.",
+    "noResults": "Nta bakozi babonetse.",
+    "servicesLabel": "Serivisi",
+    "inviteAction": "Tumira",
+    "alreadyInThisAgency": "Mu kigo cyawe",
+    "inAnotherAgency": "Mu kindi kigo"
+  },
+  "workerEnrollments": {
+    "back": "Subira inyuma",
+    "title": "Ubutumire bw'ibigo",
+    "emptyTitle": "Nta butumire",
+    "emptyHint": "Iyo ikigo gitumiye imwe muri serivisi zawe, izagaragara hano kugira ngo wemere.",
+    "statusInvited": "Watumiwe",
+    "statusActive": "Birakora",
+    "statusDeclined": "Wanze",
+    "statusOptedOut": "Wavuyemo",
+    "statusRevoked": "Bwakuweho",
+    "inviteExplainer": "{agency} ishaka kongera serivisi yawe ya {service} mu kigo cyayo. Emera kugira ngo winjire.",
+    "accept": "Emera",
+    "decline": "Anga",
+    "leave": "Kuva mu kigo",
+    "leaving": "Kuvamo…",
+    "acceptSuccess": "Ubutumire bwemewe.",
+    "declineSuccess": "Ubutumire bwanzwe.",
+    "leaveSuccess": "Wavuye mu kigo.",
+    "actionError": "Habaye ikibazo. Ongera ugerageze."
+  },
+  "agencyReviews": {
+    "title": "Isuzuma ry'ikigo",
+    "subtitle": "Uko abakiriya basuzuma ikigo cyawe nk'isosiyete.",
+    "emptyTitle": "Nta isuzuma rirahaba",
+    "emptyHint": "Iyo abakiriya basuzumye ikigo cyawe, amanota n'ibitekerezo byabo bigaragara hano.",
+    "basedOn": "Bishingiye ku masuzuma {count}",
+    "anonymous": "Utazwi",
+    "yourReply": "Igisubizo cyawe",
+    "replyPlaceholder": "Andika igisubizo…",
+    "sendReply": "Ohereza igisubizo",
+    "cancel": "Kureka",
+    "replyAction": "Subiza",
+    "replySaved": "Igisubizo cyabitswe.",
+    "actionError": "Habaye ikibazo. Ongera ugerageze.",
+    "wouldUseAgain": "Bakongera kukoresha",
+    "rehireYes": "Yakongera",
+    "rehireMaybe": "Ashobora kongera",
+    "rehireNo": "Ntiyakongera"
+  },
+  "agencyReviewSubmit": {
+    "rateAgency": "Tanga isuzuma ku kigo",
+    "rehireQuestion": "Wakongera gukoresha iki kigo?",
+    "thanks": "Urakoze gutanga isuzuma kuri iki kigo."
+  },
+  "agencyMessages": {
+    "title": "Ubutumwa",
+    "subtitle": "Ibiganiro n'abakiriya ku byifuzo byabo.",
+    "emptyTitle": "Nta biganiro birahaba",
+    "emptyHint": "Iyo wemeye icyifuzo, ikiganiro kigaragara hano.",
+    "openRequest": "Fungura icyifuzo",
+    "aboutWorker": "Kuri {worker}"
+  },
+  "conversation": {
+    "noMessagesYet": "Nta butumwa buhari",
+    "typeMessage": "Andika ubutumwa…",
+    "couldNotSend": "Ntibyoherejwe. Ongera ugerageze.",
+    "title": "Ikiganiro",
+    "back": "Subira inyuma"
+  },
+  "workPlacementOffers": {
+    "title": "Icyifuzo cyo guhabwa akazi",
+    "from": "{agency} ishaka kuguha akazi kwa {employer}",
+    "agencyFallback": "Ikigo"
   }
 }

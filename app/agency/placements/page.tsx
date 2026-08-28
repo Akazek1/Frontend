@@ -95,7 +95,6 @@ export default function AgencyPlacementsPage() {
                   <th className="px-5 py-3.5">{t("employer")}</th>
                   <th className="px-5 py-3.5">{t("status")}</th>
                   <th className="px-5 py-3.5">{t("placed")}</th>
-                  <th className="px-5 py-3.5">{t("commission")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,16 +110,6 @@ export default function AgencyPlacementsPage() {
                     <td className="px-5 py-4"><StatusPill label={STATUS(t)[p.status].label} tone={STATUS(t)[p.status].tone} /></td>
                     <td className="px-5 py-4 text-[13px] text-ink-muted">
                       {new Date(p.placedAt).toLocaleDateString("en-RW", { day: "numeric", month: "short", year: "numeric" })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-semibold text-ink">
-                          {p.commissionAmount ? `${new Intl.NumberFormat("en-RW").format(p.commissionAmount)} RWF` : "—"}
-                        </span>
-                        {p.commissionAmount ? (
-                          <StatusPill label={p.commissionPaid ? t("paid") : t("unpaid")} tone={p.commissionPaid ? "green" : "amber"} />
-                        ) : null}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -144,13 +133,6 @@ export default function AgencyPlacementsPage() {
                   <span className="text-ink-muted">
                     {new Date(p.placedAt).toLocaleDateString("en-RW", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
-                  {p.commissionAmount ? (
-                    <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                      <Coins className="h-3.5 w-3.5 text-brand" />
-                      {new Intl.NumberFormat("en-RW").format(p.commissionAmount)} RWF
-                      <StatusPill label={p.commissionPaid ? t("paid") : t("unpaid")} tone={p.commissionPaid ? "green" : "amber"} />
-                    </span>
-                  ) : null}
                 </div>
               </AgencyCard>
             ))}

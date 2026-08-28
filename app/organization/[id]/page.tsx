@@ -18,6 +18,7 @@ import {
   appStickyHeaderClass,
 } from "@/components/ui/app-primitives"
 import { cn } from "@/lib/utils"
+import { AgencyWorkerCards } from "@/components/organization/agency-worker-cards"
 
 interface Organization {
   id: string
@@ -189,6 +190,8 @@ export default function OrgProfilePage() {
             <p className="text-sm text-gray-400 italic">{t("noContactDetails")}</p>
           )}
         </Card>
+
+        {org.type === "STAFFING_AGENCY" && <AgencyWorkerCards agencyId={id as string} />}
 
         {org.type === "SERVICE_COMPANY" && (
           <Card>

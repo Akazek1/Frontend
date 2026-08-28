@@ -9,6 +9,7 @@ export interface InquiryPerson {
   phoneNumber?: string | null;
   email?: string | null;
   createdAt?: string | null;
+  addresses?: { city: string | null; district: string | null; sector: string | null; isDefault?: boolean }[];
 }
 
 export interface AgencyInquiry {
@@ -23,14 +24,20 @@ export interface AgencyInquiry {
   workerOfInterest: InquiryPerson | null;
   handoverWorker: InquiryPerson | null;
   messages?: InquiryMessage[];
+  /** Unified conversation backing this inquiry's chat. */
+  conversation?: { id: string } | null;
 }
 
 export interface InquiryMessage {
   id: string;
-  senderId: string;
+  // A message is sent by EITHER a User (senderId) OR the agency org (senderOrgId).
+  senderId: string | null;
+  senderOrgId?: string | null;
   content: string;
   createdAt: string;
+  isRead?: boolean;
   sender?: InquiryPerson;
+  senderOrg?: { id: string; name: string; logoUrl: string | null } | null;
 }
 
 export function inquiryStatusMap(

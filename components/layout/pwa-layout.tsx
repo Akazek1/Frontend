@@ -110,7 +110,10 @@ const Layout = ({
   const isInquiryDetail = /^\/inquiries\/[^/]+$/.test(pathname);
   const shouldHideNavigation =
     hideNavigationPaths.includes(pathname) ||
+    // Every chat room is full-bleed: booking rooms (/conversations/inbox) and
+    // unified rooms (/conversations/thread) alike.
     pathname.startsWith("/conversations/inbox") ||
+    pathname.startsWith("/conversations/thread") ||
     isServiceDetail ||
     isInquiryDetail ||
     (isJobDetail && !isAuthenticated);
@@ -179,7 +182,7 @@ const Layout = ({
             ? (isServiceDetail || isJobDetail)
               ? "overflow-y-auto scrollbar-hide"
               : "overflow-hidden"
-            : "overflow-y-auto scrollbar-hide pb-24"
+            : "overflow-y-auto scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]"
         }`}
       >
         {children}

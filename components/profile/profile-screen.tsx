@@ -15,6 +15,7 @@ import {
   Bookmark,
   Lock,
   Building2,
+  UserPlus,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import Image from "next/image";
@@ -93,6 +94,10 @@ const ProfileScreen = () => {
     isWorker
       ? { name: t("placementOffers"), description: t("placementOffersDesc"), Icon: Building2, href: "/inquiries" }
       : { name: t("agencyInquiries"), description: t("agencyInquiriesDesc"), Icon: Building2, href: "/inquiries" },
+    // Workers: agency enrollment invitations (accept/decline a service affiliation).
+    ...(isWorker
+      ? [{ name: t("agencyInvitations"), description: t("agencyInvitationsDesc"), Icon: UserPlus, href: "/enrollments" }]
+      : []),
     { name: t("savedProfiles"), description: t("savedProfilesDesc"), Icon: Bookmark, href: "/more/saved" },
     { name: t("notifications"), description: t("notificationsDesc"), Icon: Bell, href: "/more/notifications" },
   ];

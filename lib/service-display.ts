@@ -161,7 +161,9 @@ export function mapServiceToProviderCard(service: Service, locale?: string): Pro
         : provider?.profilePicture || provider?.profileImg,
       320,
     ),
-    agency: !isCompanyCard ? provider?.agency ?? null : null,
+    // Prefer the service-level agency (new enrollment model), fall back to the
+    // provider's legacy agency link during the transition.
+    agency: !isCompanyCard ? service.agency ?? provider?.agency ?? null : null,
   };
 }
 

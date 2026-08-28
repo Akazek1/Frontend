@@ -112,22 +112,27 @@ export function FormField({
 type PageShellProps = React.HTMLAttributes<HTMLElement> & {
   children: React.ReactNode;
   padded?: boolean;
-  bottomNav?: boolean;
 };
 
 export function PageShell({
   children,
   className,
   padded = true,
-  bottomNav = true,
   ...props
 }: PageShellProps) {
   return (
     <main
       className={cn(
-        "bg-surface mx-auto flex min-h-dvh w-full max-w-[428px] flex-col",
+        // `min-h-full` (fill the app shell's scroll container), not `min-h-dvh`
+        // (fill the viewport): the container already has the bottom-nav
+        // padding, so demanding a full viewport inside it added exactly that
+        // padding as phantom scroll on every short page.
+        "bg-surface mx-auto flex min-h-full w-full max-w-[428px] flex-col",
         padded && "px-4 pt-6",
-        bottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-6",
+        // Bottom-nav clearance lives on the app shell's scroll container
+        // (pwa-layout's <main>). Adding it here as well double-padded every
+        // page, which made short pages scroll by ~96px with nothing to show.
+        "pb-6",
         className,
       )}
       {...props}
