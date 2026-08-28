@@ -190,7 +190,7 @@ const Layout = ({
     pathname.startsWith("/business") ||
     pathname.startsWith("/welcome") ||
     (isMarketingHost && pathname === "/");
-  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/onboarding/organization", "/logout"];
+  const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/logout"];
   const isServiceDetail =
     /^\/service\/[^/]+$/.test(pathname) ||
     /^\/[^/]+\/services\/[^/]+(\/edit)?$/.test(pathname);

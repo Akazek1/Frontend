@@ -8,8 +8,7 @@ import Image from "next/image"
 import { useTranslations } from "next-intl"
 import api from "@/lib/axios"
 import { useOnboarding } from "@/context/onboarding-context"
-
-const OTP_LENGTH = 6
+import { OtpCodeInput, OTP_LENGTH } from "@/components/ui/otp-code-input"
 
 export function LoginForm() {
   const t = useTranslations("login")
@@ -169,45 +168,13 @@ export function LoginForm() {
                 })}
               </p>
 
-              <div
-                className="relative flex gap-2 justify-center"
-                onClick={() => inputsRef.current[0]?.focus()}
-              >
-                <input
-                  ref={(el) => { inputsRef.current[0] = el }}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  autoComplete="one-time-code"
-                  maxLength={OTP_LENGTH}
-                  value={code.join("")}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH)
-                    const next = Array(OTP_LENGTH).fill("")
-                    for (let i = 0; i < val.length; i++) next[i] = val[i]
-                    setCode(next)
-                    if (val.length === OTP_LENGTH) handleVerifyOtp(val)
-                  }}
-                  onFocus={(e) => e.target.scrollIntoView({ behavior: "smooth", block: "center" })}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  style={{ fontSize: "16px" }}
-                  aria-label={t("verificationCode")}
-                />
-                {Array.from({ length: OTP_LENGTH }).map((_, i) => {
-                  const isFilled = !!code[i]
-                  const isActive = i === code.findIndex((d) => !d) || (i === OTP_LENGTH - 1 && code.every((d) => d))
-                  return (
-                    <div
-                      key={i}
-                      className={`w-11 h-12 flex items-center justify-center text-xl font-bold border-2 rounded-xl transition-all ${
-                        isActive ? "border-brand ring-2 ring-brand/20" : isFilled ? "border-brand/50" : "border-gray-200"
-                      }`}
-                    >
-                      {code[i] || ""}
-                    </div>
-                  )
-                })}
-              </div>
+              <OtpCodeInput
+                value={code}
+                onChange={setCode}
+                onComplete={handleVerifyOtp}
+                inputRef={(el) => { inputsRef.current[0] = el }}
+                ariaLabel={t("verificationCode")}
+              />
 
               <div className="text-center">
                 {resendCooldown > 0 ? (

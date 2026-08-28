@@ -1,36 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, Briefcase, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Building2, Briefcase, Loader2, CheckCircle } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
-import { colors } from "@/constant/colors";
-import { HuzaLogo } from "@/components/brand/huza-logo";
+import { isValidRwandaPhone, normalizeRwandaPhone } from "@/lib/phone";
+import { BusinessAuthShell } from "@/components/business/business-auth-shell";
+import { PasswordField } from "@/components/business/password-field";
+import { OtpCodeInput, OTP_LENGTH } from "@/components/ui/otp-code-input";
 
 type OrgType = "SERVICE_COMPANY" | "STAFFING_AGENCY";
 
+// Matches the backend's OTP resend cooldown (AuthService.OTP_RESEND_COOLDOWN_SECONDS).
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export default function BusinessRegisterPage() {
   const t = useTranslations("businessRegister");
+  const locale = useLocale();
   const [type, setType] = useState<OrgType | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Sign-up is two phases on one page: fill in the details, then prove the
+  // phone number with the code we text to it. The account is only created at
+  // the end, so an abandoned sign-up leaves nothing behind.
+  const [phase, setPhase] = useState<"details" | "verify">("details");
+  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const [resendIn, setResendIn] = useState(0);
 
-  async function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setInterval(() => setResendIn((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [resendIn]);
+
+  async function sendCode() {
+    const res = await api.post("/auth/org/request-otp", {
+      email: email.trim(),
+      phone: normalizeRwandaPhone(phone),
+      locale,
+    });
+    setResendIn(RESEND_COOLDOWN_SECONDS);
+    return res;
+  }
+
+  async function handleDetailsSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!type) return toast.error(t("chooseBusinessType"));
     if (!name.trim()) return toast.error(t("enterBusinessName"));
     if (!email.trim()) return toast.error(t("enterEmailAddress"));
+    // Required: this number receives the sign-up code and every later
+    // password-reset code, and is how we reach the owner if the email is wrong.
+    if (!isValidRwandaPhone(phone)) return toast.error(t("enterValidPhone"));
     if (password.length < 8) return toast.error(t("passwordTooShort"));
     if (password !== confirm) return toast.error(t("passwordsDoNotMatch"));
 
+    setLoading(true);
+    try {
+      await sendCode();
+      setCode(Array(OTP_LENGTH).fill(""));
+      setPhase("verify");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("couldNotSendCode")));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (resendIn > 0 || loading) return;
+    setLoading(true);
+    try {
+      await sendCode();
+      toast.success(t("codeResent"));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("couldNotSendCode")));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify(otp: string) {
     setLoading(true);
     try {
       const res = await api.post("/auth/org/register", {
@@ -38,7 +94,8 @@ export default function BusinessRegisterPage() {
         type,
         email: email.trim(),
         password,
-        phone: phone.trim() || undefined,
+        phone: normalizeRwandaPhone(phone),
+        otp,
       });
       const data = res.data?.data || res.data;
       if (!data?.token) throw new Error(t("noTokenReturned"));
@@ -51,6 +108,7 @@ export default function BusinessRegisterPage() {
         type === "SERVICE_COMPANY" ? "/business/services" : "/agency";
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotCreateAccount")));
+      setCode(Array(OTP_LENGTH).fill(""));
       setLoading(false);
     }
   }
@@ -75,77 +133,95 @@ export default function BusinessRegisterPage() {
   );
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#F4F7F3] px-4 py-10">
-      <div className="w-full max-w-[460px]">
-        <div className="mb-6 flex items-center justify-center">
-          <HuzaLogo markClassName="h-8 w-8" wordClassName="text-[22px]" />
-        </div>
-
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <div className="mb-6 flex flex-col items-center text-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: colors.backgroundTertiary }}>
-              <Building2 className="h-7 w-7" style={{ color: colors.primary }} />
-            </div>
-            <h1 className="text-[22px] font-black text-ink">{t("registerYourBusiness")}</h1>
-            <p className="mt-1 text-[13px] text-ink-muted">{t("adminVerifiesAccount")}</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
-              {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("businessName")}</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. CleanPro Kigali Ltd"
-                className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="min-w-0 flex-1">
-                <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("emailYourLogin")}</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" autoComplete="email"
-                  className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("phoneOptional")}</label>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0788…"
-                  className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("password")}</label>
-              <div className="relative">
-                <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t("atLeast8Characters")} autoComplete="new-password"
-                  className="h-12 w-full rounded-xl border border-gray-200 px-3.5 pr-11 text-[14px] outline-none focus:border-brand" />
-                <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink">
-                  {showPw ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("confirmPassword")}</label>
-              <input type={showPw ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                placeholder={t("reEnterPassword")} autoComplete="new-password"
-                className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
-            </div>
-
-            <button type="submit" disabled={loading}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark disabled:opacity-60">
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t("createAccount")}
-            </button>
-          </form>
-        </div>
-
-        <p className="mt-5 text-center text-[13px] text-ink-muted">
+    <BusinessAuthShell
+      icon={Building2}
+      title={phase === "details" ? t("registerYourBusiness") : t("verifyYourNumber")}
+      subtitle={phase === "details" ? t("adminVerifiesAccount") : undefined}
+      maxWidthClass="max-w-[460px]"
+      footer={
+        <>
           {t("alreadyHaveAccount")}{" "}
           <Link href="/business/login" className="font-semibold text-brand hover:underline">{t("signIn")}</Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {phase === "details" ? (
+        <form onSubmit={handleDetailsSubmit} className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
+            {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("businessName")}</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. CleanPro Kigali Ltd"
+              className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("emailYourLogin")}</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" autoComplete="email"
+                className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("phone")}</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0788…"
+                type="tel" inputMode="tel" autoComplete="tel"
+                className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
+            </div>
+          </div>
+
+          <p className="-mt-1 text-[11.5px] leading-relaxed text-ink-muted">{t("phoneHelp")}</p>
+
+          <PasswordField label={t("password")} value={password} onChange={setPassword} placeholder={t("atLeast8Characters")} />
+          <PasswordField label={t("confirmPassword")} value={confirm} onChange={setConfirm} placeholder={t("reEnterPassword")} />
+
+          <button type="submit" disabled={loading}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark disabled:opacity-60">
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t("continue")}
+          </button>
+        </form>
+      ) : (
+        <div className="space-y-5">
+          <p className="text-center text-[13px] text-ink-muted">
+            {t.rich("codeSentTo", {
+              phone: normalizeRwandaPhone(phone),
+              b: (chunks) => <span className="font-semibold text-ink">{chunks}</span>,
+            })}
+          </p>
+
+          <OtpCodeInput
+            value={code}
+            onChange={setCode}
+            onComplete={handleVerify}
+            autoFocus
+            ariaLabel={t("verificationCode")}
+          />
+
+          <div className="text-center">
+            {resendIn > 0 ? (
+              <p className="text-[13px] text-ink-muted">{t("resendCodeIn", { seconds: resendIn })}</p>
+            ) : (
+              <button type="button" onClick={handleResend} disabled={loading}
+                className="text-[13px] font-semibold text-brand underline underline-offset-2 disabled:opacity-60">
+                {t("resendCode")}
+              </button>
+            )}
+          </div>
+
+          <button type="button" onClick={() => handleVerify(code.join(""))}
+            disabled={loading || code.join("").length < OTP_LENGTH}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark disabled:opacity-60">
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t("createAccount")}
+          </button>
+
+          <button type="button" onClick={() => setPhase("details")} disabled={loading}
+            className="h-11 w-full rounded-xl border-2 border-gray-200 text-[13px] font-bold text-ink hover:bg-gray-50 disabled:opacity-60">
+            {t("backToDetails")}
+          </button>
+        </div>
+      )}
+    </BusinessAuthShell>
   );
 }
