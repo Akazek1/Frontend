@@ -121,9 +121,13 @@ export function mapServiceToProviderCard(service: Service, locale?: string): Pro
   const isCompanyCard = !service.provider && !!service.company;
   const company = service.company;
   const provider = service.provider;
+  // A company that operates as a provider: a normal provider card in every
+  // way, just rendered as a business rather than a person.
+  const isCompanyProvider = (provider as { accountType?: string } | null | undefined)?.accountType === "COMPANY";
 
   return {
     id: service.id,
+    isCompany: isCompanyCard || isCompanyProvider,
     image: getOptimizedCloudinaryUrl(getServiceCardImage(service), 640),
     name: isCompanyCard
       ? company?.name || "Company"
@@ -133,7 +137,7 @@ export function mapServiceToProviderCard(service: Service, locale?: string): Pro
     title: getServiceDisplayName(service, locale),
     experience: service.description || "",
     languages:
-      !isCompanyCard && Array.isArray(provider?.languages)
+      !isCompanyCard && !isCompanyProvider && Array.isArray(provider?.languages)
         ? provider!.languages!.join(", ")
         : "",
     location: isCompanyCard ? areas[0] || "" : formatProviderLocation(provider, areas),
@@ -149,9 +153,13 @@ export function mapServiceToProviderCard(service: Service, locale?: string): Pro
     available: isCompanyCard
       ? service.isActive
       : service.isActive && (provider?.availableForWork ?? true),
+    // A business is "verified" when the BUSINESS has been checked, not the
+    // person — true whether the company owns the card or operates as provider.
     verified: isCompanyCard
       ? company?.verified ?? false
-      : provider?.isVerified ?? false,
+      : isCompanyProvider
+        ? (provider as { company?: { verified?: boolean } } | null)?.company?.verified ?? false
+        : provider?.isVerified ?? false,
     type: getBookingType(service),
     providerId: service.providerId ?? undefined,
     username: isCompanyCard ? undefined : provider?.username,

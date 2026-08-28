@@ -17,6 +17,7 @@ import {
     Coins,
     Flag,
     Home as HomeIcon,
+    Link as LinkIcon,
     Loader2,
     MapPin,
     MessageCircle,
@@ -92,6 +93,11 @@ interface ExistingBookingSummary {
     // Backend's authoritative flag (replaced the `reviews` array): true when the
     // booking is completed and still needs a comment-bearing review.
     reviewPending?: boolean;
+}
+
+/** "instagram.com/kigalievents" — the readable part of a URL, for a link chip. */
+function prettyLink(url: string) {
+    return url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
 }
 
 export function ServiceDetailClient() {
@@ -219,6 +225,16 @@ export function ServiceDetailClient() {
     // owner shown in the header is the Service Company instead.
     const company = service?.company;
     const isCompanyCard = !provider && !!company;
+    // A company operating as a provider: the card is an ordinary provider card,
+    // but the owner is a business — no education, no personal languages, an
+    // office address rather than a home one, and profile links if they added any.
+    const providerCompany = (provider as { accountType?: string; company?: {
+        id: string; name: string; logoUrl: string | null; verified: boolean;
+        socialLinks?: string[]; address?: string | null; website?: string | null; description?: string | null;
+    } | null } | null | undefined);
+    const isCompanyProvider = providerCompany?.accountType === "COMPANY";
+    const businessProfile = isCompanyProvider ? providerCompany?.company ?? null : null;
+    const isBusiness = isCompanyCard || isCompanyProvider;
     const providerName = useMemo(
         () => (isCompanyCard ? company?.name || t("companyFallback") : getProviderName(provider)),
         [isCompanyCard, company, provider, t],
@@ -238,12 +254,15 @@ export function ServiceDetailClient() {
         : provider?.profilePicture || provider?.profileImg || profileImageFallback;
 
     // Real languages only — the "Speaks" row is hidden when none are set.
-    const languages = provider?.languages ?? [];
-    const educationLevel = provider?.educationLevel;
+    const languages = isBusiness ? [] : provider?.languages ?? [];
+    // Businesses have no education level — the row is hidden for them.
+    const educationLevel = isBusiness ? undefined : provider?.educationLevel;
 
     const isVerified = isCompanyCard
         ? company?.verified ?? false
-        : provider?.isVerified ?? false;
+        : isCompanyProvider
+            ? businessProfile?.verified ?? false
+            : provider?.isVerified ?? false;
     const availableToday = isCompanyCard
         ? service?.isActive !== false
         : service?.isActive !== false && (service?.provider?.availableForWork ?? true);
@@ -672,6 +691,54 @@ export function ServiceDetailClient() {
                         </div>
                     </div>
                 </section>
+
+                {/* A business shows where to find it instead of an education
+                    level: office address and up to three profile links. */}
+                {isBusiness && (businessProfile?.address || (businessProfile?.socialLinks?.length ?? 0) > 0) ? (
+                    <section
+                        className="mt-3 rounded-2xl bg-white p-4"
+                        style={{ border: `1px solid ${colors.border}` }}
+                    >
+                        {businessProfile?.address ? (
+                            <div className="flex items-start gap-3">
+                                <div
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                    style={{ backgroundColor: colors.backgroundTertiary, color: colors.primary }}
+                                >
+                                    <MapPin className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: colors.textMuted }}>
+                                        {t("officeLocation")}
+                                    </p>
+                                    <p className="mt-0.5 text-[14px] font-bold text-ink">{businessProfile.address}</p>
+                                </div>
+                            </div>
+                        ) : null}
+
+                        {(businessProfile?.socialLinks?.length ?? 0) > 0 ? (
+                            <div className={businessProfile?.address ? "mt-3 border-t border-gray-100 pt-3" : ""}>
+                                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: colors.textMuted }}>
+                                    {t("findUsOnline")}
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {businessProfile!.socialLinks!.slice(0, 3).map((link) => (
+                                        <a
+                                            key={link}
+                                            href={link}
+                                            target="_blank"
+                                            rel="noopener noreferrer nofollow"
+                                            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-[12px] font-semibold text-ink hover:bg-gray-50"
+                                        >
+                                            <LinkIcon className="h-3.5 w-3.5" style={{ color: colors.primary }} />
+                                            <span className="max-w-[160px] truncate">{prettyLink(link)}</span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null}
+                    </section>
+                ) : null}
 
                 {educationLevel ? (
                     <section

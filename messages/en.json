@@ -1980,6 +1980,8 @@
     "coveredFor": "Covered for",
     "thirtyDays": "30 Days",
     "education": "Education",
+    "officeLocation": "Office",
+    "findUsOnline": "Find us online",
     "sharedByNoDocument": "Shared by {name}; no document required.",
     "viewPhoto": "View photo",
     "reportThisService": "Report this service",
