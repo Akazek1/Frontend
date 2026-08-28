@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import { AgencyNotificationBell } from "@/components/agency/agency-notification-bell";
+import LanguageSwitcher from "@/components/header/language-switcher";
 import { AGENCY_NAV, type AgencyNavItem } from "@/constant/agency-nav";
 import { useAgency } from "@/context/agency-context";
 import { cn } from "@/lib/utils";
@@ -203,6 +204,7 @@ export function AgencyShell({ children }: { children: React.ReactNode }) {
           <HuzaLogo markClassName="h-6 w-6" wordClassName="text-[16px]" className="lg:hidden" />
           <div className="hidden lg:block" />
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <AgencyNotificationBell />
             <Link href="/agency/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-white">
               KS

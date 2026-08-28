@@ -58,26 +58,6 @@ export default function AgencyDashboardPage() {
         })}
       </div>
 
-      {/* Commission summary */}
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
-        <AgencyCard className="p-5">
-          <div className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-brand" />
-            <h2 className="text-[14px] font-bold text-ink">{t("commissionEarned")}</h2>
-          </div>
-          <p className="mt-3 text-[26px] font-black text-ink">{formatRWF(stats?.totalCommissionEarned ?? 0)}</p>
-          <p className="mt-1 text-[12px] text-ink-muted">{t("totalAcrossPlacements")}</p>
-        </AgencyCard>
-        <AgencyCard className="p-5">
-          <div className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-[#B45309]" />
-            <h2 className="text-[14px] font-bold text-ink">{t("unpaidCommission")}</h2>
-          </div>
-          <p className="mt-3 text-[26px] font-black text-ink">{formatRWF(stats?.unpaidCommission ?? 0)}</p>
-          <p className="mt-1 text-[12px] text-ink-muted">{t("outstandingOnActive")}</p>
-        </AgencyCard>
-      </div>
-
       {/* Quick actions */}
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
         <Link href="/agency/requests">

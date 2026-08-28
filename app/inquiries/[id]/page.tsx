@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, Send, ShieldCheck, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
@@ -11,6 +11,7 @@ import { goBackOr } from "@/lib/navigation";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
 import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
+import { AgencyReviewPrompt } from "@/components/agency-review-prompt";
 
 export default function InquiryDetailPage() {
   const t = useTranslations("inquiryDetail");
@@ -23,14 +24,13 @@ export default function InquiryDetailPage() {
   const [inquiry, setInquiry] = useState<AgencyInquiry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     try {
       const res = await api.get(`/inquiries/${id}`);
       setInquiry(res.data?.data || res.data);
+      // Viewing marks the agency's messages read (read receipts).
     } catch (err) {
       setError(getApiErrorMessage(err, t("inquiryNotFound")));
     } finally {
@@ -43,11 +43,8 @@ export default function InquiryDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [inquiry?.messages?.length]);
-
-  // Poll for new messages/status while the conversation is live.
+  // Poll for status changes while the inquiry is live (the conversation
+  // component polls its own messages).
   useEffect(() => {
     const active = inquiry?.status === "TALKING" || inquiry?.status === "HANDED_OVER";
     if (!active) return;
@@ -79,26 +76,16 @@ export default function InquiryDetailPage() {
   const isHandoverWorker = meId === inquiry.handoverWorker?.id;
   const st = inquiryStatusMap(tShared)[inquiry.status];
 
-  async function sendMessage() {
-    if (!draft.trim()) return;
-    setBusy(true);
-    try {
-      await api.post(`/inquiries/${id}/messages`, { content: draft.trim() });
-      setDraft("");
-      await load();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, t("couldNotSendMessage")));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function acceptHandover() {
     setBusy(true);
     try {
-      await api.post(`/inquiries/${id}/handover/accept`);
+      const res = await api.post(`/inquiries/${id}/handover/accept`);
       toast.success(t("confirmedBookingCreated"));
-      router.push("/conversations");
+      // Land in the new booking's chat room, which opens with a notice saying
+      // who placed you (never the client's private note to the agency).
+      const newBookingId = (res.data?.data || res.data)?.booking?.id;
+      router.push(newBookingId ? `/conversations/inbox/${newBookingId}` : "/conversations");
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotAccept")));
       setBusy(false);
@@ -202,10 +189,34 @@ export default function InquiryDetailPage() {
               {inquiry.status === "PENDING" && (
                 <p className="mt-2 text-[12px] text-ink-muted">{t("waitingForResponse", { agency: inquiry.agency?.name ?? t("agencyFallback") })}</p>
               )}
+              {/* Between hand-over and the worker's answer the client used to
+                  see nothing at all — the request just went quiet. */}
+              {inquiry.status === "HANDED_OVER" && (
+                <div className="mt-3 rounded-xl border border-[#C8E6C4] bg-[#EEF8EA] p-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-brand" />
+                    <p className="text-[13px] font-bold text-ink">
+                      {t("workerProposedTitle", { worker: inquiryPersonName(inquiry.handoverWorker, tShared) })}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-[12px] leading-relaxed text-ink-muted">
+                    {t("workerProposedBody", { worker: inquiryPersonName(inquiry.handoverWorker, tShared) })}
+                  </p>
+                </div>
+              )}
               {inquiry.status === "CONVERTED" && (
-                <button onClick={() => router.push("/conversations")} className="mt-2 text-[13px] font-semibold text-brand underline">
-                  {t("workerConfirmedGoToBookings")}
-                </button>
+                <>
+                  <button onClick={() => router.push("/conversations")} className="mt-2 block text-[13px] font-semibold text-brand underline">
+                    {t("workerConfirmedGoToBookings")}
+                  </button>
+                  {inquiry.agency?.id && (
+                    <AgencyReviewPrompt
+                      agencyId={inquiry.agency.id}
+                      agencyName={inquiry.agency.name ?? t("agencyFallback")}
+                      bookingId={inquiry.bookingId ?? undefined}
+                    />
+                  )}
+                </>
               )}
               {(inquiry.status === "PENDING" || inquiry.status === "TALKING" || inquiry.status === "HANDED_OVER") && (
                 <button
@@ -223,46 +234,22 @@ export default function InquiryDetailPage() {
               )}
             </div>
 
-            {(inquiry.status === "TALKING" || (inquiry.messages?.length ?? 0) > 0) && (
-              <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="mb-2 text-[13px] font-bold text-ink">{t("conversation")}</p>
-                <div className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto">
-                  {(inquiry.messages ?? []).length === 0 && (
-                    <p className="py-6 text-center text-[13px] text-ink-muted">{t("noMessagesYet")}</p>
-                  )}
-                  {(inquiry.messages ?? []).map((m) => {
-                    const mine = m.senderId === meId;
-                    return (
-                      <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-[13px] ${mine ? "bg-brand text-white" : "bg-gray-100 text-ink"}`}>
-                          {m.content}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={endRef} />
+            {inquiry.conversation?.id && (
+              <button
+                onClick={() => router.push(`/conversations/thread/${inquiry.conversation!.id}`)}
+                className="flex w-full items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-bold text-ink">{t("conversation")}</p>
+                  <p className="truncate text-[12px] text-ink-muted">{t("openConversationHint")}</p>
                 </div>
-              </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-gray-400" />
+              </button>
             )}
           </>
         )}
       </div>
 
-      {/* Employer composer (only while talking) */}
-      {isEmployer && inquiry.status === "TALKING" && (
-        <div className="sticky bottom-0 flex items-center gap-2 border-t border-gray-100 bg-white p-3">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-            placeholder={t("typeMessage")}
-            className="h-11 flex-1 rounded-xl border border-gray-200 px-3 text-[14px] outline-none focus:border-brand"
-          />
-          <button onClick={sendMessage} disabled={busy || !draft.trim()} className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white disabled:opacity-50">
-            <Send className="h-5 w-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

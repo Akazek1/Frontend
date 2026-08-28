@@ -99,7 +99,7 @@ export default function PlacementDetailPage() {
 
     if (loading) {
         return (
-            <PageShell bottomNav={false}>
+            <PageShell>
                 <div className="flex h-40 items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
                 </div>
@@ -109,7 +109,7 @@ export default function PlacementDetailPage() {
 
     if (error || !placement) {
         return (
-            <PageShell bottomNav={false}>
+            <PageShell>
                 <PageHeader title={t("placement")} onBack={() => router.back()} />
                 <div className="mt-8 text-center text-[14px] text-ink-muted">{error || t("placementNotFound")}</div>
             </PageShell>
@@ -127,7 +127,7 @@ export default function PlacementDetailPage() {
     const workerHandle = placement.worker.username ? `/${placement.worker.username}` : null;
 
     return (
-        <PageShell bottomNav={false} padded>
+        <PageShell padded>
             <PageHeader
                 title={t("placementDetails")}
                 onBack={() => router.back()}

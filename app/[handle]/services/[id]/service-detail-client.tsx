@@ -204,7 +204,7 @@ export function ServiceDetailClient() {
     // modal the profile button opens, then drop the flag so closing it
     // doesn't re-trigger.
     useEffect(() => {
-        if (!service?.provider?.agency) return;
+        if (!agencyBacking) return;
         if (searchParams.get("contact") !== "agency") return;
         requireAuth(() => setIsInquiryOpen(true), "hire");
         router.replace(`/${params.handle}/services/${serviceId}`, { scroll: false });
@@ -212,6 +212,9 @@ export function ServiceDetailClient() {
     }, [service, searchParams]);
 
     const provider = service?.provider;
+    // Agency backing: prefer the service-level enrollment (new model), fall
+    // back to the provider's legacy agency link during the transition.
+    const agencyBacking = service?.agency ?? provider?.agency ?? null;
     // Project 2 Phase E — a company-owned card has no individual provider; the
     // owner shown in the header is the Service Company instead.
     const company = service?.company;
@@ -319,7 +322,7 @@ export function ServiceDetailClient() {
     };
 
     const handleInquirySubmit = async () => {
-        if (!service?.provider?.agency || inquirySubmitting) return;
+        if (!agencyBacking || inquirySubmitting) return;
         if (inquiryNote.trim().length < 5) {
             toast.error(t("addShortNote"));
             return;
@@ -327,11 +330,11 @@ export function ServiceDetailClient() {
         setInquirySubmitting(true);
         try {
             await api.post("/inquiries", {
-                agencyId: service.provider.agency.id,
-                workerOfInterestId: service.provider.id,
+                agencyId: agencyBacking.id,
+                workerOfInterestId: service?.provider?.id,
                 note: inquiryNote.trim(),
             });
-            toast.success(t("inquirySentTo", { name: service.provider.agency.name }));
+            toast.success(t("inquirySentTo", { name: agencyBacking.name }));
             setInquirySent(true);
             setIsInquiryOpen(false);
             setInquiryNote("");
@@ -525,7 +528,7 @@ export function ServiceDetailClient() {
                 </section>
 
                 {/* Agency backing section — only for agency-backed workers */}
-                {provider?.agency && (
+                {agencyBacking && (
                     <div className="mt-4 flex flex-col gap-3">
                         {/* BACKED BY card */}
                         <div className="rounded-2xl border border-[#C8E6C4] bg-[#EEF8EA] p-4">
@@ -536,11 +539,11 @@ export function ServiceDetailClient() {
                             </div>
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    {provider.agency.logoUrl ? (
+                                    {agencyBacking.logoUrl ? (
                                         <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-white shadow">
                                             <Image
-                                                src={provider.agency.logoUrl}
-                                                alt={provider.agency.name}
+                                                src={agencyBacking.logoUrl}
+                                                alt={agencyBacking.name}
                                                 width={48}
                                                 height={48}
                                                 className="h-full w-full object-cover"
@@ -549,26 +552,26 @@ export function ServiceDetailClient() {
                                     ) : (
                                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-white bg-brand shadow">
                                             <span className="text-[16px] font-bold text-white">
-                                                {provider.agency.name.charAt(0)}
+                                                {agencyBacking.name.charAt(0)}
                                             </span>
                                         </div>
                                     )}
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-1">
                                             <span className="truncate text-[14px] font-bold text-ink">
-                                                {provider.agency.name}
+                                                {agencyBacking.name}
                                             </span>
-                                            {provider.agency.verified && <VerifiedBadge size={14} />}
+                                            {agencyBacking.verified && <VerifiedBadge size={14} />}
                                         </div>
-                                        {provider.agency._count && (
+                                        {agencyBacking._count && (
                                             <p className="text-[11px] text-ink-muted">
-                                                {t("activeWorkersAndPlacements", { workers: provider.agency._count.workers, placements: provider.agency._count.placements })}
+                                                {t("activeWorkersAndPlacements", { workers: agencyBacking._count.workers, placements: agencyBacking._count.placements })}
                                             </p>
                                         )}
                                     </div>
                                 </div>
                                 <Link
-                                    href={`/organization/${provider.agency.id}`}
+                                    href={`/organization/${agencyBacking.id}`}
                                     className="flex-shrink-0 rounded-lg border border-brand px-3 py-1.5 text-[11px] font-semibold text-brand"
                                     onClick={(e) => e.stopPropagation()}
                                 >
@@ -597,7 +600,7 @@ export function ServiceDetailClient() {
                             <div className="min-w-0 flex-1">
                                 <p className="text-[13px] font-bold text-ink">{t("hiringProtection")}</p>
                                 <p className="mt-0.5 text-[11px] leading-snug text-ink-muted">
-                                    {t("hiringProtectionDesc", { agency: provider.agency.name })}
+                                    {t("hiringProtectionDesc", { agency: agencyBacking.name })}
                                 </p>
                             </div>
                             <div className="flex-shrink-0 text-right">
@@ -891,13 +894,13 @@ export function ServiceDetailClient() {
                 onSelect={selectLightboxIndex}
             />
 
-            {isInquiryOpen && service?.provider?.agency && (
+            {isInquiryOpen && agencyBacking && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
                     <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{t("contactAgency")}</p>
-                                <h3 className="text-[17px] font-black text-ink mt-0.5">{service.provider.agency.name}</h3>
+                                <h3 className="text-[17px] font-black text-ink mt-0.5">{agencyBacking.name}</h3>
                                 <p className="text-[13px] text-gray-400">{t("aboutName", { name: providerName })}</p>
                             </div>
                             <button onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }} className="p-1 text-gray-400 hover:text-gray-600">
@@ -993,10 +996,10 @@ export function ServiceDetailClient() {
                         <Pencil className="h-4 w-4" />
                         {t("editService")}
                     </button>
-                ) : provider?.agency ? (
+                ) : agencyBacking ? (
                     <div className="flex items-center gap-3">
                         <Link
-                            href={`/organization/${provider.agency.id}`}
+                            href={`/organization/${agencyBacking.id}`}
                             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[15px] font-bold"
                             style={{
                                 border: `1.5px solid ${colors.primary}`,

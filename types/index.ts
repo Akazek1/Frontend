@@ -65,6 +65,15 @@ export interface Service {
       _count?: { workers: number; placements: number };
     } | null;
   } | null;
+  // Service-level agency backing (new enrollment model). Preferred over
+  // provider.agency (legacy) when present.
+  agency?: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    verified: boolean;
+    _count?: { workers: number; placements: number };
+  } | null;
   companyId?: string | null;
   company?: {
     id: string;

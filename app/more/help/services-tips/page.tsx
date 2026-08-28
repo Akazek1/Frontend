@@ -14,7 +14,7 @@ export default function ServicesTipsHelpPage() {
   const t = useTranslations("servicesTipsHelp");
   const router = useRouter();
   return (
-    <PageShell padded={false} bottomNav={false}>
+    <PageShell padded={false}>
       <PageHeader
         title={t("title")}
         compact

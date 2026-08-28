@@ -12,6 +12,7 @@ import { goBackOr } from "@/lib/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { initializeSocket, getSocket } from "@/lib/socket";
+import { getConversation, toChatMessage } from "@/lib/conversations";
 import toast from "react-hot-toast";
 import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE, QUICK_TAP_EMOJI, SKIN_TONE_STORAGE_KEY, applySkinTone } from "@/constant";
 import { haptic } from "@/lib/haptics";
@@ -369,11 +370,31 @@ function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () =
   );
 }
 
-const ChatRoom = ({ bookingId }: { bookingId: string }) => {
+/**
+ * ONE chat room for every persona pairing.
+ *
+ * Booking mode (`bookingId`) is the original, untouched path. Conversation mode
+ * (`conversationId`) feeds unified conversations — employer↔agency, employer↔
+ * company, anything future — through the SAME render layer, so reply, reactions,
+ * edit, unsend and receipts are identical everywhere. Conversation data is
+ * adapted into the booking shapes this component already renders.
+ */
+const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversationId?: string }) => {
+  const isConversation = Boolean(conversationId);
+  /** The id this room is keyed by, whichever mode it is in. */
+  const roomId = (conversationId || bookingId) as string;
   const t = useTranslations("chatRoom");
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const [booking, setBooking] = useState<BookingDetails | null>(null);
+  const [conversationType, setConversationType] = useState<string | null>(null);
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
+  // Who an agency/company thread is ABOUT — the worker in question. Shown next
+  // to the role label so neither side has to guess which placement this is.
+  const [subjectName, setSubjectName] = useState<string | null>(null);
+  // Why a conversation is closed, so the banner can say the true reason
+  // instead of borrowing the booking chat's "job complete" wording.
+  const [closedReason, setClosedReason] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -463,8 +484,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     // Opening the conversation dismisses ALL of its message notifications at
     // once (not just the single one that was tapped), so the bell stops
     // showing N-1 stale unread entries after you read the thread.
-    api.patch(`/users/notifications/read-by-booking/${bookingId}`).catch(() => {});
-  }, [bookingId]); // eslint-disable-line react-hooks/exhaustive-deps
+    api.patch(isConversation ? `/users/notifications/read-by-inquiry/${roomId}` : `/users/notifications/read-by-booking/${roomId}`).catch(() => {});
+  }, [roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!token || !user?.id) return;
@@ -478,12 +499,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     // the sender's ticks to "read" before the recipient ever saw the message.
     const markReadIfVisible = () => {
       if (document.visibilityState === "visible") {
-        socket.emit("readMessages", bookingId);
+        socket.emit(isConversation ? "readConversation" : "readMessages", roomId);
       }
     };
 
     const onConnect = () => {
-      socket.emit("joinBooking", bookingId);
+      socket.emit(isConversation ? "joinConversation" : "joinBooking", roomId);
       markReadIfVisible();
 
       if (partnerId) {
@@ -495,7 +516,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
 
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible" && socket.connected) {
-        socket.emit("readMessages", bookingId);
+        socket.emit(isConversation ? "readConversation" : "readMessages", roomId);
       }
     };
 
@@ -525,7 +546,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleNewMessage = (message: Message) => {
-      if (message.bookingId !== bookingId) return;
+      if (message.bookingId !== roomId) return;
 
       // A reminder from the partner re-surfaces the nudge even if it was
       // dismissed, so the recipient sees the Accept button again.
@@ -569,12 +590,12 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         document.visibilityState === "visible"
       ) {
         readReceiptSentForRef.current.add(message.id);
-        socket.emit("readMessages", bookingId);
+        socket.emit(isConversation ? "readConversation" : "readMessages", roomId);
       }
     };
 
     const handleMessagesRead = (data: { bookingId: string; readerId: string }) => {
-      if (data.bookingId === bookingId && data.readerId !== user.id) {
+      if (data.bookingId === roomId && data.readerId !== user.id) {
         setMessages((prev) =>
           prev.map((m) =>
             m.senderId === user.id ? { ...m, isRead: true, isDelivered: true } : m,
@@ -584,7 +605,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleMessagesDelivered = (data: { bookingId: string; recipientId: string }) => {
-      if (data.bookingId === bookingId && data.recipientId !== user?.id) {
+      if (data.bookingId === roomId && data.recipientId !== user?.id) {
         setMessages((prev) =>
           prev.map((m) =>
             m.senderId === user?.id && !m.isDelivered ? { ...m, isDelivered: true } : m,
@@ -594,40 +615,64 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     };
 
     const handleMessageReactionUpdated = (data: { bookingId: string; messageId: string; reactions: MessageReaction[] }) => {
-      if (data.bookingId !== bookingId) return;
+      if (data.bookingId !== roomId) return;
       setMessages((prev) =>
         prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m)),
       );
     };
 
     const handleMessageUpdated = (updated: Message) => {
-      if (updated.bookingId !== bookingId) return;
+      if (updated.bookingId !== roomId) return;
       setMessages((prev) =>
         prev.map((m) => (m.id === updated.id ? { ...updated, status: "sent" } : m)),
       );
     };
 
     const handleBookingStatusUpdated = (data: { bookingId: string; status: string }) => {
-      if (data.bookingId !== bookingId) return;
+      if (data.bookingId !== roomId) return;
       setBooking((prev) => prev ? { ...prev, status: data.status, updatedAt: new Date().toISOString() } : prev);
     };
 
     const handleTaskCreated = (task: Task) => {
-      if (task.bookingId !== bookingId) return;
+      if (task.bookingId !== roomId) return;
       setTasks((prev) => prev.some((t) => t.id === task.id) ? prev : [...prev, task]);
     };
 
     const handleTaskUpdated = (task: Task) => {
-      if (task.bookingId !== bookingId) return;
+      if (task.bookingId !== roomId) return;
       setTasks((prev) => prev.map((t) => t.id === task.id ? task : t));
     };
 
     const handleTaskDeleted = (data: { id: string; bookingId: string }) => {
-      if (data.bookingId !== bookingId) return;
+      if (data.bookingId !== roomId) return;
       setTasks((prev) => prev.filter((t) => t.id !== data.id));
     };
 
     socket.on("newMessage", handleNewMessage);
+    // Unified-conversation equivalents of newMessage / messageUpdated, so the
+    // same handlers drive both modes.
+    const onConversationMessage = (p: { conversationId: string; message: any }) => {
+      if (!isConversation || p?.conversationId !== roomId || !p.message) return;
+      handleNewMessage({ ...toChatMessage(p.message), bookingId: roomId });
+    };
+    const onConversationMessageUpdated = (p: { conversationId: string; message: any }) => {
+      if (!isConversation || p?.conversationId !== roomId || !p.message) return;
+      handleMessageUpdated({ ...toChatMessage(p.message), bookingId: roomId });
+    };
+    // Read receipts in conversation mode. The booking chat's `messagesRead`
+    // never fires here, so without this the sender's ticks stayed single grey
+    // however long ago the other side read the thread. `readerKey` is a party
+    // key ("user:<id>" / "org:<id>"); an org principal's user.id IS its org id,
+    // so comparing the id half works for either persona.
+    const onConversationRead = (p: { conversationId: string; readerKey?: string }) => {
+      if (!isConversation || p?.conversationId !== roomId) return;
+      if (p.readerKey?.split(":")[1] === user.id) return;
+      handleMessagesRead({ bookingId: roomId, readerId: p.readerKey ?? "" });
+    };
+    socket.on("conversationMessage", onConversationMessage);
+    socket.on("conversationMessageUpdated", onConversationMessageUpdated);
+    socket.on("conversationRead", onConversationRead);
+
     socket.on("messagesRead", handleMessagesRead);
     socket.on("messagesDelivered", handleMessagesDelivered);
     socket.on("messageReactionUpdated", handleMessageReactionUpdated);
@@ -641,8 +686,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     socket.on("taskDeleted", handleTaskDeleted);
 
     return () => {
-      socket.emit("leaveBooking", bookingId);
+      socket.emit(isConversation ? "leaveConversation" : "leaveBooking", roomId);
       socket.off("newMessage", handleNewMessage);
+      // Conversation-mode listeners were never removed here: every remount
+      // stacked another copy, so one incoming message was handled N times.
+      socket.off("conversationMessage", onConversationMessage);
+      socket.off("conversationMessageUpdated", onConversationMessageUpdated);
+      socket.off("conversationRead", onConversationRead);
       socket.off("messagesRead", handleMessagesRead);
       socket.off("messagesDelivered", handleMessagesDelivered);
       socket.off("messageReactionUpdated", handleMessageReactionUpdated);
@@ -657,7 +707,9 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       socket.off("connect", onConnect);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [bookingId, token, user?.id, booking?.workerId, booking?.employerId]);
+    // roomId, not bookingId: in conversation mode bookingId is undefined, so
+    // moving between two threads relied on the partner id happening to change.
+  }, [roomId, token, user?.id, booking?.workerId, booking?.employerId]);
 
   useEffect(() => {
     const prevCount = prevMsgCountRef.current;
@@ -690,6 +742,10 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   // banner button covers any later visits after the prompt is closed.
   useEffect(() => {
     if (!booking || !user) return;
+    // Conversation mode has no booking to review — `booking` is a synthesised
+    // shape whose id is the conversation's, so /feedback would be nonsense.
+    // Reviewing an agency is its own flow (AgencyReviewPrompt on the inquiry).
+    if (isConversation) return;
     if (booking.status !== BOOKING_STATUS.COMPLETED) return;
     if (reviewAutoPromptedRef.current) return;
 
@@ -704,9 +760,53 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     setIsReviewPromptOpen(true);
   }, [booking, user]);
 
+  /** Send-event name + payload for whichever mode this room is in. */
+  const sendArgs = (msg: { content: string; replyToId?: string }): [string, unknown] =>
+    isConversation
+      ? ["sendConversationMessage", { conversationId: roomId, content: msg.content, replyToId: msg.replyToId }]
+      : ["sendMessage", { bookingId: roomId, message: msg }];
+
   const fetchBookingDetails = async () => {
     try {
       setIsLoading(true);
+
+      if (isConversation) {
+        const thread = await getConversation(conversationId as string);
+        setConversationType(thread.type);
+        setViewerRole(thread.capabilities?.viewerRole ?? null);
+        setSubjectName(thread.capabilities?.subjectName ?? null);
+        setClosedReason(thread.capabilities?.closedReason ?? null);
+        const otherId = thread.other?.orgId ?? thread.other?.userId ?? "";
+        const meId = thread.me.replace(/^(user|org):/, "");
+
+        setMessages(
+          [...thread.messages]
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            .map((m) => ({ ...(toChatMessage(m) as Message), status: 'sent' as const })),
+        );
+        // Synthesised booking shape: "worker" is the other party, "employer" is
+        // me, so the existing partner/header logic resolves correctly.
+        setBooking({
+          id: thread.id,
+          status: thread.capabilities?.canSend ? 'CONFIRMED' : 'COMPLETED',
+          updatedAt: new Date().toISOString(),
+          workerId: otherId,
+          employerId: meId,
+          service: { category: { name: thread.other?.title } },
+          worker: {
+            id: otherId,
+            firstName: thread.other?.title ?? '',
+            lastName: '',
+            profilePicture: thread.other?.avatarUrl ?? '',
+            username: '',
+          },
+          employer: { id: meId, firstName: '', lastName: '', profilePicture: '', username: '' },
+          messages: [],
+        } as never as BookingDetails);
+        setTasks([]);
+        return;
+      }
+
       const response = await api.get(`/bookings/${bookingId}`);
       const data = response.data.data;
       setBooking(data);
@@ -734,7 +834,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       id: tempId,
       content: messageContent,
       senderId: user.id,
-      bookingId,
+      bookingId: bookingId ?? roomId,
       createdAt: new Date().toISOString(),
       // Start as "sent" (single gray), never optimistically "delivered" —
       // partnerOnline is only this client's cached presence guess and can be
@@ -774,7 +874,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           const response = await new Promise<SendMessageAck>((resolve, reject) => {
              const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-             socket.emit("sendMessage", { bookingId, message: { content: messageContent, replyToId: replyingTo?.id } }, (ack: SendMessageAck) => {
+             socket.emit(...sendArgs({ content: messageContent, replyToId: replyingTo?.id }), (ack: SendMessageAck) => {
                clearTimeout(timeout);
                resolve(ack);
              });
@@ -846,7 +946,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           const response = await new Promise<SendMessageAck>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-            socket.emit("sendMessage", { bookingId, message: { content, replyToId } }, (ack: SendMessageAck) => {
+            socket.emit(...sendArgs({ content, replyToId }), (ack: SendMessageAck) => {
               clearTimeout(timeout);
               resolve(ack);
             });
@@ -922,7 +1022,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           ack = await new Promise<ReactionAck>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-            socket.emit("reactToMessage", { messageId, emoji }, (response: ReactionAck) => {
+            socket.emit(isConversation ? "reactToConversationMessage" : "reactToMessage", { messageId, emoji }, (response: ReactionAck) => {
               clearTimeout(timeout);
               resolve(response);
             });
@@ -1018,7 +1118,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           ack = await new Promise<MessageMutationAck>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-            socket.emit("editMessage", { messageId, content }, (r: MessageMutationAck) => {
+            socket.emit(isConversation ? "editConversationMessage" : "editMessage", { messageId, content }, (r: MessageMutationAck) => {
               clearTimeout(timeout);
               resolve(r);
             });
@@ -1066,7 +1166,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         try {
           ack = await new Promise<MessageMutationAck>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Timeout")), 10000);
-            socket.emit("deleteMessage", { messageId }, (r: MessageMutationAck) => {
+            socket.emit(isConversation ? "deleteConversationMessage" : "deleteMessage", { messageId }, (r: MessageMutationAck) => {
               clearTimeout(timeout);
               resolve(r);
             });
@@ -1264,10 +1364,26 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
   const partnerName = partner ? `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim() : t("unknownPartnerFallback");
   const isWorker = user.id === booking.workerId;
   const contextTitle = booking.service?.category?.name || booking.job?.title || t("workRequestFallback");
+  // In conversation mode the counterpart is an organisation (agency/company),
+  // so label the role rather than repeating its name under the title.
+  const conversationRoleLabel =
+    // Describe who you are TALKING TO, not the conversation type: an agency
+    // looking at a client should read "Client", not "Agency".
+    viewerRole === "AGENCY" || viewerRole === "COMPANY"
+      ? t("client")
+      : conversationType === "COMPANY_INQUIRY"
+        ? t("company")
+        : t("agency");
   // Role-aware label for the partner: a worker is described by the service they
   // provide (e.g. "Driver"); an employer is simply the "Employer" — never the
   // service title, which would wrongly imply they do that job.
-  const partnerRoleLabel = isWorker ? t("employer") : contextTitle;
+  const partnerRoleLabel = isConversation
+    ? subjectName
+      ? t("aboutWorker", { role: conversationRoleLabel, worker: subjectName })
+      : conversationRoleLabel
+    : isWorker
+      ? t("employer")
+      : contextTitle;
   // Review wording follows the direction of the relationship.
   const rehireQuestion = isWorker
     ? t("rehireQuestionProvider")
@@ -1290,7 +1406,8 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
     Date.now() - new Date(msg.createdAt).getTime() < MESSAGE_EDIT_WINDOW_MS &&
     lastPartnerMessageAt <= new Date(msg.createdAt).getTime();
   const incompleteTaskCount = tasks.filter((t) => !t.isCompleted && !t.isCanceled).length;
-  const hasTaskTab = tasks.length > 0 || isApproved;
+  // Tasks are a booking concept; conversation rooms never show the tab.
+  const hasTaskTab = !isConversation && (tasks.length > 0 || isApproved);
   const bookingReviews = (booking.reviews || []).map(normalizeReviewForBooking);
   const myReview = getMyReview();
   // A review left without a comment is treated as incomplete, so the user can
@@ -1325,6 +1442,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           <p className="truncate text-[11px] text-ink-subtle font-medium">{partnerRoleLabel}</p>
         </div>
 
+        {!isConversation && (
         <div className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
           booking.status === BOOKING_STATUS.PENDING ? 'bg-orange-50 text-orange-600' :
           booking.status === BOOKING_STATUS.CONFIRMED ? 'bg-blue-50 text-blue-600' :
@@ -1334,12 +1452,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         }`}>
           {booking.status}
         </div>
+        )}
       </header>
 
       <TaskDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        bookingId={bookingId}
+        bookingId={bookingId as string}
         userId={user.id}
         employerId={booking.employerId}
         workerId={booking.workerId}
@@ -1376,7 +1495,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         onReply={replyToBookingReview}
       />
 
-      {/* Right-edge sticky task tab */}
+      {/* Right-edge sticky task tab — bookings only */}
       {hasTaskTab && (
         <button
           onClick={() => setIsDrawerOpen(true)}
@@ -1393,8 +1512,25 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
         </button>
       )}
 
+      {/* A closed conversation says WHY it closed; reviewing an agency is a
+          separate flow, so no "Leave Review" button here. */}
+      {isConversation && closedReason && closedReason !== "NONE" && (
+        <div className="flex items-center justify-center gap-2 bg-gray-100 px-3 py-2 text-center text-[11px] font-medium text-gray-600 shadow-inner">
+          <Archive className="h-3.5 w-3.5 shrink-0" />
+          {closedReason === "BOOKING_COMPLETED"
+            ? t("jobCompleteReadOnly")
+            : closedReason === "BOOKING_CANCELLED"
+              ? t("bookingCancelledClosed")
+              : closedReason === "NOT_YET_OPEN"
+                ? t("conversationNotYetOpen")
+                : closedReason === "GUARANTEE_EXPIRED"
+                  ? t("conversationGuaranteeOver")
+                  : t("conversationClosed")}
+        </div>
+      )}
+
       {/* Banner for Status */}
-      {isCompleted && (
+      {isCompleted && !isConversation && (
         <div className="flex flex-col items-center justify-center gap-2 bg-gray-100 px-3 py-3 text-[11px] font-medium text-gray-600 shadow-inner">
           <div className="flex items-center gap-2">
             <Archive className="h-3.5 w-3.5" />
@@ -1416,7 +1552,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
           </Button>
         </div>
       )}
-      {isCancelled && (
+      {isCancelled && !isConversation && (
         <div className="flex items-center justify-center gap-2 bg-red-50 py-2 text-[11px] font-medium text-red-600 shadow-inner">
           <AlertCircle className="h-3.5 w-3.5" />
           {t("bookingCancelledClosed")}
@@ -1484,15 +1620,17 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Messages Area */}
-      <main ref={mainRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-28">
-        <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
-          <p className="text-[11px] font-semibold text-ink">{t("bookingDetails")}</p>
-          <p className="mt-1 text-[10px] text-ink-subtle">
-            {isPending
-              ? t("workNotConfirmedYet")
-              : t("keepCommunicationsInApp")}
-          </p>
-        </div>
+      <main ref={mainRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto overscroll-contain space-y-4 px-4 pt-4 pb-4">
+        {!isConversation && (
+          <div className="mx-auto max-w-[280px] rounded-xl bg-white p-3 text-center shadow-sm border border-gray-100">
+            <p className="text-[11px] font-semibold text-ink">{t("bookingDetails")}</p>
+            <p className="mt-1 text-[10px] text-ink-subtle">
+              {isPending
+                ? t("workNotConfirmedYet")
+                : t("keepCommunicationsInApp")}
+            </p>
+          </div>
+        )}
 
         {messages.map((msg) => {
           if (isSystemMessage(msg.content)) {
@@ -1603,7 +1741,7 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
       )}
 
       {/* Input Area */}
-      <footer className="bg-white p-4 pb-8 shadow-[0_-1px_10px_rgba(0,0,0,0.02)]">
+      <footer className="shrink-0 px-4 pb-4 pt-2">
         {editingMessage ? (
           <div className="mb-2 flex items-center gap-2 rounded-xl border-l-2 border-amber-400 bg-amber-50 px-3 py-2">
             <Pencil className="h-3.5 w-3.5 shrink-0 text-amber-500" />
@@ -1647,13 +1785,13 @@ const ChatRoom = ({ bookingId }: { bookingId: string }) => {
             onKeyDown={handleKeyDown}
             disabled={isReadOnly}
             rows={1}
-            className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-2xl border-gray-200 bg-gray-50 px-5 py-3 focus:ring-1 focus:ring-brand/20 scrollbar-hide"
+            className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-xl border border-gray-200 bg-white px-3 py-3 text-[14px] focus-visible:border-brand focus-visible:ring-0 scrollbar-hide"
           />
           <Button
             onClick={() => editingMessage ? handleSaveEdit() : handleSendMessage()}
             size="icon"
             disabled={!newMessage.trim() || isSending || isReadOnly}
-            className="h-11 w-11 flex-shrink-0 rounded-full bg-brand text-white hover:bg-brand-dark"
+            className="h-11 w-11 flex-shrink-0 rounded-xl bg-brand text-white hover:bg-brand-dark"
           >
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : editingMessage ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>

@@ -187,7 +187,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
 
   if (showPrereqGate) {
     return (
-      <PageShell padded={false} bottomNav={false}>
+      <PageShell padded={false}>
         <WizardHeader
           title={t("gateTitle")}
           subtitle={t("gateSubtitle")}
@@ -199,7 +199,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
   }
 
   return (
-    <PageShell padded={false} bottomNav={false}>
+    <PageShell padded={false}>
       {header && (
         <WizardHeader
           title={header.title}

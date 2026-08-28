@@ -2,14 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { listConversations, type ConversationSummary } from "@/lib/conversations";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import api from "@/lib/axios";
 import type { RootState } from "@/store";
 import { useSelector } from "react-redux";
-import { Check, CheckCheck, ChevronRight, MessageCircle } from "lucide-react";
-import { VerifiedBadge } from "@/components/ui/verified-badge";
+import {
+  ConversationEmpty,
+  ConversationRow,
+  ConversationRowSkeleton,
+  type ConversationRowData,
+} from "./conversation-row";
 import { BOOKING_STATUS } from "@/constant";
 import type { InboxCounts } from "./index";
 
@@ -83,12 +87,6 @@ interface Booking {
   preview?: string;
 }
 
-const INQUIRY_PILL: Record<string, { label: string; pill: string; bar: string }> = {
-  PENDING: { label: "Inquiry sent", pill: "bg-orange-50 text-orange-600", bar: "bg-orange-400" },
-  TALKING: { label: "In conversation", pill: "bg-blue-50 text-blue-600", bar: "bg-blue-500" },
-  HANDED_OVER: { label: "Awaiting worker", pill: "bg-amber-50 text-amber-600", bar: "bg-amber-400" },
-};
-
 interface ChatInboxProps {
   searchQuery: string;
   onCounts?: (counts: InboxCounts) => void;
@@ -109,6 +107,46 @@ async function fetchConversations(): Promise<Booking[]> {
     : [];
 }
 
+/**
+ * Unified conversations (agency / company / …) mapped into the row shape this
+ * inbox already renders, so every chat lives on one page. Booking rows are
+ * untouched — they still come from `fetchConversations()` above.
+ */
+async function fetchUnifiedConversations(currentUserId?: string): Promise<Booking[]> {
+  const rows = await listConversations().catch(() => [] as ConversationSummary[]);
+  return rows
+    .filter((c) => c.kind === "CONVERSATION")
+    .map((c) => ({
+      bookingId: c.id,
+      status: "CONFIRMED",
+      createdAt: c.updatedAt,
+      updatedAt: c.updatedAt,
+      service: { id: c.id, category: { name: undefined } },
+      partner: {
+        id: c.id,
+        firstName: c.title,
+        lastName: "",
+        profilePicture: c.avatarUrl ?? undefined,
+      },
+      latestMessage: c.lastMessage
+        ? ({
+            id: `${c.id}-last`,
+            content: c.lastMessage.content,
+            createdAt: c.lastMessage.createdAt,
+            senderId: c.lastMessage.mine ? currentUserId ?? "" : c.id,
+            // The message's OWN state — `unreadCount` is the viewer's unread
+            // tally, so using it here showed blue ticks in the inbox while the
+            // room (reading the real value) showed a single tick.
+            isRead: c.lastMessage.isRead,
+            isDelivered: c.lastMessage.isDelivered,
+          } as Message)
+        : undefined,
+      unreadCount: c.unreadCount,
+      isInquiry: true,
+      inquiryId: c.inquiryId ?? undefined,
+    }));
+}
+
 export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
   const t = useTranslations("chatInbox");
   const searchParams = useSearchParams();
@@ -120,6 +158,15 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
 
   // Cached conversation list — returning to Messages renders instantly, no
   // spinner. Socket events below keep `bookings` live after the seed.
+  // Agency / company threads, fetched separately so the booking query above is
+  // untouched. Merged into one list for rendering.
+  const { data: unifiedData, refetch: refetchUnified } = useQuery({
+    queryKey: ["unified-conversations", user?.id],
+    queryFn: () => fetchUnifiedConversations(user?.id),
+    enabled: Boolean(token),
+    staleTime: 15_000,
+  });
+
   const { data: conversationsData, isLoading: loading, refetch } = useQuery({
     queryKey: ["conversations", user?.id],
     queryFn: fetchConversations,
@@ -132,6 +179,8 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
   // re-subscribing the listeners on every render.
   const refetchRef = useRef(refetch);
   refetchRef.current = refetch;
+  const refetchUnifiedRef = useRef(refetchUnified);
+  refetchUnifiedRef.current = refetchUnified;
 
   // Seed local state from the cached/fetched list, then check presence for all
   // partners (handles the case where the socket connected before data arrived).
@@ -253,10 +302,17 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
         });
       };
 
+      // Unified (agency / company) rows come from their own query, so the
+      // booking events above never touch them: without these their preview,
+      // unread badge and read ticks only moved on a full page reload.
+      const refreshUnified = () => { void refetchUnifiedRef.current(); };
+
       socket.on("connect", checkAllPresence);
       if (socket.connected) checkAllPresence();
 
       socket.on("newMessage", handleNewMessage);
+      socket.on("conversationMessage", refreshUnified);
+      socket.on("conversationRead", refreshUnified);
       socket.on("messagesDelivered", handleMessagesDelivered);
       socket.on("messagesRead", handleMessagesRead);
       socket.on("userOnline", handleUserOnline);
@@ -266,6 +322,8 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
       return () => {
         socket.off("connect", checkAllPresence);
         socket.off("newMessage", handleNewMessage);
+        socket.off("conversationMessage", refreshUnified);
+        socket.off("conversationRead", refreshUnified);
         socket.off("messagesDelivered", handleMessagesDelivered);
         socket.off("messagesRead", handleMessagesRead);
         socket.off("userOnline", handleUserOnline);
@@ -275,29 +333,39 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
     }
   }, [token, user?.id]);
 
+  // One list: booking threads + unified conversations, newest first.
+  const allThreads = useMemo(() => {
+    const merged = [...bookings, ...(unifiedData ?? [])];
+    return merged.sort((a, b) => {
+      const at = new Date(a.latestMessage?.createdAt || a.updatedAt || a.createdAt || 0).getTime();
+      const bt = new Date(b.latestMessage?.createdAt || b.updatedAt || b.createdAt || 0).getTime();
+      return bt - at;
+    });
+  }, [bookings, unifiedData]);
+
   // Report global counts (independent of the active tab) to the parent so the
   // tab badges stay accurate.
   useEffect(() => {
     if (!onCounts) return;
-    const active = bookings.filter((b) => !isArchived(b.status));
+    const active = allThreads.filter((b) => !isArchived(b.status));
     onCounts({
       all: active.length,
       read: active.filter(
         (b) => b.latestMessage && !isUnreadByMe(b.latestMessage, user?.id),
       ).length,
       unread: active.filter((b) => isUnreadByMe(b.latestMessage, user?.id)).length,
-      archive: bookings.filter((b) => isArchived(b.status)).length,
-      archiveReviewPending: bookings.filter(
+      archive: allThreads.filter((b) => isArchived(b.status)).length,
+      archiveReviewPending: allThreads.filter(
         (b) => isArchived(b.status) && b.reviewPending,
       ).length,
     });
-  }, [bookings, user?.id, onCounts]);
+  }, [allThreads, user?.id, onCounts]);
 
   const filteredBookings = useMemo(() => {
-    if (!bookings) return [];
+    if (!allThreads) return [];
 
     const tab = currentTab.toLowerCase();
-    const tabFiltered = bookings.filter((booking) => {
+    const tabFiltered = allThreads.filter((booking) => {
       const archived = isArchived(booking.status);
       if (tab === "archive") return archived;
       if (archived) return false;
@@ -321,32 +389,12 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
       : tabFiltered;
 
     return searchFiltered;
-  }, [bookings, currentTab, searchQuery, user?.id]);
-
-  const formatTimestamp = (isoDate: string): string => {
-    const date = new Date(isoDate);
-    if (Number.isNaN(date.getTime())) return "";
-
-    const diffMs = Date.now() - date.getTime();
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return t("justNow");
-    if (minutes < 60) return t("minutesAgo", { minutes });
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return t("hoursAgo", { hours });
-    const days = Math.floor(hours / 24);
-    if (days === 1) return t("yesterday");
-    if (days < 7) return t("daysAgo", { days });
-    return date.toLocaleDateString([], { month: "short", day: "numeric" });
-  };
+  }, [allThreads, currentTab, searchQuery, user?.id]);
 
   return (
     <div className="w-full">
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="h-[96px] animate-pulse rounded-2xl bg-white" />
-          ))}
-        </div>
+        <ConversationRowSkeleton />
       ) : filteredBookings.length > 0 ? (
         <div className="space-y-3">
           {filteredBookings.map((booking) => {
@@ -354,102 +402,54 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
             const partner = booking.partner;
             if (!partner) return null;
 
-            const displayName = `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim();
-            const initials = `${partner.firstName?.[0] || ""}${partner.lastName?.[0] || ""}` || "AK";
-            const isUnreadByMe = Boolean(msg && msg.senderId !== user?.id && !msg.isRead);
             const status = getStatusConfig(booking.status, t);
-            const fallbackTime = booking.updatedAt || booking.createdAt || new Date().toISOString();
-            const previewText =
-              msg?.content ||
-              (booking.status === BOOKING_STATUS.COMPLETED
-                ? t("jobCompletedReadOnly")
-                : t("bookingClosedReadOnly"));
+            const mine = Boolean(msg && msg.senderId === user?.id);
+            const row: ConversationRowData = {
+              id: booking.bookingId,
+              name: `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim(),
+              avatarUrl: partner.profilePicture,
+              isVerified: partner.isVerified,
+              isOnline: Boolean(presenceMap[partner.id]),
+              label: booking.isInquiry
+                ? t("agencyConversation")
+                : booking.service?.category?.name || t("bookingFallback"),
+              // Agency threads have no booking lifecycle, so no status pill.
+              pill: booking.isInquiry ? null : { label: status.label, className: status.pill },
+              accentClassName: status.bar,
+              timestamp: msg?.createdAt || booking.updatedAt || booking.createdAt || new Date().toISOString(),
+              preview:
+                msg?.content ||
+                (booking.isInquiry
+                  ? t("noMessagesYet")
+                  : booking.status === BOOKING_STATUS.COMPLETED
+                    ? t("jobCompletedReadOnly")
+                    : t("bookingClosedReadOnly")),
+              isUnread: Boolean(msg && msg.senderId !== user?.id && !msg.isRead),
+              ownReceipt: mine ? (msg!.isRead ? "read" : msg!.isDelivered ? "delivered" : "sent") : null,
+              unreadCount: booking.unreadCount,
+              reviewPending: booking.reviewPending,
+            };
+
             return (
-              <button
+              <ConversationRow
                 key={booking.bookingId}
-                type="button"
-                className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-gray-100 bg-white py-3 pl-4 pr-2 text-left shadow-sm transition-colors hover:bg-gray-50"
-                onClick={() => router.push(`/conversations/inbox/${booking.bookingId}`)}
-              >
-                {/* Status accent bar */}
-                <span className={`absolute left-0 top-0 h-full w-1.5 ${status.bar}`} />
-
-                <span className="relative flex-shrink-0">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={partner.profilePicture || ""} className="object-cover" />
-                    <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white shadow-sm ${presenceMap[partner.id] ? "bg-green-500" : "bg-gray-300"}`} />
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-start justify-between gap-2">
-                    <span className="flex min-w-0 items-center gap-1">
-                      <span className="block truncate text-[15px] font-bold text-ink">
-                        {displayName}
-                      </span>
-                      {partner.isVerified ? <VerifiedBadge size={14} /> : null}
-                    </span>
-                    <span className="text-[11px] font-medium text-[#9E9E9E]">{formatTimestamp(msg?.createdAt || fallbackTime)}</span>
-                  </span>
-
-                  <span className="mt-0.5 flex items-center justify-between gap-2">
-                    <span className="block truncate text-[12.5px] font-semibold text-brand">
-                      {booking.service?.category?.name || t("bookingFallback")}
-                    </span>
-                    <span className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${status.pill}`}>
-                      {status.label}
-                    </span>
-                  </span>
-
-                  <span className="mt-1 flex items-end justify-between gap-2">
-                    <span className={`block truncate text-[12px] leading-5 ${isUnreadByMe ? "font-bold text-ink" : "text-ink-muted"}`}>
-                      {previewText}
-                    </span>
-                    <span className="flex flex-shrink-0 items-center gap-1.5">
-                      {msg && msg.senderId === user?.id &&
-                        (msg.isRead ? (
-                          <CheckCheck className="h-3.5 w-3.5 text-[#34B7F1]" />
-                        ) : msg.isDelivered ? (
-                          <CheckCheck className="h-3.5 w-3.5 text-[#9E9E9E]" />
-                        ) : (
-                          <Check className="h-3.5 w-3.5 text-[#9E9E9E]" />
-                        ))}
-                      {booking.unreadCount && booking.unreadCount > 0 ? (
-                        <span className="min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
-                          {booking.unreadCount}
-                        </span>
-                      ) : booking.reviewPending ? (
-                        <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                          {t("review")}
-                        </span>
-                      ) : null}
-                    </span>
-                  </span>
-                </span>
-
-                <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-gray-300" />
-              </button>
+                data={row}
+                onClick={() =>
+                  router.push(
+                    booking.isInquiry
+                      ? `/conversations/thread/${booking.bookingId}`
+                      : `/conversations/inbox/${booking.bookingId}`,
+                  )
+                }
+              />
             );
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-12 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface">
-            <MessageCircle className="h-7 w-7 text-brand" />
-          </span>
-          <h3 className="mt-4 text-[15px] font-bold text-ink">
-            {currentTab === "Archive" ? t("nothingArchivedYet") : t("noMessagesFound")}
-          </h3>
-          <p className="mt-1 max-w-[260px] text-[12px] leading-5 text-ink-muted">
-            {currentTab === "Archive"
-              ? t("archiveEmptyDesc")
-              : t("searchEmptyDesc")}
-          </p>
-        </div>
+        <ConversationEmpty
+          title={currentTab === "Archive" ? t("nothingArchivedYet") : t("noMessagesFound")}
+          hint={currentTab === "Archive" ? t("archiveEmptyDesc") : t("searchEmptyDesc")}
+        />
       )}
     </div>
   );

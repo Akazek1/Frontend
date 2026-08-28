@@ -46,9 +46,22 @@ export function useServiceList(params: BrowseServicesParams = {}) {
   });
 
   // Flatten pages into one list for rendering; expose the total so callers can
-  // show "showing N of M" and decide whether more exist.
-  const services = query.data?.pages.flatMap((p) => p.items) ?? [];
-  const total = query.data?.pages[0]?.total ?? 0;
+  // show "showing N of M" and decide whether more exist. Dedupe by id: the
+  // ranked marketplace pool can shift slightly between page fetches (time-based
+  // scoring, live data changes), so the same service may land on two pages —
+  // without this, React sees duplicate keys.
+  const pages = query.data?.pages ?? [];
+  const seen = new Set<string>();
+  const services: (typeof pages)[number]["items"] = [];
+  for (const p of pages) {
+    for (const item of p.items) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id);
+        services.push(item);
+      }
+    }
+  }
+  const total = pages[0]?.total ?? 0;
 
   return { ...query, services, total };
 }

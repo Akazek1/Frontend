@@ -63,7 +63,7 @@ export default function ReportIssuePage() {
 
     if (submitted) {
         return (
-            <PageShell bottomNav={false} padded>
+            <PageShell padded>
                 <div className="flex flex-col items-center justify-center gap-4 pt-20 text-center">
                     <div
                         className="flex h-16 w-16 items-center justify-center rounded-full"
@@ -88,7 +88,7 @@ export default function ReportIssuePage() {
     }
 
     return (
-        <PageShell bottomNav={false} padded>
+        <PageShell padded>
             <PageHeader
                 title={t("reportAnIssue")}
                 subtitle={t("subtitle")}

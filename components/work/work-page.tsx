@@ -33,6 +33,7 @@ import {
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { useWorkData } from "@/hooks/useWorkData";
+import { PlacementOffersBanner } from "@/components/work/placement-offers-banner";
 import jobsService, { Job } from "@/services/jobs-service";
 import { cn, formatPrice } from "@/lib/utils";
 import {
@@ -519,6 +520,8 @@ export default function WorkPage() {
       </div>
 
       <div className={cn(appContentClass, "px-4 pt-4")}>
+        {/* Placement offers awaiting this worker's decision. */}
+        <PlacementOffersBanner />
         {error && (
           <div className="rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-[12px] font-medium text-orange-700">
             {error}
