@@ -2036,6 +2036,17 @@
     "message": "Ubutumwa",
     "more": "Ibindi"
   },
+  "marketingSettings": {
+    "title": "Kwamamaza no ku mbuga nkoranyambaga",
+    "subtitle": "Hitamo uburyo Huza ishobora kukwamamaza",
+    "showcaseTitle": "Koresha umwirondoro wanjye mu kwamamaza kwa Huza",
+    "showcaseDesc": "Emerera Huza gukoresha ifoto yawe, izina n'umwirondoro wawe ku mbuga nkoranyambaga zayo, mu kwamamaza no mu byapa.",
+    "showcaseToggleAria": "Hindura ikoreshwa ry'umwirondoro wanjye mu kwamamaza kwa Huza",
+    "turnedOn": "Wemeye ko Huza igukoresha mu kwamamaza",
+    "turnedOff": "Wanze ko Huza igukoresha mu kwamamaza",
+    "failedToUpdate": "Ntibyashobotse kubika. Ongera ugerageze.",
+    "notice": "Ibi bitandukanye no kwemera Amabwiriza. Umwirondoro wawe rusange ku isoko ntuhinduka. Nuramuka uhisemo kubireka, Huza ihagarika gukoresha umwirondoro wawe mu kwamamaza, ariko ibyamaze gutangazwa cyangwa gusangizwa n'abandi bishobora gusigara."
+  },
   "profileScreen": {
     "editProfile": "Hindura Umwirondoro",
     "editProfileDesc": "Vugurura amakuru bwite akuranga",
@@ -2049,6 +2060,8 @@
     "savedProfilesDesc": "Reba abatanga serivisi wabitse",
     "notifications": "Amatangazo",
     "notificationsDesc": "Genzura amatangazo n'ibyibutswa",
+    "marketing": "Kwamamaza no ku mbuga nkoranyambaga",
+    "marketingDesc": "Genzura uburyo Huza yamamaza umwirondoro wawe",
     "helpAndSupport": "Ubufasha n'Inkunga",
     "helpAndSupportDesc": "Bona ibisubizo cyangwa uvugane n'itsinda rifasha",
     "reportAnIssue": "Tanga Ikibazo",

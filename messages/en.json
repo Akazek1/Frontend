@@ -2042,6 +2042,17 @@
     "message": "Message",
     "more": "More"
   },
+  "marketingSettings": {
+    "title": "Marketing & Social Media",
+    "subtitle": "Choose how Huza can promote you",
+    "showcaseTitle": "Feature my profile in Huza marketing",
+    "showcaseDesc": "Let Huza use your photo, name and profile on its own social media accounts, ads and promotional material.",
+    "showcaseToggleAria": "Toggle featuring my profile in Huza marketing",
+    "turnedOn": "You're opted in to Huza marketing",
+    "turnedOff": "You're opted out of Huza marketing",
+    "failedToUpdate": "Could not save that. Please try again.",
+    "notice": "This is separate from accepting the Terms. Your public marketplace profile is not affected. If you opt out later, Huza stops using your profile in marketing, but content already posted or re-shared by others may remain."
+  },
   "profileScreen": {
     "editProfile": "Edit Profile",
     "editProfileDesc": "Update your personal details",
@@ -2055,6 +2066,8 @@
     "savedProfilesDesc": "View providers you bookmarked",
     "notifications": "Notifications",
     "notificationsDesc": "Control alerts and reminders",
+    "marketing": "Marketing & Social Media",
+    "marketingDesc": "Control how Huza promotes your profile",
     "helpAndSupport": "Help & Support",
     "helpAndSupportDesc": "Get answers or contact support",
     "reportAnIssue": "Report an Issue",

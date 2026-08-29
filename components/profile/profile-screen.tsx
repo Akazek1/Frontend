@@ -16,6 +16,7 @@ import {
   Lock,
   Building2,
   UserPlus,
+  Megaphone,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import Image from "next/image";
@@ -100,6 +101,7 @@ const ProfileScreen = () => {
       : []),
     { name: t("savedProfiles"), description: t("savedProfilesDesc"), Icon: Bookmark, href: "/more/saved" },
     { name: t("notifications"), description: t("notificationsDesc"), Icon: Bell, href: "/more/notifications" },
+    { name: t("marketing"), description: t("marketingDesc"), Icon: Megaphone, href: "/more/marketing" },
   ];
 
   const supportItems = [
