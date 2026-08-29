@@ -645,6 +645,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setCode(Array(OTP_LENGTH).fill(""))
       setActiveInputIndex(0)
     }
+    // LoginForm (step 2) is only ever entered directly — via the
+    // /onboarding?step=login link/deep-link — never by advancing from step 1
+    // (SignupForm). A plain `step - 1` therefore always lands back on the
+    // registration form, which the person never actually visited. Its real
+    // "back" destination is RoleSelection, the screen the login link sits on.
+    if (currentStep === 2) {
+      setCurrentStep(0)
+      return
+    }
     setCurrentStep(prev => prev - 1)
   }, [currentStep])
 
