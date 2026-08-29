@@ -152,10 +152,11 @@ Ask Rwandan counsel:
   another basis?
 - Is the **suppression record** (hashed phone / email / ID + reason + date)
   proportionate, and is the disclosure in Privacy §9 sufficient?
-- Is bundling **acceptance of the Terms** and **the social-media/app-content
-  use** (Privacy §7 / Terms §6) into signup acceptable, given it is framed as a
-  condition of the free service and users can ask not to be individually
-  featured? Would counsel prefer an unbundled tick for the media use?
+- For the **social-media / app-content use** (Privacy §7, Terms §5–6), the docs
+  now rely on the content licence in the Terms + legitimate interest, with
+  consent only as a backstop, and give a per-person right to object. Is that
+  basis sound under Law Nº 058/2021, or would counsel still want an unbundled
+  opt-in for the media use?
 - Are the **cross-border transfer** safeguards (Privacy §8) sufficient, or does
   each processor country / mechanism need naming?
 - **Retention periods** (Privacy §9) — do Rwandan tax / accounting / labour rules
