@@ -132,7 +132,7 @@
     "phonePlaceholder": "Phone number",
     "phoneExists": "An account with this number already exists.",
     "logInInstead": "Log in instead",
-    "agree": "I have read and agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>, including that Huza.app may use app screenshots and videos that show my public profile.",
+    "agree": "I have read and agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>, including how Huza.app uses app screenshots and videos that show my public profile.",
     "otpSentTo": "We texted a code to <b>+250 {phone}</b>. Open your Messages app to find it.",
     "otpAriaLabel": "Verification code",
     "resendIn": "Resend code in {seconds}s",
