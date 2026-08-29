@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/app-primitives"
 import { cn } from "@/lib/utils"
 import { AgencyWorkerCards } from "@/components/organization/agency-worker-cards"
+import { CopyableText } from "@/components/ui/copyable-text"
 
 interface Organization {
   id: string
@@ -47,14 +48,18 @@ interface OrganizationResponse {
   createdAt?: string
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | null }) {
+function InfoRow({ icon, label, value, copyable }: { icon: React.ReactNode; label: string; value: string | null; copyable?: boolean }) {
   if (!value) return null
   return (
     <div className="flex items-start gap-3">
       <div className="mt-0.5 text-brand">{icon}</div>
       <div>
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-sm text-gray-800">{value}</p>
+        {copyable ? (
+          <CopyableText value={value} label={label} className="text-sm text-gray-800" />
+        ) : (
+          <p className="text-sm text-gray-800">{value}</p>
+        )}
       </div>
     </div>
   )
@@ -182,8 +187,8 @@ export default function OrgProfilePage() {
         {/* Contact details */}
         <Card className="flex flex-col gap-4">
           <AppSectionHeader title={t("contactAndLocation")} />
-          <InfoRow icon={<Phone className="w-4 h-4" />} label={t("phone")} value={org.phone} />
-          <InfoRow icon={<Mail className="w-4 h-4" />} label={t("email")} value={org.email} />
+          <InfoRow icon={<Phone className="w-4 h-4" />} label={t("phone")} value={org.phone} copyable />
+          <InfoRow icon={<Mail className="w-4 h-4" />} label={t("email")} value={org.email} copyable />
           <InfoRow icon={<MapPin className="w-4 h-4" />} label={t("address")} value={org.address} />
 
           {!org.phone && !org.email && !org.address && (

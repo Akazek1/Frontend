@@ -63,6 +63,8 @@ export interface Service {
       logoUrl: string | null;
       verified: boolean;
       _count?: { workers: number; placements: number };
+      /** My own open inquiry about THIS worker with this agency, if any. */
+      myInquiry?: { id: string; status: string } | null;
     } | null;
   } | null;
   // Service-level agency backing (new enrollment model). Preferred over
@@ -73,6 +75,8 @@ export interface Service {
     logoUrl: string | null;
     verified: boolean;
     _count?: { workers: number; placements: number };
+    /** My own open inquiry about THIS worker with this agency, if any. */
+    myInquiry?: { id: string; status: string } | null;
   } | null;
   companyId?: string | null;
   company?: {

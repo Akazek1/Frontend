@@ -25,6 +25,7 @@ import {
 import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, AgencyPageHeader, Avatar, Collapsible, StatusPill } from "@/components/agency/agency-ui";
+import { CopyableText } from "@/components/ui/copyable-text";
 import { cn } from "@/lib/utils";
 
 interface WorkerDoc {
@@ -267,7 +268,7 @@ export default function WorkerDetailPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("employer")}</p>
                       <p className="text-[14px] font-bold text-ink">{name(currentPlacement.employer, t)}</p>
                       {currentPlacement.employer.phoneNumber && (
-                        <p className="text-[12px] text-ink-muted">{currentPlacement.employer.phoneNumber}</p>
+                        <CopyableText value={currentPlacement.employer.phoneNumber} label={t("phone")} className="text-[12px] text-ink-muted" />
                       )}
                       {locationOf(currentPlacement.employer.addresses) && (
                         <p className="flex items-center gap-1 text-[12px] text-ink-muted">

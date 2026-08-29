@@ -221,6 +221,10 @@ export function ServiceDetailClient() {
     // Agency backing: prefer the service-level enrollment (new model), fall
     // back to the provider's legacy agency link during the transition.
     const agencyBacking = service?.agency ?? provider?.agency ?? null;
+    // An inquiry already open with this agency about this worker — the button
+    // reflects that instead of offering to send a second one.
+    const myAgencyInquiry = agencyBacking?.myInquiry ?? null;
+    const isAwaitingAgency = !!myAgencyInquiry;
     // Project 2 Phase E — a company-owned card has no individual provider; the
     // owner shown in the header is the Service Company instead.
     const company = service?.company;
@@ -1075,14 +1079,25 @@ export function ServiceDetailClient() {
                         >
                             {t("viewAgency")}
                         </Link>
-                        <button
-                            onClick={() => requireAuth(() => setIsInquiryOpen(true), "hire")}
-                            disabled={inquirySent}
-                            className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
-                            style={{ backgroundColor: inquirySent ? "#9CA3AF" : colors.primary }}
-                        >
-                            {inquirySent ? t("inquirySent") : t("contactAgency")}
-                        </button>
+                        {isAwaitingAgency ? (
+                            <Link
+                                href={`/inquiries/${myAgencyInquiry!.id}`}
+                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white"
+                                style={{ backgroundColor: "#9CA3AF" }}
+                            >
+                                <Clock className="h-4 w-4" />
+                                {t("awaitingAgencyResponse")}
+                            </Link>
+                        ) : (
+                            <button
+                                onClick={() => requireAuth(() => setIsInquiryOpen(true), "hire")}
+                                disabled={inquirySent}
+                                className="flex h-12 flex-[1.6] items-center justify-center gap-2 rounded-xl text-[15px] font-bold text-white disabled:opacity-70"
+                                style={{ backgroundColor: inquirySent ? "#9CA3AF" : colors.primary }}
+                            >
+                                {inquirySent ? t("inquirySent") : t("contactAgency")}
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="flex items-center gap-3">

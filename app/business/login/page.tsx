@@ -119,11 +119,6 @@ export default function BusinessLoginPage() {
             </button>
           </form>
 
-          {/* Test creds hint (TEMP) */}
-          <p className="mt-3 rounded-lg bg-[#FFF8EC] px-3 py-2 text-center text-[11px] text-[#B45309]">
-            {t("testLoginLabel")} <span className="font-bold">agency@akazek.test</span> / <span className="font-bold">agency123</span>
-          </p>
-
           <div className="my-5 flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-100" />
             <span className="text-[12px] text-ink-muted">{t("or")}</span>

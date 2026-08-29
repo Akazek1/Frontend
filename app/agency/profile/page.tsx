@@ -22,6 +22,7 @@ import api from "@/lib/axios";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, Avatar, StatusPill } from "@/components/agency/agency-ui";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { CopyableText } from "@/components/ui/copyable-text";
 import { shouldUnoptimizeImage } from "@/lib/service-display";
 
 interface ProfileWorker {
@@ -168,8 +169,8 @@ export default function AgencyProfilePage() {
           <AgencyCard className="p-5">
             <h2 className="mb-3 text-[15px] font-bold text-ink">{t("contactInformation")}</h2>
             <div className="space-y-3">
-              {org.phone && <ContactRow icon={Phone} value={org.phone} />}
-              {org.email && <ContactRow icon={Mail} value={org.email} />}
+              {org.phone && <ContactRow icon={Phone} value={org.phone} copyable label={t("phone")} />}
+              {org.email && <ContactRow icon={Mail} value={org.email} copyable label={t("email")} />}
               {org.website && <ContactRow icon={Globe} value={org.website} />}
               {org.address && <ContactRow icon={MapPin} value={org.address} />}
             </div>
@@ -241,11 +242,11 @@ export default function AgencyProfilePage() {
   );
 }
 
-function ContactRow({ icon: Icon, value }: { icon: React.ElementType<{ className?: string }>; value: string }) {
+function ContactRow({ icon: Icon, value, copyable, label }: { icon: React.ElementType<{ className?: string }>; value: string; copyable?: boolean; label?: string }) {
   return (
     <div className="flex items-center gap-3 text-[13px] text-ink">
       <Icon className="h-4 w-4 shrink-0 text-brand" />
-      <span className="truncate">{value}</span>
+      {copyable ? <CopyableText value={value} label={label} /> : <span className="truncate">{value}</span>}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import BackButtonHeader from '@/components/header/back-button-header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { CopyableText } from '@/components/ui/copyable-text';
 import {
     AppButton,
     AppSectionHeader,
@@ -302,10 +303,14 @@ const BookingDetails: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-medium text-sm">{booking.user?.firstName} {booking.user?.lastName}</p>
-                                <p className="text-xs text-gray-500">{booking.user?.phoneNumber}</p>
+                                {booking.user?.phoneNumber && (
+                                    <CopyableText value={booking.user.phoneNumber} className="text-xs text-gray-500" />
+                                )}
                             </div>
                         </div>
-                        <p className="text-xs text-gray-600">{booking.user?.email}</p>
+                        {booking.user?.email && (
+                            <CopyableText value={booking.user.email} className="text-xs text-gray-600" />
+                        )}
                     </Card>
 
                     {/* Worker Card */}
@@ -317,10 +322,14 @@ const BookingDetails: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-medium text-sm">{booking.worker.firstName} {booking.worker.lastName}</p>
-                                <p className="text-xs text-gray-500">{booking.worker.phoneNumber}</p>
+                                {booking.worker.phoneNumber && (
+                                    <CopyableText value={booking.worker.phoneNumber} className="text-xs text-gray-500" />
+                                )}
                             </div>
                         </div>
-                        <p className="text-xs text-gray-600">{booking.worker.email}</p>
+                        {booking.worker.email && (
+                            <CopyableText value={booking.worker.email} className="text-xs text-gray-600" />
+                        )}
                     </Card>
                 </div>
 
