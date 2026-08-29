@@ -54,10 +54,10 @@ const HelpAndSupport = () => {
             {t("phoneSupport")}
           </p>
           <a
-            href="tel:+250788000000"
+            href="tel:+250785567821"
             className="text-brand font-semibold hover:underline"
           >
-            +250 788 000 000
+            +250 785 567 821
           </a>
           <p className="text-xs text-gray-500">{t("phoneAvailability")}</p>
         </div>
@@ -68,7 +68,7 @@ const HelpAndSupport = () => {
             {t("whatsappSupport")}
           </p>
           <a
-            href="https://wa.me/250788000000"
+            href="https://wa.me/250785567821"
             target="_blank"
             rel="noopener noreferrer"
             className="text-brand font-semibold hover:underline inline-flex items-center gap-1"

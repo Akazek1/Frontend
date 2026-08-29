@@ -37,7 +37,7 @@ export const APP_CONFIG = {
   // Contact & Support
   contact: {
     email: "support@huza.app",
-    phone: "+250788335947", // Update with actual support number
+    phone: "+250785567821",
     website: "https://www.huza.app",
   },
 
