@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const TERMS_INTRO =
-  "These Terms & Conditions govern your use of Huza and the services provided through our platform. By accessing and using Huza, you agree to comply with these terms. If you do not agree, please do not use our services.";
+  "These Terms & Conditions are an agreement between you and Huza.app LTD. They govern your use of Huza, an online marketplace that connects people who need household and personal services with people who provide them. By creating an account or using Huza you accept these Terms and the Privacy Policy. If you do not agree, please do not use Huza.";
 
 // Public, auth-free page so it is readable from the signup screen (where the
 // user is not yet authenticated) as well as from the in-app More menu.
