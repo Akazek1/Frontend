@@ -90,7 +90,6 @@ export function PhoneNumberEntry() {
           <Link href="/privacy" className="text-brand underline underline-offset-2" onClick={(e) => e.stopPropagation()}>
             Privacy Policy
           </Link>
-          , including how Huza.app uses app screenshots and videos that show my public profile.
         </span>
       </label>
     </div>

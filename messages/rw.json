@@ -132,7 +132,7 @@
     "phonePlaceholder": "Nimero ya telefoni",
     "phoneExists": "Konti ifite iyi nimero isanzwe ihari.",
     "logInInstead": "Ahubwo injira",
-    "agree": "Nasomye kandi nemera <terms>Amabwiriza y'Imikoreshereze</terms> na <privacy>Amabwiriza y'Ibanga</privacy>, harimo uburyo Huza.app ikoresha amafoto n'amashusho ya porogaramu agaragaza umwirondoro wanjye rusange.",
+    "agree": "Nasomye kandi nemera <terms>Amabwiriza y'Imikoreshereze</terms> na <privacy>Amabwiriza y'Ibanga</privacy>",
     "otpSentTo": "Twohereje kode kuri SMS kuri <b>+250 {phone}</b>. Fungura Messages (ubutumwa) kuri telefoni yawe uyisome.",
     "otpAriaLabel": "Kode yo kwemeza",
     "resendIn": "Ongera wohereze kode mu masegonda {seconds}",
