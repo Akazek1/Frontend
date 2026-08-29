@@ -13,6 +13,7 @@ import { PasswordField } from "@/components/business/password-field";
 import { OtpCodeInput, OTP_LENGTH } from "@/components/ui/otp-code-input";
 
 type OrgType = "SERVICE_COMPANY" | "STAFFING_AGENCY";
+type AgencyModel = "PLACEMENT" | "DISPATCH";
 
 // Matches the backend's OTP resend cooldown (AuthService.OTP_RESEND_COOLDOWN_SECONDS).
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -21,6 +22,8 @@ export default function BusinessRegisterPage() {
   const t = useTranslations("businessRegister");
   const locale = useLocale();
   const [type, setType] = useState<OrgType | null>(null);
+  // Only asked when type is STAFFING_AGENCY — how the agency engages workers.
+  const [agencyModel, setAgencyModel] = useState<AgencyModel | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -53,6 +56,7 @@ export default function BusinessRegisterPage() {
   async function handleDetailsSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!type) return toast.error(t("chooseBusinessType"));
+    if (type === "STAFFING_AGENCY" && !agencyModel) return toast.error(t("chooseAgencyModel"));
     if (!name.trim()) return toast.error(t("enterBusinessName"));
     if (!email.trim()) return toast.error(t("enterEmailAddress"));
     // Required: this number receives the sign-up code and every later
@@ -96,6 +100,7 @@ export default function BusinessRegisterPage() {
         password,
         phone: normalizeRwandaPhone(phone),
         otp,
+        ...(type === "STAFFING_AGENCY" && agencyModel ? { agencyModel } : {}),
       });
       const data = res.data?.data || res.data;
       if (!data?.token) throw new Error(t("noTokenReturned"));
@@ -116,7 +121,11 @@ export default function BusinessRegisterPage() {
   const typeCard = (orgType: OrgType, title: string, sub: string, Icon: typeof Building2) => (
     <button
       type="button"
-      onClick={() => setType(orgType)}
+      onClick={() => {
+        setType(orgType);
+        // A model choice only makes sense for an agency — drop a stale pick.
+        if (orgType !== "STAFFING_AGENCY") setAgencyModel(null);
+      }}
       className={`relative flex min-w-0 flex-1 items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
         type === orgType ? "border-brand bg-brand text-white" : "border-gray-200 bg-white text-ink hover:border-brand"
       }`}
@@ -129,6 +138,20 @@ export default function BusinessRegisterPage() {
         <p className="text-[14px] font-bold">{title}</p>
         <p className={`text-[11px] ${type === orgType ? "text-white/80" : "text-ink-muted"}`}>{sub}</p>
       </div>
+    </button>
+  );
+
+  const agencyModelCard = (model: AgencyModel, title: string, sub: string) => (
+    <button
+      type="button"
+      onClick={() => setAgencyModel(model)}
+      className={`relative flex min-w-0 flex-1 flex-col items-start gap-1 rounded-xl border-2 p-3.5 text-left transition-all ${
+        agencyModel === model ? "border-brand bg-brand text-white" : "border-gray-200 bg-white text-ink hover:border-brand"
+      }`}
+    >
+      {agencyModel === model && <CheckCircle className="absolute right-2.5 top-2.5 h-4 w-4 text-white" />}
+      <p className="text-[13px] font-bold">{title}</p>
+      <p className={`text-[11px] leading-snug ${agencyModel === model ? "text-white/80" : "text-ink-muted"}`}>{sub}</p>
     </button>
   );
 
@@ -151,6 +174,16 @@ export default function BusinessRegisterPage() {
             {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
             {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
           </div>
+
+          {type === "STAFFING_AGENCY" && (
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("agencyModelLabel")}</label>
+              <div className="flex flex-col gap-2.5 sm:flex-row">
+                {agencyModelCard("PLACEMENT", t("agencyModelPlacement"), t("agencyModelPlacementDesc"))}
+                {agencyModelCard("DISPATCH", t("agencyModelDispatch"), t("agencyModelDispatchDesc"))}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("businessName")}</label>

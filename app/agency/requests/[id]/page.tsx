@@ -24,6 +24,7 @@ import { getApiErrorMessage } from "@/lib/error-handler";
 import { AgencyCard, AgencyLoading, AgencyPageHeader, Avatar, StatusPill } from "@/components/agency/agency-ui";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { AgencyInquiry, inquiryStatusMap, inquiryPersonName } from "@/constant/agency-inquiries";
+import { CopyableText } from "@/components/ui/copyable-text";
 import { cn } from "@/lib/utils";
 
 interface AgencyWorkerLite {
@@ -169,7 +170,12 @@ export default function AgencyInquiryDetailPage() {
             </button>
             {showEmployer && (
               <div className="mt-3 space-y-1.5 border-t border-gray-50 pt-3 text-[12px] text-ink-muted">
-                {inquiry.employer.email && <p className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {inquiry.employer.email}</p>}
+                {inquiry.employer.phoneNumber && (
+                  <p className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> <CopyableText value={inquiry.employer.phoneNumber} label={t("phone")} /></p>
+                )}
+                {inquiry.employer.email && (
+                  <p className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> <CopyableText value={inquiry.employer.email} label={t("email")} /></p>
+                )}
                 {(() => {
                   const a = inquiry.employer.addresses?.[0];
                   const loc = a ? [a.sector, a.district, a.city].filter(Boolean).join(", ") : null;

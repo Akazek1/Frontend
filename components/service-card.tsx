@@ -15,6 +15,8 @@ interface AgencyInfo {
   name: string;
   logoUrl: string | null;
   verified: boolean;
+  /** My own open inquiry about THIS worker with this agency, if any. */
+  myInquiry?: { id: string; status: string } | null;
 }
 
 interface ServiceCardProps {
@@ -280,7 +282,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               </span>
             ))}
           </div>
-          {!isOwnService && agency ? (
+          {!isOwnService && agency?.myInquiry ? (
+            // An inquiry about this worker is already open with this agency —
+            // the card reflects that instead of offering to send another one.
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/inquiries/${agency.myInquiry!.id}`);
+              }}
+              className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors duration-200 whitespace-nowrap bg-gray-300 text-ink"
+            >
+              {t("awaitingAgencyResponse")}
+            </button>
+          ) : !isOwnService && agency ? (
             // Agency-backed workers aren't hired directly — the employer
             // contacts the agency. Open the profile's Contact-Agency inquiry
             // modal directly via the `contact=agency` flag (same experience as
