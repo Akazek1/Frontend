@@ -1,13 +1,25 @@
+"use client";
+
 import Link from "next/link";
-import { Search, Home, Briefcase, HelpCircle, ArrowRight } from "lucide-react";
+import { Search, Home, Briefcase, HelpCircle, ArrowRight, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { colors } from "@/constant/colors";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function NotFound() {
   const t = useTranslations("notFound");
+  // A dead link can strand someone on a page whose own in-app nav might not
+  // be trustworthy for whatever reason got them here — /logout is a plain,
+  // self-contained route (see app/logout/page.tsx) that doesn't depend on
+  // any of that, so it's a safety valve, not just a redundant link.
+  const { isAuthenticated } = useAuth();
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-6 py-6 text-center" style={{ backgroundColor: colors.background }}>
+    // min-h-full, not min-h-screen: this renders inside pwa-layout's <main>,
+    // which already reserves space for the fixed bottom nav via padding.
+    // min-h-screen (100vh) on top of that padding is what caused the extra
+    // scroll — the content was never actually taller than the screen.
+    <div className="flex min-h-full flex-col items-center justify-center px-6 py-6 text-center" style={{ backgroundColor: colors.background }}>
       {/* Explicit Error Badge */}
       <div className="mb-4 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-[0.2em]" style={{ borderColor: colors.borderSecondary, color: colors.textMuted, backgroundColor: "white" }}>
         {t("errorBadge")}
@@ -37,6 +49,19 @@ export default function NotFound() {
             <Home className="mr-2 h-4 w-4" /> {t("backToHome")}
           </Button>
         </Link>
+
+        {isAuthenticated && (
+          <div className="pt-1">
+            <p className="mb-1.5 text-xs" style={{ color: colors.textMuted }}>{t("logOutInstead")}</p>
+            <Link
+              href="/logout"
+              className="inline-flex items-center gap-1.5 text-xs font-bold underline underline-offset-2"
+              style={{ color: colors.textSecondary }}
+            >
+              <LogOut className="h-3.5 w-3.5" /> {t("logOut")}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* "Important Info" / Quick Guide Section - More compact */}

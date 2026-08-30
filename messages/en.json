@@ -1622,6 +1622,8 @@
     "heading": "Something went wrong.",
     "description": "The link you followed might be broken, or the page may have been moved.",
     "backToHome": "Back to Home",
+    "logOutInstead": "Not signed in as the right account?",
+    "logOut": "Log out",
     "quickGuide": "Quick Guide",
     "verifiedProfessionals": "Verified Professionals",
     "verifiedProfessionalsDesc": "Trusted, ID-verified workers only.",
