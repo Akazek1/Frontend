@@ -245,21 +245,26 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      // Logout: clear local state immediately on dispatch so the UI responds
+      // Logout: flip Redux state immediately on dispatch so protected UI hides
       // right away; the fulfilled case just shows the toast after server cleanup.
+      //
+      // Deliberately does NOT touch localStorage/the cookie here (unlike this
+      // reducer's previous version). Those live in the thunk body's `logout()`,
+      // AFTER it awaits authService.logout() — which needs getAuthToken() to
+      // still return a real token so the revoke-refresh-token POST /auth/logout
+      // call actually authenticates. Clearing it here raced ahead of that call:
+      // /auth/logout fired with no Authorization header, got 401, and never
+      // revoked the server-side refresh token. Meanwhile any OTHER in-flight
+      // request that also 401'd during that same window triggered the axios
+      // interceptor's silent-refresh-on-401 — which succeeded, since the
+      // refresh token was still live — silently re-authenticating the user
+      // with a brand-new access token right after they'd just "logged out".
       .addCase(logout.pending, (state) => {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
         state.otpSent = false;
         state.phoneNumber = null;
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-          localStorage.removeItem("signupToken");
-          localStorage.removeItem("user");
-          document.cookie = "token=; path=/; max-age=0";
-          document.cookie = "profileComplete=; path=/; max-age=0";
-        }
       })
       .addCase(logout.fulfilled, (_state) => {
         toast.success("Logged out successfully");
