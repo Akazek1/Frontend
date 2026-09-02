@@ -45,13 +45,5 @@ function jsonLd() {
 }
 
 export default function MarketingHomeRw() {
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd()) }}
-      />
-      <MarketingHome dict={marketingRw} />
-    </>
-  );
+  return <MarketingHome dict={marketingRw} jsonLd={jsonLd()} />;
 }

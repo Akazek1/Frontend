@@ -20,7 +20,7 @@ function multiline(text: string) {
 // markup renders the English page (/welcome) and the Kinyarwanda page (/rw).
 // Section ids (how/workers/employers/trust) are locale-independent so the nav
 // anchors and hreflang work identically on both.
-export function MarketingHome({ dict }: { dict: MarketingDict }) {
+export function MarketingHome({ dict, jsonLd }: { dict: MarketingDict; jsonLd?: object }) {
   const Arrow = ARROW_ICON;
   const Check = CHECK_ICON;
 
@@ -30,6 +30,16 @@ export function MarketingHome({ dict }: { dict: MarketingDict }) {
     // language here for crawlers and screen readers. Pairs with the page's
     // hreflang alternates and og:locale.
     <div lang={dict.locale}>
+      {jsonLd ? (
+        // Rendered as a child of a real element (not a fragment sibling) so
+        // Next serializes it into the SSR HTML instead of the RSC payload.
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
       {/* Hero */}
       <section className="bg-surface">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
