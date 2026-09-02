@@ -30,6 +30,15 @@ import type { LucideIcon } from "lucide-react";
 
 export type MarketingLocale = "en" | "rw";
 
+// The marketing site's own origin. `metadataBase` in the root layout resolves
+// to the APP domain (app.huza.app) on Vercel, so page-relative canonical /
+// hreflang / og:url values on the marketing pages would wrongly point at the
+// app domain. We build absolute marketing URLs from this instead.
+export const MARKETING_ORIGIN =
+  process.env.NEXT_PUBLIC_MARKETING_URL || "https://www.huza.app";
+
+export const marketingUrl = (path: string) => `${MARKETING_ORIGIN}${path}`;
+
 export interface MarketingDict {
   /** <html lang> + hreflang code for this page. */
   locale: MarketingLocale;

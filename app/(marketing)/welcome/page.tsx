@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingHome } from "@/components/marketing/marketing-home";
-import { marketingEn } from "@/components/marketing/marketing-content";
+import { marketingEn, marketingUrl } from "@/components/marketing/marketing-content";
 import { APP_CONFIG } from "@/constant/app.config";
 
 // English marketing homepage. Served at huza.app/ (middleware rewrites "/" here)
@@ -12,17 +12,17 @@ export const metadata: Metadata = {
   title: marketingEn.meta.title,
   description: marketingEn.meta.description,
   alternates: {
-    canonical: "/welcome",
+    canonical: marketingUrl("/welcome"),
     languages: {
-      en: "/welcome",
-      rw: "/rw",
-      "x-default": "/welcome",
+      en: marketingUrl("/welcome"),
+      rw: marketingUrl("/rw"),
+      "x-default": marketingUrl("/welcome"),
     },
   },
   openGraph: {
     title: marketingEn.meta.title,
     description: marketingEn.meta.description,
-    url: "/welcome",
+    url: marketingUrl("/welcome"),
     locale: "en_RW",
     alternateLocale: ["rw_RW"],
   },
@@ -42,6 +42,11 @@ function jsonLd() {
       areaServed: "RW",
       email: APP_CONFIG.contact.email,
       telephone: APP_CONFIG.contact.phone,
+      sameAs: [
+        APP_CONFIG.social.facebook,
+        APP_CONFIG.social.instagram,
+        APP_CONFIG.social.whatsapp,
+      ],
     },
   };
 }
