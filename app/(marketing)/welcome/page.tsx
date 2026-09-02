@@ -42,6 +42,11 @@ function jsonLd() {
       areaServed: "RW",
       email: APP_CONFIG.contact.email,
       telephone: APP_CONFIG.contact.phone,
+      sameAs: [
+        APP_CONFIG.social.facebook,
+        APP_CONFIG.social.instagram,
+        APP_CONFIG.social.whatsapp,
+      ],
     },
   };
 }

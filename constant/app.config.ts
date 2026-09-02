@@ -49,9 +49,9 @@ export const APP_CONFIG = {
 
   // Social Media
   social: {
-    facebook: "https://facebook.com/akazek",
-    instagram: "https://instagram.com/akazek",
-    twitter: "https://twitter.com/akazek",
+    facebook: "https://www.facebook.com/profile.php?id=61592881903543",
+    instagram: "https://www.instagram.com/huza.app/",
+    whatsapp: "https://whatsapp.com/channel/0029Vb8h47bE50UkwovmcY0C",
   },
 
   // SMS Configuration
