@@ -1,11 +1,12 @@
 "use client";
 
-import { Users, Mail, Home, Heart, Clock, GraduationCap, type LucideIcon } from "lucide-react";
+import { Users, Mail, Heart, Clock, GraduationCap, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { profileOptionLabel } from "@/constant/profile-options";
 
 export interface PersonalInfoProps {
   gender?: string;
   email?: string;
-  homeLocation?: string;
   healthStatus?: string;
   preferredWorkTime?: string;
   educationLevel?: string;
@@ -27,26 +28,28 @@ const Row: React.FC<{ icon: LucideIcon; label: string; value?: string }> = ({ ic
 export function PersonalInfo({
   gender,
   email,
-  homeLocation,
   healthStatus,
   preferredWorkTime,
   educationLevel,
 }: PersonalInfoProps) {
-  const formattedGender = gender ? gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase() : undefined;
+  const t = useTranslations("handleProfile");
+  const to = useTranslations("profileOptions");
+  // Home Location is intentionally omitted here — the profile header already
+  // shows the same location, and repeating it (with country appended) read as
+  // a duplicate.
   const rows = [
-    { icon: Users, label: "Gender", value: formattedGender },
-    { icon: Mail, label: "Email", value: email },
-    { icon: Home, label: "Home Location", value: homeLocation },
-    { icon: GraduationCap, label: "Education", value: educationLevel },
-    { icon: Heart, label: "Health Status", value: healthStatus },
-    { icon: Clock, label: "Preferred Work Time", value: preferredWorkTime },
+    { icon: Users, label: t("genderLabel"), value: profileOptionLabel("gender", gender, to) },
+    { icon: Mail, label: t("emailLabel"), value: email },
+    { icon: GraduationCap, label: t("educationLabel"), value: profileOptionLabel("education", educationLevel, to) },
+    { icon: Heart, label: t("healthStatusLabel"), value: profileOptionLabel("health", healthStatus, to) },
+    { icon: Clock, label: t("preferredWorkTimeLabel"), value: profileOptionLabel("workTime", preferredWorkTime, to) },
   ].filter((r) => !!r.value);
 
   if (rows.length === 0) return null;
 
   return (
     <section className="mx-4 mt-4 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-      <h2 className="text-lg font-bold text-ink mb-4">Personal Information</h2>
+      <h2 className="text-lg font-bold text-ink mb-4">{t("personalInformation")}</h2>
       <div className="space-y-3">
         {rows.map((r) => (
           <Row key={r.label} icon={r.icon} label={r.label} value={r.value} />

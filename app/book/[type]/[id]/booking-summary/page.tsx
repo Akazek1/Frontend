@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ interface Address {
 
 const BookingSummary = () => {
     const t = useTranslations("bookingSummary");
+    const locale = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
     const params = useParams();
@@ -98,7 +99,7 @@ const BookingSummary = () => {
                     experience: service.description || t("noExperienceProvided"),
                     languages: Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : "",
                     location: Array.isArray(service.serviceAreas) ? service.serviceAreas.join(", ") : service.serviceAreas || "",
-                    price: formatPrice(service.priceMin, service.priceMax, service.priceType),
+                    price: formatPrice(service.priceMin, service.priceMax, service.priceType, locale),
                     rating: 4.8,
                     reviews: 8289,
                     distance: "2 miles",
@@ -322,7 +323,7 @@ const BookingSummary = () => {
                                         <p className="text-sm text-ink-muted font-medium">
                                             {service.description || "No description provided"}
                                         </p>
-                                        <p className="text-brand font-bold text-sm">{service.price} RWF/day</p>
+                                        <p className="text-brand font-bold text-sm">{formatPrice(service.priceMin, service.priceMax, service.priceType, locale)}</p>
                                     </div>
                                 </div>
                                 <div className="w-full flex justify-end">

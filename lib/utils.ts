@@ -5,10 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatPrice(priceMin?: number, priceMax?: number, priceType?: string): string {
-  if (!priceMin && !priceMax) return "Price on request"
+// Per-locale unit suffix for a price. Currency ("RWF") is left as-is; only the
+// charged-per unit is localised. `rw` = Kinyarwanda (draft — pending native review).
+const PRICE_SUFFIX: Record<string, Record<string, string>> = {
+  en: { daily: "/day", monthly: "/month", hourly: "/hr" },
+  rw: { daily: "/umunsi", monthly: "/ukwezi", hourly: "/isaha" },
+}
+
+export function formatPrice(priceMin?: number, priceMax?: number, priceType?: string, locale?: string): string {
+  const lang = locale && PRICE_SUFFIX[locale] ? locale : "en"
+  if (!priceMin && !priceMax) return lang === "rw" ? "Igiciro kizamenyekana" : "Price on request"
   const type = priceType ?? "fixed"
-  const suffix = type === "daily" ? "/day" : type === "monthly" ? "/month" : type === "hourly" ? "/hr" : ""
+  const suffix = PRICE_SUFFIX[lang][type] ?? ""
   const min = priceMin?.toLocaleString() ?? "0"
   const max = priceMax?.toLocaleString()
   if (max && priceMax !== priceMin) return `${min} – ${max} RWF${suffix}`
