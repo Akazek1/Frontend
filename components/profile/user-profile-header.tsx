@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -33,11 +34,11 @@ export interface UserProfileHeaderProps {
   isOwner?: boolean;
 }
 
-const formatMonth = (iso?: string) => {
+const formatMonth = (iso?: string, locale = "en-US") => {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return d.toLocaleDateString(locale === "rw" ? "rw-RW" : "en-US", { month: "long", year: "numeric" });
 };
 
 export function UserProfileHeader({
@@ -56,12 +57,14 @@ export function UserProfileHeader({
   isOwner = false,
 }: UserProfileHeaderProps) {
   const router = useRouter();
+  const t = useTranslations("handleProfile");
+  const locale = useLocale();
   const shareLink = useShareLink();
   const { lightbox, open: openLightbox, close: closeLightbox, prev: lightboxPrev, next: lightboxNext, select: selectLightboxIndex } = useLightbox();
   // Single source of truth: the admin-approved `isVerified` flag.
   const verified = !!isVerified;
   const location = locationProp || [district, sector, cell, city, country].filter(Boolean).join(", ");
-  const memberSinceLabel = formatMonth(memberSince);
+  const memberSinceLabel = formatMonth(memberSince, locale);
 
   return (
     <section className="px-4 pt-4 pb-2">
@@ -91,7 +94,7 @@ export function UserProfileHeader({
               aria-label="Edit profile"
             >
               <Pencil className="w-3.5 h-3.5" />
-              Edit
+              {t("edit")}
             </Link>
           )}
         </div>
@@ -142,13 +145,13 @@ export function UserProfileHeader({
         {languages.length > 0 ? (
           <div className="flex items-center gap-3">
             <MessageSquare className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <span>Speaks: {languages.join(", ")}</span>
+            <span>{t("speaks")} {languages.join(", ")}</span>
           </div>
         ) : null}
         {memberSinceLabel ? (
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <span>Member since {memberSinceLabel}</span>
+            <span>{t("memberSince")} {memberSinceLabel}</span>
           </div>
         ) : null}
       </div>

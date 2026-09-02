@@ -55,7 +55,13 @@ import { cn } from "@/lib/utils";
 import ProfileImageUploader from "@/components/profile/profile-img-uloader";
 import IdUploadDialog from "@/components/profile/id-upload-dialog";
 import APP_CONFIG from "@/constant/app.config";
-import { QUALITY_DEFS, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
+import { qualityDefs, QUALITY_KEYS, type QualityKey } from "@/constant/user-qualities";
+import {
+  GENDER_OPTIONS,
+  EDUCATION_OPTIONS,
+  HEALTH_OPTIONS,
+  WORK_TIME_OPTIONS,
+} from "@/constant/profile-options";
 import { SectorPicker } from "@/components/ui/sector-picker";
 import { findSector, type ViewerLocation } from "@/constants/rwanda-sectors";
 
@@ -85,31 +91,6 @@ type EditSection = "overview" | "identity" | "location" | "languages" | "work" |
 
 const LEGAL_WORKING_AGE = 18;
 const BIO_LIMIT = 500;
-
-const EDUCATION_OPTIONS = [
-  "No formal education",
-  "Primary school",
-  "Lower secondary",
-  "Upper secondary / high school",
-  "Vocational / TVET",
-  "University",
-  "Other",
-];
-
-const WORK_TIME_OPTIONS = [
-  "Morning",
-  "Afternoon",
-  "Evening",
-  "Full day",
-  "Live-in",
-  "Flexible",
-];
-
-const HEALTH_OPTIONS = [
-  "Fit for work",
-  "Can do light work",
-  "Prefer not to say",
-];
 
 const normalizePhone = (phone?: string) => {
   const digits = String(phone || "").replace(/\D/g, "");
@@ -231,6 +212,8 @@ const Field = ({
 
 export default function EditProfile({ idEditable = true }: { idEditable?: boolean }) {
   const t = useTranslations("editProfile");
+  const to = useTranslations("profileOptions");
+  const qDefs = qualityDefs(to);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -815,7 +798,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
 
             <Field label={t("gender")} error={errors.gender}>
               <div className="grid grid-cols-3 gap-2">
-                {APP_CONFIG.profile.genders.map((gender) => {
+                {GENDER_OPTIONS.map((gender) => {
                   const active = form.gender === gender.value;
                   return (
                     <button
@@ -828,7 +811,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                       } disabled:opacity-60`}
                     >
                       <User className="h-4 w-4" />
-                      {gender.label}
+                      {to(gender.key)}
                     </button>
                   );
                 })}
@@ -929,7 +912,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
               <Field label={t("topQualities")}>
                 <div className="grid grid-cols-2 gap-2">
                   {QUALITY_KEYS.map((quality) => {
-                    const def = QUALITY_DEFS[quality];
+                    const def = qDefs[quality];
                     const Icon = def.icon;
                     const active = form.topQualities.includes(quality);
                     return (
@@ -958,7 +941,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     <SelectValue placeholder={t("selectEducationLevel")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {EDUCATION_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                    {EDUCATION_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{to(option.key)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <p className="mt-1 flex items-center gap-1.5 text-[11px] leading-4 text-[#6B7668]">
@@ -972,7 +955,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     <SelectValue placeholder={t("selectStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {HEALTH_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                    {HEALTH_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{to(option.key)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
@@ -982,7 +965,7 @@ export default function EditProfile({ idEditable = true }: { idEditable?: boolea
                     <SelectValue placeholder={t("selectTime")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {WORK_TIME_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                    {WORK_TIME_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{to(option.key)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>

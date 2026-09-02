@@ -23,45 +23,41 @@ export const QUALITY_KEYS = [
 
 export type QualityKey = (typeof QUALITY_KEYS)[number];
 
-export const QUALITY_DEFS: Record<QualityKey, { icon: LucideIcon; title: string; description: string }> = {
-  RELIABLE: {
-    icon: ShieldCheck,
-    title: "Reliable & Trustworthy",
-    description: "You can count on me to get the job done right.",
-  },
-  ATTENTION_TO_DETAIL: {
-    icon: Sparkles,
-    title: "Attention to Detail",
-    description: "I make sure every corner is spotless.",
-  },
-  ON_TIME: {
-    icon: Clock,
-    title: "On Time",
-    description: "I respect your time and always arrive on time.",
-  },
-  EXPERIENCED: {
-    icon: Award,
-    title: "Experienced",
-    description: "Years of hands-on experience in my field.",
-  },
-  INSURED: {
-    icon: Shield,
-    title: "Insured",
-    description: "Covered so you can hire with confidence.",
-  },
-  MULTILINGUAL: {
-    icon: Languages,
-    title: "Multilingual",
-    description: "I can communicate in multiple languages.",
-  },
-  ECO_FRIENDLY: {
-    icon: Leaf,
-    title: "Eco-Friendly",
-    description: "I use safe, environment-friendly products.",
-  },
-  PET_FRIENDLY: {
-    icon: PawPrint,
-    title: "Pet-Friendly",
-    description: "Comfortable working in homes with pets.",
-  },
+export const QUALITY_ICONS: Record<QualityKey, LucideIcon> = {
+  RELIABLE: ShieldCheck,
+  ATTENTION_TO_DETAIL: Sparkles,
+  ON_TIME: Clock,
+  EXPERIENCED: Award,
+  INSURED: Shield,
+  MULTILINGUAL: Languages,
+  ECO_FRIENDLY: Leaf,
+  PET_FRIENDLY: PawPrint,
 };
+
+const QUALITY_I18N: Record<QualityKey, { titleKey: string; descKey: string }> = {
+  RELIABLE: { titleKey: "qualityReliableTitle", descKey: "qualityReliableDesc" },
+  ATTENTION_TO_DETAIL: { titleKey: "qualityDetailTitle", descKey: "qualityDetailDesc" },
+  ON_TIME: { titleKey: "qualityOnTimeTitle", descKey: "qualityOnTimeDesc" },
+  EXPERIENCED: { titleKey: "qualityExperiencedTitle", descKey: "qualityExperiencedDesc" },
+  INSURED: { titleKey: "qualityInsuredTitle", descKey: "qualityInsuredDesc" },
+  MULTILINGUAL: { titleKey: "qualityMultilingualTitle", descKey: "qualityMultilingualDesc" },
+  ECO_FRIENDLY: { titleKey: "qualityEcoTitle", descKey: "qualityEcoDesc" },
+  PET_FRIENDLY: { titleKey: "qualityPetTitle", descKey: "qualityPetDesc" },
+};
+
+/**
+ * Localised quality definitions. `t` must be bound to the "profileOptions"
+ * namespace. Icons live in QUALITY_ICONS.
+ */
+export function qualityDefs(
+  t: (key: string) => string,
+): Record<QualityKey, { icon: LucideIcon; title: string; description: string }> {
+  return QUALITY_KEYS.reduce((acc, key) => {
+    acc[key] = {
+      icon: QUALITY_ICONS[key],
+      title: t(QUALITY_I18N[key].titleKey),
+      description: t(QUALITY_I18N[key].descKey),
+    };
+    return acc;
+  }, {} as Record<QualityKey, { icon: LucideIcon; title: string; description: string }>);
+}

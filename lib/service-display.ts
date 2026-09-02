@@ -141,7 +141,7 @@ export function mapServiceToProviderCard(service: Service, locale?: string): Pro
         ? provider!.languages!.join(", ")
         : "",
     location: isCompanyCard ? areas[0] || "" : formatProviderLocation(provider, areas),
-    price: formatPrice(service.priceMin, service.priceMax, service.priceType),
+    price: formatPrice(service.priceMin, service.priceMax, service.priceType, locale),
     rating: service.reviews?.averageRating || 0,
     reviews: service.reviews?.totalReviews || 0,
     jobsCompleted: service.reviews?.jobsCompleted || 0,

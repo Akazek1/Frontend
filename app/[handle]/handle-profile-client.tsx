@@ -237,7 +237,6 @@ export function HandleProfileClient() {
 
   const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || t("userFallback");
   const addr = profile.addresses?.[0];
-  const homeLocation = formatAddressLocation(addr, { includeCountry: true });
 
   const displayName = profile.firstName || name;
 
@@ -264,7 +263,6 @@ export function HandleProfileClient() {
       <PersonalInfo
         gender={profile.gender}
         email={profile.email}
-        homeLocation={homeLocation}
         healthStatus={profile.healthStatus}
         preferredWorkTime={profile.preferredWorkTime}
         educationLevel={canSeeEducation ? profile.educationLevel : undefined}

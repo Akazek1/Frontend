@@ -78,7 +78,7 @@ const BookmarksPage = () => {
                             experience={t("yearsExperience")}
                             languages={Array.isArray(service?.worker?.languages) ? service.worker.languages.join(", ") : t("notAvailable")}
                             location={Array.isArray(service?.serviceAreas) ? service.serviceAreas.join(", ") : service?.serviceAreas || t("notAvailable")}
-                            price={formatPrice(service?.priceMin, service?.priceMax, service?.priceType)}
+                            price={formatPrice(service?.priceMin, service?.priceMax, service?.priceType, locale)}
                             rating={service?.reviews?.averageRating || 0}
                             reviews={service?.reviews?.totalReviews || 0}
                             distance={t("distancePlaceholder")}

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Service } from "@/types";
 import { useServiceList } from "@/hooks/useServiceList";
@@ -17,17 +17,6 @@ import {
   ReviewPromptDialog,
   type ReviewPromptPayload,
 } from "@/components/reviews/review-prompt-dialog";
-import {
-  AppButton,
-  FormField,
-  SheetBody,
-  SheetFooter,
-  SheetHeader,
-  SheetOverlay,
-  SheetPanel,
-  appTextareaClass,
-} from "@/components/ui/app-primitives";
-import { cn } from "@/lib/utils";
 
 interface HireModal {
   serviceId: string;
@@ -182,7 +171,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         serviceId: hireModal.serviceId,
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       });
-      toast.success(`Booking request sent to ${hireModal.providerName}!`);
+      toast.success(t("hireRequestSent", { name: hireModal.providerName }));
       setRequestedServiceIds((prev) => {
         const next = new Set(prev);
         next.add(hireModal.serviceId);
@@ -333,57 +322,51 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         onSubmit={submitProviderReview}
       />
 
-      {/* Request to Hire modal */}
+      {/* Request to Hire modal — matches the polished modal on the service
+          detail page: fully-rounded card, even padding, i18n copy. */}
       {hireModal && (
-        <>
-          <SheetOverlay
-            onClick={() => { setHireModal(null); setNotes(""); }}
-            aria-hidden="true"
-          />
-          <SheetPanel side="floating" className="max-w-sm" onClose={() => { setHireModal(null); setNotes(""); }}>
-            <SheetHeader
-              title={hireModal.providerName}
-              subtitle={hireModal.serviceTitle}
-              onClose={() => { setHireModal(null); setNotes(""); }}
-              className="border-b-0 pb-2"
-              leading={
-                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
-                  Request
-                </span>
-              }
-            />
-
-            <SheetBody className="space-y-5 pt-2">
-              <FormField label="Message" hint="Optional">
-                <textarea
-                  autoFocus
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Describe what you need, preferred schedule, or any specific requirements…"
-                  rows={3}
-                  className={cn(appTextareaClass, "min-h-[96px]")}
-                />
-              </FormField>
-            </SheetBody>
-
-            <SheetFooter className="flex gap-3 border-t-0 pb-6 pt-0">
-              <AppButton
-                appVariant="secondary"
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
+          <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{t("hireRequestLabel")}</p>
+                <h3 className="text-[17px] font-black text-ink mt-0.5">{hireModal.providerName}</h3>
+                <p className="text-[13px] text-gray-400">{hireModal.serviceTitle}</p>
+              </div>
+              <button onClick={() => { setHireModal(null); setNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold text-ink block mb-1.5">
+                {t("hireMessage")} <span className="text-gray-400 font-normal">{t("hireOptional")}</span>
+              </label>
+              <textarea
+                autoFocus
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t("hireMessagePlaceholder")}
+                rows={3}
+                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
                 onClick={() => { setHireModal(null); setNotes(""); }}
-                className="flex-1"
+                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
               >
-                Cancel
-              </AppButton>
-              <AppButton
+                {t("hireCancel")}
+              </button>
+              <button
                 onClick={handleHireSubmit}
                 disabled={submitting}
-                className="flex-1"
+                className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Request"}
-              </AppButton>
-            </SheetFooter>
-          </SheetPanel>
-        </>
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("hireSend")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -278,7 +278,7 @@ export function ServiceDetailClient() {
 
     const priceText = useMemo(() => {
         if (!service) return t("priceOnRequest");
-        return formatPrice(service.priceMin, service.priceMax, service.priceType) || t("priceOnRequest");
+        return formatPrice(service.priceMin, service.priceMax, service.priceType, locale) || t("priceOnRequest");
     }, [service]);
 
     // Real stats only. Counts are 0 for a new provider; years shows "—" when
