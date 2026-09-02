@@ -8,8 +8,21 @@ export function middleware(request: NextRequest) {
   // marketing site; the app lives on app.huza.app. On the apex, serve the
   // marketing homepage at "/" (rewrite keeps the clean URL — no /welcome shown).
   const host = request.headers.get("host") || "";
-  if (isMarketingHost(host) && request.nextUrl.pathname === "/") {
+  const path = request.nextUrl.pathname;
+  if (isMarketingHost(host) && path === "/") {
     return NextResponse.rewrite(new URL("/welcome", request.url));
+  }
+
+  // The marketing pages are routes in this same Next app, so without a guard
+  // they also render on app.huza.app (app.huza.app/welcome, /rw). That splits
+  // the marketing content across two domains and confuses canonical/hreflang.
+  // Send any marketing path on the app host back to the marketing origin.
+  const isMarketingPath = path === "/welcome" || path === "/rw" || path.startsWith("/rw/");
+  if (isMarketingPath && !isMarketingHost(host) && host.split(":")[0].endsWith("huza.app")) {
+    return NextResponse.redirect(
+      new URL(path + request.nextUrl.search, "https://www.huza.app"),
+      301,
+    );
   }
 
   if (request.nextUrl.pathname === "/bookings" || request.nextUrl.pathname === "/jobs") {
@@ -92,6 +105,9 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/welcome",
+    "/rw",
+    "/rw/:path*",
     "/profile/:path*",
     "/more/:path*",
     "/book/:path*",

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingHome } from "@/components/marketing/marketing-home";
-import { marketingRw } from "@/components/marketing/marketing-content";
+import { marketingRw, marketingUrl } from "@/components/marketing/marketing-content";
 import { APP_CONFIG } from "@/constant/app.config";
 
 // Kinyarwanda marketing homepage — a real, crawlable URL (not a cookie/locale
@@ -10,17 +10,17 @@ export const metadata: Metadata = {
   title: marketingRw.meta.title,
   description: marketingRw.meta.description,
   alternates: {
-    canonical: "/rw",
+    canonical: marketingUrl("/rw"),
     languages: {
-      en: "/welcome",
-      rw: "/rw",
-      "x-default": "/welcome",
+      en: marketingUrl("/welcome"),
+      rw: marketingUrl("/rw"),
+      "x-default": marketingUrl("/welcome"),
     },
   },
   openGraph: {
     title: marketingRw.meta.title,
     description: marketingRw.meta.description,
-    url: "/rw",
+    url: marketingUrl("/rw"),
     locale: "rw_RW",
     alternateLocale: ["en_RW"],
   },
