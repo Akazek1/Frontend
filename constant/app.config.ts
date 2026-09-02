@@ -8,6 +8,12 @@ export const APP_CONFIG = {
   tagline: "Connect with Trusted Service Professionals",
   description: "Rwanda's domestic work marketplace connecting households with verified service workers",
 
+  // Where the actual app lives. The marketing site runs on the apex domain
+  // (huza.app) and the app on app.huza.app, so marketing CTAs ("Open the app")
+  // must point at an absolute URL, not "/" (which just re-serves the marketing
+  // homepage on the apex host). Override per-env with NEXT_PUBLIC_APP_URL.
+  appUrl: process.env.NEXT_PUBLIC_APP_URL || "https://app.huza.app",
+
   // Branding
   brand: {
     primaryColor: "#145B10",
