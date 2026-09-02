@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { LOCALE_COOKIE } from "@/i18n/config";
 import { persistLanguage } from "@/lib/set-language";
@@ -26,14 +26,25 @@ function hasLocaleCookie(): boolean {
  * appears and the previous choice is applied silently. Mounted app-wide in the
  * root layout.
  */
-export default function LanguageGate() {
+export default function LanguageGate({ isMarketingHost = false }: { isMarketingHost?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // The public marketing pages carry their own explicit EN/RW language switch
+  // as real URLs, so this cookie-based prompt is redundant and intrusive there.
+  // On the marketing host, "/" is the (rewritten) marketing homepage; the
+  // /welcome and /rw paths are marketing on any host.
+  const onMarketing =
+    (isMarketingHost && pathname === "/") ||
+    pathname.startsWith("/welcome") ||
+    pathname === "/rw" ||
+    pathname.startsWith("/rw/");
 
   useEffect(() => {
     // Runs client-side after hydration; if there's no saved locale, prompt once.
-    if (!hasLocaleCookie()) setOpen(true);
-  }, []);
+    if (!onMarketing && !hasLocaleCookie()) setOpen(true);
+  }, [onMarketing]);
 
   if (!open) return null;
 

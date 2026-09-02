@@ -57,6 +57,10 @@ export const metadata: Metadata = {
   description: APP_CONFIG.description,
   manifest: "/manifest.webmanifest",
   applicationName: APP_CONFIG.name,
+  verification: {
+    // Google Search Console — HTML-tag verification for the huza.app property.
+    google: "ag5A3y7JxsE8kwe_w69S9R9Yz7TkBzp2ZpeJErfqThE",
+  },
   openGraph: {
     type: "website",
     siteName: APP_CONFIG.name,
@@ -140,7 +144,7 @@ export default async function RootLayout({
                     {children}
                   </Layout>
                   <AuthGateSheet />
-                  <LanguageGate />
+                  <LanguageGate isMarketingHost={onMarketingHost} />
                 </AuthGateProvider>
               </BookmarkProvider>
             </ViewModeProvider>
