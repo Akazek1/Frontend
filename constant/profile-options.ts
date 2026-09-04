@@ -51,27 +51,28 @@ const BY_KIND: Record<ProfileOptionKind, Option[]> = {
 
 /**
  * Older accounts (seeded/demo data, and profiles saved before the education
- * dropdown was standardised) may still carry free-text values that don't
- * match `EDUCATION_OPTIONS` exactly. Map the common ones back onto a
- * standard option so they still get a localised label instead of showing
- * raw English text.
+ * dropdown was standardised) may still carry free-text education values
+ * that don't match `EDUCATION_OPTIONS` exactly, e.g. "Completed primary
+ * school" instead of "Primary school". Rather than collapsing these onto a
+ * generic option (losing the actual wording), each legacy phrase gets its
+ * own localisation key so the original phrasing is preserved but still
+ * translated.
  */
-const LEGACY_EDUCATION_ALIASES: Record<string, string> = {
-  "Completed primary school": "Primary school",
-  "Completed lower secondary school": "Lower secondary",
-  "Completed ordinary level secondary school": "Lower secondary",
-  "Completed secondary school": "Upper secondary / high school",
-  "Secondary school": "Upper secondary / high school",
-  "Technical diploma": "Vocational / TVET",
-  "University degree": "University",
+const LEGACY_EDUCATION_KEYS: Record<string, string> = {
+  "Completed primary school": "eduLegacyCompletedPrimary",
+  "Completed lower secondary school": "eduLegacyCompletedLowerSecondary",
+  "Completed ordinary level secondary school": "eduLegacyCompletedOLevel",
+  "Completed secondary school": "eduLegacyCompletedSecondary",
+  "Secondary school": "eduLegacySecondary",
+  "Technical diploma": "eduLegacyTechnicalDiploma",
+  "University degree": "eduLegacyUniversityDegree",
+  "Nursing assistant training": "eduLegacyNursingAssistant",
+  "Technical/vocational certificate - culinary arts": "eduLegacyCertCulinary",
+  "Technical/vocational certificate - electrical installation": "eduLegacyCertElectrical",
+  "Technical/vocational certificate - plumbing": "eduLegacyCertPlumbing",
+  "Completed secondary school + childcare short courses": "eduLegacyCompletedSecondaryChildcare",
+  "Completed secondary school + driving school": "eduLegacyCompletedSecondaryDriving",
 };
-
-function normalizeOptionValue(kind: ProfileOptionKind, value: string): string {
-  if (kind === "education" && LEGACY_EDUCATION_ALIASES[value]) {
-    return LEGACY_EDUCATION_ALIASES[value];
-  }
-  return value;
-}
 
 export function profileOptionLabel(
   kind: ProfileOptionKind,
@@ -79,7 +80,10 @@ export function profileOptionLabel(
   t: (key: string) => string,
 ): string | undefined {
   if (!value) return undefined;
-  const normalized = normalizeOptionValue(kind, value);
-  const match = BY_KIND[kind].find((o) => o.value === normalized);
-  return match ? t(match.key) : value;
+  const match = BY_KIND[kind].find((o) => o.value === value);
+  if (match) return t(match.key);
+  if (kind === "education" && LEGACY_EDUCATION_KEYS[value]) {
+    return t(LEGACY_EDUCATION_KEYS[value]);
+  }
+  return value;
 }
