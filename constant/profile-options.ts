@@ -49,12 +49,37 @@ const BY_KIND: Record<ProfileOptionKind, Option[]> = {
   workTime: WORK_TIME_OPTIONS,
 };
 
+/**
+ * Older accounts (seeded/demo data, and profiles saved before the education
+ * dropdown was standardised) may still carry free-text values that don't
+ * match `EDUCATION_OPTIONS` exactly. Map the common ones back onto a
+ * standard option so they still get a localised label instead of showing
+ * raw English text.
+ */
+const LEGACY_EDUCATION_ALIASES: Record<string, string> = {
+  "Completed primary school": "Primary school",
+  "Completed lower secondary school": "Lower secondary",
+  "Completed ordinary level secondary school": "Lower secondary",
+  "Completed secondary school": "Upper secondary / high school",
+  "Secondary school": "Upper secondary / high school",
+  "Technical diploma": "Vocational / TVET",
+  "University degree": "University",
+};
+
+function normalizeOptionValue(kind: ProfileOptionKind, value: string): string {
+  if (kind === "education" && LEGACY_EDUCATION_ALIASES[value]) {
+    return LEGACY_EDUCATION_ALIASES[value];
+  }
+  return value;
+}
+
 export function profileOptionLabel(
   kind: ProfileOptionKind,
   value: string | undefined | null,
   t: (key: string) => string,
 ): string | undefined {
   if (!value) return undefined;
-  const match = BY_KIND[kind].find((o) => o.value === value);
+  const normalized = normalizeOptionValue(kind, value);
+  const match = BY_KIND[kind].find((o) => o.value === normalized);
   return match ? t(match.key) : value;
 }
