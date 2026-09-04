@@ -47,6 +47,7 @@ import {
     shouldUnoptimizeImage,
 } from "@/lib/service-display";
 import { colors } from "@/constant/colors";
+import { profileOptionLabel } from "@/constant/profile-options";
 import {
     DEFAULT_CATEGORY_ICON,
     providerStats,
@@ -102,6 +103,7 @@ function prettyLink(url: string) {
 
 export function ServiceDetailClient() {
     const t = useTranslations("serviceDetail");
+    const to = useTranslations("profileOptions");
     const tShared = useTranslations("serviceDetailShared");
     const locale = useLocale();
     const SERVICE_DETAIL_LABELS = serviceDetailLabels(tShared);
@@ -764,10 +766,7 @@ export function ServiceDetailClient() {
                                     {t("education")}
                                 </h2>
                                 <p className="mt-1 text-[13px]" style={{ color: colors.textSecondary }}>
-                                    {educationLevel}
-                                </p>
-                                <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                                    {t("sharedByNoDocument", { name: firstName })}
+                                    {profileOptionLabel("education", educationLevel, to)}
                                 </p>
                             </div>
                         </div>
