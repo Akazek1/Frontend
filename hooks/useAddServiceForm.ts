@@ -48,7 +48,7 @@ interface UseAddServiceFormOptions {
 
 const STORAGE_PREFIX = "hwa.addServiceForm.";
 const MAX_IMAGES = 6;
-const MAX_DESCRIPTION = 150;
+const MAX_DESCRIPTION = 300;
 
 function emptyForm(): WizardFormState {
   return {
