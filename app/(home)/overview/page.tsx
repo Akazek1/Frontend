@@ -136,6 +136,10 @@ const HomeContent = () => {
               <input
                 ref={searchInputRef}
                 type="text"
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={

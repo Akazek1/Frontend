@@ -1779,6 +1779,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
         <div className="flex items-end gap-2">
           <Textarea
             ref={inputRef}
+            enterKeyHint="send"
             placeholder={isReadOnly ? t("readOnlyPlaceholder") : editingMessage ? t("editPlaceholder") : t("typePlaceholder")}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

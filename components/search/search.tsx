@@ -64,6 +64,10 @@ const SearchBar = ({
           {searchIcon}
           <Input
             type="text"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             placeholder={placeholder}
             className="h-12 rounded-2xl border-[#DDE3DD] bg-white pl-11 pr-4 text-[14px] font-medium text-ink shadow-sm transition-all placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus-visible:ring-2 focus-visible:ring-brand/20"
             value={query}

@@ -30,7 +30,6 @@ import {
     Star,
     UtensilsCrossed,
     Users,
-    X,
 } from "lucide-react";
 
 import api from "@/lib/axios";
@@ -48,6 +47,7 @@ import {
 } from "@/lib/service-display";
 import { colors } from "@/constant/colors";
 import { profileOptionLabel } from "@/constant/profile-options";
+import { SheetOverlay, SheetPanel, SheetHeader, SheetBody, SheetFooter } from "@/components/ui/app-primitives";
 import {
     DEFAULT_CATEGORY_ICON,
     providerStats,
@@ -965,62 +965,64 @@ export function ServiceDetailClient() {
             />
 
             {isInquiryOpen && agencyBacking && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
-                    <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
-                        <div className="flex items-start justify-between">
-                            <div>
+                <>
+                    <SheetOverlay onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }} />
+                    <SheetPanel side="bottom" onClose={() => { setIsInquiryOpen(false); setInquiryNote(""); }}>
+                        <SheetHeader
+                            title={agencyBacking.name}
+                            subtitle={t("aboutName", { name: providerName })}
+                            onClose={() => { setIsInquiryOpen(false); setInquiryNote(""); }}
+                            leading={
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{t("contactAgency")}</p>
-                                <h3 className="text-[17px] font-black text-ink mt-0.5">{agencyBacking.name}</h3>
-                                <p className="text-[13px] text-gray-400">{t("aboutName", { name: providerName })}</p>
-                            </div>
-                            <button onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }} className="p-1 text-gray-400 hover:text-gray-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <p className="text-[12px] leading-relaxed text-gray-500">
-                            {t("inquiryModalDesc")}
-                        </p>
-                        <textarea
-                            autoFocus
-                            value={inquiryNote}
-                            onChange={(e) => setInquiryNote(e.target.value)}
-                            rows={4}
-                            placeholder={t("inquiryPlaceholder")}
-                            className="w-full rounded-2xl border border-gray-200 p-3 text-[14px] outline-none focus:border-brand resize-none"
+                            }
                         />
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }}
-                                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
-                            >
-                                {t("cancel")}
-                            </button>
-                            <button
-                                onClick={handleInquirySubmit}
-                                disabled={inquirySubmitting}
-                                className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-                            >
-                                {inquirySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendInquiry")}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        <SheetBody>
+                            <p className="mb-3 text-[12px] leading-relaxed text-gray-500">
+                                {t("inquiryModalDesc")}
+                            </p>
+                            <textarea
+                                autoFocus
+                                value={inquiryNote}
+                                onChange={(e) => setInquiryNote(e.target.value)}
+                                rows={4}
+                                placeholder={t("inquiryPlaceholder")}
+                                className="w-full rounded-2xl border border-gray-200 p-3 text-[14px] outline-none focus:border-brand resize-none"
+                            />
+                        </SheetBody>
+                        <SheetFooter>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setIsInquiryOpen(false); setInquiryNote(""); }}
+                                    className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
+                                >
+                                    {t("cancel")}
+                                </button>
+                                <button
+                                    onClick={handleInquirySubmit}
+                                    disabled={inquirySubmitting}
+                                    className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                                >
+                                    {inquirySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendInquiry")}
+                                </button>
+                            </div>
+                        </SheetFooter>
+                    </SheetPanel>
+                </>
             )}
 
             {isHireModalOpen && service && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4 pb-8">
-                    <div className="w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl space-y-5">
-                        <div className="flex items-start justify-between">
-                            <div>
+                <>
+                    <SheetOverlay onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} />
+                    <SheetPanel side="bottom" onClose={() => { setIsHireModalOpen(false); setHireNotes(""); }}>
+                        <SheetHeader
+                            title={providerName}
+                            subtitle={getServiceDisplayName(service, locale)}
+                            onClose={() => { setIsHireModalOpen(false); setHireNotes(""); }}
+                            leading={
                                 <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{SERVICE_DETAIL_LABELS.requestToHire}</p>
-                                <h3 className="text-[17px] font-black text-ink mt-0.5">{providerName}</h3>
-                                <p className="text-[13px] text-gray-400">{getServiceDisplayName(service, locale)}</p>
-                            </div>
-                            <button onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} className="p-1 text-gray-400 hover:text-gray-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div>
+                            }
+                        />
+                        <SheetBody>
                             <label className="text-[12px] font-semibold text-ink block mb-1.5">
                                 {t("messageOptional")} <span className="text-gray-400 font-normal">{t("optional")}</span>
                             </label>
@@ -1031,24 +1033,26 @@ export function ServiceDetailClient() {
                                 rows={3}
                                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
                             />
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }}
-                                className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
-                            >
-                                {t("cancel")}
-                            </button>
-                            <button
-                                onClick={handleHireSubmit}
-                                disabled={submitting}
-                                className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendRequest")}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        </SheetBody>
+                        <SheetFooter>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }}
+                                    className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
+                                >
+                                    {t("cancel")}
+                                </button>
+                                <button
+                                    onClick={handleHireSubmit}
+                                    disabled={submitting}
+                                    className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendRequest")}
+                                </button>
+                            </div>
+                        </SheetFooter>
+                    </SheetPanel>
+                </>
             )}
 
             {/* Sticky bottom action bar — constrained to phone container */}
