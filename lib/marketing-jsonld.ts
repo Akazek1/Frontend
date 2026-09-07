@@ -100,6 +100,7 @@ export function blogPostJsonLd(input: {
   locale: "en" | "rw";
   publishedAt: string;
   updatedAt?: string;
+  image?: string;
 }) {
   const url = `${MARKETING_ORIGIN}/blog/${input.slug}`;
   return {
@@ -115,6 +116,7 @@ export function blogPostJsonLd(input: {
         dateModified: input.updatedAt ?? input.publishedAt,
         url,
         mainEntityOfPage: url,
+        ...(input.image ? { image: input.image } : {}),
         author: { "@id": ORG_ID },
         publisher: { "@id": ORG_ID },
         isPartOf: { "@id": `${MARKETING_ORIGIN}/welcome#website` },

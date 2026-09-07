@@ -42,7 +42,29 @@ export async function generateMetadata({
       locale: meta.locale === "rw" ? "rw_RW" : "en_RW",
       publishedTime: meta.publishedAt,
       modifiedTime: meta.updatedAt ?? meta.publishedAt,
+      ...(meta.heroImage
+        ? {
+            images: [
+              {
+                url: marketingUrl(meta.heroImage),
+                width: 1600,
+                height: 840,
+                alt: meta.heroImageAlt ?? meta.title,
+              },
+            ],
+          }
+        : {}),
     },
+    ...(meta.heroImage
+      ? {
+          twitter: {
+            card: "summary_large_image" as const,
+            title: meta.title,
+            description: meta.description,
+            images: [marketingUrl(meta.heroImage)],
+          },
+        }
+      : {}),
   };
 }
 
@@ -74,6 +96,7 @@ export default async function BlogArticle({
                 locale: meta.locale,
                 publishedAt: meta.publishedAt,
                 updatedAt: meta.updatedAt,
+                image: meta.heroImage ? marketingUrl(meta.heroImage) : undefined,
               }),
             ).replace(/</g, "\\u003c"),
           }}
@@ -101,6 +124,18 @@ export default async function BlogArticle({
       <p className="mt-3 text-sm text-ink-subtle">
         {dateFmt.format(new Date(meta.publishedAt))}
       </p>
+
+      {meta.heroImage && (
+        // eslint-disable-next-line @next/next/no-img-element -- static asset,
+        // images.unoptimized is on; plain <img> avoids the next/image runtime.
+        <img
+          src={meta.heroImage}
+          alt={meta.heroImageAlt ?? ""}
+          width={1600}
+          height={840}
+          className="mt-8 aspect-[40/21] w-full rounded-2xl object-cover ring-1 ring-black/5"
+        />
+      )}
 
       <div className="mt-10">
         <Prose>

@@ -20,6 +20,9 @@ export const meta: BlogPost["meta"] = {
   status: "draft",
   reviewNote:
     "AI first draft. Needs a human pass — especially the cultural/operational notes and any pay-range guidance (left deliberately vague here) — before publishing.",
+  heroImage: "/blog/expat-guide-home-services-rwanda.jpg",
+  heroImageAlt:
+    "A house helper washing dishes in a home kitchen in Kigali, Rwanda.",
 };
 
 export function Body() {

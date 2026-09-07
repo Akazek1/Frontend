@@ -25,6 +25,14 @@ export interface BlogPostMeta {
   status: BlogStatus;
   /** One-line note for whoever reviews this draft. */
   reviewNote?: string;
+  /**
+   * Hero image, as a path under /public (e.g. "/blog/my-post.jpg"). Shown at
+   * the top of the article and used as the OG / Twitter share image, so it
+   * should be ~1600×840 (1.9:1) and already web-optimised. Optional.
+   */
+  heroImage?: string;
+  /** Alt text for heroImage. Required whenever heroImage is set. */
+  heroImageAlt?: string;
 }
 
 export interface BlogPost {

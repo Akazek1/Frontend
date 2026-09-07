@@ -33,6 +33,18 @@ export default function BlogIndex() {
         <ul className="mt-12 space-y-8">
           {PUBLISHED_POSTS.map(({ meta }) => (
             <li key={meta.slug} className="border-b border-black/5 pb-8 last:border-0">
+              {meta.heroImage && (
+                <Link href={`/blog/${meta.slug}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={meta.heroImage}
+                    alt={meta.heroImageAlt ?? ""}
+                    width={1600}
+                    height={840}
+                    className="mb-4 aspect-[40/21] w-full rounded-xl object-cover ring-1 ring-black/5"
+                  />
+                </Link>
+              )}
               <h2 className="text-xl font-bold text-ink">
                 <Link href={`/blog/${meta.slug}`} className="hover:text-brand">
                   {meta.title}

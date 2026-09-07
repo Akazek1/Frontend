@@ -23,6 +23,9 @@ export const meta: BlogPost["meta"] = {
   status: "draft",
   reviewNote:
     "Kinyarwanda AI draft — needs full native-speaker review and rewrite before publishing. Do not translate mechanically.",
+  heroImage: "/blog/akazi-mu-rwanda-huza.jpg",
+  heroImageAlt:
+    "Abakozi ba serivisi za Huza bahagaze imbere y'urugo i Kigali — umuteka, umurezi w'abana, umukanishi, umusukura n'umushoferi.",
 };
 
 export function Body() {
