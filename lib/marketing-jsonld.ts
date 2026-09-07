@@ -102,7 +102,8 @@ export function blogPostJsonLd(input: {
   updatedAt?: string;
   image?: string;
 }) {
-  const url = `${MARKETING_ORIGIN}/blog/${input.slug}`;
+  const indexPath = input.locale === "rw" ? "/rw/blog" : "/blog";
+  const url = `${MARKETING_ORIGIN}${indexPath}/${input.slug}`;
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -125,7 +126,7 @@ export function blogPostJsonLd(input: {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: APP_CONFIG.seoName, item: MARKETING_ORIGIN },
-          { "@type": "ListItem", position: 2, name: "Blog", item: `${MARKETING_ORIGIN}/blog` },
+          { "@type": "ListItem", position: 2, name: "Blog", item: `${MARKETING_ORIGIN}${indexPath}` },
           { "@type": "ListItem", position: 3, name: input.title, item: url },
         ],
       },

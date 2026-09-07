@@ -3,11 +3,10 @@ import { notFound } from "next/navigation";
 import { BlogArticleView, blogArticleMetadata } from "@/components/blog/blog-article-view";
 import { ALL_POSTS, getPost } from "@/content/blog";
 
-// English article route. Only EN slugs exist here (drafts included — they just
-// carry robots:noindex); Kinyarwanda articles live under /rw/blog. Any other
-// slug 404s.
+// Kinyarwanda article route. Only RW slugs exist here (drafts included);
+// English articles live under /blog. Any other slug 404s.
 export function generateStaticParams() {
-  return ALL_POSTS.filter((p) => p.meta.locale === "en").map((p) => ({ slug: p.meta.slug }));
+  return ALL_POSTS.filter((p) => p.meta.locale === "rw").map((p) => ({ slug: p.meta.slug }));
 }
 
 export const dynamicParams = false;
@@ -19,17 +18,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
-  if (!post || post.meta.locale !== "en") return {};
+  if (!post || post.meta.locale !== "rw") return {};
   return blogArticleMetadata(post);
 }
 
-export default async function BlogArticleEn({
+export default async function BlogArticleRw({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
   const post = getPost(slug);
-  if (!post || post.meta.locale !== "en") notFound();
+  if (!post || post.meta.locale !== "rw") notFound();
   return <BlogArticleView post={post} />;
 }
