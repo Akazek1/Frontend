@@ -25,13 +25,19 @@ const SOCIAL = [
 // Secondary navigation. Column copy + links come from the locale dict; the
 // special href "APP" resolves to the real app URL (marketing runs on a
 // different host than the app).
-export function MarketingFooter() {
+export function MarketingFooter({
+  blogEnabled = { en: true, rw: true },
+}: {
+  blogEnabled?: { en: boolean; rw: boolean };
+}) {
   const pathname = usePathname();
   const isRw = pathname === "/rw" || pathname.startsWith("/rw/");
   const dict = marketingDict(isRw ? "rw" : "en");
   const year = new Date().getFullYear();
 
   const resolve = (href: string) => (href === "APP" ? APP_CONFIG.appUrl : href);
+  const showLink = (href: string) =>
+    href === "/blog" ? blogEnabled.en : href === "/rw/blog" ? blogEnabled.rw : true;
 
   return (
     <footer className="border-t border-black/5 bg-surface">
@@ -60,7 +66,7 @@ export function MarketingFooter() {
             <div key={col.title}>
               <h3 className="text-sm font-semibold text-ink">{col.title}</h3>
               <ul className="mt-3 space-y-2.5">
-                {col.links.map((l) => (
+                {col.links.filter((l) => showLink(l.href)).map((l) => (
                   <li key={l.label}>
                     <Link
                       href={resolve(l.href)}

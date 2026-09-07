@@ -13,13 +13,21 @@ import { marketingDict } from "@/components/marketing/marketing-content";
 // Locale-aware: on /rw it renders the Kinyarwanda labels and the language chip
 // links to the English page (and vice-versa) — a real navigation between two
 // crawlable URLs, not a cookie switch.
-export function MarketingNav() {
+export function MarketingNav({
+  blogEnabled = { en: true, rw: true },
+}: {
+  blogEnabled?: { en: boolean; rw: boolean };
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isRw = pathname === "/rw" || pathname.startsWith("/rw/");
   const dict = marketingDict(isRw ? "rw" : "en");
   const homeHref = isRw ? "/rw" : "/welcome";
-  const links = dict.nav.links;
+  const links = dict.nav.links.filter((l) => {
+    if (l.href === "/blog") return blogEnabled.en;
+    if (l.href === "/rw/blog") return blogEnabled.rw;
+    return true;
+  });
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 backdrop-blur">
