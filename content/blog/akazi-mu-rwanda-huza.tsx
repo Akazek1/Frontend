@@ -3,10 +3,8 @@ import type { BlogPost } from "./types";
 
 const APP = APP_CONFIG.appUrl;
 
-// ⚠️  KINYARWANDA — AI FIRST DRAFT. Must be reviewed and rewritten by a native
-// Kinyarwanda speaker before `status` is changed to "published" (see the i18n
-// translation policy: rw copy is native-speaker-only by default). Fix in place;
-// do not regenerate.
+// Kinyarwanda article — copy reviewed and edited by a native speaker (the site
+// owner), 2026-09-07. Keep it native-speaker-only for future edits.
 export const meta: BlogPost["meta"] = {
   slug: "huza-abakora-nabashaka-akazi-mu-rwanda",
   locale: "rw",
@@ -20,9 +18,7 @@ export const meta: BlogPost["meta"] = {
     "abakozi b'abahanga Rwanda",
   ],
   publishedAt: "2026-09-07",
-  status: "draft",
-  reviewNote:
-    "Kinyarwanda AI draft — needs full native-speaker review and rewrite before publishing. Do not translate mechanically.",
+  status: "published",
   heroImage: "/blog/huza-abakora-nabashaka-akazi-mu-rwanda.jpg",
   heroImageAlt:
     "Abakozi ba serivisi za Huza bari hafi yawe; uteka, umurezi w'abana, umukanishi, usuka n'umushoferi.",

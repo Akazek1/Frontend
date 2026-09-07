@@ -119,6 +119,7 @@ export const marketingEn: MarketingDict = {
       { href: A.workers, label: "For workers" },
       { href: A.employers, label: "For employers" },
       { href: A.trust, label: "Trust & safety" },
+      { href: "/blog", label: "Blog" },
     ],
     openApp: "Open the app",
     otherLangLabel: "Ikinyarwanda",
@@ -215,6 +216,7 @@ export const marketingEn: MarketingDict = {
       {
         title: "Company",
         links: [
+          { label: "Blog", href: "/blog" },
           { label: "Trust & safety", href: A.trust },
           { label: "Privacy policy", href: "/privacy" },
           { label: "Terms of service", href: "/terms" },
@@ -239,6 +241,7 @@ export const marketingRw: MarketingDict = {
       { href: A.workers, label: "Ku bakozi" },
       { href: A.employers, label: "Ku bakoresha" },
       { href: A.trust, label: "Kwizerana n'umutekano" },
+      { href: "/blog", label: "Blog" },
     ],
     openApp: "Fungura porogaramu",
     otherLangLabel: "English",
@@ -335,6 +338,7 @@ export const marketingRw: MarketingDict = {
       {
         title: "Ikigo",
         links: [
+          { label: "Blog", href: "/blog" },
           { label: "Kwizerana n'umutekano", href: A.trust },
           { label: "Politiki y'ibanga", href: "/privacy" },
           { label: "Amabwiriza y'imikoreshereze", href: "/terms" },
