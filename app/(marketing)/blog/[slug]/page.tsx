@@ -68,7 +68,7 @@ export async function generateMetadata({
   };
 }
 
-const dateFmt = new Intl.DateTimeFormat("en", { dateStyle: "long" });
+const dateFmt = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
 
 export default async function BlogArticle({
   params,

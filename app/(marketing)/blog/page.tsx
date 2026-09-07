@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   robots: PUBLISHED_POSTS.length === 0 ? { index: false, follow: true } : undefined,
 };
 
-const dateFmt = new Intl.DateTimeFormat("en", { dateStyle: "long" });
+const dateFmt = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" });
 
 export default function BlogIndex() {
   return (

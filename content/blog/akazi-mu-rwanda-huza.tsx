@@ -8,11 +8,11 @@ const APP = APP_CONFIG.appUrl;
 // translation policy: rw copy is native-speaker-only by default). Fix in place;
 // do not regenerate.
 export const meta: BlogPost["meta"] = {
-  slug: "akazi-mu-rwanda-huza",
+  slug: "huza-abakora-nabashaka-akazi-mu-rwanda",
   locale: "rw",
   title: "Uburyo wabona akazi ko mu rugo cyangwa serivisi kuri Huza App",
   description:
-    "Menya uko Huza App ifasha abakozi bo mu Rwanda — abasukura, abateka, abarezi b'abana, abashoferi n'abandi — kubona abakiriya no gutangira akazi mu ntambwe eshatu.",
+    "Menya uko Huza App ifasha abakozi bo mu Rwanda; abasukura, abateka, abarezi b'abana,abazamu, abashoferi n'abandi. Kubona abakiriya no gutangira akazi mu ntambwe eshatu.",
   keywords: [
     "akazi mu Rwanda",
     "gushaka akazi Kigali",
@@ -23,18 +23,18 @@ export const meta: BlogPost["meta"] = {
   status: "draft",
   reviewNote:
     "Kinyarwanda AI draft — needs full native-speaker review and rewrite before publishing. Do not translate mechanically.",
-  heroImage: "/blog/akazi-mu-rwanda-huza.jpg",
+  heroImage: "/blog/huza-abakora-nabashaka-akazi-mu-rwanda.jpg",
   heroImageAlt:
-    "Abakozi ba serivisi za Huza bahagaze imbere y'urugo i Kigali — umuteka, umurezi w'abana, umukanishi, umusukura n'umushoferi.",
+    "Abakozi ba serivisi za Huza bari hafi yawe; uteka, umurezi w'abana, umukanishi, usuka n'umushoferi.",
 };
 
 export function Body() {
   return (
     <>
       <p>
-        Huza App ni isoko rikorera kuri interineti rihuza ingo zo mu Rwanda
+        Huza.app ni isoko rikorera kuri interineti rihuza ingo zo mu Rwanda
         n&rsquo;abakozi ba serivisi bagenzuwe. Niba ukora isuku, guteka, kurera
-        abana, gutwara imodoka cyangwa ubundi bumenyi bwo mu rugo, Huza igufasha
+        abana, gutwara imodoka cyangwa ubundi bumenyi bukenerwa mu rugo, Huza igufasha
         kubonana n&rsquo;abakiriya bari hafi yawe.
       </p>
 
@@ -45,7 +45,7 @@ export function Body() {
         <li>Kurera no kwita ku bana</li>
         <li>Gutwara imodoka</li>
         <li>Kwigisha abana mu rugo</li>
-        <li>Kwiyubaka no kwita ku isuku y&rsquo;umubiri (make-up)</li>
+        <li>Kwita ku ubwiza n&rsquo;isuku y&rsquo;umubiri (make-up)</li>
       </ul>
 
       <h2>Intambwe eshatu zo gutangira</h2>
@@ -57,18 +57,18 @@ export function Body() {
         <li>
           <strong>Ohereza indangamuntu kugira ngo ugenzurwe.</strong> Ibi
           bituma abakiriya bakwizera kandi bikaguha akamenyetso k&rsquo;uko
-          wagenzuwe.
+          wagenzuwe, kandi biguma ari ibanga.
         </li>
         <li>
           <strong>Tangira kwakira ubusabe bw&rsquo;akazi.</strong> Iyo umukiriya
-          agusabye, muvugana muri porogaramu, mwumvikana ku gihe no ku mushahara.
+          agusabye, muvugana muri porogaramu, mwumvikana ku gihe no ku umushahara.
         </li>
       </ol>
 
       <h2>Kwiyandikisha ni ubuntu</h2>
       <p>
         Kwiyandikisha kuri Huza App nta kiguzi bisaba. Ushobora gukora
-        umwirondoro ukanagenzurwa ku buntu.
+        umwirondoro ukanagenzurwa ku ubuntu.
       </p>
       <p>
         <a href={APP}>Fungura Huza App maze utangire</a>.
