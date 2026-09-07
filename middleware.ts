@@ -7,10 +7,11 @@ export function middleware(request: NextRequest) {
   // Host-based split: the apex domain huza.app is the public marketing site;
   // the app lives on app.huza.app. huza.app is the ONE canonical marketing host.
   //
-  // www→apex canonicalisation is handled at the CDN (Vercel: huza.app is the
-  // primary domain, www.huza.app redirects to it). It must NOT also be done
-  // here — an in-middleware "www → apex" 301 fought Vercel's redirect and
-  // produced an infinite loop (ERR_TOO_MANY_REDIRECTS) in production.
+  // www→apex canonicalisation is done at the CDN (Vercel: huza.app is the
+  // project's primary domain, www.huza.app redirects to it). It must NOT also
+  // be done here: when Vercel's primary domain was still www, an in-middleware
+  // "www → apex" 301 fought Vercel's "apex → www" 308 and produced an infinite
+  // redirect loop (ERR_TOO_MANY_REDIRECTS) in production.
   const CANONICAL_MARKETING_ORIGIN = "https://huza.app";
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0].toLowerCase();
