@@ -241,7 +241,7 @@ export const marketingRw: MarketingDict = {
       { href: A.workers, label: "Ku bakozi" },
       { href: A.employers, label: "Ku bakoresha" },
       { href: A.trust, label: "Kwizerana n'umutekano" },
-      { href: "/blog", label: "Blog" },
+      { href: "/rw/blog", label: "Blog" },
     ],
     openApp: "Fungura porogaramu",
     otherLangLabel: "English",
@@ -338,7 +338,7 @@ export const marketingRw: MarketingDict = {
       {
         title: "Ikigo",
         links: [
-          { label: "Blog", href: "/blog" },
+          { label: "Blog", href: "/rw/blog" },
           { label: "Kwizerana n'umutekano", href: A.trust },
           { label: "Politiki y'ibanga", href: "/privacy" },
           { label: "Amabwiriza y'imikoreshereze", href: "/terms" },
