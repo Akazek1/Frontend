@@ -5,28 +5,16 @@ import { isMarketingHost } from "@/lib/marketing-host";
 
 export function middleware(request: NextRequest) {
   // Host-based split: the apex domain huza.app is the public marketing site;
-  // the app lives on app.huza.app. huza.app is the ONE canonical marketing host
-  // — www.huza.app redirects to it so link authority and canonical/hreflang
-  // signals never split across two hostnames. (A host-level 301 at the CDN
-  // should do this too; this is the in-app backstop.)
+  // the app lives on app.huza.app. huza.app is the ONE canonical marketing host.
+  //
+  // www→apex canonicalisation is handled at the CDN (Vercel: huza.app is the
+  // primary domain, www.huza.app redirects to it). It must NOT also be done
+  // here — an in-middleware "www → apex" 301 fought Vercel's redirect and
+  // produced an infinite loop (ERR_TOO_MANY_REDIRECTS) in production.
   const CANONICAL_MARKETING_ORIGIN = "https://huza.app";
   const host = request.headers.get("host") || "";
   const hostname = host.split(":")[0].toLowerCase();
   const path = request.nextUrl.pathname;
-
-  // www.huza.app/* → huza.app/*  (and www.app.huza.app/* → app.huza.app/*)
-  if (hostname === "www.huza.app") {
-    return NextResponse.redirect(
-      new URL(path + request.nextUrl.search, CANONICAL_MARKETING_ORIGIN),
-      301,
-    );
-  }
-  if (hostname === "www.app.huza.app") {
-    return NextResponse.redirect(
-      new URL(path + request.nextUrl.search, "https://app.huza.app"),
-      301,
-    );
-  }
 
   // On the marketing host, serve the marketing homepage at "/" (rewrite keeps
   // the clean URL — no /welcome shown).

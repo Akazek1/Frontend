@@ -29,15 +29,25 @@ export function MarketingNav() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm font-medium text-ink-muted transition-colors hover:text-brand"
-            >
-              {l.label}
-            </a>
-          ))}
+          {links.map((l) =>
+            l.href.startsWith("/") ? (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-sm font-medium text-ink-muted transition-colors hover:text-brand"
+              >
+                {l.label}
+              </Link>
+            ) : (
+              <a
+                key={l.href}
+                href={l.href}
+                className="text-sm font-medium text-ink-muted transition-colors hover:text-brand"
+              >
+                {l.label}
+              </a>
+            ),
+          )}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -69,16 +79,19 @@ export function MarketingNav() {
       {open && (
         <div className="border-t border-black/5 bg-white md:hidden">
           <div className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-3">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-2 py-3 text-base font-medium text-ink transition-colors hover:bg-surface"
-              >
-                {l.label}
-              </a>
-            ))}
+            {links.map((l) => {
+              const cls =
+                "rounded-lg px-2 py-3 text-base font-medium text-ink transition-colors hover:bg-surface";
+              return l.href.startsWith("/") ? (
+                <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className={cls}>
+                  {l.label}
+                </Link>
+              ) : (
+                <a key={l.href} href={l.href} onClick={() => setOpen(false)} className={cls}>
+                  {l.label}
+                </a>
+              );
+            })}
             <div className="mt-2 flex items-center justify-between gap-3 border-t border-black/5 pt-3">
               <Link
                 href={dict.nav.otherLangHref}
