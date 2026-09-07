@@ -1,224 +1,87 @@
-"use client";
-import React, { useState, useRef, useEffect } from "react";
-import ServiceCard from "@/components/service-card";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import { useServiceList } from "@/hooks/useServiceList";
-import { useAuth } from "@/hooks/useAuth";
-import { useAuthGate } from "@/context/auth-gate-context";
-import type { BrowseServicesParams } from "@/services/services-service";
-import BackButtonHeader from "@/components/header/back-button-header";
-import { formatPrice } from "@/lib/utils";
-import { getBookingType, getServiceDetailPath, mapServiceToProviderCard } from "@/lib/service-display";
-import { Icons } from "@/components/icons";
-import FilterModal, { FilterValues } from "@/components/search/filter-modal";
+import { Suspense } from "react";
+import type { Service } from "@/types";
+import { APP_CONFIG } from "@/constant/app.config";
+import {
+  getServiceDisplayName,
+  getProviderName,
+  getServiceDetailPath,
+  getServiceCardImage,
+} from "@/lib/service-display";
+import { MARKETING_SERVICE_TYPES } from "@/lib/marketing-jsonld";
+import { ServiceBrowseClient } from "./service-browse-client";
 
+// The browse page is a client component (filters, infinite scroll, guest wall).
+// This server wrapper adds what a crawler needs and the client can't emit:
+// a server-rendered first page of listings as schema.org data, so "home
+// services app Rwanda" / "hire a cleaner Kigali" have real structured content
+// to rank. The visible card list is still owned by the client body (page 1 is
+// public — same data, just hydrated there). SSR-ing the visible cards too is a
+// later step; it has to be done without regressing the guest wall.
 
-const ServicePage = () => {
-    const t = useTranslations("servicesBrowse");
-    const locale = useLocale();
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const category = searchParams.get("category");
-    const grouping = searchParams.get("grouping");
-    const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
-    const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const [filters, setFilters] = useState<FilterValues>({
-        minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined,
-        maxPrice: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined,
-        serviceType: searchParams.get("serviceType") || undefined,
-        availability: searchParams.get("availability") || undefined,
-        location: searchParams.get("location") || undefined,
-        distanceKm: searchParams.get("distanceKm") ? Number(searchParams.get("distanceKm")) : undefined,
+async function fetchFirstPage(): Promise<Service[]> {
+  try {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+    const res = await fetch(`${baseURL}/services?page=1&limit=12`, {
+      // Marketplace ranking shifts through the day; a short cache keeps the
+      // structured data fresh without hammering the API on every crawl.
+      next: { revalidate: 300 },
     });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const payload = json?.data ?? json;
+    const items = Array.isArray(payload) ? payload : payload?.items;
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
 
-    const browseParams: BrowseServicesParams = {
-        ...(category && category !== "all" ? { category } : {}),
-        ...(grouping ? { grouping } : {}),
-        ...(searchTerm ? { searchTerm } : {}),
-        ...(filters.minPrice ? { minPrice: filters.minPrice } : {}),
-        ...(filters.maxPrice ? { maxPrice: filters.maxPrice } : {}),
-        ...(filters.serviceType ? { serviceType: filters.serviceType } : {}),
-        ...(filters.availability ? { available: filters.availability === "available" } : {}),
-        ...(filters.location ? { location: filters.location } : {}),
-    };
+function collectionJsonLd(services: Service[]) {
+  const appUrl = APP_CONFIG.appUrl;
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Browse verified home & domestic service providers in Rwanda",
+    description:
+      "Vetted house cleaners, nannies, cooks, tutors, drivers and makeup artists available to book across Kigali and Rwanda on Huza App.",
+    isPartOf: { "@id": `${APP_CONFIG.contact.website}/#website` },
+    about: {
+      "@type": "Service",
+      serviceType: [...MARKETING_SERVICE_TYPES],
+      provider: { "@id": `${APP_CONFIG.contact.website}/#organization` },
+      areaServed: [
+        { "@type": "City", name: "Kigali" },
+        { "@type": "Country", name: "Rwanda" },
+      ],
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: services.slice(0, 12).map((service, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${appUrl}${getServiceDetailPath(service)}`,
+        name: `${getServiceDisplayName(service, "en")} by ${getProviderName(service.provider)}`,
+        ...(getServiceCardImage(service) ? { image: getServiceCardImage(service) } : {}),
+      })),
+    },
+  };
+}
 
-    // Cached + stale-while-revalidate: revisiting this page shows the previous
-    // results instantly instead of a spinner. See hooks/useServiceList.
-    const {
-        services,
-        isLoading,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useServiceList(browseParams);
-
-    const { isAuthenticated } = useAuth();
-    const { openAuthGate } = useAuthGate();
-
-    // Guest wall: signed-in viewers auto-load the next ranked page as they reach
-    // the bottom; guests get the first page and then a sign-in prompt instead.
-    const sentinelRef = useRef<HTMLDivElement | null>(null);
-    const canAutoLoad = isAuthenticated && hasNextPage && !isFetchingNextPage;
-    useEffect(() => {
-        const el = sentinelRef.current;
-        if (!el || !canAutoLoad) return;
-        const io = new IntersectionObserver(
-            (entries) => {
-                if (entries[0]?.isIntersecting) fetchNextPage();
-            },
-            { rootMargin: "400px" },
-        );
-        io.observe(el);
-        return () => io.disconnect();
-    }, [canAutoLoad, fetchNextPage]);
-
-    const promptSignIn = () =>
-        openAuthGate("browse-more", `/service?${searchParams.toString()}`);
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setInputValue(value);
-        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-        searchDebounceRef.current = setTimeout(() => setSearchTerm(value), 350);
-    };
-
-    const handleApplyFilters = (newFilters: FilterValues) => {
-        setFilters(newFilters);
-        // Update URL to reflect current search/filter state
-        const params = new URLSearchParams(searchParams.toString());
-        if (newFilters.minPrice) params.set("minPrice", newFilters.minPrice.toString()); else params.delete("minPrice");
-        if (newFilters.maxPrice) params.set("maxPrice", newFilters.maxPrice.toString()); else params.delete("maxPrice");
-        if (newFilters.serviceType) params.set("serviceType", newFilters.serviceType); else params.delete("serviceType");
-        if (newFilters.availability) params.set("availability", newFilters.availability); else params.delete("availability");
-        if (newFilters.location) params.set("location", newFilters.location); else params.delete("location");
-        if (newFilters.distanceKm) params.set("distanceKm", newFilters.distanceKm.toString()); else params.delete("distanceKm");
-        params.delete("minRating");
-        router.push(`/service?${params.toString()}`);
-    };
-
-    return (
-        <div className="bg-surface min-h-dvh space-y-6 p-6">
-            {/* Header with Back Arrow */}
-            <BackButtonHeader text={grouping || category || t("services")} backHref="/" />
-
-            <div className="rounded-3xl border border-[#DDEDDD] bg-white p-3 shadow-sm">
-                <div className="relative">
-                    <Icons.SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 fill-[#878787]" />
-                    <input
-                        type="text"
-                        placeholder={t("searchPlaceholder")}
-                        className="h-12 w-full rounded-2xl border border-[#DDE3DD] bg-[#FAFFFA] pl-11 pr-4 text-[14px] font-medium text-ink outline-none transition placeholder:text-[13px] placeholder:font-medium placeholder:text-[#7A827A] focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20"
-                        value={inputValue}
-                        onChange={handleSearchChange}
-                    />
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7A827A]">{t("refineResults")}</p>
-                        <p className="truncate text-[12px] text-[#4B554B]">{t("refineResultsDesc")}</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsFilterModalOpen(true)}
-                        className="flex h-10 shrink-0 items-center gap-2 rounded-2xl bg-brand px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
-                    >
-                        <Icons.FilerIcon className="w-4 h-4 fill-white" />
-                        {t("filter")}
-                        {Object.values(filters).filter(Boolean).length > 0 && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-brand">
-                                {Object.values(filters).filter(Boolean).length}
-                            </span>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Loading State */}
-            {isLoading && (
-                <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-8 h-8 border-4 border-brand/20 border-t-brand rounded-full animate-spin"></div>
-                    <p className="mt-4 text-sm text-[#878787]">{t("findingServices")}</p>
-                </div>
-            )}
-
-            {/* Error State */}
-            {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-center text-sm">
-                    {t("fetchError")}
-                </div>
-            )}
-
-            {/* Services List */}
-            {!isLoading && !error && (
-                <div className="space-y-4">
-                    {services.length > 0 ? (
-                        <>
-                            <div className="grid gap-4">
-                                {services.map((service) => (
-                                    <ServiceCard
-                                        key={service.id}
-                                        {...mapServiceToProviderCard(service, locale)}
-                                        distance={filters.distanceKm ? t("withinKm", { km: filters.distanceKm }) : t("nearby")}
-                                        onClick={() => router.push(getServiceDetailPath(service))}
-                                        onHireClick={() => router.push(`/book/${getBookingType(service)}/${service.id}`)}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Pagination footer: infinite scroll for signed-in
-                                viewers, a sign-in wall for guests. */}
-                            {hasNextPage ? (
-                                isAuthenticated ? (
-                                    <div ref={sentinelRef} className="flex justify-center py-6">
-                                        {isFetchingNextPage && (
-                                            <div className="flex items-center gap-2 text-sm text-[#878787]">
-                                                <span className="w-5 h-5 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
-                                                {t("loadingMore")}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={promptSignIn}
-                                        className="w-full rounded-2xl border border-brand/30 bg-brand/5 py-4 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
-                                    >
-                                        {t("signInToSeeMore")}
-                                    </button>
-                                )
-                            ) : (
-                                <p className="py-6 text-center text-xs text-[#B0B0B0]">
-                                    {t("endOfResults")}
-                                </p>
-                            )}
-                        </>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                <Icons.SearchIcon className="w-8 h-8 fill-gray-300" />
-                            </div>
-                            <h3 className="text-base font-bold text-ink">{t("noResultsFound")}</h3>
-                            <p className="text-sm text-[#878787] mt-1 max-w-[200px]">
-                                {t("noResultsHint")}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            <FilterModal 
-                isOpen={isFilterModalOpen}
-                onClose={() => setIsFilterModalOpen(false)}
-                onApply={handleApplyFilters}
-                initialFilters={filters}
-            />
-        </div>
-    );
-};
-
-export default ServicePage;
+export default async function ServiceBrowsePage() {
+  const services = await fetchFirstPage();
+  return (
+    <>
+      {services.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(collectionJsonLd(services)).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
+      <Suspense fallback={null}>
+        <ServiceBrowseClient />
+      </Suspense>
+    </>
+  );
+}

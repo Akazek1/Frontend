@@ -30,12 +30,13 @@ import type { LucideIcon } from "lucide-react";
 
 export type MarketingLocale = "en" | "rw";
 
-// The marketing site's own origin. `metadataBase` in the root layout resolves
-// to the APP domain (app.huza.app) on Vercel, so page-relative canonical /
-// hreflang / og:url values on the marketing pages would wrongly point at the
-// app domain. We build absolute marketing URLs from this instead.
+// The marketing site's own origin — the canonical apex host huza.app (NOT www,
+// which 301s to it). `metadataBase` in the root layout resolves to the APP
+// domain (app.huza.app) on Vercel, so page-relative canonical / hreflang /
+// og:url values on the marketing pages would wrongly point at the app domain.
+// We build absolute marketing URLs from this instead.
 export const MARKETING_ORIGIN =
-  process.env.NEXT_PUBLIC_MARKETING_URL || "https://www.huza.app";
+  process.env.NEXT_PUBLIC_MARKETING_URL || "https://huza.app";
 
 export const marketingUrl = (path: string) => `${MARKETING_ORIGIN}${path}`;
 
@@ -108,9 +109,9 @@ export const marketingEn: MarketingDict = {
   locale: "en",
   path: "/welcome",
   meta: {
-    title: "Huza — Rwanda's trusted marketplace for household & service work",
+    title: "Huza App | On-Demand Home Services & Domestic Helpers in Kigali, Rwanda",
     description:
-      "Huza connects households in Rwanda with verified cleaners, nannies, cooks and skilled workers — and helps workers find reliable jobs. Free to join.",
+      "Huza App connects households in Kigali and across Rwanda with vetted house cleaners, nannies, cooks, tutors, drivers and makeup artists — and helps workers find reliable jobs. Free to join.",
   },
   nav: {
     links: [

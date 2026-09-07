@@ -35,14 +35,14 @@ export async function generateMetadata({
   const profile = await fetchProfileForMetadata(handle);
 
   if (!profile) {
-    return { title: `Profile - ${APP_CONFIG.name}` };
+    return { title: `Profile | ${APP_CONFIG.seoName}` };
   }
 
   const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || "User";
-  const title = `${name} - ${APP_CONFIG.name}`;
+  const title = `${name} - ${APP_CONFIG.seoName}`;
   const description =
     profile.bio?.trim() ||
-    `View ${name}'s profile on ${APP_CONFIG.name}. Find trusted help for your home and daily needs.`;
+    `View ${name}'s profile on ${APP_CONFIG.seoName}. Find trusted help for your home and daily needs.`;
   const image = profile.profilePicture;
 
   return {

@@ -25,7 +25,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/welcome", "/rw", "/privacy", "/terms", "/service"],
+      allow: ["/", "/welcome", "/rw", "/blog", "/privacy", "/terms", "/service"],
       disallow: privatePaths,
     },
     sitemap: `${APP_CONFIG.contact.website}/sitemap.xml`,

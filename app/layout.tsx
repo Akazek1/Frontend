@@ -63,8 +63,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: APP_CONFIG.name,
-    title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+    siteName: APP_CONFIG.seoName,
+    title: `${APP_CONFIG.seoName} - ${APP_CONFIG.tagline}`,
     description: APP_CONFIG.description,
     url: "/", // absolutized via metadataBase — not the dead APP_CONFIG domain
     images: [
@@ -72,13 +72,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+        alt: `${APP_CONFIG.seoName} - ${APP_CONFIG.tagline}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_CONFIG.name} - ${APP_CONFIG.tagline}`,
+    title: `${APP_CONFIG.seoName} - ${APP_CONFIG.tagline}`,
     description: APP_CONFIG.description,
     images: ["/og-image.png"],
   },

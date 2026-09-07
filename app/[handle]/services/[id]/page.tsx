@@ -29,15 +29,15 @@ export async function generateMetadata({
   const service = await fetchServiceForMetadata(id);
 
   if (!service) {
-    return { title: `Service - ${APP_CONFIG.name}` };
+    return { title: `Service | ${APP_CONFIG.seoName}` };
   }
 
   const serviceName = getServiceDisplayName(service);
   const providerName = getProviderName(service.provider);
-  const title = `${serviceName} by ${providerName} - ${APP_CONFIG.name}`;
+  const title = `${serviceName} by ${providerName} - ${APP_CONFIG.seoName}`;
   const description =
     service.description?.trim() ||
-    `${providerName} offers ${serviceName} on ${APP_CONFIG.name}. Find trusted help for your home and daily needs.`;
+    `${providerName} offers ${serviceName} on ${APP_CONFIG.seoName}. Find trusted help for your home and daily needs.`;
   const image = getServiceCardImage(service);
 
   return {

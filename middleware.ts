@@ -4,11 +4,32 @@ import { isGuestBrowsingEnabled } from "@/lib/feature-flags";
 import { isMarketingHost } from "@/lib/marketing-host";
 
 export function middleware(request: NextRequest) {
-  // Host-based split: the apex domain (huza.app / www.huza.app) is the public
-  // marketing site; the app lives on app.huza.app. On the apex, serve the
-  // marketing homepage at "/" (rewrite keeps the clean URL — no /welcome shown).
+  // Host-based split: the apex domain huza.app is the public marketing site;
+  // the app lives on app.huza.app. huza.app is the ONE canonical marketing host
+  // — www.huza.app redirects to it so link authority and canonical/hreflang
+  // signals never split across two hostnames. (A host-level 301 at the CDN
+  // should do this too; this is the in-app backstop.)
+  const CANONICAL_MARKETING_ORIGIN = "https://huza.app";
   const host = request.headers.get("host") || "";
+  const hostname = host.split(":")[0].toLowerCase();
   const path = request.nextUrl.pathname;
+
+  // www.huza.app/* → huza.app/*  (and www.app.huza.app/* → app.huza.app/*)
+  if (hostname === "www.huza.app") {
+    return NextResponse.redirect(
+      new URL(path + request.nextUrl.search, CANONICAL_MARKETING_ORIGIN),
+      301,
+    );
+  }
+  if (hostname === "www.app.huza.app") {
+    return NextResponse.redirect(
+      new URL(path + request.nextUrl.search, "https://app.huza.app"),
+      301,
+    );
+  }
+
+  // On the marketing host, serve the marketing homepage at "/" (rewrite keeps
+  // the clean URL — no /welcome shown).
   if (isMarketingHost(host) && path === "/") {
     return NextResponse.rewrite(new URL("/welcome", request.url));
   }
@@ -16,11 +37,16 @@ export function middleware(request: NextRequest) {
   // The marketing pages are routes in this same Next app, so without a guard
   // they also render on app.huza.app (app.huza.app/welcome, /rw). That splits
   // the marketing content across two domains and confuses canonical/hreflang.
-  // Send any marketing path on the app host back to the marketing origin.
-  const isMarketingPath = path === "/welcome" || path === "/rw" || path.startsWith("/rw/");
-  if (isMarketingPath && !isMarketingHost(host) && host.split(":")[0].endsWith("huza.app")) {
+  // Send any marketing path on the app host back to the canonical marketing origin.
+  const isMarketingPath =
+    path === "/welcome" ||
+    path === "/rw" ||
+    path.startsWith("/rw/") ||
+    path === "/blog" ||
+    path.startsWith("/blog/");
+  if (isMarketingPath && !isMarketingHost(host) && hostname.endsWith("huza.app")) {
     return NextResponse.redirect(
-      new URL(path + request.nextUrl.search, "https://www.huza.app"),
+      new URL(path + request.nextUrl.search, CANONICAL_MARKETING_ORIGIN),
       301,
     );
   }
@@ -108,6 +134,8 @@ export const config = {
     "/welcome",
     "/rw",
     "/rw/:path*",
+    "/blog",
+    "/blog/:path*",
     "/profile/:path*",
     "/more/:path*",
     "/book/:path*",

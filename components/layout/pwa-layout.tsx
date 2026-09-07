@@ -191,6 +191,7 @@ const Layout = ({
     pathname.startsWith("/welcome") ||
     pathname === "/rw" ||
     pathname.startsWith("/rw/") ||
+    pathname.startsWith("/blog") ||
     (isMarketingHost && pathname === "/");
   const hideNavigationPaths = ["/onboarding", "/auth/login", "/auth/register", "/logout"];
   const isServiceDetail =
