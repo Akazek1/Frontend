@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingHome } from "@/components/marketing/marketing-home";
 import { marketingEn, marketingUrl } from "@/components/marketing/marketing-content";
-import { APP_CONFIG } from "@/constant/app.config";
+import { marketingJsonLd } from "@/lib/marketing-jsonld";
 
 // English marketing homepage. Served at huza.app/ (middleware rewrites "/" here)
 // and directly at /welcome. The Kinyarwanda twin lives at /rw; the two are
@@ -28,29 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
-function jsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: APP_CONFIG.name,
-    url: APP_CONFIG.contact.website,
-    description: marketingEn.meta.description,
-    inLanguage: ["en", "rw"],
-    publisher: {
-      "@type": "Organization",
-      name: APP_CONFIG.company.name,
-      areaServed: "RW",
-      email: APP_CONFIG.contact.email,
-      telephone: APP_CONFIG.contact.phone,
-      sameAs: [
-        APP_CONFIG.social.facebook,
-        APP_CONFIG.social.instagram,
-        APP_CONFIG.social.whatsapp,
-      ],
-    },
-  };
-}
-
 export default function MarketingHomeEn() {
-  return <MarketingHome dict={marketingEn} jsonLd={jsonLd()} />;
+  const jsonLd = marketingJsonLd("en", marketingUrl("/welcome"), marketingEn.meta.description);
+  return <MarketingHome dict={marketingEn} jsonLd={jsonLd} />;
 }
