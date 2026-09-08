@@ -139,13 +139,12 @@ export function SignupForm() {
         setChecking(false)
         return
       }
-    } catch {
-      // In dev mode, allow continuing if the check endpoint is unavailable
-      if (process.env.NODE_ENV !== "development") {
-        setPhoneError(t("errors.phoneCheckFailed"))
-        setChecking(false)
-        return
-      }
+    } catch (err) {
+      // A transient check-user failure (network, 5xx, rate-limit) must NOT block
+      // signup — requesting an OTP with purpose "signup" is the authoritative
+      // "already registered" gate and rejects a duplicate anyway. Only a
+      // definite exists:true response (handled above) stops the flow here.
+      console.warn("check-user unavailable, proceeding to OTP:", err)
     } finally {
       setChecking(false)
     }

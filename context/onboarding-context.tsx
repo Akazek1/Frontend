@@ -297,7 +297,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setPhoneNumber(cleaned)
 
     try {
-      const success = await sendOtp({ phoneNumber: formatted, purpose, locale })
+      const success = await sendOtp({
+        phoneNumber: formatted,
+        purpose,
+        locale,
+        // Captured on the signup form; lets an admin follow up with a drop-off
+        // who never verified. Ignored by the backend for logins.
+        ...(purpose === "signup"
+          ? { firstName: firstName?.trim() || undefined, lastName: lastName?.trim() || undefined }
+          : {}),
+      })
       if (success) return true
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
@@ -318,7 +327,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       )
       return false
     }
-  }, [phoneNumber, sendOtp, locale])
+  }, [phoneNumber, sendOtp, locale, firstName, lastName])
 
   const handleResendOtp = useCallback(async () => {
     if (resendCooldown > 0) return
