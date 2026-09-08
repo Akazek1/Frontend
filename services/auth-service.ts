@@ -15,6 +15,10 @@ export interface SendOtpRequest {
   // user is viewing the app in — needed at signup, before an account (and its
   // saved preferredLanguage) exists. The backend falls back to English if absent.
   locale?: string;
+  // Name typed on the signup form, stored on the OTP row so an admin can follow
+  // up with a drop-off who never verified. Sent only for purpose "signup".
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface VerifyOtpRequest {

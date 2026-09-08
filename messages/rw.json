@@ -2263,7 +2263,7 @@
   "tutorial": {
     "welcome": "Murakaza neza kuri {appName}! 🎉",
     "switchViews": "Hindura hagati y'uburyo bubiri",
-    "description": "Ushobora guhinduranya hagati yo kuba <b>Umukoresha</b> n'<b>Umukozi</b> igihe icyo ari cyo cyose! Koresha buto iri hejuru kugira ngo uhindure uburyo.",
+    "description": "Ushobora guhinduranya hagati yo kuba <b>Umukoresha</b> n''<b>Umukozi</b> igihe icyo ari cyo cyose! Koresha buto iri hejuru kugira ngo uhindure uburyo.",
     "employerMode": {
       "title": "Uburyo bw'Umukoresha",
       "desc": "Reba kandi uhe akazi abatanga serivisi ukeneye."

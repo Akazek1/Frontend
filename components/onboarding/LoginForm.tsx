@@ -67,13 +67,12 @@ export function LoginForm() {
       // Remember for post-login routing (set-a-PIN prompt / keep-or-change).
       setCheckedPin({ hasPin: !!hasPin, pinIsTemporary: !!pinIsTemporary })
       usePin = !!hasPin
-    } catch {
-      // In dev, allow continuing even if the check endpoint fails
-      if (process.env.NODE_ENV !== "development") {
-        setPhoneError(t("couldNotVerifyNumber"))
-        setChecking(false)
-        return
-      }
+    } catch (err) {
+      // A transient check-user failure (network, 5xx, rate-limit) must NOT block
+      // login — requesting an OTP with purpose "login" still rejects an unknown
+      // number and a blocked account. We just lose PIN detection for this
+      // attempt and fall back to OTP, which is an acceptable degradation.
+      console.warn("check-user unavailable, proceeding to OTP login:", err)
     } finally {
       setChecking(false)
     }
