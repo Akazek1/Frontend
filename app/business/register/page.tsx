@@ -165,6 +165,10 @@ export default function BusinessRegisterPage() {
       maxWidthClass="max-w-[460px]"
       footer={
         <>
+          <span className="block mb-1">
+            {t("notABusiness")}{" "}
+            <Link href="/onboarding" className="font-semibold text-brand hover:underline">{t("signUpAsIndividual")}</Link>
+          </span>
           {t("alreadyHaveAccount")}{" "}
           <Link href="/business/login" className="font-semibold text-brand hover:underline">{t("signIn")}</Link>
         </>
