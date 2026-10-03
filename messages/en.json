@@ -2369,5 +2369,21 @@
     "title": "Placement offer",
     "from": "{agency} wants to place you with {employer}",
     "agencyFallback": "An agency"
+  },
+  "businessOnboarding": {
+    "bioStepTitle": "Business profile",
+    "bioStepSubtitle": "Tell customers about your business",
+    "addressStepTitle": "Business location",
+    "addressStepSubtitle": "Where do you operate from?",
+    "logoHint": "Add your business logo",
+    "descriptionLabel": "Business description",
+    "descriptionPlaceholder": "What does your business offer? What makes it stand out?",
+    "descriptionTooShort": "Add a few more words about your business (at least 10 characters)",
+    "saveFailed": "Could not save your business profile. Please try again.",
+    "continue": "Continue",
+    "saving": "Saving...",
+    "pendingVerificationTitle": "Your business is under review",
+    "pendingVerificationBody": "An admin verifies every new business before it can list services. You can explore Huza in the meantime — we'll notify you once you're approved, and you'll be able to add your first service right away.",
+    "pendingVerificationCta": "Go to the app"
   }
 }

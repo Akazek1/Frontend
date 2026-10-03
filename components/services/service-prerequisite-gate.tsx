@@ -26,11 +26,15 @@ interface ServicePrerequisiteGateProps {
 export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequisiteGateProps) {
   const t = useTranslations("servicePrerequisiteGate");
   const { user } = useSelector((state: RootState) => state.auth);
+  // A COMPANY account is a business, not a person — it has no personal ID to
+  // verify. Only the profile picture (the business logo) is required.
+  const isCompany = (user as { accountType?: string })?.accountType === "COMPANY";
   const [idStatus, setIdStatus] = useState<IdStatus>("NONE");
   const [showIdUpload, setShowIdUpload] = useState(false);
-  const [loadingId, setLoadingId] = useState(true);
+  const [loadingId, setLoadingId] = useState(!isCompany);
 
   const refreshIdStatus = useCallback(async () => {
+    if (isCompany) return;
     try {
       const res = await api.get("/documents/user/my-documents");
       const docs = res.data?.data || res.data || [];
@@ -52,7 +56,7 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
   }, [refreshIdStatus]);
 
   const hasPhoto = Boolean(user?.profilePicture);
-  const hasId = idStatus === "APPROVED" || idStatus === "PENDING_VERIFICATION";
+  const hasId = isCompany || idStatus === "APPROVED" || idStatus === "PENDING_VERIFICATION";
 
   // Auto-skip the gate ONLY when both prerequisites are already satisfied at
   // load — decided once, after the ID status resolves. This must not fire when
@@ -101,7 +105,8 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
         <ProfileImageUploader />
       </div>
 
-      {/* ID — recommended */}
+      {/* ID — recommended (individuals only; a company has no personal ID) */}
+      {!isCompany && (
       <div className="rounded-2xl border border-[#E1EBDD] bg-white p-4">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EEF8EA] text-brand">
@@ -136,6 +141,7 @@ export default function ServicePrerequisiteGate({ onContinue }: ServicePrerequis
           )}
         </div>
       </div>
+      )}
 
       <div className="space-y-2">
         <AppButton onClick={onContinue} disabled={!hasPhoto || !hasId} className="w-full">

@@ -41,9 +41,11 @@ export default function BusinessLoginPage() {
       toast.success(t("welcomeBack"));
       // Hard navigation so the auth state re-hydrates from the stored token.
       // A service company signs in as its own provider account and uses the
-      // ordinary app, exactly like an individual provider; a staffing agency
+      // ordinary app, exactly like an individual provider — but first through
+      // /business/onboarding, which bounces straight to "/" once the business
+      // profile/address/first service are already in place. A staffing agency
       // is an org principal and gets the agency console.
-      window.location.href = data.user?.accountType === "COMPANY" ? "/" : "/agency";
+      window.location.href = data.user?.accountType === "COMPANY" ? "/business/onboarding" : "/agency";
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("invalidEmailOrPassword")));
       setLoading(false);

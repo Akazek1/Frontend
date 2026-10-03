@@ -108,9 +108,11 @@ export default function BusinessRegisterPage() {
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
       toast.success(t("accountCreatedPendingVerification"));
       // Hard navigation so auth state re-hydrates from the stored token.
-      // A service company is signed in as its own provider account and uses
-      // the ordinary app; an agency goes to the agency console.
-      window.location.href = type === "SERVICE_COMPANY" ? "/" : "/agency";
+      // A service company is signed in as its own provider account and goes
+      // through the business onboarding wizard first (profile, address,
+      // first service listing) before it lands in the ordinary app; an
+      // agency goes straight to the agency console.
+      window.location.href = type === "SERVICE_COMPANY" ? "/business/onboarding" : "/agency";
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotCreateAccount")));
       setCode(Array(OTP_LENGTH).fill(""));
