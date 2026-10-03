@@ -29,7 +29,9 @@ const Header = () => {
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    // Org accounts (agencies/companies logged in as an org principal) have no
+    // User row — GET /users/profile always 404s for them, so skip the fetch.
+    if (!user || (user as { principalType?: string }).principalType === "org") {
       setAddress(null);
       setIsLoadingAddress(false);
       return;

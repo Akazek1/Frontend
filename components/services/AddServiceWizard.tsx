@@ -28,13 +28,15 @@ const ALL_ID = "all";
 interface AddServiceWizardProps {
   /** Provided when editing an existing service — the wizard opens on details. */
   service?: Service;
+  /** Where "Finish" on the success screen goes. Defaults to the services list. */
+  finishHref?: string;
 }
 
 type WizardUser = {
   addresses?: Array<{ district?: string; city?: string }>;
 } | null;
 
-export function AddServiceWizard({ service }: AddServiceWizardProps) {
+export function AddServiceWizard({ service, finishHref = "/more/services" }: AddServiceWizardProps) {
   const t = useTranslations("serviceWizard");
   const router = useRouter();
   const { user } = useAuth();
@@ -146,7 +148,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
       setCreatedService(result);
       if (isEdit) {
         toast.success(t("serviceUpdatedToast"));
-        router.push("/more/services");
+        router.push(finishHref);
       } else {
         setStep(4);
       }
@@ -267,7 +269,7 @@ export function AddServiceWizard({ service }: AddServiceWizardProps) {
             service={createdService}
             serviceIcon={selectedJobType?.jobType.icon}
             onAddAnother={handleAddAnother}
-            onFinish={() => router.push("/more/services")}
+            onFinish={() => router.push(finishHref)}
           />
         )}
       </main>

@@ -2363,5 +2363,21 @@
     "title": "Icyifuzo cyo guhabwa akazi",
     "from": "{agency} ishaka kuguha akazi kwa {employer}",
     "agencyFallback": "Ikigo"
+  },
+  "businessOnboarding": {
+    "bioStepTitle": "Umwirondoro w'ubucuruzi",
+    "bioStepSubtitle": "Bwira abakiriya ibirebana n'ubucuruzi bwawe",
+    "addressStepTitle": "Aho ubucuruzi buherereye",
+    "addressStepSubtitle": "Ese ukorera he?",
+    "logoHint": "Ongeraho ikirango cy'ubucuruzi bwawe",
+    "descriptionLabel": "Ibisobanuro by'ubucuruzi",
+    "descriptionPlaceholder": "Ubucuruzi bwawe butanga iki? Ni iki gitandukanya ubucuruzi bwawe n'ubundi?",
+    "descriptionTooShort": "Ongeraho amagambo make ku bucuruzi bwawe (nibura inyuguti 10)",
+    "saveFailed": "Ntibishoboka kubika umwirondoro w'ubucuruzi bwawe. Ongera ugerageze.",
+    "continue": "Komeza",
+    "saving": "Kubika...",
+    "pendingVerificationTitle": "Ubucuruzi bwawe buracyasuzumwa",
+    "pendingVerificationBody": "Umuyobozi asuzuma buri bucuruzi bushya mbere yuko butangira gutanga serivisi. Ushobora gukomeza kureba Huza mu gihe utegereje — tuzagusabiriza igihe wemejwe, hanyuma ushobore kongeraho serivisi yawe ya mbere ako kanya.",
+    "pendingVerificationCta": "Jya muri porogaramu"
   }
 }
