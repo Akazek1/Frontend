@@ -50,8 +50,9 @@
     },
     "business": {
       "title": "I represent a business",
-      "desc": "Register your agency or company and connect with more clients.",
-      "cta": "Register now"
+      "desc": "Staffing agency, cleaning company, salon — register your organisation and reach more clients.",
+      "cta": "Register now",
+      "badge": "Agency • Service company • Organisation"
     },
     "haveAccount": "Already have an account?",
     "logIn": "Log in",

@@ -173,22 +173,36 @@ export function RoleSelection() {
           </div>
         </button>
 
-        {/* ── Business card ── */}
+        {/* ── Business card ── same visual weight as the other two so agencies
+             don't mistake themselves for "Employer" and sign up as individuals */}
         <button
           type="button"
           onClick={() => router.push("/business/register")}
-          className="w-full text-left rounded-2xl border border-gray-200 bg-white p-3.5 flex items-center gap-3 hover:border-gray-300 transition-colors"
+          className="w-full text-left rounded-2xl border-2 border-[#BFDBFE] bg-[#F0F7FF] p-4 transition-all duration-200 hover:border-[#93C5FD]"
         >
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5 text-gray-500" />
+          <div className="flex items-start gap-3">
+            <div className="w-[62px] h-[62px] rounded-full bg-[#DBEAFE] flex items-center justify-center shrink-0 text-3xl">
+              🏢
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-0.5">
+                <h3 className="font-bold text-gray-900 text-[15px]">{t("business.title")}</h3>
+                <div className="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center shrink-0">
+                  <ChevronRight className="w-4 h-4 text-[#2563EB]" />
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500 leading-snug mb-2">
+                {t("business.desc")}
+              </p>
+
+              <div className="flex items-center gap-1">
+                <Building2 className="w-3 h-3 text-[#2563EB]" />
+                <span className="text-[10px] text-[#2563EB] font-semibold">{t("business.badge")}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-800">{t("business.title")}</p>
-            <p className="text-xs text-gray-500 leading-snug">{t("business.desc")}</p>
-          </div>
-          <span className="text-xs font-bold text-[#2E7D32] shrink-0 whitespace-nowrap">
-            {t("business.cta")} ›
-          </span>
         </button>
 
         {/* ── Login link ── */}

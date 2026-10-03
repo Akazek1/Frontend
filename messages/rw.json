@@ -50,8 +50,9 @@
     },
     "business": {
       "title": "Mpagarariye ubucuruzi",
-      "desc": "Andikisha ikigo cyawe maze uhuze n'abakiriya benshi.",
-      "cta": "Iyandikishe ubu"
+      "desc": "Ikigo gishaka akazi, isosiyete isukura, salon — andikisha ikigo cyawe maze uhuze n'abakiriya benshi.",
+      "cta": "Iyandikishe ubu",
+      "badge": "Ikigo • Isosiyete • Umuryango"
     },
     "haveAccount": "Usanzwe ufite konti?",
     "logIn": "Injira",
