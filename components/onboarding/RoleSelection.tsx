@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Shield, TrendingUp, Building2, ChevronRight, Lock } from "lucide-react"
+import { Shield, TrendingUp, Building2, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useOnboarding } from "@/context/onboarding-context"
@@ -23,76 +23,20 @@ export function RoleSelection() {
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-[#F7FCF5]">
+    <div className="w-full h-full bg-[#F7FCF5] flex flex-col">
 
-      {/* ── Hero header ── */}
-      <div className="relative bg-gradient-to-br from-[#E6F4E0] via-[#EFF8EA] to-[#F7FCF5] overflow-hidden">
-        {/* Language picker */}
-        <div className="absolute top-3 right-4 z-10">
-          <LanguageSwitcher />
-        </div>
-
-        <div className="flex items-end justify-between pt-10 pl-5">
-          {/* Title + tagline */}
-          <div className="pb-5 pr-2">
-            <p className="text-lg font-semibold text-gray-800">{t("welcome")}</p>
-            <HuzaLogo markClassName="h-9 w-9" wordClassName="text-[32px] text-brand-strong" />
-            <p className="text-sm text-gray-500 mt-2 max-w-[170px] leading-snug">
-              {t("tagline")}
-            </p>
-          </div>
-
-          {/* Hero illustration — swap src for real asset when available */}
-          <div className="relative aspect-[185/160] w-[38vw] min-w-[118px] max-w-[185px] shrink-0 overflow-hidden">
-            <svg viewBox="0 0 185 160" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              {/* Window background */}
-              <rect x="90" y="10" width="85" height="100" rx="8" fill="#D4EDDA" />
-              <rect x="110" y="20" width="25" height="30" rx="3" fill="#A8D5B5" />
-              <rect x="140" y="20" width="25" height="30" rx="3" fill="#A8D5B5" />
-              {/* Curtains */}
-              <path d="M90 10 Q105 40 95 100 L90 100Z" fill="#B8DFC5" />
-              <path d="M175 10 Q160 40 170 100 L175 100Z" fill="#B8DFC5" />
-              {/* Plant */}
-              <rect x="30" y="100" width="10" height="30" rx="2" fill="#6D9E72" />
-              <ellipse cx="35" cy="95" rx="18" ry="15" fill="#4CAF50" />
-              <ellipse cx="22" cy="88" rx="12" ry="10" fill="#66BB6A" />
-              <ellipse cx="48" cy="88" rx="12" ry="10" fill="#66BB6A" />
-              {/* Worker 1 — green apron */}
-              <ellipse cx="95" cy="65" rx="12" ry="13" fill="#5D4037" />
-              <rect x="78" y="75" width="34" height="55" rx="6" fill="#2E7D32" />
-              <rect x="83" y="78" width="24" height="40" rx="4" fill="#C8E6C9" />
-              {/* Arm with glove */}
-              <rect x="68" y="85" width="12" height="30" rx="5" fill="#2E7D32" />
-              <ellipse cx="72" cy="118" rx="8" ry="6" fill="#FDD835" />
-              <rect x="108" y="85" width="12" height="25" rx="5" fill="#2E7D32" />
-              {/* Worker 2 — yellow headwrap */}
-              <ellipse cx="145" cy="60" rx="12" ry="13" fill="#5D4037" />
-              <ellipse cx="145" cy="52" rx="13" ry="8" fill="#FBC02D" />
-              <rect x="129" y="70" width="32" height="55" rx="6" fill="#388E3C" />
-              <rect x="134" y="73" width="22" height="40" rx="4" fill="#C8E6C9" />
-              {/* Cooking pot */}
-              <rect x="130" y="100" width="30" height="22" rx="4" fill="#455A64" />
-              <rect x="126" y="97" width="38" height="6" rx="3" fill="#546E7A" />
-              <ellipse cx="145" cy="98" rx="19" ry="4" fill="#607D8B" />
-              {/* Table surface */}
-              <rect x="0" y="128" width="185" height="8" rx="2" fill="#A5D6A7" />
-              <rect x="0" y="135" width="185" height="25" rx="0" fill="#81C784" />
-            </svg>
-          </div>
-        </div>
+      {/* ── Top bar: logo + language picker ── */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 bg-[#F7FCF5]">
+        <HuzaLogo markClassName="h-7 w-7" wordClassName="text-[22px] text-brand-strong" />
+        <LanguageSwitcher />
       </div>
 
       {/* ── Content ── */}
-      <div className="px-4 pt-4 pb-8 space-y-3">
+      <div className="flex-1 flex flex-col justify-center px-4 py-4 space-y-3">
 
         {/* Section heading */}
-        <div className="text-center py-2">
+        <div className="text-center pb-1">
           <h2 className="text-base font-bold text-gray-900">{t("roleHeading")}</h2>
-          <div className="flex items-center justify-center gap-2 mt-0.5">
-            <span className="text-[10px] text-[#4CAF50]">🌿</span>
-            <p className="text-xs text-gray-400">{t("changeLater")}</p>
-            <span className="text-[10px] text-[#4CAF50]">🌿</span>
-          </div>
         </div>
 
         {/* ── Employer card ── */}
@@ -213,13 +157,6 @@ export function RoleSelection() {
           </Link>
         </p>
 
-        {/* ── Security note ── */}
-        <div className="text-center space-y-0.5">
-          <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
-            <Lock className="w-3 h-3" /> {t("secureNote")}
-          </p>
-          <p className="text-xs text-gray-400">{t("phoneNote")}</p>
-        </div>
       </div>
 
     </div>
