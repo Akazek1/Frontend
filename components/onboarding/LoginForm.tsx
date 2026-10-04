@@ -17,7 +17,7 @@ export function LoginForm() {
     handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin, setCheckedPin,
     code, setCode,
     inputsRef,
-    isLoading, resendCooldown,
+    isLoading, resendCooldown, otpSecondsLeft,
   } = useOnboarding()
 
   const [otpSent, setOtpSent] = useState(false)
@@ -174,6 +174,19 @@ export function LoginForm() {
                 inputRef={(el) => { inputsRef.current[0] = el }}
                 ariaLabel={t("verificationCode")}
               />
+
+              {otpSecondsLeft > 0 && (
+                <p className={`text-center text-xs ${otpSecondsLeft <= 60 ? "text-red-500 font-semibold" : "text-gray-400"}`}>
+                  {otpSecondsLeft <= 60
+                    ? t("codeExpiresIn", { seconds: otpSecondsLeft })
+                    : t("codeValidFor", { minutes: Math.ceil(otpSecondsLeft / 60) })}
+                </p>
+              )}
+              {otpSecondsLeft === 0 && (
+                <p className="text-center text-xs text-red-500 font-semibold">{t("codeExpired")}</p>
+              )}
+
+              <p className="text-center text-[11px] text-gray-400">{t("useLatestCode")}</p>
 
               <div className="text-center">
                 {resendCooldown > 0 ? (

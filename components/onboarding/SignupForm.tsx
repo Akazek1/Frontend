@@ -39,7 +39,7 @@ export function SignupForm() {
     handleSendOtp, handleVerifyOtp, handleSaveBasicInfo, handleResendOtp,
     code, setCode,
     inputsRef,
-    isLoading, resendCooldown,
+    isLoading, resendCooldown, otpSecondsLeft,
     handleBack,
   } = useOnboarding()
 
@@ -480,6 +480,21 @@ export function SignupForm() {
                     )
                   })}
                 </div>
+
+                {/* Expiry countdown */}
+                {otpSecondsLeft > 0 && (
+                  <p className={`text-center text-xs ${otpSecondsLeft <= 60 ? "text-red-500 font-semibold" : "text-gray-400"}`}>
+                    {otpSecondsLeft <= 60
+                      ? t("codeExpiresIn", { seconds: otpSecondsLeft })
+                      : t("codeValidFor", { minutes: Math.ceil(otpSecondsLeft / 60) })}
+                  </p>
+                )}
+                {otpSecondsLeft === 0 && (
+                  <p className="text-center text-xs text-red-500 font-semibold">{t("codeExpired")}</p>
+                )}
+
+                {/* Resend tip */}
+                <p className="text-center text-[11px] text-gray-400">{t("useLatestCode")}</p>
 
                 <div className="text-center">
                   {resendCooldown > 0 ? (
