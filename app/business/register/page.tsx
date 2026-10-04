@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, Briefcase, Loader2, CheckCircle } from "lucide-react";
+import { Building2, Briefcase, Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
@@ -21,6 +21,9 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export default function BusinessRegisterPage() {
   const t = useTranslations("businessRegister");
   const locale = useLocale();
+  // type-picker is its own full screen so the user is never overwhelmed by the
+  // form before they have decided what kind of business they are registering.
+  const [phase, setPhase] = useState<"type-picker" | "confirm" | "details" | "verify">("type-picker");
   const [type, setType] = useState<OrgType | null>(null);
   // Only asked when type is STAFFING_AGENCY — how the agency engages workers.
   const [agencyModel, setAgencyModel] = useState<AgencyModel | null>(null);
@@ -30,10 +33,6 @@ export default function BusinessRegisterPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  // Sign-up is two phases on one page: fill in the details, then prove the
-  // phone number with the code we text to it. The account is only created at
-  // the end, so an abandoned sign-up leaves nothing behind.
-  const [phase, setPhase] = useState<"details" | "verify">("details");
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [resendIn, setResendIn] = useState(0);
 
@@ -125,8 +124,8 @@ export default function BusinessRegisterPage() {
       type="button"
       onClick={() => {
         setType(orgType);
-        // A model choice only makes sense for an agency — drop a stale pick.
         if (orgType !== "STAFFING_AGENCY") setAgencyModel(null);
+        setPhase("confirm");
       }}
       className={`relative flex min-w-0 flex-1 items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
         type === orgType ? "border-brand bg-brand text-white" : "border-gray-200 bg-white text-ink hover:border-brand"
@@ -157,14 +156,74 @@ export default function BusinessRegisterPage() {
     </button>
   );
 
+  // Confirmation screen — shown after type is picked, before the form.
+  // Asks if the user is actually an individual so they can self-correct.
+
+  if (phase === "confirm") {
+    return (
+      <BusinessAuthShell
+        icon={Building2}
+        title={t("confirmIndividualTitle")}
+        subtitle={t("confirmIndividualSubtitle")}
+        maxWidthClass="max-w-[460px]"
+        onBack={() => setPhase("type-picker")}
+      >
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/onboarding"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-brand text-[15px] font-bold text-white hover:bg-brand-dark"
+          >
+            {t("confirmIndividualYes")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setPhase("details")}
+            className="flex h-12 w-full items-center justify-center rounded-xl border-2 border-gray-200 text-[14px] font-bold text-ink hover:bg-gray-50"
+          >
+            {t("confirmIndividualNo")}
+          </button>
+        </div>
+      </BusinessAuthShell>
+    );
+  }
+
+  // ── Phase 1: full-screen type picker ──────────────────────────────────────
+  if (phase === "type-picker") {
+    return (
+      <BusinessAuthShell
+        icon={Building2}
+        title={t("whatKindOfBusiness")}
+        subtitle={t("pickOneToGetStarted")}
+        maxWidthClass="max-w-[460px]"
+        backHref="/onboarding"
+        footer={
+          <>
+            {t("notABusiness")}{" "}
+            <Link href="/onboarding" className="font-semibold text-brand hover:underline">{t("signUpAsIndividual")}</Link>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
+          {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
+        </div>
+      </BusinessAuthShell>
+    );
+  }
+
   return (
     <BusinessAuthShell
       icon={Building2}
       title={phase === "details" ? t("registerYourBusiness") : t("verifyYourNumber")}
       subtitle={phase === "details" ? t("adminVerifiesAccount") : undefined}
       maxWidthClass="max-w-[460px]"
+      onBack={phase === "details" ? () => setPhase("type-picker") : undefined}
       footer={
         <>
+          <span className="block mb-1">
+            {t("notABusiness")}{" "}
+            <Link href="/onboarding" className="font-semibold text-brand hover:underline">{t("signUpAsIndividual")}</Link>
+          </span>
           {t("alreadyHaveAccount")}{" "}
           <Link href="/business/login" className="font-semibold text-brand hover:underline">{t("signIn")}</Link>
         </>
@@ -172,10 +231,17 @@ export default function BusinessRegisterPage() {
     >
       {phase === "details" ? (
         <form onSubmit={handleDetailsSubmit} className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
-            {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
-          </div>
+          {/* Summary of chosen type with a change link */}
+          <button
+            type="button"
+            onClick={() => setPhase("type-picker")}
+            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-left hover:bg-gray-100"
+          >
+            <span className="text-[13px] font-semibold text-ink">
+              {type === "SERVICE_COMPANY" ? t("serviceCompany") : t("staffingAgency")}
+            </span>
+            <span className="text-[12px] font-semibold text-brand">{t("change")}</span>
+          </button>
 
           {type === "STAFFING_AGENCY" && (
             <div>
