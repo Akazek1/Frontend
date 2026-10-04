@@ -35,12 +35,19 @@ export default function BusinessRegisterPage() {
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [resendIn, setResendIn] = useState(0);
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(0);
 
   useEffect(() => {
     if (resendIn <= 0) return;
     const id = setInterval(() => setResendIn((s) => (s <= 1 ? 0 : s - 1)), 1000);
     return () => clearInterval(id);
   }, [resendIn]);
+
+  useEffect(() => {
+    if (otpSecondsLeft <= 0) return;
+    const id = setInterval(() => setOtpSecondsLeft((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [otpSecondsLeft]);
 
   async function sendCode() {
     const res = await api.post("/auth/org/request-otp", {
@@ -68,6 +75,7 @@ export default function BusinessRegisterPage() {
     try {
       await sendCode();
       setCode(Array(OTP_LENGTH).fill(""));
+      setOtpSecondsLeft(600);
       setPhase("verify");
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotSendCode")));
@@ -81,6 +89,7 @@ export default function BusinessRegisterPage() {
     setLoading(true);
     try {
       await sendCode();
+      setOtpSecondsLeft(600);
       toast.success(t("codeResent"));
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("couldNotSendCode")));
@@ -299,6 +308,19 @@ export default function BusinessRegisterPage() {
             autoFocus
             ariaLabel={t("verificationCode")}
           />
+
+          {otpSecondsLeft > 0 && (
+            <p className={`text-center text-xs ${otpSecondsLeft <= 60 ? "text-red-500 font-semibold" : "text-ink-muted"}`}>
+              {otpSecondsLeft <= 60
+                ? t("codeExpiresIn", { seconds: otpSecondsLeft })
+                : t("codeValidFor", { minutes: Math.ceil(otpSecondsLeft / 60) })}
+            </p>
+          )}
+          {otpSecondsLeft === 0 && (
+            <p className="text-center text-xs text-red-500 font-semibold">{t("codeExpired")}</p>
+          )}
+
+          <p className="text-center text-[11px] text-ink-muted">{t("useLatestCode")}</p>
 
           <div className="text-center">
             {resendIn > 0 ? (

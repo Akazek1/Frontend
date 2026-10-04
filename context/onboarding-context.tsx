@@ -101,6 +101,8 @@ interface OnboardingContextType {
   setIsReturningUser: (returning: boolean) => void
   isLoading: boolean
   resendCooldown: number
+  /** Seconds until the current OTP expires (counts down from 600). 0 = expired. */
+  otpSecondsLeft: number
 
   handleSendOtp: (purpose?: "login" | "signup") => Promise<boolean>
   handleVerifyOtp: (otpCode: string) => Promise<void>
@@ -160,6 +162,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [activeInputIndex, setActiveInputIndex] = useState(0)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(0)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -181,6 +184,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const id = setTimeout(() => setResendCooldown(prev => Math.max(0, prev - 1)), 1000)
     return () => clearTimeout(id)
   }, [resendCooldown])
+
+  // OTP expiry countdown (10 min = 600 s, matches backend)
+  useEffect(() => {
+    if (otpSecondsLeft <= 0) return
+    const id = setTimeout(() => setOtpSecondsLeft(prev => Math.max(0, prev - 1)), 1000)
+    return () => clearTimeout(id)
+  }, [otpSecondsLeft])
 
   // Persist the new-user "Create your account" step so opening Terms/Privacy and
   // returning keeps the form filled. Cleared once the user moves past signup.
@@ -307,7 +317,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           ? { firstName: firstName?.trim() || undefined, lastName: lastName?.trim() || undefined }
           : {}),
       })
-      if (success) return true
+      if (success) {
+        setOtpSecondsLeft(600) // 10 min, matches backend expiry
+        return true
+      }
       if (process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
         return true
@@ -334,6 +347,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setCode(Array(OTP_LENGTH).fill(""))
     setActiveInputIndex(0)
     setResendCooldown(60)
+    setOtpSecondsLeft(600)
     await handleSendOtp()
   }, [resendCooldown, handleSendOtp])
 
@@ -699,6 +713,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setIsReturningUser,
     isLoading,
     resendCooldown,
+    otpSecondsLeft,
     handleSendOtp,
     handleVerifyOtp,
     handleLoginWithPin,
