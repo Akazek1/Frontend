@@ -21,6 +21,9 @@ const RESEND_COOLDOWN_SECONDS = 60;
 export default function BusinessRegisterPage() {
   const t = useTranslations("businessRegister");
   const locale = useLocale();
+  // type-picker is its own full screen so the user is never overwhelmed by the
+  // form before they have decided what kind of business they are registering.
+  const [phase, setPhase] = useState<"type-picker" | "details" | "verify">("type-picker");
   const [type, setType] = useState<OrgType | null>(null);
   // Only asked when type is STAFFING_AGENCY — how the agency engages workers.
   const [agencyModel, setAgencyModel] = useState<AgencyModel | null>(null);
@@ -30,10 +33,6 @@ export default function BusinessRegisterPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  // Sign-up is two phases on one page: fill in the details, then prove the
-  // phone number with the code we text to it. The account is only created at
-  // the end, so an abandoned sign-up leaves nothing behind.
-  const [phase, setPhase] = useState<"details" | "verify">("details");
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [resendIn, setResendIn] = useState(0);
 
@@ -157,6 +156,38 @@ export default function BusinessRegisterPage() {
     </button>
   );
 
+  // ── Phase 1: full-screen type picker ──────────────────────────────────────
+  if (phase === "type-picker") {
+    return (
+      <BusinessAuthShell
+        icon={Building2}
+        title={t("whatKindOfBusiness")}
+        subtitle={t("pickOneToGetStarted")}
+        maxWidthClass="max-w-[460px]"
+        footer={
+          <>
+            {t("notABusiness")}{" "}
+            <Link href="/onboarding" className="font-semibold text-brand hover:underline">{t("signUpAsIndividual")}</Link>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
+          {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
+
+          <button
+            type="button"
+            disabled={!type}
+            onClick={() => setPhase("details")}
+            className="mt-1 flex h-12 w-full items-center justify-center rounded-xl bg-brand text-[15px] font-bold text-white transition hover:bg-brand-dark disabled:opacity-40"
+          >
+            {t("continue")}
+          </button>
+        </div>
+      </BusinessAuthShell>
+    );
+  }
+
   return (
     <BusinessAuthShell
       icon={Building2}
@@ -176,10 +207,17 @@ export default function BusinessRegisterPage() {
     >
       {phase === "details" ? (
         <form onSubmit={handleDetailsSubmit} className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {typeCard("SERVICE_COMPANY", t("serviceCompany"), t("serviceCompanyDesc"), Building2)}
-            {typeCard("STAFFING_AGENCY", t("staffingAgency"), t("staffingAgencyDesc"), Briefcase)}
-          </div>
+          {/* Summary of chosen type with a change link */}
+          <button
+            type="button"
+            onClick={() => setPhase("type-picker")}
+            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-left hover:bg-gray-100"
+          >
+            <span className="text-[13px] font-semibold text-ink">
+              {type === "SERVICE_COMPANY" ? t("serviceCompany") : t("staffingAgency")}
+            </span>
+            <span className="text-[12px] font-semibold text-brand">{t("change")}</span>
+          </button>
 
           {type === "STAFFING_AGENCY" && (
             <div>
