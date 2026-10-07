@@ -14,7 +14,7 @@ export function LoginForm() {
   const t = useTranslations("login")
   const {
     phoneNumber, handlePhoneChange,
-    handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin, setCheckedPin,
+    handleSendOtp, handleVerifyOtp, handleResendOtp, handleLoginWithPin, setCheckedPin, requestPinReset,
     code, setCode,
     inputsRef,
     isLoading, resendCooldown, otpSecondsLeft,
@@ -37,6 +37,7 @@ export function LoginForm() {
 
   const handleLogin = async () => {
     setPhoneError("")
+    requestPinReset(false)
 
     let cleaned = phoneNumber.replace(/^\+\d{1,4}/, "").replace(/\D/g, "")
     if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
@@ -100,8 +101,10 @@ export function LoginForm() {
     }
   }
 
-  // "Use a code instead" / forgot PIN → drop back to the OTP flow.
-  const useCodeInstead = async () => {
+  // Both drop back to the OTP flow; "Forgot PIN?" additionally makes the
+  // login end on the set-PIN step so the user leaves with a PIN they know.
+  const switchToCode = async (forgotPin = false) => {
+    requestPinReset(forgotPin)
     setPinMode(false)
     setPin("")
     setPinError("")
@@ -253,8 +256,12 @@ export function LoginForm() {
               {pinError && <p className="text-xs text-red-500 text-center">{pinError}</p>}
 
               <div className="text-center">
-                <button type="button" onClick={useCodeInstead} className="text-sm text-brand font-medium underline underline-offset-2">
+                <button type="button" onClick={() => switchToCode(false)} className="text-sm text-brand font-medium underline underline-offset-2">
                   {t("useACodeInstead")}
+                </button>
+                <span className="mx-2 text-gray-300" aria-hidden>·</span>
+                <button type="button" onClick={() => switchToCode(true)} className="text-sm text-brand font-medium underline underline-offset-2">
+                  {t("forgotPin")}
                 </button>
               </div>
             </div>

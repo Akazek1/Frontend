@@ -138,6 +138,19 @@ api.interceptors.response.use(
       }
     }
 
+    // 403 TERMS_NOT_ACCEPTED — user is logged in but hasn't accepted the ToS.
+    // Fire a window event so the TermsGateProvider can show the acceptance sheet.
+    // Skipped when no token is stored (nothing to gate); the provider also
+    // ignores the event once Redux says the user has logged out.
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.code === "TERMS_NOT_ACCEPTED" &&
+      typeof window !== "undefined" &&
+      !!getAuthToken()
+    ) {
+      window.dispatchEvent(new CustomEvent("huza:terms-not-accepted"));
+    }
+
     return Promise.reject(error);
   }
 );

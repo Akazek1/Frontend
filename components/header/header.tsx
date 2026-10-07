@@ -204,8 +204,8 @@ const Header = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Avatar - go to personal profile or onboarding if not logged in */}
-          <Link href={user ? `/${getProviderHandle(user).replace(/^@/, "")}` : "/onboarding"}>
+          {/* Avatar - go to public profile if handle exists, own profile page otherwise */}
+          <Link href={user ? (user.username ? `/${user.username}` : "/profile") : "/onboarding"}>
             {user?.profilePicture ? (
               <Image
                 src={user.profilePicture}
