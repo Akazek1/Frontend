@@ -2,16 +2,17 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useLocale } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useAuth } from "@/hooks/useAuth"
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "@/store"
-import { updateUser, setSession } from "@/store/slices/auth-slice"
+import { useDispatch, useStore } from "react-redux"
+import { AppDispatch, RootState } from "@/store"
+import { updateUser, setSession, setPinSetupInProgress } from "@/store/slices/auth-slice"
 import api from "@/lib/axios"
 import { getSignupToken } from "@/lib/auth-utils"
 import { track } from "@/lib/analytics"
 import { toast } from "react-hot-toast"
 import type { AuthResponse, UserRole, OnboardingRole } from "@/services/auth-service"
+import { TERMS_GATE_EVENT } from "@/context/terms-gate-context"
 
 const OTP_LENGTH = 6
 
@@ -108,6 +109,8 @@ interface OnboardingContextType {
   handleVerifyOtp: (otpCode: string) => Promise<void>
   handleLoginWithPin: (pin: string) => Promise<{ ok: boolean; message?: string }>
   setCheckedPin: (info: { hasPin: boolean; pinIsTemporary: boolean } | null) => void
+  // "Forgot PIN?": the next successful OTP login must end on the set-PIN step.
+  requestPinReset: (requested: boolean) => void
   handleSubmitPin: (pin: string) => Promise<void>
   handleAcceptPin: () => Promise<void>
   handleSaveBasicInfo: () => Promise<void>
@@ -148,6 +151,20 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // 'signup' = the PIN step follows a fresh signup (resume role onboarding after).
   // 'postLogin' = an existing user was prompted after login (just go home after).
   const [pinPromptMode, setPinPromptMode] = useState<"signup" | "postLogin">("signup")
+  // A ref, not state: read inside handleVerifyOtp right after being set.
+  const pinResetRequestedRef = useRef(false)
+  const requestPinReset = useCallback((requested: boolean) => {
+    pinResetRequestedRef.current = requested
+  }, [])
+
+  // The terms sheet reloads the page after acceptance unless something claims
+  // the event. On a PIN step a reload would lose the step, so stay put.
+  useEffect(() => {
+    if (currentStep !== 8 && currentStep !== 9) return
+    const keepStep = (e: Event) => e.preventDefault()
+    window.addEventListener("huza:terms-accepted", keepStep)
+    return () => window.removeEventListener("huza:terms-accepted", keepStep)
+  }, [currentStep])
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [phoneNumber, setPhoneNumber] = useState("")
   const [selectedRoles, setSelectedRoles] = useState<OnboardingRole[]>([])
@@ -168,6 +185,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const locale = useLocale()
   const dispatch = useDispatch<AppDispatch>()
+  const store = useStore<RootState>()
+  const tPin = useTranslations("onboarding.setPin")
   const { sendOtp, verifyOtp, isLoading } = useAuth()
 
   const inputsRef = useRef<Array<HTMLInputElement | null>>(Array(OTP_LENGTH).fill(null))
@@ -321,11 +340,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         setOtpSecondsLeft(600) // 10 min, matches backend expiry
         return true
       }
-      if (process.env.NODE_ENV === "development") {
+      // The thunk swallows the error into Redux; read it back so the user sees
+      // the server's actual reason (e.g. the resend cooldown) instead of a guess.
+      const serverMessage = store.getState().auth.error
+      const noServerReply = !serverMessage || serverMessage === "Failed to send OTP"
+      if (noServerReply && process.env.NODE_ENV === "development") {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
         return true
       }
-      toast.error("Failed to send OTP. Please try again.")
+      toast.error(noServerReply ? "Failed to send OTP. Please try again." : serverMessage)
       return false
     } catch (error) {
       const err = error as Error & { code?: string; response?: { data?: { message?: string } } }
@@ -340,7 +363,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       )
       return false
     }
-  }, [phoneNumber, sendOtp, locale, firstName, lastName])
+  }, [phoneNumber, sendOtp, locale, firstName, lastName, store])
 
   const handleResendOtp = useCallback(async () => {
     if (resendCooldown > 0) return
@@ -383,7 +406,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const completeSignupForNewUser = async (_user: NonNullable<UserData>) => {
       const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
-      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth }
+      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth, termsAccepted }
       if (lastName.trim()) payload.lastName = lastName.trim()
       if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
 
@@ -443,15 +466,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           await completeRoleOnboarding(["EMPLOYER"])
           dispatch(updateUser({ employerOnboardingComplete: true }))
         }
-        // An existing user only reaches OTP verification via the login flow —
-        // either they have no PIN yet, or they have one but tapped "use a code
-        // instead" because they forgot it. Either way, send them to set a PIN:
-        // a fresh one overwrites any forgotten hash (POST /auth/set-pin), so a
-        // forgetful user gets back to PIN-first login instead of being stuck
-        // needing an SMS every time. Set-PIN is mandatory, so they land in a
-        // good state before reaching home.
-        if (checkedPin) {
+        // Force the set-PIN step when the account has no PIN, or the user said
+        // they forgot it (the OTP just proved the phone; set-pin overwrites the
+        // old hash). "Use a code instead" with a known PIN goes straight home.
+        const resetRequested = pinResetRequestedRef.current
+        pinResetRequestedRef.current = false
+        if (!user.hasPin || resetRequested) {
           setPinPromptMode("postLogin")
+          dispatch(setPinSetupInProgress(true))
           setCurrentStep(8) // SetPinStep
           return
         }
@@ -464,6 +486,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         // created; prompt to set a login PIN before role-specific onboarding.
         const { roles, token } = await completeSignupForNewUser(user)
         setPostSignup({ roles, token })
+        dispatch(setPinSetupInProgress(true))
         setCurrentStep(8) // SetPinStep
       } else {
         // Login mode edge case: no name collected → show name step
@@ -488,7 +511,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setActiveInputIndex(0)
       setTimeout(() => inputsRef.current[0]?.focus(), 50)
     }
-  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, selectedRoles, dispatch, redirectHome, completeRoleOnboarding])
+  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, dateOfBirth, termsAccepted, selectedRoles, dispatch, redirectHome, completeRoleOnboarding])
 
   // After the PIN step: resume the role-specific onboarding that would otherwise
   // have run immediately after signup (workers → profile/ID; employers → home).
@@ -520,11 +543,13 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
       )
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Could not set PIN. Please try again.")
+      toast.error(e?.response?.data?.message || tPin("couldNotSetPin"))
       return // stay on the PIN step so they can retry
     }
+    dispatch(updateUser({ hasPin: true, pinIsTemporary: false }))
+    dispatch(setPinSetupInProgress(false))
     await finishAfterPin()
-  }, [postSignup, finishAfterPin])
+  }, [postSignup, finishAfterPin, dispatch, tPin])
 
   // Returning-user PIN login (no SMS). On success, establishes the session and
   // routes exactly like an OTP login: incomplete workers resume onboarding,
@@ -550,10 +575,29 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         await completeRoleOnboarding(["EMPLOYER"])
         dispatch(updateUser({ employerOnboardingComplete: true }))
       }
+      // Terms not yet accepted → show the gate immediately before anything else.
+      // After the user accepts, a "huza:terms-accepted" event continues this flow.
+      if (!user.termsAcceptedAt) {
+        const onTermsAccepted = (e: Event) => {
+          e.preventDefault() // tell the sheet: we're handling routing, don't reload
+          window.removeEventListener("huza:terms-accepted", onTermsAccepted)
+          if (checkedPin?.pinIsTemporary) {
+            setPinPromptMode("postLogin")
+            dispatch(setPinSetupInProgress(true))
+            setCurrentStep(9) // ReviewPinStep
+          } else {
+            redirectHome(false)
+          }
+        }
+        window.addEventListener("huza:terms-accepted", onTermsAccepted)
+        window.dispatchEvent(new CustomEvent(TERMS_GATE_EVENT))
+        return { ok: true }
+      }
       // Logged in with an admin-assigned (temporary) PIN → ask them to keep it
       // or set their own before continuing.
       if (checkedPin?.pinIsTemporary) {
         setPinPromptMode("postLogin")
+        dispatch(setPinSetupInProgress(true))
         setCurrentStep(9) // ReviewPinStep
         return { ok: true }
       }
@@ -571,8 +615,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } catch {
       /* non-fatal — the PIN still works; just proceed */
     }
+    dispatch(updateUser({ pinIsTemporary: false }))
+    dispatch(setPinSetupInProgress(false))
     redirectHome(false)
-  }, [redirectHome])
+  }, [redirectHome, dispatch])
 
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
@@ -664,6 +710,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleBack = useCallback(() => {
     if (currentStep <= 0) return
+    // PIN setup and review are mandatory — back button does nothing here.
+    if (currentStep === 8 || currentStep === 9) return
     if (currentStep === 3) { // OTP → phone: clear code
       setCode(Array(OTP_LENGTH).fill(""))
       setActiveInputIndex(0)
@@ -718,6 +766,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     handleVerifyOtp,
     handleLoginWithPin,
     setCheckedPin,
+    requestPinReset,
     handleSubmitPin,
     handleAcceptPin,
     handleSaveBasicInfo,

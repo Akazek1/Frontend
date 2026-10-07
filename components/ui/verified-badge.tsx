@@ -7,14 +7,15 @@ interface VerifiedBadgeProps {
   size?: number;
   className?: string;
   title?: string;
+  fill?: string;
 }
 
-export function VerifiedBadge({ size = 20, className, title = "Verified" }: VerifiedBadgeProps) {
+export function VerifiedBadge({ size = 20, className, title = "Verified", fill }: VerifiedBadgeProps) {
   return (
     <BadgeCheck
       width={size}
       height={size}
-      fill={VERIFIED_BADGE_COLOR}
+      fill={fill ?? VERIFIED_BADGE_COLOR}
       stroke="#FFFFFF"
       strokeWidth={2.25}
       aria-label={title}

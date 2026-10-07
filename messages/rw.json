@@ -65,7 +65,14 @@
       "confirmLabel": "Emeza PIN",
       "mismatch": "PIN ntizihuye.",
       "submit": "Bika PIN",
-      "skip": "Simbuka ubu"
+      "skip": "Simbuka ubu",
+      "logOut": "Ahubwo sohoka",
+      "reviewHeading": "Washyiriweho PIN",
+      "reviewBody": "Umukozi wa Huza yashyizeho PIN ya konti yawe yo kwinjira. Ushobora kuyigumana cyangwa ukayihindura.",
+      "setOwnPin": "Nishyirireho PIN yanjye",
+      "keepPin": "Gumana iyi PIN",
+      "couldNotSetPin": "Ntibyashobotse kubika PIN. Ongera ugerageze.",
+      "couldNotConfirmPin": "Ntibyashobotse kwemeza PIN. Ongera ugerageze."
     },
     "allSet": {
       "title": "Byarangiye!",
@@ -1659,7 +1666,7 @@
     "setNewPasswordToContinue": "Shyiraho ijambo ry'ibanga rishya kugira ngo ukomeze.",
     "welcomeBack": "Ikaze subiye!",
     "invalidEmailOrPassword": "Imeyili cyangwa ijambo ry'ibanga sibyo",
-    "agencyPortal": "Urupapuro rw'Ikigo",
+    "agencyPortal": "Ipaji y'Ikigo",
     "signInToAgencyAccount": "Injira kuri konti y'ikigo cyawe",
     "emailAddress": "Aderesi ya imeyili",
     "password": "Ijambo ry'ibanga",
@@ -1730,7 +1737,17 @@
     "resendCodeIn": "Ongera wohereze kode mu masegonda {seconds}",
     "codeResent": "Kode yongeye koherezwa",
     "couldNotSendCode": "Ntibyakunze kohereza kode",
-    "backToDetails": "Subira ku makuru"
+    "backToDetails": "Subira ku makuru",
+    "businessDescription": "Ibisobanuro by'ikigo",
+    "businessDescriptionPlaceholder": "Ikigo cyawe gitanga iki? Ni iki kigitandukanya n'ibindi?",
+    "descriptionTooShort": "Sobanura ikigo cyawe (nibura inyuguti 10)",
+    "serviceCategory": "Mutanga serivisi z'ubuhe bwoko?",
+    "serviceCategoryHelp": "Hitamo ihuye neza n'ikigo cyawe, ushobora kongeraho izindi nyuma.",
+    "chooseServiceCategory": "Hitamo ubwoko bwa serivisi ikigo cyawe gitanga",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora"
   },
   "feedback": {
     "pleaseWriteMessage": "Andika ubutumwa bugufi mbere yo kohereza",
@@ -2220,6 +2237,7 @@
     "logIn": "Injira",
     "verifying": "Birimo kwemezwa...",
     "changePhoneNumber": "Hindura nimero ya telefoni",
+    "forgotPin": "Wibagiwe PIN?",
     "enterYourPin": "Andika PIN yawe",
     "useACodeInstead": "Ahubwo koresha kode",
     "loggingIn": "Birimo kwinjira...",
@@ -2227,7 +2245,11 @@
     "agencyOrCompany": "Ikigo cyangwa sosiyete?",
     "signInWithEmailPassword": "Injira ukoresheje imeyili n'ijambo ry'ibanga",
     "dontHaveAccount": "Ntufite konti?",
-    "signUp": "Iyandikishe"
+    "signUp": "Iyandikishe",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora"
   },
   "sectorPicker": {
     "stepTitle": {
@@ -2397,5 +2419,17 @@
     "pendingVerificationTitle": "Ubucuruzi bwawe buracyasuzumwa",
     "pendingVerificationBody": "Umuyobozi asuzuma buri bucuruzi bushya mbere yuko butangira gutanga serivisi. Ushobora gukomeza kureba Huza mu gihe utegereje — tuzagusabiriza igihe wemejwe, hanyuma ushobore kongeraho serivisi yawe ya mbere ako kanya.",
     "pendingVerificationCta": "Jya muri porogaramu"
+  },
+  "termsGate": {
+    "title": "Soma maze wemere",
+    "subtitle": "Soma kandi wemere Amategeko n'amabwiriza hamwe n'Amabwiriza y'Ibanga byacu kugira ngo ukomeze.",
+    "tabTerms": "Amabwiriza n'Amategeko",
+    "tabPrivacy": "Amabwiriza y'Ibanga",
+    "agree": "Nasomye kandi nemeye <b>Amabwiriza n'Amategeko</b> n''<b>Amabwiriza y'Ibanga</b>.",
+    "confirmIdentity": "Ndemeza ko amakuru natanze ari ay'ukuri kandi ko ndi uwo mvuga ko ndi we.",
+    "accept": "Emera maze ukomeze",
+    "decline": "Anga maze usohoke",
+    "pleaseWait": "Tegereza…",
+    "genericError": "Habaye ikibazo. Ongera ugerageze."
   }
 }

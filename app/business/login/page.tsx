@@ -31,6 +31,7 @@ export default function BusinessLoginPage() {
       const data = res.data?.data || res.data;
       if (!data?.token) throw new Error(t("noTokenReturned"));
       localStorage.setItem("token", data.token);
+      document.cookie = `token=${data.token}; path=/; max-age=31536000; SameSite=Lax`;
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
       // After an admin reset, force a password change before entering the app.
       if (data.mustChangePassword) {

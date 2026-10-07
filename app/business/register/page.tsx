@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Building2, Briefcase, Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -11,9 +11,118 @@ import { isValidRwandaPhone, normalizeRwandaPhone } from "@/lib/phone";
 import { BusinessAuthShell } from "@/components/business/business-auth-shell";
 import { PasswordField } from "@/components/business/password-field";
 import { OtpCodeInput, OTP_LENGTH } from "@/components/ui/otp-code-input";
+import { IconBadge } from "@/components/services/wizard/wizard-ui";
+import { Check, ChevronDown, Search } from "lucide-react";
+import type { WizardGrouping, WizardJobType } from "@/components/services/wizard/WizardStep1ChooseCategory";
 
 type OrgType = "SERVICE_COMPANY" | "STAFFING_AGENCY";
 type AgencyModel = "PLACEMENT" | "DISPATCH";
+
+function CategoryMultiPicker({
+  tree,
+  loading,
+  search,
+  onSearch,
+  selectedIds,
+  onToggle,
+}: {
+  tree: WizardGrouping[];
+  loading: boolean;
+  search: string;
+  onSearch: (v: string) => void;
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
+
+  const filtered = useMemo<WizardGrouping[]>(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tree;
+    return tree
+      .map((g) => ({
+        ...g,
+        jobTypes: g.jobTypes.filter((jt) =>
+          `${jt.name} ${jt.nameKn ?? ""}`.toLowerCase().includes(q),
+        ),
+      }))
+      .filter((g) => g.jobTypes.length > 0);
+  }, [tree, search]);
+
+  // Auto-expand when search narrows to a single group.
+  useEffect(() => {
+    if (filtered.length === 1) setOpenGroupId(filtered[0].id);
+    else if (search.trim() === "") setOpenGroupId(null);
+  }, [filtered.length, search]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+        <input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search services…"
+          className="h-11 w-full rounded-2xl border border-[#DCE8D9] bg-white pl-10 pr-4 text-[13px] outline-none placeholder:text-ink-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20"
+        />
+      </div>
+      {loading ? (
+        <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div>
+      ) : filtered.length === 0 ? (
+        <p className="py-6 text-center text-[13px] text-ink-muted">No services match your search.</p>
+      ) : (
+        filtered.map((g) => {
+          const open = openGroupId === g.id;
+          const selectedCount = g.jobTypes.filter((jt) => selectedIds.has(jt.id)).length;
+          return (
+            <div key={g.id} className="overflow-hidden rounded-2xl border border-[#DCE8D9] bg-white">
+              {/* Group header — toggles open/close */}
+              <button
+                type="button"
+                onClick={() => setOpenGroupId(open ? null : g.id)}
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-[#FBFEFA]"
+              >
+                <IconBadge icon={g.icon ?? null} />
+                <span className="flex-1 text-[13px] font-bold text-ink">{g.name}</span>
+                {selectedCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">
+                    {selectedCount}
+                  </span>
+                )}
+                <ChevronDown className={`h-4 w-4 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`} />
+              </button>
+              {/* Job types — shown when open */}
+              {open && (
+                <div className="flex flex-col gap-2 border-t border-[#DCE8D9] p-3">
+                  {g.jobTypes.map((jt) => {
+                    const selected = selectedIds.has(jt.id);
+                    return (
+                      <button
+                        key={jt.id}
+                        type="button"
+                        onClick={() => onToggle(jt.id)}
+                        className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                          selected ? "border-brand bg-surface" : "border-[#DCE8D9] bg-white hover:bg-[#FBFEFA]"
+                        }`}
+                      >
+                        <IconBadge icon={jt.icon ?? null} />
+                        <span className="flex-1 text-[13px] font-semibold text-ink">{jt.name}</span>
+                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                          selected ? "border-brand bg-brand text-white" : "border-gray-300 bg-white"
+                        }`}>
+                          {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
 
 // Matches the backend's OTP resend cooldown (AuthService.OTP_RESEND_COOLDOWN_SECONDS).
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -28,6 +137,20 @@ export default function BusinessRegisterPage() {
   // Only asked when type is STAFFING_AGENCY — how the agency engages workers.
   const [agencyModel, setAgencyModel] = useState<AgencyModel | null>(null);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
+  const [catSearch, setCatSearch] = useState("");
+  const [tree, setTree] = useState<WizardGrouping[]>([]);
+  const [treeLoading, setTreeLoading] = useState(false);
+
+  useEffect(() => {
+    if (phase !== "details" || type !== "SERVICE_COMPANY" || tree.length > 0 || treeLoading) return;
+    setTreeLoading(true);
+    api.get("/taxonomy/tree")
+      .then((res) => setTree(res.data?.data ?? res.data ?? []))
+      .catch(() => {})
+      .finally(() => setTreeLoading(false));
+  }, [phase, type]);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,6 +187,8 @@ export default function BusinessRegisterPage() {
     if (!type) return toast.error(t("chooseBusinessType"));
     if (type === "STAFFING_AGENCY" && !agencyModel) return toast.error(t("chooseAgencyModel"));
     if (!name.trim()) return toast.error(t("enterBusinessName"));
+    if (description.trim().length < 10) return toast.error(t("descriptionTooShort"));
+    if (type === "SERVICE_COMPANY" && selectedCategoryIds.size === 0) return toast.error(t("chooseServiceCategory"));
     if (!email.trim()) return toast.error(t("enterEmailAddress"));
     // Required: this number receives the sign-up code and every later
     // password-reset code, and is how we reach the owner if the email is wrong.
@@ -108,11 +233,16 @@ export default function BusinessRegisterPage() {
         password,
         phone: normalizeRwandaPhone(phone),
         otp,
+        ...(description.trim() ? { description: description.trim() } : {}),
+        ...(selectedCategoryIds.size ? { primaryCategoryIds: [...selectedCategoryIds] } : {}),
         ...(type === "STAFFING_AGENCY" && agencyModel ? { agencyModel } : {}),
       });
       const data = res.data?.data || res.data;
       if (!data?.token) throw new Error(t("noTokenReturned"));
       localStorage.setItem("token", data.token);
+      // Mirror the token into the cookie so the Next.js middleware can see
+      // the session on protected routes (/work, /more, /conversations, etc.).
+      document.cookie = `token=${data.token}; path=/; max-age=31536000; SameSite=Lax`;
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
       toast.success(t("accountCreatedPendingVerification"));
       // Hard navigation so auth state re-hydrates from the stored token.
@@ -267,6 +397,38 @@ export default function BusinessRegisterPage() {
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. CleanPro Kigali Ltd"
               className="h-12 w-full rounded-xl border border-gray-200 px-3.5 text-[14px] outline-none focus:border-brand" />
           </div>
+
+          <div>
+            <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("businessDescription")}</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("businessDescriptionPlaceholder")}
+              maxLength={2000}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-gray-200 px-3.5 py-3 text-[14px] outline-none focus:border-brand"
+            />
+          </div>
+
+          {type === "SERVICE_COMPANY" && (
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-ink">{t("serviceCategory")}</label>
+              <p className="mb-2 text-[11.5px] text-ink-muted">{t("serviceCategoryHelp")}</p>
+              <CategoryMultiPicker
+                tree={tree}
+                loading={treeLoading}
+                search={catSearch}
+                onSearch={setCatSearch}
+                selectedIds={selectedCategoryIds}
+                onToggle={(id) => setSelectedCategoryIds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                })}
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="min-w-0 flex-1">

@@ -59,6 +59,11 @@ export interface AuthResponse {
       isProfileComplete?: boolean;
       employerOnboardingComplete?: boolean;
       workerOnboardingComplete?: boolean;
+      hasPin?: boolean;
+      // Admin-assigned PIN the user has not yet kept or replaced.
+      pinIsTemporary?: boolean;
+      termsAcceptedAt?: string | null;
+      accountType?: "INDIVIDUAL" | "COMPANY";
       dateOfBirth?: string;
       gender?: string;
       languages?: string[];

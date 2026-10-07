@@ -13,6 +13,9 @@ import { BookmarkProvider } from "@/context/bookmark-context"; // Ensure this im
 import { ViewModeProvider } from "@/context/view-mode-context";
 import { AuthGateProvider } from "@/context/auth-gate-context";
 import { AuthGateSheet } from "@/components/auth/auth-gate-sheet";
+import { TermsGateProvider } from "@/context/terms-gate-context";
+import { TermsGateSheet } from "@/components/auth/terms-gate-sheet";
+import { PinGate } from "@/components/auth/pin-gate";
 import LanguageGate from "@/components/language-gate";
 import { APP_CONFIG } from "@/constant/app.config";
 import { PwaLifecycle } from "@/components/pwa/pwa-lifecycle";
@@ -138,13 +141,17 @@ export default async function RootLayout({
             <ViewModeProvider>
               <BookmarkProvider>
                 <AuthGateProvider>
-                  <Layout isMarketingHost={onMarketingHost}>
-                    <Toaster position="top-center" />
-                    <PwaLifecycle />
-                    {children}
-                  </Layout>
-                  <AuthGateSheet />
-                  <LanguageGate isMarketingHost={onMarketingHost} />
+                  <TermsGateProvider>
+                    <Layout isMarketingHost={onMarketingHost}>
+                      <Toaster position="top-center" />
+                      <PwaLifecycle />
+                      {children}
+                    </Layout>
+                    <AuthGateSheet />
+                    <TermsGateSheet />
+                    <PinGate />
+                    <LanguageGate isMarketingHost={onMarketingHost} />
+                  </TermsGateProvider>
                 </AuthGateProvider>
               </BookmarkProvider>
             </ViewModeProvider>

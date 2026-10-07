@@ -121,10 +121,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       onClick={onClick}
       className={cn(
         "border shadow-sm hover:shadow-md rounded-2xl overflow-hidden flex cursor-pointer transition-shadow duration-200",
-        // A business card is tinted so it reads as a company at a glance —
-        // a muted teal that sits beside the brand green without being it.
+        // Business cards get a warm rose tint so they stand out from individual
+        // provider cards at a glance without clashing with the brand green.
         isCompany
-          ? "bg-[#F1F7F6] border-[#D4E7E2]"
+          ? "bg-[#FDF5F5] border-[#F0D4D4]"
           : "bg-white border-gray-100",
       )}
     >
@@ -162,7 +162,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             <span className="text-[13px] font-bold text-ink truncate">
               {displayProviderName || t("unknownProvider")}
             </span>
-            {verified && <VerifiedBadge size={16} />}
+            {verified && (
+              <VerifiedBadge
+                size={16}
+                fill={isCompany ? "#8B1A1A" : undefined}
+              />
+            )}
           </div>
           <button
             onClick={handleBookmarkClick}

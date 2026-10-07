@@ -65,7 +65,14 @@
       "confirmLabel": "Confirm PIN",
       "mismatch": "PINs don’t match.",
       "submit": "Set PIN",
-      "skip": "Skip for now"
+      "skip": "Skip for now",
+      "logOut": "Log out instead",
+      "reviewHeading": "Your PIN was set for you",
+      "reviewBody": "An admin set a login PIN for your account. You can keep it or choose your own now.",
+      "setOwnPin": "Set my own PIN",
+      "keepPin": "Keep this PIN",
+      "couldNotSetPin": "Could not set PIN. Please try again.",
+      "couldNotConfirmPin": "Could not confirm PIN. Please try again."
     },
     "allSet": {
       "title": "You're all set!",
@@ -1670,8 +1677,8 @@
     "setNewPasswordToContinue": "Please set a new password to continue.",
     "welcomeBack": "Welcome back!",
     "invalidEmailOrPassword": "Invalid email or password",
-    "agencyPortal": "Agency Portal",
-    "signInToAgencyAccount": "Sign in to your agency account",
+    "agencyPortal": "Business Portal",
+    "signInToAgencyAccount": "Sign in to your business or agency account",
     "emailAddress": "Email address",
     "password": "Password",
     "hidePassword": "Hide password",
@@ -1741,7 +1748,17 @@
     "resendCodeIn": "Resend code in {seconds}s",
     "codeResent": "Code sent again",
     "couldNotSendCode": "Could not send the code",
-    "backToDetails": "Back to details"
+    "codeValidFor": "Code valid for {minutes} min",
+    "codeExpiresIn": "Code expires in {seconds}s",
+    "codeExpired": "Code expired, please request a new one",
+    "useLatestCode": "If you requested multiple codes, only the last one works",
+    "backToDetails": "Back to details",
+    "businessDescription": "Business description",
+    "businessDescriptionPlaceholder": "What does your business offer? What makes it stand out?",
+    "descriptionTooShort": "Please describe your business (at least 10 characters)",
+    "serviceCategory": "What type of services do you offer?",
+    "serviceCategoryHelp": "Pick the one that best fits your business, you can add more later.",
+    "chooseServiceCategory": "Please select the type of services your business offers"
   },
   "feedback": {
     "pleaseWriteMessage": "Please write a short message before submitting",
@@ -2231,13 +2248,14 @@
     "resendCode": "Resend code",
     "codeValidFor": "Code valid for {minutes} min",
     "codeExpiresIn": "Code expires in {seconds}s",
-    "codeExpired": "Code expired — please request a new one",
+    "codeExpired": "Code expired, please request a new one",
     "useLatestCode": "If you requested multiple codes, only the last one works",
     "checking": "Checking...",
     "sendingCode": "Sending code...",
     "logIn": "Log In",
     "verifying": "Verifying...",
     "changePhoneNumber": "Change phone number",
+    "forgotPin": "Forgot PIN?",
     "enterYourPin": "Enter your PIN",
     "useACodeInstead": "Use a code instead",
     "loggingIn": "Logging in...",
@@ -2415,5 +2433,17 @@
     "pendingVerificationTitle": "Your business is under review",
     "pendingVerificationBody": "An admin verifies every new business before it can list services. You can explore Huza in the meantime — we'll notify you once you're approved, and you'll be able to add your first service right away.",
     "pendingVerificationCta": "Go to the app"
+  },
+  "termsGate": {
+    "title": "Review & Accept",
+    "subtitle": "Please read and accept our Terms and Privacy Policy to continue.",
+    "tabTerms": "Terms of Service",
+    "tabPrivacy": "Privacy Policy",
+    "agree": "I have read and agree to the <b>Terms of Service</b> and <b>Privacy Policy</b>.",
+    "confirmIdentity": "I confirm that the information I provided is accurate and I am who I claim to be.",
+    "accept": "Accept & Continue",
+    "decline": "Decline and log out",
+    "pleaseWait": "Please wait…",
+    "genericError": "Something went wrong. Please try again."
   }
 }

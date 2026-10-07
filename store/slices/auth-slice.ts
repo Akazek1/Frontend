@@ -32,6 +32,10 @@ interface AuthState {
   // request started; compared against the current version in `fulfilled` to
   // detect whether a newer local update superseded it.
   pendingFetchVersion: number | null;
+  // True while the onboarding flow is actively at the PIN setup step.
+  // In-memory only — resets on refresh, which is intentional: a refresh
+  // while in PIN setup should show the PinGate overlay everywhere.
+  pinSetupInProgress: boolean;
 }
 
 // Helper function to safely parse localStorage
@@ -84,6 +88,7 @@ const initialState: AuthState = {
   phoneNumber: null,
   userUpdateVersion: 0,
   pendingFetchVersion: null,
+  pinSetupInProgress: false,
 };
 
 // Async thunks
@@ -146,6 +151,9 @@ const authSlice = createSlice({
     resetAuthState: (state) => {
       state.error = null;
       state.isLoading = false;
+    },
+    setPinSetupInProgress: (state, action: PayloadAction<boolean>) => {
+      state.pinSetupInProgress = action.payload;
     },
     setPhoneNumber: (state, action: PayloadAction<string>) => {
       state.phoneNumber = action.payload;
@@ -301,5 +309,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, setPhoneNumber, updateUser, setSession } = authSlice.actions;
+export const { resetAuthState, setPhoneNumber, updateUser, setSession, setPinSetupInProgress } = authSlice.actions;
 export default authSlice.reducer;
