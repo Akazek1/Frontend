@@ -24,6 +24,7 @@ import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { BOOKING_STATUS } from "@/constant";
 import { ReportModal } from "../provider/report-modal";
+import { ConfirmActionDialog } from "./confirm-action-dialog";
 import {
   AppButton,
   FormField,
@@ -413,6 +414,8 @@ export function TaskDrawer({
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  // Completing or cancelling a job is final, so both go through an explicit confirmation.
+  const [confirmAction, setConfirmAction] = useState<"completeJob" | "cancelJob" | null>(null);
 
   const isEmployer = userId === employerId;
   const isReadOnly = status === BOOKING_STATUS.COMPLETED || status === BOOKING_STATUS.CANCELLED;
@@ -444,6 +447,7 @@ export function TaskDrawer({
       toast.error(getApiErrorMessage(error, t("failedAction", { action: actionLabels[actionKey].toLowerCase() })));
     } finally {
       setIsActionLoading(null);
+      setConfirmAction(null);
     }
   };
 
@@ -452,13 +456,14 @@ export function TaskDrawer({
       toast.error(t("remainingTasksWarning", { count: activeCount }));
       return;
     }
-    handleStatusChange(BOOKING_STATUS.COMPLETED, "completeJob");
+    setConfirmAction("completeJob");
   };
 
-  const handleCancelJob = () => {
-    if (confirm(t("confirmCancelJob"))) {
-      handleStatusChange(BOOKING_STATUS.CANCELLED, "cancelJob");
-    }
+  const handleCancelJob = () => setConfirmAction("cancelJob");
+
+  const handleConfirmAction = () => {
+    if (confirmAction === "completeJob") handleStatusChange(BOOKING_STATUS.COMPLETED, "completeJob");
+    else if (confirmAction === "cancelJob") handleStatusChange(BOOKING_STATUS.CANCELLED, "cancelJob");
   };
 
   const patchTask = async (task: Task, body: Record<string, unknown>, errMsg: string) => {
@@ -728,6 +733,22 @@ export function TaskDrawer({
           </>
         )}
       </SheetPanel>
+      <ConfirmActionDialog
+        open={confirmAction !== null}
+        tone={confirmAction === "cancelJob" ? "danger" : "primary"}
+        title={confirmAction === "cancelJob" ? t("confirmCancelTitle") : t("confirmCompleteTitle")}
+        body={confirmAction === "cancelJob" ? t("confirmCancelBody") : t("confirmCompleteBody")}
+        points={
+          confirmAction === "cancelJob"
+            ? [t("confirmCancelPoint1"), t("confirmCancelPoint2")]
+            : [t("confirmCompletePoint1"), t("confirmCompletePoint2"), t("confirmCompletePoint3")]
+        }
+        confirmLabel={confirmAction === "cancelJob" ? t("confirmCancelYes") : t("confirmCompleteYes")}
+        dismissLabel={confirmAction === "cancelJob" ? t("confirmCancelNo") : t("confirmCompleteNo")}
+        isWorking={isActionLoading !== null}
+        onConfirm={handleConfirmAction}
+        onDismiss={() => setConfirmAction(null)}
+      />
       {isReportModalOpen && (
         <ReportModal targetId={userId === employerId ? workerId : employerId} onClose={() => setIsReportModalOpen(false)} />
       )}

@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 /**
  * Shares a URL with a layered fallback chain: native OS share sheet, then
@@ -10,6 +11,7 @@ import toast from "react-hot-toast";
  * identical regardless of which page it's tapped from.
  */
 export function useShareLink() {
+  const t = useTranslations("share");
   return useCallback(async (url: string, title?: string) => {
     // 1) Native share sheet — must be called before any `await` to keep the
     // user-activation it requires.
@@ -26,7 +28,7 @@ export function useShareLink() {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
-        toast.success("Link copied to clipboard");
+        toast.success(t("linkCopied"));
         return;
       }
     } catch {
@@ -44,13 +46,13 @@ export function useShareLink() {
       const ok = document.execCommand("copy");
       document.body.removeChild(ta);
       if (ok) {
-        toast.success("Link copied to clipboard");
+        toast.success(t("linkCopied"));
         return;
       }
     } catch {
       /* fall through to manual copy */
     }
     // 4) Last resort — surface the link so it can be copied.
-    toast(`Copy this link: ${url}`, { duration: 6000 });
-  }, []);
+    toast(t("copyLinkManually", { url }), { duration: 6000 });
+  }, [t]);
 }

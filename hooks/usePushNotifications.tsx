@@ -7,6 +7,7 @@ import { getMessagingInstance } from "@/lib/firebase";
 import { onMessage } from "firebase/messaging";
 import { useAuth } from "./useAuth";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { registerFcmToken } from "@/services/fcm-token-service";
 import { getNotificationHref, type NotificationItem } from "./useNotifications";
 import api from "@/lib/axios";
@@ -14,6 +15,7 @@ import api from "@/lib/axios";
 export const usePushNotifications = () => {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
+  const tr = useTranslations("pushToast");
 
   const requestPermission = useCallback(async () => {
     try {
@@ -53,7 +55,7 @@ export const usePushNotifications = () => {
         unsubscribe = onMessage(messaging, (payload) => {
           // Data-only messages carry title/body in `data` (see backend
           // sendPushNotification); fall back to the old `notification` shape.
-          const title = payload.data?.title || payload.notification?.title || "Notification";
+          const title = payload.data?.title || payload.notification?.title || tr("defaultTitle");
           const body = payload.data?.body || payload.notification?.body || "";
           const data = (payload.data || {}) as Record<string, unknown>;
           // Route to the SAME place tapping the notification in the in-app list
@@ -104,7 +106,7 @@ export const usePushNotifications = () => {
                     </p>
                   )}
                   {href && (
-                    <p className="mt-1 text-[12px] font-semibold text-brand">Tap to open</p>
+                    <p className="mt-1 text-[12px] font-semibold text-brand">{tr("tapToOpen")}</p>
                   )}
                 </div>
               </div>
@@ -116,7 +118,7 @@ export const usePushNotifications = () => {
     });
 
     return () => { unsubscribe?.(); };
-  }, [isAuthenticated]); // only re-run on auth change, not on every render
+  }, [isAuthenticated, tr]); // only re-run on auth change (tr is stable per locale), not on every render
 
   return { requestPermission };
 };

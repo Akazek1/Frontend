@@ -20,6 +20,7 @@ import type {
   UserRole,
 } from "@/services/auth-service";
 import { toast } from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { getAuthToken } from "@/lib/auth-utils";
 import { track } from "@/lib/analytics";
 
@@ -32,6 +33,7 @@ let resumeListenerRegistered = false;
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const t = useTranslations("authToasts");
   const { user, isAuthenticated, isLoading, error, otpSent, phoneNumber } =
     useSelector((state: RootState) => state.auth);
   const effectiveIsAuthenticated = isAuthenticated || Boolean(getAuthToken());
@@ -82,7 +84,7 @@ export const useAuth = () => {
     try {
       // Validate phone number before dispatching
       if (!data.phoneNumber || data.phoneNumber.length < 9) {
-        toast.error("Please enter a valid phone number (at least 9 digits)");
+        toast.error(t("invalidPhone"));
         return false;
       }
 
@@ -112,7 +114,7 @@ export const useAuth = () => {
       // Legacy format: just OTP string
       if (!phoneNumber) {
         toast.error(
-          "Phone number is missing. Please go back and enter your phone number."
+          t("phoneMissing")
         );
         return false;
       }
@@ -127,7 +129,7 @@ export const useAuth = () => {
     try {
       // Accept 6-digit OTP (standard) or hardcoded OTP for development
       if (otp.length !== 6) {
-        toast.error("Please enter a valid 6-digit OTP");
+        toast.error(t("invalidOtpLength"));
         return false;
       }
 
@@ -142,13 +144,13 @@ export const useAuth = () => {
         track("otp_verified"); // funnel: code accepted, into the app
         return result.user;
       } else {
-        toast.error("Invalid OTP please try again.");
+        toast.error(t("invalidOtp"));
       }
     } catch (error) {
       console.error("OTP verification failed:", error);
       track("otp_failed"); // wrong/expired code — the drop-off point
       const err = error as Error & { response?: { data?: { message?: string } } }
-      const errorMessage = err?.response?.data?.message || err?.message || "OTP verification failed"
+      const errorMessage = err?.response?.data?.message || err?.message || t("otpFailed")
       toast.error(errorMessage)
       return false
     }
@@ -167,7 +169,7 @@ export const useAuth = () => {
   ) => {
     try {
       if (isLoading) {
-        toast.error("Please wait, another request is in progress");
+        toast.error(t("requestInProgress"));
         return false;
       }
 
@@ -181,15 +183,15 @@ export const useAuth = () => {
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
       } else {
-        toast.error("User data not found");
+        toast.error(t("userNotFound"));
         return false;
       }
 
-      toast.success("User profile updated successfully");
+      toast.success(t("profileUpdated"));
       return true;
     } catch (error) {
       const err = error as Error;
-      const message = err.message || "Failed to update user profile";
+      const message = err.message || t("profileUpdateFailed");
       console.error("Error updating user profile:", error);
       toast.error(message);
       return false;

@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { Reply, Copy, Pencil, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { QUICK_REACTION_EMOJIS, SKIN_TONES, applySkinTone, supportsSkinTone } from "@/constant";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ export function MessageActionsPopover({
   onDelete,
   children,
 }: MessageActionsPopoverProps) {
+  const t = useTranslations("chatRoom");
   const [tonePickerOpen, setTonePickerOpen] = useState(false);
 
   return (
@@ -103,12 +105,12 @@ export function MessageActionsPopover({
 
         {showActions && !tonePickerOpen && (
           <div className="mt-1 flex items-center gap-0.5 border-t border-gray-100 pt-1">
-            <ActionButton icon={Reply} label="Reply" onClick={onReply} />
-            <ActionButton icon={Copy} label="Copy" onClick={onCopy} />
+            <ActionButton icon={Reply} label={t("reply")} onClick={onReply} />
+            <ActionButton icon={Copy} label={t("actionCopy")} onClick={onCopy} />
             {canModify && (
               <>
-                <ActionButton icon={Pencil} label="Edit" onClick={onEdit} />
-                <ActionButton icon={Trash2} label="Undo" onClick={onDelete} danger />
+                <ActionButton icon={Pencil} label={t("actionEdit")} onClick={onEdit} />
+                <ActionButton icon={Trash2} label={t("actionUndo")} onClick={onDelete} danger />
               </>
             )}
           </div>

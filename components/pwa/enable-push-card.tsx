@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -29,6 +30,7 @@ export function EnablePushCard() {
   const { user, isAuthenticated } = useAuth();
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations("enablePush");
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -87,12 +89,10 @@ export function EnablePushCard() {
         localStorage.setItem(DEVICE_PUSH_KEY, "on");
         const token = await registerFcmToken();
         toast[token ? "success" : "error"](
-          token
-            ? "Notifications are on"
-            : "Couldn't finish — try again in More → Notification Settings.",
+          token ? t("turnedOn") : t("couldNotFinish"),
         );
       } else if (permission === "denied") {
-        toast("You can turn them on anytime in More → Notification Settings.");
+        toast(t("turnOnLater"));
       }
     } finally {
       setBusy(false);
@@ -108,9 +108,9 @@ export function EnablePushCard() {
           <Bell className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#111827]">Turn on notifications</p>
+          <p className="text-sm font-semibold text-[#111827]">{t("title")}</p>
           <p className="mt-0.5 text-xs leading-5 text-[#4B5563]">
-            Know the moment someone wants to hire you or replies to you.
+            {t("body")}
           </p>
           <Button
             size="sm"
@@ -118,13 +118,13 @@ export function EnablePushCard() {
             className="mt-2 h-8 bg-[#145B10] px-3 text-xs hover:bg-[#0f4a0c]"
             onClick={enable}
           >
-            Turn on
+            {t("turnOn")}
           </Button>
         </div>
         <button
           type="button"
           className="rounded-md p-1 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
-          aria-label="Not now"
+          aria-label={t("notNow")}
           onClick={snooze}
         >
           <X className="h-4 w-4" />

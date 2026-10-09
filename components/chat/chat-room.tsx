@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import { BOOKING_STATUS, PENDING_NUDGE_MESSAGE_THRESHOLD, PENDING_REMINDER_MESSAGE, QUICK_TAP_EMOJI, SKIN_TONE_STORAGE_KEY, applySkinTone } from "@/constant";
 import { haptic } from "@/lib/haptics";
 import { TaskDrawer, Task } from "./task-drawer";
+import { ConfirmActionDialog } from "./confirm-action-dialog";
 import { MessageActionsPopover } from "./message-actions-popover";
 import { LinkifiedText } from "./linkified-text";
 import { useMessageGestures } from "@/hooks/useMessageGestures";
@@ -439,6 +440,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
   const mainRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isConfirmingRevoke, setIsConfirmingRevoke] = useState(false);
+  const [isConfirmingAccept, setIsConfirmingAccept] = useState(false);
   const readReceiptSentForRef = useRef<Set<string>>(new Set());
   const reviewAutoPromptedRef = useRef(false);
   // Chat auto-scroll: only follow new messages when the reader is already at
@@ -1228,6 +1230,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
       toast.error(t("failedApproveRequest"));
     } finally {
       setIsUpdatingStatus(false);
+      setIsConfirmingAccept(false);
     }
   };
 
@@ -1505,6 +1508,22 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
         )}
       </header>
 
+      <ConfirmActionDialog
+        open={isConfirmingAccept}
+        title={t("acceptConfirmTitle")}
+        body={t("acceptConfirmBody", { name: partnerName })}
+        points={[
+          t("acceptConfirmPoint1", { name: partner?.firstName || partnerName }),
+          t("acceptConfirmPoint2"),
+          t("acceptConfirmPoint3"),
+        ]}
+        confirmLabel={t("acceptConfirmYes")}
+        dismissLabel={t("acceptConfirmNo")}
+        isWorking={isUpdatingStatus}
+        onConfirm={handleApproveRequest}
+        onDismiss={() => setIsConfirmingAccept(false)}
+      />
+
       <TaskDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -1658,7 +1677,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
             {t("workerHasOfferMessage")}
           </p>
           <Button
-            onClick={handleApproveRequest}
+            onClick={() => setIsConfirmingAccept(true)}
             disabled={isUpdatingStatus}
             size="sm"
             className="h-8 rounded-full bg-brand px-4 text-[11px] font-bold text-white hover:bg-brand-dark"
@@ -1772,7 +1791,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
 
             {isWorker ? (
               <Button
-                onClick={handleApproveRequest}
+                onClick={() => setIsConfirmingAccept(true)}
                 disabled={isUpdatingStatus}
                 size="sm"
                 className="mt-2 h-9 w-full rounded-full bg-brand text-[12px] font-bold text-white hover:bg-brand-dark"

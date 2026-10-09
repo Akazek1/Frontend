@@ -3,6 +3,7 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { getApiErrorMessage } from "@/lib/error-handler";
 
 interface ReportModalProps {
@@ -12,14 +13,17 @@ interface ReportModalProps {
   onSuccess?: () => void;
 }
 
+// Values are sent to the API; labels live under reportModal.reasons.<value>.
 const REPORT_REASONS = [
-  { value: "harassment", label: "Harassment or Abuse" },
-  { value: "fraud", label: "Fraud or Scam" },
-  { value: "inappropriate_content", label: "Inappropriate Content" },
-  { value: "unprofessional", label: "Unprofessional Behavior" },
-  { value: "safety_concern", label: "Safety Concern" },
-  { value: "other", label: "Other" },
-];
+  "harassment",
+  "fraud",
+  "inappropriate_content",
+  "unprofessional",
+  "safety_concern",
+  "other",
+] as const;
+
+const DESCRIPTION_MAX_LENGTH = 500;
 
 export const ReportModal: React.FC<ReportModalProps> = ({
   targetId,
@@ -27,6 +31,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const t = useTranslations("reportModal");
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,12 +40,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     e.preventDefault();
 
     if (!reason) {
-      toast.error("Please select a reason");
+      toast.error(t("reasonRequired"));
       return;
     }
 
     if (!description.trim()) {
-      toast.error("Please provide details about the report");
+      toast.error(t("detailsRequired"));
       return;
     }
 
@@ -53,11 +58,11 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         evidence: [],
       });
 
-      toast.success("Report submitted successfully. Our team will review it shortly.");
+      toast.success(t("success"));
       onSuccess?.();
       onClose();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Failed to submit report"));
+      toast.error(getApiErrorMessage(error, t("failed")));
     } finally {
       setLoading(false);
     }
@@ -74,35 +79,35 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Report {targetName}</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t("title", { name: targetName ?? "" })}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 p-1"
-            aria-label="Close"
+            aria-label={t("close")}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <p className="text-sm text-gray-600 mb-6">
-          Help us keep our community safe by reporting inappropriate behavior or content.
+          {t("intro")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Reason Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              What&apos;s the reason for this report?
+              {t("reasonLabel")}
             </label>
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select a reason...</option>
-              {REPORT_REASONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              <option value="">{t("reasonPlaceholder")}</option>
+              {REPORT_REASONS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`reasons.${value}`)}
                 </option>
               ))}
             </select>
@@ -111,24 +116,24 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           {/* Description Textarea */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Please provide details
+              {t("detailsLabel")}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what happened and why you're reporting this..."
-              maxLength={500}
+              placeholder={t("detailsPlaceholder")}
+              maxLength={DESCRIPTION_MAX_LENGTH}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-24"
             />
             <p className="text-xs text-gray-500 mt-1">
-              {description.length} / 500 characters
+              {t("charCount", { count: description.length, max: DESCRIPTION_MAX_LENGTH })}
             </p>
           </div>
 
           {/* Info Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-700">
-              <strong>Note:</strong> False reports may result in your account being suspended.
+              <strong>{t("noteLabel")}</strong> {t("noteBody")}
             </p>
           </div>
 
@@ -140,7 +145,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="submit"
@@ -148,7 +153,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               disabled={loading}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Submit Report
+              {t("submit")}
             </button>
           </div>
         </form>

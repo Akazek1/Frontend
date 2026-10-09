@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { Loader2, Briefcase } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import jobsService from "@/services/jobs-service";
 import type { RootState } from "@/store";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -53,6 +54,7 @@ const JobPostingsFeed: React.FC = () => {
   const user         = useSelector((state: RootState) => state.auth.user);
   const router       = useRouter();
   const { requireAuth } = useRequireAuth();
+  const t = useTranslations("jobFeed");
 
   useEffect(() => {
     const load = async () => {
@@ -107,9 +109,9 @@ const JobPostingsFeed: React.FC = () => {
     try {
       await jobsService.applyToJob(jobId, { message: "I am interested in this job." });
       setAppliedJobIds(prev => new Set([...prev, jobId]));
-      toast.success("Interest sent! The employer will be notified.");
+      toast.success(t("interestSent"));
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to send interest."));
+      toast.error(getApiErrorMessage(err, t("interestFailed")));
     } finally {
       setIsApplying(null);
     }
@@ -126,9 +128,9 @@ const JobPostingsFeed: React.FC = () => {
       <div className="w-14 h-14 rounded-2xl bg-brand/10 flex items-center justify-center">
         <Briefcase className="w-7 h-7 text-brand" />
       </div>
-      <p className="text-[14px] font-bold text-ink">No job postings yet</p>
+      <p className="text-[14px] font-bold text-ink">{t("emptyTitle")}</p>
       <p className="text-[12px] text-ink-muted text-center px-8 leading-relaxed">
-        Employers haven&apos;t posted any jobs yet. Check back soon.
+        {t("emptyBody")}
       </p>
     </div>
   );
@@ -137,17 +139,17 @@ const JobPostingsFeed: React.FC = () => {
     <div className="space-y-3 pb-8">
       {/* Section header */}
       <div className="flex items-center justify-between mt-1">
-        <h2 className="text-[16px] font-bold text-ink">Jobs Near You</h2>
+        <h2 className="text-[16px] font-bold text-ink">{t("heading")}</h2>
         <button onClick={() => router.push("/work")} className="text-[12px] font-semibold text-brand">
-          See all
+          {t("seeAll")}
         </button>
       </div>
 
       {jobs.map(job => {
         const applied    = appliedJobIds.has(job.id);
         const poster   = job.poster.isPrivate
-          ? "Private Employer"
-          : `${job.poster.firstName} ${job.poster.lastName}`.trim() || "Private Employer";
+          ? t("privateEmployer")
+          : `${job.poster.firstName} ${job.poster.lastName}`.trim() || t("privateEmployer");
 
         return (
           <JobPostCard

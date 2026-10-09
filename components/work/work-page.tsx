@@ -584,9 +584,9 @@ export default function WorkPage() {
       </div>
       {receivedReviews.length > 0 && (
         <div id="reviews-received" className={cn(appContentClass, "px-4 pt-6 pb-24 scroll-mt-24")}>
-          <h2 className="text-lg font-bold text-ink mb-4">Reviews About You ({receivedReviews.length})</h2>
+          <h2 className="text-lg font-bold text-ink mb-4">{t("reviewsAboutYou", { count: receivedReviews.length })}</h2>
           <p className="text-[12px] text-ink-muted mb-4">
-            These are reviews other people left about working with you. You can reply once to each review.
+            {t("reviewsAboutYouDesc")}
           </p>
           <div className="space-y-3 rounded-2xl border border-[#DCE8D9] bg-white p-4 shadow-sm">
             {receivedReviews.map((review) => (

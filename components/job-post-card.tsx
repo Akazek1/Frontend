@@ -3,6 +3,7 @@
 import type React from "react";
 import Image from "next/image";
 import { Loader2, MapPin, Zap, Star, Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getCategoryIcon } from "@/constant/category-icons";
 
 export interface JobPostCardData {
@@ -28,20 +29,22 @@ interface JobPostCardProps {
   onExpress: () => void;
 }
 
-const formatBudget = (min?: number | null, max?: number | null) => {
+type JobFeedT = ReturnType<typeof useTranslations<"jobFeed">>;
+
+const formatBudget = (t: JobFeedT, min?: number | null, max?: number | null) => {
   if (!min && !max) return null;
   const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
   if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (min) return `From ${fmt(min)}`;
-  return `Up to ${fmt(max!)}`;
+  if (min) return t("budgetFrom", { amount: fmt(min) });
+  return t("budgetUpTo", { amount: fmt(max!) });
 };
 
-const timeAgo = (iso: string) => {
+const timeAgo = (t: JobFeedT, iso: string) => {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) return t("justNow");
+  if (diff < 3600) return t("minutesAgo", { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t("hoursAgo", { count: Math.floor(diff / 3600) });
+  return t("daysAgo", { count: Math.floor(diff / 86400) });
 };
 
 const getUrgency = (id: string): "urgent" | "new" | "flexible" => {
@@ -52,20 +55,21 @@ const getUrgency = (id: string): "urgent" | "new" | "flexible" => {
 };
 
 const URGENCY_CONFIG = {
-  urgent: { label: "Urgent", bg: "bg-orange-50", text: "text-orange-600", Icon: Zap },
-  new: { label: "New", bg: "bg-blue-50", text: "text-blue-600", Icon: Star },
-  flexible: { label: "Flexible", bg: "bg-purple-50", text: "text-purple-600", Icon: Clock },
+  urgent: { bg: "bg-orange-50", text: "text-orange-600", Icon: Zap },
+  new: { bg: "bg-blue-50", text: "text-blue-600", Icon: Star },
+  flexible: { bg: "bg-purple-50", text: "text-purple-600", Icon: Clock },
 };
 
+// Keys under jobFeed.tags.
 const WORK_TAG_SETS = [
-  ["Live-in", "Full-time"],
-  ["Part-time", "Weekdays"],
-  ["Live-out", "Full-time"],
-  ["Flexible", "Part-time"],
-];
+  ["liveIn", "fullTime"],
+  ["partTime", "weekdays"],
+  ["liveOut", "fullTime"],
+  ["flexible", "partTime"],
+] as const;
 
 const getWorkTags = (id: string) => WORK_TAG_SETS[id.charCodeAt(0) % WORK_TAG_SETS.length];
-const getDistance = (id: string) => ((id.charCodeAt(0) % 40) / 10 + 0.5).toFixed(1) + " km away";
+const getDistance = (id: string) => ((id.charCodeAt(0) % 40) / 10 + 0.5).toFixed(1);
 
 export function JobPostCard({
   job,
@@ -75,13 +79,15 @@ export function JobPostCard({
   onClick,
   onExpress,
 }: JobPostCardProps) {
+  const t = useTranslations("jobFeed");
   const urgency = getUrgency(job.id);
-  const { label, bg, text, Icon: UrgIcon } = URGENCY_CONFIG[urgency];
-  const budget = formatBudget(job.budgetMin, job.budgetMax);
+  const { bg, text, Icon: UrgIcon } = URGENCY_CONFIG[urgency];
+  const label = t(`urgency.${urgency}`);
+  const budget = formatBudget(t, job.budgetMin, job.budgetMax);
   const workTags = getWorkTags(job.id);
-  const dist = getDistance(job.id);
+  const dist = t("distanceAway", { distance: getDistance(job.id) });
   const isOwnJob = Boolean(currentUserId && job.employerId === currentUserId);
-  const poster = job.posterIsPrivate ? "Private Employer" : job.posterName?.trim() || "Private Employer";
+  const poster = job.posterIsPrivate ? t("privateEmployer") : job.posterName?.trim() || t("privateEmployer");
 
   const handleExpressClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -107,7 +113,7 @@ export function JobPostCard({
               <UrgIcon className="h-2.5 w-2.5" />
               {label}
             </span>
-            <span className="whitespace-nowrap text-[10px] text-gray-400">{timeAgo(job.createdAt)}</span>
+            <span className="whitespace-nowrap text-[10px] text-gray-400">{timeAgo(t, job.createdAt)}</span>
           </div>
           <h3 className="mt-1 text-[14px] font-bold leading-snug text-ink">
             {job.title}
@@ -129,7 +135,7 @@ export function JobPostCard({
         )}
         {workTags.map((tag) => (
           <span key={tag} className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[10px] font-medium text-ink-muted">
-            {tag}
+            {t(`tags.${tag}`)}
           </span>
         ))}
       </div>
@@ -139,14 +145,14 @@ export function JobPostCard({
       </p>
 
       <div className="flex items-center justify-between pt-0.5">
-        <span className="text-[10px] text-gray-400">Posted by {poster}</span>
+        <span className="text-[10px] text-gray-400">{t("postedBy", { name: poster })}</span>
 
         {isOwnJob ? (
-          <span className="text-[11px] font-semibold italic text-gray-400">Your posting</span>
+          <span className="text-[11px] font-semibold italic text-gray-400">{t("yourPosting")}</span>
         ) : applied ? (
           <div className="flex flex-col items-end">
-            <span className="text-[12px] font-bold text-brand">✓ Interest Sent</span>
-            <span className="text-[10px] leading-tight text-gray-400">Waiting for employer response</span>
+            <span className="text-[12px] font-bold text-brand">{t("interestSentBadge")}</span>
+            <span className="text-[10px] leading-tight text-gray-400">{t("waitingResponse")}</span>
           </div>
         ) : (
           <button
@@ -154,7 +160,7 @@ export function JobPostCard({
             disabled={isApplying}
             className="flex min-w-[128px] items-center justify-center gap-1.5 rounded-full bg-brand py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#0f4a0c] active:scale-95 disabled:opacity-70"
           >
-            {isApplying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Express Interest"}
+            {isApplying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("expressInterest")}
           </button>
         )}
       </div>

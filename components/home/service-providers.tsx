@@ -182,7 +182,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
       setHireModal(null);
       setNotes("");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to send request. Please try again."));
+      toast.error(getApiErrorMessage(err, t("requestFailed")));
     } finally {
       setSubmitting(false);
     }
@@ -196,7 +196,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         comment: payload.comment,
         bookingId: reviewModal.bookingId,
       });
-      toast.success("Review submitted.");
+      toast.success(t("reviewSubmitted"));
       // Card returns to "Request to Hire".
       setReviewableByService((prev) => {
         const next = new Map(prev);
@@ -205,7 +205,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
       });
       return true;
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not submit your review."));
+      toast.error(getApiErrorMessage(err, t("reviewFailed")));
       return false;
     }
   };
@@ -227,7 +227,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             animate={{ opacity: 1 }}
             className="text-center text-red-500 py-4"
           >
-            Failed to load services.
+            {t("loadFailed")}
           </motion.div>
         ) : (
           <motion.div
@@ -248,7 +248,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                     }}
                     onHireClick={() => {
                       if (currentUserId && provider.providerId === currentUserId) {
-                        toast.error("You can't book your own service.");
+                        toast.error(t("ownService"));
                         return;
                       }
                       if (requestedServiceIds.has(provider.id)) return;
@@ -279,7 +279,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
               })
             ) : (
               <p className="text-center text-gray-500 py-4">
-                No providers found.
+                {t("noProviders")}
               </p>
             )}
 
@@ -318,7 +318,6 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
             ? { title: reviewModal.name, subtitle: reviewModal.title }
             : null
         }
-        rehireQuestion="Would you hire this person again?"
         initialRehire={reviewModal?.wouldRehire ?? null}
         initialComment={reviewModal?.comment ?? ""}
         onOpenChange={(open) => {

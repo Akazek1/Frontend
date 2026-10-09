@@ -4,6 +4,7 @@ import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { useTranslations } from "next-intl";
 
 interface BookmarkContextType {
     bookmarkedIds: Set<string>;
@@ -24,6 +25,7 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [bookingsFetched, setBookingsFetched] = useState<boolean>(false);
     const fetchingRef = useRef(false);
+    const t = useTranslations("bookmarks");
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
     const loadBookmarks = useCallback(async () => {
@@ -65,20 +67,20 @@ export const BookmarkProvider: React.FC<BookmarkProviderProps> = ({ children }) 
                     newSet.delete(itemId);
                     return newSet;
                 });
-                toast.success("Bookmark removed");
+                toast.success(t("removed"));
             } else {
                 // Add bookmark
                 await api.post(`/bookmarks/services/${itemId}`);
                 setBookmarkedIds((prev) => new Set(prev).add(itemId));
-                toast.success("Bookmark added");
+                toast.success(t("added"));
             }
         } catch (error) {
-            toast.error("Please wait and try again.");
+            toast.error(t("error"));
             console.error("Bookmark error:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [bookmarkedIds]);
+    }, [bookmarkedIds, t]);
 
     const isBookmarked = useCallback((itemId: string) => bookmarkedIds.has(itemId), [bookmarkedIds]);
 

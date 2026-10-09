@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export function DeactivateServiceDialog({
   onCancel,
   onConfirm,
 }: DeactivateServiceDialogProps) {
+  const t = useTranslations("deactivateService");
   const [isWorking, setIsWorking] = useState(false);
 
   const handleConfirm = async () => {
@@ -52,12 +54,12 @@ export function DeactivateServiceDialog({
   };
 
   const isDeactivating = isActive;
-  const title = isDeactivating ? "Deactivate service" : "Reactivate service";
+  const title = isDeactivating ? t("deactivateTitle") : t("reactivateTitle");
   const body = isDeactivating
-    ? "Your card will be hidden from the marketplace until you turn it back on. Your reviews and booking history stay attached — you can reactivate from this page at any time."
-    : "Your card will be visible to employers again. Existing reviews and booking history are restored along with it.";
-  const ctaLabel = isDeactivating ? "Deactivate" : "Activate";
-  const workingLabel = isDeactivating ? "Deactivating…" : "Activating…";
+    ? t("deactivateBody")
+    : t("reactivateBody");
+  const ctaLabel = isDeactivating ? t("deactivate") : t("activate");
+  const workingLabel = isDeactivating ? t("deactivating") : t("activating");
 
   return (
     <Dialog
@@ -89,7 +91,7 @@ export function DeactivateServiceDialog({
             onClick={onCancel}
             disabled={isWorking}
           >
-            Cancel
+            {t("cancel")}
           </AppButton>
           <AppButton
             type="button"

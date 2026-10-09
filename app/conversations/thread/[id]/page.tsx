@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { Suspense } from "react";
 import ChatRoom from "@/components/chat/chat-room";
 
@@ -10,10 +11,11 @@ import ChatRoom from "@/components/chat/chat-room";
  */
 const ConversationRoomPage = () => {
   const params = useParams();
+  const t = useTranslations("chatRoom");
   const id = params.id as string;
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t("loading")}</div>}>
       {/* Chat rooms hide the bottom nav, so this route owns the whole viewport. */}
       <div className="h-dvh">
         <ChatRoom conversationId={id} />

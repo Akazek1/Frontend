@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Label } from './ui/label';
 
 interface ImagePickerProps {
@@ -10,6 +11,7 @@ interface ImagePickerProps {
 }
 
 const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect, initialPreview, initialPreviews, multiple = false }) => {
+    const t = useTranslations('imagePicker');
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -25,7 +27,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect
 
     return (
         <div className="w-full max-w-sm">
-            <Label className="font-semibold text-secondary-foreground/50 text-xs">Service Images</Label>
+            <Label className="font-semibold text-secondary-foreground/50 text-xs">{t('label')}</Label>
             <label
                 htmlFor="image-upload"
                 className="flex flex-col items-center justify-center w-full h-44 p-4 border-2 border-dashed border-gray-300 bg-white rounded-lg cursor-pointer hover:border-brand transition"
@@ -37,7 +39,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect
                                 <Image
                                     fill
                                     src={preview}
-                                    alt={`Service preview ${index + 1}`}
+                                    alt={t('previewAlt', { index: index + 1 })}
                                     className="object-cover"
                                 />
                             </div>
@@ -59,7 +61,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ onImageSelect, onImagesSelect
                                 d="M7 16l-4-4m0 0l4-4m-4 4h18"
                             />
                         </svg>
-                        <p className="mt-2 text-brand">Click to upload service photos</p>
+                        <p className="mt-2 text-brand">{t('upload')}</p>
                     </div>
                 )}
                 <input
