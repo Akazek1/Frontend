@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
 import { Provider } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
+import { NextIntlClientProvider } from "next-intl"
+import messages from "@/messages/en.json"
 import authReducer from "@/store/slices/auth-slice"
 import { useAuth } from "@/hooks/useAuth"
 import authService from "@/services/auth-service"
@@ -26,7 +28,9 @@ describe("useAuth hook", () => {
   const renderUseAuth = () => {
     return renderHook(() => useAuth(), {
       wrapper: ({ children }) => (
-        <Provider store={store}>{children}</Provider>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <Provider store={store}>{children}</Provider>
+        </NextIntlClientProvider>
       ),
     })
   }
