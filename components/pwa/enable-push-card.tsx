@@ -37,6 +37,11 @@ export function EnablePushCard() {
     // "denied" can't be fixed from here (the settings page explains that).
     if (Notification.permission !== "default") return;
     if (isDevicePushOptedOut()) return;
+    // Already turned on from this device. Some phones keep reporting the
+    // permission as "default" afterwards, and this card remounts whenever the
+    // user leaves a full-screen page — together that re-asked someone who had
+    // already said yes, over and over.
+    if (localStorage.getItem(DEVICE_PUSH_KEY) === "on") return;
     if (Date.now() < Number(localStorage.getItem(SNOOZE_KEY) || 0)) return;
 
     let interactions = 0;
@@ -74,6 +79,10 @@ export function EnablePushCard() {
       // requestPermission() while the user gesture is still "live".
       const permission = await Notification.requestPermission();
       setVisible(false);
+      // Whatever the answer, the question has been put: without this, a phone
+      // that closes the system prompt without an answer (permission stays
+      // "default") brought the card straight back on the next page.
+      if (permission !== "granted") snooze();
       if (permission === "granted") {
         localStorage.setItem(DEVICE_PUSH_KEY, "on");
         const token = await registerFcmToken();

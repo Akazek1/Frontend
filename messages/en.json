@@ -950,7 +950,9 @@
         "question": "How do I delete my account?",
         "answer": "There's no in-app delete option yet — email support@huza.app with your account details and we'll process the deletion within 30 days. This is permanent: your services, bookings, and reviews will all be removed."
       }
-    }
+    },
+    "chatWithSupport": "Chat with Huza Support",
+    "chatWithSupportDesc": "Write to our team in the app. We reply in your Messages."
   },
   "bookingSummary": {
     "invalidServiceId": "Invalid service ID",
@@ -1343,7 +1345,10 @@
     "agency": "Agency",
     "company": "Company",
     "client": "Client",
-    "aboutWorker": "{role} · about {worker}"
+    "aboutWorker": "{role} · about {worker}",
+    "supportTeam": "Official Huza team",
+    "supportStaffName": "{name} · Huza Support",
+    "supportSafetyNote": "This is the official Huza team. We will never ask for your PIN or verification code."
   },
   "receivedBookingDetails": {
     "failedFetchBooking": "Failed to fetch booking",
@@ -2231,7 +2236,8 @@
     "yesterday": "Yesterday",
     "daysAgo": "{days}d ago",
     "agencyConversation": "Agency",
-    "noMessagesYet": "No messages yet"
+    "noMessagesYet": "No messages yet",
+    "supportConversation": "Official Huza team"
   },
   "login": {
     "welcomeBack": "Welcome back",
@@ -2445,5 +2451,22 @@
     "decline": "Decline and log out",
     "pleaseWait": "Please wait…",
     "genericError": "Something went wrong. Please try again."
+  },
+  "supportInfo": {
+    "title": "Chat info",
+    "back": "Back",
+    "name": "Huza Support",
+    "officialAccount": "Official Huza account",
+    "intro": "Hi! Welcome to the official Huza Support chat.",
+    "whatFor": "This is where you can ask for help, report a problem, and get answers. Straight from our team.",
+    "safety": "Official chats from Huza will always have a blue verified badge. And we'll never ask for your PIN or verification code."
+  },
+  "guestContact": {
+    "prompt": "Trouble signing in? Call or WhatsApp us on",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "copy": "Copy number",
+    "copied": "Number copied",
+    "copyFailed": "Couldn't copy the number"
   }
 }

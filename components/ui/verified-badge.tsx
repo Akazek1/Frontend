@@ -2,6 +2,9 @@ import { BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const VERIFIED_BADGE_COLOR = "#145B10";
+// The official Huza Support account is marked in blue, so it can never be
+// mistaken for an ordinary verified user (green).
+export const SUPPORT_BADGE_COLOR = "#1D8CF8";
 
 interface VerifiedBadgeProps {
   size?: number;

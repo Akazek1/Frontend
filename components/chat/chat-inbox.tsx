@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listConversations, type ConversationSummary } from "@/lib/conversations";
+import { listConversations, openSupportThread, type ConversationSummary } from "@/lib/conversations";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import api from "@/lib/axios";
@@ -85,6 +85,8 @@ interface Booking {
   isInquiry?: boolean;
   inquiryId?: string;
   preview?: string;
+  // The user's thread with the Huza support team — always pinned first.
+  isSupport?: boolean;
 }
 
 interface ChatInboxProps {
@@ -113,7 +115,13 @@ async function fetchConversations(): Promise<Booking[]> {
  * untouched — they still come from `fetchConversations()` above.
  */
 async function fetchUnifiedConversations(currentUserId?: string): Promise<Booking[]> {
-  const rows = await listConversations().catch(() => [] as ConversationSummary[]);
+  let rows = await listConversations().catch(() => [] as ConversationSummary[]);
+  // Accounts that predate support chat have no thread yet: open it once so the
+  // pinned "Huza Support" row (and its welcome message) is there for everyone.
+  if (currentUserId && !rows.some((c) => c.type === "SUPPORT")) {
+    const opened = await openSupportThread().catch(() => null);
+    if (opened) rows = await listConversations().catch(() => rows);
+  }
   return rows
     .filter((c) => c.kind === "CONVERSATION")
     .map((c) => ({
@@ -127,6 +135,7 @@ async function fetchUnifiedConversations(currentUserId?: string): Promise<Bookin
         firstName: c.title,
         lastName: "",
         profilePicture: c.avatarUrl ?? undefined,
+        isVerified: c.otherIsVerified,
       },
       latestMessage: c.lastMessage
         ? ({
@@ -144,6 +153,7 @@ async function fetchUnifiedConversations(currentUserId?: string): Promise<Bookin
       unreadCount: c.unreadCount,
       isInquiry: true,
       inquiryId: c.inquiryId ?? undefined,
+      isSupport: c.type === "SUPPORT",
     }));
 }
 
@@ -337,6 +347,7 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
   const allThreads = useMemo(() => {
     const merged = [...bookings, ...(unifiedData ?? [])];
     return merged.sort((a, b) => {
+      if (a.isSupport !== b.isSupport) return a.isSupport ? -1 : 1;
       const at = new Date(a.latestMessage?.createdAt || a.updatedAt || a.createdAt || 0).getTime();
       const bt = new Date(b.latestMessage?.createdAt || b.updatedAt || b.createdAt || 0).getTime();
       return bt - at;
@@ -409,8 +420,12 @@ export default function ChatInbox({ searchQuery, onCounts }: ChatInboxProps) {
               name: `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim(),
               avatarUrl: partner.profilePicture,
               isVerified: partner.isVerified,
-              isOnline: Boolean(presenceMap[partner.id]),
-              label: booking.isInquiry
+              // The support team has no single person behind it to be "online".
+              isOnline: booking.isSupport ? undefined : Boolean(presenceMap[partner.id]),
+              isSupport: booking.isSupport,
+              label: booking.isSupport
+                ? t("supportConversation")
+                : booking.isInquiry
                 ? t("agencyConversation")
                 : booking.service?.category?.name || t("bookingFallback"),
               // Agency threads have no booking lifecycle, so no status pill.

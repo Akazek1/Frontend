@@ -9,6 +9,7 @@ import { NavItem } from "@/types";
 import { colors } from "@/constant/colors";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthGate } from "@/context/auth-gate-context";
+import { useUnreadMessagesBadge } from "@/hooks/useUnreadMessagesBadge";
 
 const Navigation = () => {
   const t = useTranslations("appNavigation");
@@ -16,6 +17,7 @@ const Navigation = () => {
   const { isAuthenticated } = useAuth();
   const { openAuthGate } = useAuthGate();
   const navItems = getNavItems(t);
+  const unreadMessages = useUnreadMessagesBadge();
 
   const isActive = (item: NavItem): boolean => {
     if (item.matchPattern) {
@@ -70,13 +72,21 @@ const Navigation = () => {
               aria-disabled={isDisabled}
             >
               {IconComponent && (
-                <IconComponent
-                  className="w-6 h-6"
-                  style={{
-                    stroke: isDisabled ? colors.textLight + "66" : (isActiveNav ? "white" : colors.textLight),
-                    fill: isActiveNav ? colors.primary : "none",
-                  }}
-                />
+                <span className="relative">
+                  <IconComponent
+                    className="w-6 h-6"
+                    style={{
+                      stroke: isDisabled ? colors.textLight + "66" : (isActiveNav ? "white" : colors.textLight),
+                      fill: isActiveNav ? colors.primary : "none",
+                    }}
+                  />
+                  {/* New messages since Messages was last opened. */}
+                  {item.url === "/conversations" && unreadMessages > 0 && (
+                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                      {unreadMessages > 99 ? "99+" : unreadMessages}
+                    </span>
+                  )}
+                </span>
               )}
               <span>{item.title}</span>
             </Link>

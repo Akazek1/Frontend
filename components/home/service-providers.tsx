@@ -19,6 +19,7 @@ import {
 } from "@/components/reviews/review-prompt-dialog";
 import { SheetOverlay, SheetPanel, SheetHeader, SheetBody, SheetFooter } from "@/components/ui/app-primitives";
 
+import { GuestContactLine } from "@/components/support/guest-contact-line";
 interface HireModal {
   serviceId: string;
   providerName: string;
@@ -294,6 +295,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                   )}
                 </div>
               ) : (
+                <>
                 <button
                   type="button"
                   onClick={() => requireAuth(undefined, "browse-more")}
@@ -301,6 +303,8 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                 >
                   {t("signInToSeeMore")}
                 </button>
+                <GuestContactLine className="mt-3" />
+                </>
               )
             )}
           </motion.div>

@@ -126,7 +126,7 @@ const ProfileScreen = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 pb-24 pt-3 sm:px-6" style={{ backgroundColor: colors.background }}>
+    <div className="min-h-full px-4 pb-0 pt-3 sm:px-6" style={{ backgroundColor: colors.background }}>
       <div className="mb-3 flex items-center justify-between">
         <h1 className="flex items-center gap-2.5 text-2xl font-bold leading-[120%]" style={{ color: colors.text }}>
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white shadow-sm">

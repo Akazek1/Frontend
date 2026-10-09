@@ -406,7 +406,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
     const completeSignupForNewUser = async (_user: NonNullable<UserData>) => {
       const roles = selectedRoles.length > 0 ? selectedRoles : ["EMPLOYER" as const]
-      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth, termsAccepted }
+      // `locale` saves the UI language on the new account, so the support welcome
+      // message arrives in it.
+      const payload: Record<string, unknown> = { firstName: firstName.trim(), roles, dateOfBirth, termsAccepted, locale }
       if (lastName.trim()) payload.lastName = lastName.trim()
       if (email.trim() && isValidEmail(email.trim())) payload.email = email.trim()
 
@@ -511,7 +513,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       setActiveInputIndex(0)
       setTimeout(() => inputsRef.current[0]?.focus(), 50)
     }
-  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, dateOfBirth, termsAccepted, selectedRoles, dispatch, redirectHome, completeRoleOnboarding])
+  }, [phoneNumber, verifyOtp, redirectUrl, firstName, lastName, email, dateOfBirth, termsAccepted, selectedRoles, dispatch, redirectHome, completeRoleOnboarding, locale])
 
   // After the PIN step: resume the role-specific onboarding that would otherwise
   // have run immediately after signup (workers → profile/ID; employers → home).

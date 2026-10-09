@@ -3,8 +3,12 @@
 import React, { useState } from "react";
 import { useTranslations } from "next-intl";
 import BackButtonHeader from "@/components/header/back-button-header";
-import { Check, ChevronDown, Mail, Phone, Send } from "lucide-react";
+import { Check, ChevronDown, Headset, Loader2, Mail, Phone, Send } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { openSupportThread } from "@/lib/conversations";
 import {
   AppButton,
   AppSectionHeader,
@@ -20,6 +24,20 @@ const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const HelpAndSupport = () => {
   const t = useTranslations("help");
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
+  const router = useRouter();
+  const isSignedIn = useSelector((state: RootState) => Boolean(state.auth.token));
+  const [openingChat, setOpeningChat] = useState(false);
+
+  // In-app chat with the Huza team: one permanent thread per account.
+  const openSupportChat = async () => {
+    if (openingChat) return;
+    setOpeningChat(true);
+    try {
+      router.push(`/conversations/thread/${await openSupportThread()}`);
+    } catch {
+      setOpeningChat(false);
+    }
+  };
 
   const toggleFAQ = (id: number) => {
     setExpandedFAQ(expandedFAQ === id ? null : id);
@@ -36,7 +54,16 @@ const HelpAndSupport = () => {
           {t("needHelpDesc")}
         </p>
         <div className="space-y-3 flex flex-col">
-          <AppButton asChild className="w-full">
+          {isSignedIn && (
+            <>
+              <AppButton className="w-full" onClick={openSupportChat} disabled={openingChat}>
+                {openingChat ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headset className="h-4 w-4" />}
+                {t("chatWithSupport")}
+              </AppButton>
+              <p className="text-center text-xs text-gray-500">{t("chatWithSupportDesc")}</p>
+            </>
+          )}
+          <AppButton asChild appVariant={isSignedIn ? "secondary" : "primary"} className="w-full">
             <a href="mailto:support@huza.app">
               <Mail className="h-4 w-4" />
               {t("emailSupport")}

@@ -1,5 +1,6 @@
 "use client"
 
+import { GuestContactLine } from "@/components/support/guest-contact-line";
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -345,6 +346,8 @@ export function LoginForm() {
           </Link>
         </p>
       )}
+
+      <GuestContactLine />
     </div>
   )
 }

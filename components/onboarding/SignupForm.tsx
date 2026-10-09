@@ -1,5 +1,6 @@
 "use client"
 
+import { GuestContactLine } from "@/components/support/guest-contact-line";
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -541,6 +542,7 @@ export function SignupForm() {
           >
             {otpSent ? t("changeDetails") : t("back")}
           </button>
+          <GuestContactLine className="pt-1" />
         </div>
       </div>
     </div>
