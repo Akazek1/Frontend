@@ -187,6 +187,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch<AppDispatch>()
   const store = useStore<RootState>()
   const tPin = useTranslations("onboarding.setPin")
+  const tErr = useTranslations("onboardingMessages")
   const { sendOtp, verifyOtp, isLoading } = useAuth()
 
   const inputsRef = useRef<Array<HTMLInputElement | null>>(Array(OTP_LENGTH).fill(null))
@@ -309,7 +310,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const handleSendOtp = useCallback(async (purpose?: "login" | "signup"): Promise<boolean> => {
     if (!phoneNumber) {
-      toast.error("Please enter a phone number")
+      toast.error(tErr("enterPhone"))
       return false
     }
 
@@ -317,7 +318,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (cleaned.startsWith("250")) cleaned = cleaned.substring(3)
     if (cleaned.length === 10 && cleaned.startsWith("0")) cleaned = cleaned.substring(1)
     if (cleaned.length !== 9) {
-      toast.error("Please enter a valid phone number: 9 digits or 10 digits starting with 0")
+      toast.error(tErr("invalidPhone"))
       return false
     }
 
@@ -348,7 +349,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         toast.success("Backend offline — use 111111 to verify (dev mode)")
         return true
       }
-      toast.error(noServerReply ? "Failed to send OTP. Please try again." : serverMessage)
+      toast.error(noServerReply ? tErr("otpSendFailed") : serverMessage)
       return false
     } catch (error) {
       const err = error as Error & { code?: string; response?: { data?: { message?: string } } }
@@ -529,7 +530,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } else {
       await completeRoleOnboarding(["EMPLOYER"])
       dispatch(updateUser({ employerOnboardingComplete: true }))
-      toast.success("Welcome! Let's get started.")
+      toast.success(tErr("welcomeGetStarted"))
       redirectHome(true)
     }
   }, [pinPromptMode, postSignup, completeRoleOnboarding, redirectHome, dispatch])
@@ -625,11 +626,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Only called when user is already authenticated (login-mode edge case or complete-profile)
   const handleSaveBasicInfo = useCallback(async () => {
     if (!firstName.trim()) {
-      toast.error("Please enter your name")
+      toast.error(tErr("enterName"))
       return
     }
     if (email.trim() && !isValidEmail(email.trim())) {
-      toast.error("Please enter a valid email address")
+      toast.error(tErr("invalidEmail"))
       return
     }
 
@@ -663,7 +664,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       dispatch(updateUser(updatedUser))
       localStorage.setItem("user", JSON.stringify(updatedUser))
       track("signup_completed") // funnel: account fully created
-      toast.success("Welcome!")
+      toast.success(tErr("welcome"))
       if (roles.includes("WORKER")) {
         setCurrentStep(3) // profile picture first
       } else {
@@ -672,12 +673,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const err = error as Error & { response?: { status?: number; data?: { message?: string | string[] } } }
       if (err.response?.status === 401) {
-        toast.error("Session expired. Please verify your phone number again.")
+        toast.error(tErr("sessionExpired"))
         setCurrentStep(2)
         return
       }
       const raw = err.response?.data?.message
-      toast.error((Array.isArray(raw) ? raw[0] : raw) || "Failed to save information. Please try again.")
+      toast.error((Array.isArray(raw) ? raw[0] : raw) || tErr("saveFailed"))
     }
   }, [firstName, lastName, email, selectedRoles, verifiedUser, dispatch, redirectHome, completeRoleOnboarding])
 
@@ -690,19 +691,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     try {
       await api.patch("/users/complete-onboarding", { role: "WORKER" }, { withCredentials: true })
       dispatch(updateUser({ workerOnboardingComplete: true }))
-      toast.success("Welcome! You're all set.")
+      toast.success(tErr("welcomeAllSet"))
       document.cookie = "profileComplete=true; path=/; max-age=31536000"
       localStorage.setItem("hasSeenTutorial", "true")
       setCurrentStep(7) // "Create a service?" prompt (AllSetStep)
     } catch {
-      toast.error("Failed to complete setup. Please try again.")
+      toast.error(tErr("setupFailed"))
     }
   }, [dispatch])
 
   const handleNext = useCallback(async () => {
     if (currentStep === 0) { // role selection → signup form
       if (selectedRoles.length === 0) {
-        toast.error("Please select a role to continue")
+        toast.error(tErr("selectRole"))
         return
       }
       setCurrentStep(1)

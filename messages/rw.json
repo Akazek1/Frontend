@@ -2453,20 +2453,57 @@
     "genericError": "Habaye ikibazo. Ongera ugerageze."
   },
   "supportInfo": {
-    "title": "Chat info",
-    "back": "Back",
+    "title": "Amakuru y'ikiganiro",
+    "back": "Subira inyuma",
     "name": "Huza Support",
-    "officialAccount": "Official Huza account",
-    "intro": "Hi! Welcome to the official Huza Support chat.",
-    "whatFor": "This is where you can ask for help, report a problem, and get answers. Straight from our team.",
-    "safety": "Official chats from Huza will always have a blue verified badge. And we'll never ask for your PIN or verification code."
+    "officialAccount": "Konti yemewe ya Huza",
+    "intro": "Muraho! Murakaza neza mu kiganiro cyemewe cy'Ubufasha bwa Huza.",
+    "whatFor": "Aha ni ho ushobora gusaba ubufasha, kumenyesha ikibazo no kubona ibisubizo bivuye ku bakozi bacu.",
+    "safety": "Ibiganiro byemewe bya Huza bihora bifite ikimenyetso cy'ubururu. Kandi ntituzigera tugusaba PIN yawe cyangwa kode yo kwemeza."
   },
   "guestContact": {
-    "prompt": "Trouble signing in? Call or WhatsApp us on",
-    "call": "Call",
+    "prompt": "Ufite ikibazo cyo kwinjira? Duhamagare cyangwa utwandikire kuri WhatsApp kuri",
+    "call": "Hamagara",
     "whatsapp": "WhatsApp",
-    "copy": "Copy number",
-    "copied": "Number copied",
-    "copyFailed": "Couldn't copy the number"
+    "copy": "Koporora nimero",
+    "copied": "Nimero yakoporowe",
+    "copyFailed": "Gukoporora nimero ntibyakunze"
+  },
+  "authGate": {
+    "intentDefault": "Injira kugira ukomeze",
+    "intentReport": "Injira kugira utange raporo",
+    "intentBookmark": "Injira kugira ubibike",
+    "intentHire": "Injira kugira utange akazi",
+    "intentApply": "Injira kugira usabe aka kazi",
+    "intentPostJob": "Injira kugira utangaze akazi",
+    "intentMessage": "Injira kugira wohereze ubutumwa",
+    "intentBrowseMore": "Injira kugira ubone abandi batanga serivisi",
+    "body": "Ukeneye konti kugira ngo ukore ibi. Bifata iminota micye.",
+    "logIn": "Injira",
+    "createAccount": "Fungura konti",
+    "maybeLater": "Wenda nyuma"
+  },
+  "onboardingMessages": {
+    "enterPhone": "Andika nimero ya telefoni",
+    "invalidPhone": "Andika nimero ya telefoni yemewe: imibare 9, cyangwa imibare 10 itangirwa na 0",
+    "otpSendFailed": "Kohereza kode ntibyakunze. Ongera ugerageze.",
+    "welcomeGetStarted": "Murakaza neza! Reka dutangire.",
+    "enterName": "Andika izina ryawe",
+    "invalidEmail": "Andika imeyili yemewe",
+    "welcome": "Murakaza neza!",
+    "sessionExpired": "Igihe cyarangiye. Ongera wemeze nimero yawe ya telefoni.",
+    "saveFailed": "Kubika amakuru ntibyakunze. Ongera ugerageze.",
+    "welcomeAllSet": "Murakaza neza! Byose biratunganye.",
+    "setupFailed": "Kurangiza kwiyandikisha ntibyakunze. Ongera ugerageze.",
+    "selectRole": "Hitamo icyo ushaka gukora kugira ngo ukomeze"
+  },
+  "enablePush": {
+    "title": "Fungura amatangazo",
+    "body": "Menya ako kanya igihe umuntu ashaka kuguha akazi cyangwa agusubije.",
+    "turnOn": "Fungura",
+    "notNow": "Si ubu",
+    "turnedOn": "Amatangazo arafunguye",
+    "couldNotFinish": "Ntibyarangiye. Ongera ugerageze muri Ibindi → Amatangazo.",
+    "turnOnLater": "Ushobora kuyafungura igihe icyo ari cyo cyose muri Ibindi → Amatangazo."
   }
 }
