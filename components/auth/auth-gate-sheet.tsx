@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 import { useAuthGate } from "@/context/auth-gate-context";
+import { GuestContactLine } from "@/components/support/guest-contact-line";
 import {
   AppButton,
   SheetBody,
@@ -84,6 +85,7 @@ export function AuthGateSheet() {
           >
             Maybe later
           </button>
+          <GuestContactLine />
         </SheetFooter>
       </SheetPanel>
     </>

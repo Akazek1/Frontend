@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus, ArrowDown } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck, Archive, AlertCircle, CheckCircle2, Clock, ClipboardList, ShieldCheck, X, Pencil, Reply, SmilePlus, ArrowDown, Headset } from "lucide-react";
+import { SUPPORT_BADGE_COLOR, VerifiedBadge } from "@/components/ui/verified-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -64,6 +66,8 @@ interface Message {
   editedAt?: string | null;
   deletedAt?: string | null;
   sender: MessageSenderSummary;
+  /** Set on replies from the Huza support team — the name shown for them. */
+  staffDisplayName?: string | null;
   replyTo?: {
     id: string;
     content: string;
@@ -381,8 +385,30 @@ function HoverActions({ onReact, onReply }: { onReact: () => void; onReply: () =
  */
 const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversationId?: string }) => {
   const isConversation = Boolean(conversationId);
+  const queryClient = useQueryClient();
   /** The id this room is keyed by, whichever mode it is in. */
   const roomId = (conversationId || bookingId) as string;
+
+  // Opening a conversation reads it, but the Messages list is cached: without
+  // this, going back showed the old unread count until the cache expired.
+  useEffect(() => {
+    if (!isConversation) return;
+    return () => {
+      queryClient.setQueriesData<any[]>({ queryKey: ["unified-conversations"] }, (rows) =>
+        rows?.map((r) =>
+          r.bookingId === roomId
+            ? {
+                ...r,
+                unreadCount: 0,
+                latestMessage: r.latestMessage ? { ...r.latestMessage, isRead: true } : r.latestMessage,
+              }
+            : r,
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["unified-conversations"] });
+      void queryClient.invalidateQueries({ queryKey: ["messages-badge"] });
+    };
+  }, [isConversation, roomId, queryClient]);
   const t = useTranslations("chatRoom");
   const router = useRouter();
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -1364,6 +1390,8 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
   const partnerName = partner ? `${partner.firstName || t("unknownFallback")} ${partner.lastName || ""}`.trim() : t("unknownPartnerFallback");
   const isWorker = user.id === booking.workerId;
   const contextTitle = booking.service?.category?.name || booking.job?.title || t("workRequestFallback");
+  // The user's thread with the Huza support team: no single person behind it.
+  const isSupport = isConversation && conversationType === "SUPPORT";
   // In conversation mode the counterpart is an organisation (agency/company),
   // so label the role rather than repeating its name under the title.
   const conversationRoleLabel =
@@ -1377,7 +1405,9 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
   // Role-aware label for the partner: a worker is described by the service they
   // provide (e.g. "Driver"); an employer is simply the "Employer" — never the
   // service title, which would wrongly imply they do that job.
-  const partnerRoleLabel = isConversation
+  const partnerRoleLabel = isSupport
+    ? t("supportTeam")
+    : isConversation
     ? subjectName
       ? t("aboutWorker", { role: conversationRoleLabel, worker: subjectName })
       : conversationRoleLabel
@@ -1431,14 +1461,34 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
           <Avatar className="h-10 w-10 border border-gray-100">
             <AvatarImage src={partner?.profilePicture} className="object-cover" />
             <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
-              {partner?.firstName?.[0] || "U"}{partner?.lastName?.[0] || "P"}
+              {isSupport ? (
+                <Headset className="h-5 w-5" />
+              ) : (
+                <>{partner?.firstName?.[0] || "U"}{partner?.lastName?.[0] || "P"}</>
+              )}
             </AvatarFallback>
           </Avatar>
-          <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${partnerOnline ? "bg-green-500" : "bg-gray-300"}`} />
+          {!isSupport && (
+            <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${partnerOnline ? "bg-green-500" : "bg-gray-300"}`} />
+          )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
+        <div
+          className={`flex-1 min-w-0 ${isSupport ? "cursor-pointer" : ""}`}
+          // Tapping the support header opens "Chat info": who this account is.
+          role={isSupport ? "button" : undefined}
+          tabIndex={isSupport ? 0 : undefined}
+          onClick={isSupport ? () => router.push(`/conversations/thread/${roomId}/info`) : undefined}
+          onKeyDown={
+            isSupport
+              ? (e) => { if (e.key === "Enter") router.push(`/conversations/thread/${roomId}/info`); }
+              : undefined
+          }
+        >
+          <div className="flex min-w-0 items-center gap-1">
+            <h1 className="truncate text-sm font-bold text-ink">{partnerName}</h1>
+            {isSupport && <VerifiedBadge size={14} fill={SUPPORT_BADGE_COLOR} />}
+          </div>
           <p className="truncate text-[11px] text-ink-subtle font-medium">{partnerRoleLabel}</p>
         </div>
 
@@ -1632,6 +1682,13 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
           </div>
         )}
 
+        {isSupport && (
+          <div className="mx-auto flex max-w-[300px] items-start gap-2 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+            <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" />
+            <p className="text-[11px] leading-relaxed text-ink-subtle">{t("supportSafetyNote")}</p>
+          </div>
+        )}
+
         {messages.map((msg) => {
           if (isSystemMessage(msg.content)) {
             return (
@@ -1645,9 +1702,20 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
 
           const isMe = msg.senderId === user.id;
 
+          // Support replies are signed by whichever team member wrote them.
+          const staffLabel =
+            isSupport && !isMe
+              ? msg.staffDisplayName
+                ? t("supportStaffName", { name: msg.staffDisplayName })
+                : partnerName
+              : null;
+
           return (
+            <React.Fragment key={msg.id}>
+            {staffLabel && (
+              <p className="-mb-3 pl-1 text-[10px] font-semibold text-ink-subtle">{staffLabel}</p>
+            )}
             <MessageBubble
-              key={msg.id}
               msg={msg}
               isMe={isMe}
               currentUserId={user.id}
@@ -1675,6 +1743,7 @@ const ChatRoom = ({ bookingId, conversationId }: { bookingId?: string; conversat
               onRetry={() => handleRetry(msg)}
               onQuoteClick={scrollToMessage}
             />
+            </React.Fragment>
           );
         })}
         {showPendingNudge && (

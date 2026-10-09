@@ -1,5 +1,6 @@
 "use client";
 
+import { GuestContactLine } from "@/components/support/guest-contact-line";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -938,6 +939,9 @@ export function ServiceDetailClient() {
                         </button>
                     </div>
                 )}
+
+                {/* Guests who can't sign in to hire get a direct line to us. */}
+                <GuestContactLine className="mt-4 mb-2 px-4" />
             </main>
 
             {isReportOpen && provider && (

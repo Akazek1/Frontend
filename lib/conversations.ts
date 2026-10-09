@@ -1,6 +1,6 @@
 import api from "@/lib/axios";
 
-export type ConversationType = "BOOKING" | "AGENCY_INQUIRY" | "COMPANY_INQUIRY" | "DIRECT";
+export type ConversationType = "BOOKING" | "AGENCY_INQUIRY" | "COMPANY_INQUIRY" | "DIRECT" | "SUPPORT";
 
 /** One row in the unified inbox — any persona pairing, any context. */
 export interface ConversationSummary {
@@ -30,6 +30,8 @@ export interface ConversationMessage {
   senderOrgId: string | null;
   senderUser?: { id: string; firstName: string | null; lastName: string | null; profilePicture: string | null } | null;
   senderOrg?: { id: string; name: string; logoUrl: string | null } | null;
+  /** Set on replies from the Huza support team — the name to show for them. */
+  staffDisplayName?: string | null;
 }
 
 export interface ConversationCapabilities {
@@ -76,6 +78,14 @@ export async function sendConversationMessage(id: string, content: string, reply
   return unwrap<ConversationMessage>(await api.post(`/conversations/${id}/messages`, { content, replyToId }));
 }
 
+/**
+ * The viewer's one support thread with the Huza team (created, with its
+ * welcome message, the first time this is called).
+ */
+export async function openSupportThread(): Promise<string> {
+  return unwrap<{ conversationId: string }>(await api.get("/support/thread")).conversationId;
+}
+
 export async function markConversationRead(id: string) {
   return api.post(`/conversations/${id}/read`).catch(() => undefined);
 }
@@ -92,20 +102,22 @@ export function isMine(msg: ConversationMessage, me: string): boolean {
  */
 export function toChatMessage(m: any): any {
   if (!m) return m;
-  const personFrom = (user: any, org: any) =>
+  // `staffName` covers support-team replies, which have neither a user nor an
+  // org behind them — without it a quoted staff message shows no author.
+  const personFrom = (user: any, org: any, staffName?: string | null) =>
     org
       ? { id: org.id, firstName: org.name, lastName: "", profilePicture: org.logoUrl ?? null }
-      : user ?? { id: "", firstName: "", lastName: "", profilePicture: null };
+      : user ?? { id: "", firstName: staffName ?? "", lastName: "", profilePicture: null };
 
   return {
     ...m,
     senderId: m.senderOrgId ?? m.senderUserId ?? m.senderOrg?.id ?? m.senderUser?.id ?? "",
-    sender: personFrom(m.senderUser, m.senderOrg),
+    sender: personFrom(m.senderUser, m.senderOrg, m.staffDisplayName),
     replyTo: m.replyTo
       ? {
           ...m.replyTo,
           senderId: m.replyTo.senderOrg?.id ?? m.replyTo.senderUser?.id ?? "",
-          sender: personFrom(m.replyTo.senderUser, m.replyTo.senderOrg),
+          sender: personFrom(m.replyTo.senderUser, m.replyTo.senderOrg, m.replyTo.staffDisplayName),
         }
       : undefined,
     reactions: (m.reactions ?? []).map((r: any) => ({

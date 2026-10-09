@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Check, CheckCheck, ChevronRight, MessageCircle } from "lucide-react";
+import { Check, CheckCheck, ChevronRight, Headset, MessageCircle, Pin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { SUPPORT_BADGE_COLOR, VerifiedBadge } from "@/components/ui/verified-badge";
 
 /**
  * THE inbox row — used by every Messages list regardless of who is chatting
@@ -34,6 +34,8 @@ export interface ConversationRowData {
   ownReceipt?: "sent" | "delivered" | "read" | null;
   unreadCount?: number;
   reviewPending?: boolean;
+  /** The Huza support thread: team icon instead of initials, shown as pinned. */
+  isSupport?: boolean;
 }
 
 /** Relative timestamp, translated. One implementation for every inbox. */
@@ -81,7 +83,7 @@ export function ConversationRow({
         <Avatar className="h-12 w-12">
           <AvatarImage src={data.avatarUrl || ""} className="object-cover" />
           <AvatarFallback className="bg-surface text-[13px] font-bold text-brand">
-            {initials}
+            {data.isSupport ? <Headset className="h-5 w-5" /> : initials}
           </AvatarFallback>
         </Avatar>
         {data.isOnline !== undefined && (
@@ -97,7 +99,10 @@ export function ConversationRow({
         <span className="flex items-start justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1">
             <span className="block truncate text-[15px] font-bold text-ink">{data.name}</span>
-            {data.isVerified ? <VerifiedBadge size={14} /> : null}
+            {data.isVerified ? (
+              <VerifiedBadge size={14} fill={data.isSupport ? SUPPORT_BADGE_COLOR : undefined} />
+            ) : null}
+            {data.isSupport ? <Pin className="h-3 w-3 flex-shrink-0 text-[#9E9E9E]" /> : null}
           </span>
           <span className="text-[11px] font-medium text-[#9E9E9E]">
             {formatTimestamp(data.timestamp)}

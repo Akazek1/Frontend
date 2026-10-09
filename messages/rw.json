@@ -145,6 +145,10 @@
     "otpAriaLabel": "Kode yo kwemeza",
     "resendIn": "Ongera wohereze kode mu masegonda {seconds}",
     "resend": "Ongera wohereze kode",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora",
     "saving": "Birabikwa...",
     "save": "Bika",
     "checking": "Biragenzurwa...",
@@ -946,7 +950,9 @@
         "question": "Nasiba konti yanjye nte?",
         "answer": "Kugeza ubu nta buryo bwo gusiba konti muri porogaramu - ohereza imeyili kuri support@huza.app urimo amakuru ya konti yawe, tuzayisiba mu minsi 30. Ibi ntibisubizwa inyuma: serivisi zawe, amafatabuguzi n'ibitekerezo byose bizakurwaho."
       }
-    }
+    },
+    "chatWithSupport": "Andikira Ubufasha bwa Huza",
+    "chatWithSupportDesc": "Andikira umukozi wacu muri porogaramu. Tugusubiza aha mu Butumwa bwawe."
   },
   "bookingSummary": {
     "invalidServiceId": "ID ya serivisi si yo",
@@ -1203,7 +1209,10 @@
     "rwfPlaceholder": "RWF",
     "reset": "Subiramo",
     "apply": "Emeza",
-    "otherCategory": "Ikindi"
+    "otherCategory": "Ikindi",
+    "loadMore": "Reba ibindi",
+    "loadingMore": "Birimo gufungura ibindi…",
+    "signInToSeeMore": "Injira kugira ngo ubone abandi batanga serivisi"
   },
   "jobOwnerDetail": {
     "back": "Subira inyuma",
@@ -1336,7 +1345,10 @@
     "agency": "Ikigo",
     "company": "Isosiyete",
     "client": "Umukiriya",
-    "aboutWorker": "{role} · kuri {worker}"
+    "aboutWorker": "{role} · kuri {worker}",
+    "supportTeam": "Itsinda ry'abakozi ba Huza bemewe",
+    "supportStaffName": "{name} · Umufasha wa Huza",
+    "supportSafetyNote": "Turi abakozi ba Huza bemewe. Ntituzigera tugusaba PIN yawe cyangwa kode yo kwemeza."
   },
   "receivedBookingDetails": {
     "failedFetchBooking": "Ntibyashobotse kuzana ifatabuguzi",
@@ -1611,6 +1623,10 @@
     "codeResent": "Kode yongeye koherezwa",
     "couldNotSendCode": "Ntibyakunze kohereza kode",
     "enterTheCode": "Andika kode y'imibare 6",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora",
     "newPassword": "Ijambo ry'ibanga rishya",
     "confirmNewPassword": "Emeza ijambo ry'ibanga rishya",
     "atLeast8Characters": "Byibuze inyuguti 8",
@@ -1737,17 +1753,17 @@
     "resendCodeIn": "Ongera wohereze kode mu masegonda {seconds}",
     "codeResent": "Kode yongeye koherezwa",
     "couldNotSendCode": "Ntibyakunze kohereza kode",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora",
     "backToDetails": "Subira ku makuru",
     "businessDescription": "Ibisobanuro by'ikigo",
     "businessDescriptionPlaceholder": "Ikigo cyawe gitanga iki? Ni iki kigitandukanya n'ibindi?",
     "descriptionTooShort": "Sobanura ikigo cyawe (nibura inyuguti 10)",
     "serviceCategory": "Mutanga serivisi z'ubuhe bwoko?",
     "serviceCategoryHelp": "Hitamo ihuye neza n'ikigo cyawe, ushobora kongeraho izindi nyuma.",
-    "chooseServiceCategory": "Hitamo ubwoko bwa serivisi ikigo cyawe gitanga",
-    "codeValidFor": "Kode imara iminota {minutes}",
-    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
-    "codeExpired": "Kode yarangiye, saba indi nshya",
-    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora"
+    "chooseServiceCategory": "Hitamo ubwoko bwa serivisi ikigo cyawe gitanga"
   },
   "feedback": {
     "pleaseWriteMessage": "Andika ubutumwa bugufi mbere yo kohereza",
@@ -1857,7 +1873,10 @@
     "hireMessagePlaceholder": "Sobanura icyo ukeneye, gahunda wifuza, cyangwa ibindi bisabwa byihariye…",
     "hireCancel": "Hagarika",
     "hireSend": "Ohereza icyifuzo",
-    "hireRequestSent": "Icyifuzo cyoherejwe kuri {name}!"
+    "hireRequestSent": "Icyifuzo cyoherejwe kuri {name}!",
+    "loadingMore": "Birimo gufungura ibindi…",
+    "signInToSeeMore": "Injira kugira ngo ubone abandi batanga serivisi",
+    "endOfResults": "Wageze ku mpera"
   },
   "homeOverview": {
     "searchJobsPlaceholder": "Shaka akazi ukoresheje umutwe, icyiciro...",
@@ -2217,7 +2236,8 @@
     "yesterday": "Ejo hashize",
     "daysAgo": "iminsi {days} ishize",
     "agencyConversation": "Ikigo",
-    "noMessagesYet": "Nta butumwa buhari"
+    "noMessagesYet": "Nta butumwa buhari",
+    "supportConversation": "Itsinda ry'abakozi ba Huza bemewe"
   },
   "login": {
     "welcomeBack": "Ikaze",
@@ -2232,6 +2252,10 @@
     "verificationCode": "Kode yo kwemeza",
     "resendCodeIn": "Ongera wohereze kode mu {seconds}s",
     "resendCode": "Ongera wohereze kode",
+    "codeValidFor": "Kode imara iminota {minutes}",
+    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
+    "codeExpired": "Kode yarangiye, saba indi nshya",
+    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora",
     "checking": "Birimo kugenzurwa...",
     "sendingCode": "Kode irimo koherezwa...",
     "logIn": "Injira",
@@ -2245,11 +2269,7 @@
     "agencyOrCompany": "Ikigo cyangwa sosiyete?",
     "signInWithEmailPassword": "Injira ukoresheje imeyili n'ijambo ry'ibanga",
     "dontHaveAccount": "Ntufite konti?",
-    "signUp": "Iyandikishe",
-    "codeValidFor": "Kode imara iminota {minutes}",
-    "codeExpiresIn": "Kode irarangira mu masegonda {seconds}",
-    "codeExpired": "Kode yarangiye, saba indi nshya",
-    "useLatestCode": "Niba wasabye kode nyinshi, iya nyuma ni yo yonyine ikora"
+    "signUp": "Iyandikishe"
   },
   "sectorPicker": {
     "stepTitle": {
@@ -2431,5 +2451,22 @@
     "decline": "Anga maze usohoke",
     "pleaseWait": "Tegereza…",
     "genericError": "Habaye ikibazo. Ongera ugerageze."
+  },
+  "supportInfo": {
+    "title": "Chat info",
+    "back": "Back",
+    "name": "Huza Support",
+    "officialAccount": "Official Huza account",
+    "intro": "Hi! Welcome to the official Huza Support chat.",
+    "whatFor": "This is where you can ask for help, report a problem, and get answers. Straight from our team.",
+    "safety": "Official chats from Huza will always have a blue verified badge. And we'll never ask for your PIN or verification code."
+  },
+  "guestContact": {
+    "prompt": "Trouble signing in? Call or WhatsApp us on",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "copy": "Copy number",
+    "copied": "Number copied",
+    "copyFailed": "Couldn't copy the number"
   }
 }
