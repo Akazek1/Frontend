@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useSelector } from "react-redux"
 import toast from "react-hot-toast"
+import { useTranslations } from "next-intl"
 import { Loader2, MessageSquareReply } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Review } from "@/hooks/useReviews"
@@ -17,6 +18,7 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ review, showActions = false, onEdit, onDelete, onReply }: ReviewCardProps) {
+  const t = useTranslations("reviewCard")
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id)
   const [replyOpen, setReplyOpen] = useState(false)
   const [reply, setReply] = useState("")
@@ -24,8 +26,8 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
 
   const author = review.user || review.author || {
     id: "",
-    firstName: "Previous",
-    lastName: "Partner",
+    firstName: t("anonymousFirstName"),
+    lastName: t("anonymousLastName"),
     profilePicture: "",
   }
   const canReply = !!onReply && !!currentUserId && review.target?.id === currentUserId && !review.reply
@@ -36,20 +38,19 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
   // common service-page case) when booking roles aren't present.
   const targetIsEmployer =
     !!review.booking?.employerId && review.target?.id === review.booking.employerId
-  const verb = targetIsEmployer ? "work with" : "hire"
   const rehireBadge =
     review.wouldRehire === "YES"
-      ? { emoji: "😊", label: `Would ${verb} again`, className: "bg-green-50 text-green-700" }
+      ? { emoji: "😊", label: targetIsEmployer ? t("wouldWorkWithAgain") : t("wouldHireAgain"), className: "bg-green-50 text-green-700" }
       : review.wouldRehire === "MAYBE"
-        ? { emoji: "😐", label: `Might ${verb} again`, className: "bg-amber-50 text-amber-700" }
+        ? { emoji: "😐", label: targetIsEmployer ? t("mightWorkWithAgain") : t("mightHireAgain"), className: "bg-amber-50 text-amber-700" }
         : review.wouldRehire === "NO"
-          ? { emoji: "😞", label: `Would not ${verb} again`, className: "bg-red-50 text-red-600" }
+          ? { emoji: "😞", label: targetIsEmployer ? t("wouldNotWorkWithAgain") : t("wouldNotHireAgain"), className: "bg-red-50 text-red-600" }
           : null
 
   const handleReply = async () => {
     const text = reply.trim()
     if (!text) {
-      toast.error("Write a short reply first")
+      toast.error(t("replyEmpty"))
       return
     }
 
@@ -58,11 +59,11 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
     setSubmitting(false)
 
     if (ok) {
-      toast.success("Reply posted")
+      toast.success(t("replyPosted"))
       setReply("")
       setReplyOpen(false)
     } else {
-      toast.error("Could not post reply")
+      toast.error(t("replyFailed"))
     }
   }
 
@@ -94,7 +95,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
               <button
                 onClick={() => onEdit(review)}
                 className="text-brand hover:text-brand/80 p-1"
-                aria-label="Edit review"
+                aria-label={t("editReview")}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -110,7 +111,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
               <button
                 onClick={() => onDelete(review)}
                 className="text-red-500 hover:text-red-600 p-1"
-                aria-label="Delete review"
+                aria-label={t("deleteReview")}
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -125,16 +126,16 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
       )}
       {review.booking?.updatedAt && (
         <p className="text-xs text-gray-400">
-          Posted on {new Date(review.booking.updatedAt).toLocaleDateString()}
+          {t("postedOn", { date: new Date(review.booking.updatedAt).toLocaleDateString() })}
         </p>
       )}
       {review.reply && (
         <div className="ml-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-          <p className="text-[11px] font-bold text-ink">Response from {review.target?.firstName || "provider"}</p>
+          <p className="text-[11px] font-bold text-ink">{t("responseFrom", { name: review.target?.firstName || t("providerFallback") })}</p>
           <p className="mt-1 text-[13px] leading-[140%] text-ink-muted">{review.reply}</p>
           {review.repliedAt && (
             <p className="mt-1 text-[11px] text-gray-400">
-              Replied on {new Date(review.repliedAt).toLocaleDateString()}
+              {t("repliedOn", { date: new Date(review.repliedAt).toLocaleDateString() })}
             </p>
           )}
         </div>
@@ -146,7 +147,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
           className="inline-flex w-fit items-center gap-1.5 text-[12px] font-bold text-brand"
         >
           <MessageSquareReply className="h-3.5 w-3.5" />
-          Reply to review
+          {t("replyToReview")}
         </button>
       )}
       {canReply && replyOpen && (
@@ -156,7 +157,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
             onChange={(event) => setReply(event.target.value)}
             maxLength={1000}
             rows={3}
-            placeholder="Write one public reply..."
+            placeholder={t("replyPlaceholder")}
             className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-brand"
           />
           <div className="flex items-center justify-end gap-2">
@@ -168,7 +169,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
               }}
               className="px-3 py-1.5 text-[12px] font-semibold text-gray-500"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -177,7 +178,7 @@ export function ReviewCard({ review, showActions = false, onEdit, onDelete, onRe
               className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-50"
             >
               {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
-              Post reply
+              {t("postReply")}
             </button>
           </div>
         </div>

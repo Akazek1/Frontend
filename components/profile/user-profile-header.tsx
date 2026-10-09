@@ -74,7 +74,7 @@ export function UserProfileHeader({
           type="button"
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
           className="p-1 -ml-1"
-          aria-label="Go back"
+          aria-label={t("goBack")}
         >
           <ArrowLeft className="w-6 h-6 text-ink" />
         </button>
@@ -83,7 +83,7 @@ export function UserProfileHeader({
             type="button"
             onClick={() => shareLink(window.location.href, name)}
             className="p-2 rounded-full hover:bg-gray-100"
-            aria-label="Share profile"
+            aria-label={t("shareProfile")}
           >
             <Upload className="w-5 h-5 text-ink" />
           </button>
@@ -91,7 +91,7 @@ export function UserProfileHeader({
             <Link
               href="/profile"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand text-brand text-[13px] font-semibold hover:bg-surface transition-colors"
-              aria-label="Edit profile"
+              aria-label={t("editProfile")}
             >
               <Pencil className="w-3.5 h-3.5" />
               {t("edit")}
@@ -105,7 +105,7 @@ export function UserProfileHeader({
         <button
           type="button"
           onClick={() => profilePicture && openLightbox([profilePicture], 0)}
-          aria-label={`View ${name}'s photo`}
+          aria-label={t("viewPhoto", { name })}
           disabled={!profilePicture}
           className="relative w-28 h-28 rounded-full overflow-hidden bg-gray-100 flex-shrink-0"
         >

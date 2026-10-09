@@ -14,6 +14,10 @@ interface ChatTabsProps {
 const triggerClass =
   "group flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[12px] font-bold shadow-none data-[state=active]:bg-brand data-[state=active]:text-white data-[state=inactive]:text-gray-500";
 
+// Attention marker: a bare dot pinned to the label's top-right corner, so it
+// takes no width and can't crowd the neighbouring tab on narrow phones.
+const dotClass = "absolute -right-2 -top-1 h-2 w-2 rounded-full bg-red-500";
+
 const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
   const t = useTranslations("chatInbox");
   const router = useRouter();
@@ -45,20 +49,16 @@ const ChatTabs = ({ onTabChange, counts }: ChatTabsProps) => {
             {t("tabRead")}
           </TabsTrigger>
           <TabsTrigger value="Unread" className={triggerClass}>
-            {t("tabUnread")}
-            {counts && counts.unread > 0 ? (
-              <span className="min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                {counts.unread}
-              </span>
-            ) : null}
+            <span className="relative">
+              {t("tabUnread")}
+              {counts && counts.unread > 0 ? <span className={dotClass} aria-hidden /> : null}
+            </span>
           </TabsTrigger>
           <TabsTrigger value="Archive" className={triggerClass}>
-            {t("tabArchive")}
-            {counts && counts.archiveReviewPending > 0 ? (
-              <span className="min-w-[18px] rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                {counts.archiveReviewPending}
-              </span>
-            ) : null}
+            <span className="relative">
+              {t("tabArchive")}
+              {counts && counts.archiveReviewPending > 0 ? <span className={dotClass} aria-hidden /> : null}
+            </span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

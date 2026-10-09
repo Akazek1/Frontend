@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -41,8 +42,6 @@ interface ReviewPromptDialogProps {
   initialComment?: string;
 }
 
-const DEFAULT_REHIRE_QUESTION = "Would you hire this person again?";
-
 const REVIEW_COMMENT_MAX_WORDS = 300;
 
 function countWords(value: string) {
@@ -56,10 +55,17 @@ export function ReviewPromptDialog({
   onOpenChange,
   onSubmit,
   onSubmitted,
-  rehireQuestion = DEFAULT_REHIRE_QUESTION,
+  rehireQuestion: rehireQuestionProp,
   initialRehire = null,
   initialComment = "",
 }: ReviewPromptDialogProps) {
+  const t = useTranslations("reviewPrompt");
+  const rehireQuestion = rehireQuestionProp ?? t("defaultQuestion");
+  const rehireOptions = [
+    { value: "YES", emoji: "😊", label: t("yes") },
+    { value: "MAYBE", emoji: "😐", label: t("maybe") },
+    { value: "NO", emoji: "😞", label: t("no") },
+  ];
   const [wouldRehire, setWouldRehire] = useState<WouldRehire | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -86,11 +92,11 @@ export function ReviewPromptDialog({
 
   const handleSubmit = async () => {
     if (!wouldRehire) {
-      toast.error("Please choose an option above.");
+      toast.error(t("chooseOption"));
       return;
     }
     if (isCommentTooLong) {
-      toast.error(`Review must be ${REVIEW_COMMENT_MAX_WORDS} words or fewer.`);
+      toast.error(t("tooLong", { max: REVIEW_COMMENT_MAX_WORDS }));
       return;
     }
 
@@ -114,16 +120,16 @@ export function ReviewPromptDialog({
         {step === 1 && subject && (
           <>
             <DialogHeader>
-              <DialogTitle>Review Experience</DialogTitle>
+              <DialogTitle>{t("titleReview")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               <div className="rounded-lg bg-green-50 p-6 text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-3xl">
                   ✓
                 </div>
-                <h3 className="text-lg font-bold text-ink">Job Completed!</h3>
+                <h3 className="text-lg font-bold text-ink">{t("jobCompleted")}</h3>
                 <p className="mt-2 text-sm text-ink-muted">
-                  Thank you! Your feedback helps build trust in the Huza community.
+                  {t("thanksFeedback")}
                 </p>
               </div>
 
@@ -138,11 +144,7 @@ export function ReviewPromptDialog({
                   {rehireQuestion}
                 </p>
                 <div className="flex gap-3 justify-center">
-                  {[
-                    { value: "YES", emoji: "😊", label: "Yes" },
-                    { value: "MAYBE", emoji: "😐", label: "Maybe" },
-                    { value: "NO", emoji: "😞", label: "No" },
-                  ].map(({ value, emoji, label }) => (
+                  {rehireOptions.map(({ value, emoji, label }) => (
                     <button
                       key={value}
                       type="button"
@@ -165,7 +167,7 @@ export function ReviewPromptDialog({
               </div>
 
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full">
-                Cancel
+                {t("cancel")}
               </Button>
             </div>
           </>
@@ -174,7 +176,7 @@ export function ReviewPromptDialog({
         {step === 2 && subject && (
           <>
             <DialogHeader>
-              <DialogTitle>Share your experience</DialogTitle>
+              <DialogTitle>{t("titleShare")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               <div>
@@ -182,11 +184,7 @@ export function ReviewPromptDialog({
                   {rehireQuestion}
                 </p>
                 <div className="flex gap-3 justify-center">
-                  {[
-                    { value: "YES", emoji: "😊", label: "Yes" },
-                    { value: "MAYBE", emoji: "😐", label: "Maybe" },
-                    { value: "NO", emoji: "😞", label: "No" },
-                  ].map(({ value, emoji, label }) => (
+                  {rehireOptions.map(({ value, emoji, label }) => (
                     <button
                       key={value}
                       type="button"
@@ -207,12 +205,12 @@ export function ReviewPromptDialog({
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-ink">
-                  Tell others about your experience <span className="text-xs text-gray-500">(Optional)</span>
+                  {t("commentLabel")} <span className="text-xs text-gray-500">{t("optional")}</span>
                 </label>
                 <Textarea
                   value={comment}
                   onChange={(event) => setComment(event.target.value)}
-                  placeholder="Cleria arrived on time and did an amazing job. The house was left spotless and she was very polite and professional. Would definitely hire again."
+                  placeholder={t("commentPlaceholder")}
                   rows={4}
                   className={cn(
                     "resize-none",
@@ -225,19 +223,19 @@ export function ReviewPromptDialog({
                     isCommentTooLong ? "text-red-600" : "text-gray-500",
                   )}
                 >
-                  {commentWordCount}/{REVIEW_COMMENT_MAX_WORDS} words
+                  {t("wordCount", { count: commentWordCount, max: REVIEW_COMMENT_MAX_WORDS })}
                 </p>
               </div>
 
               <div className="rounded-lg bg-green-50 p-3">
                 <p className="text-xs text-green-800">
-                  ✓ Tip: Your review helps others make the right choice.
+                  {t("tip")}
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setStep(1)} className="flex-1">
-                  Back
+                  {t("back")}
                 </Button>
                 <Button
                   type="button"
@@ -246,7 +244,7 @@ export function ReviewPromptDialog({
                   className="flex-1 bg-brand hover:bg-[#0e4209]"
                 >
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Submit Review
+                  {t("submit")}
                 </Button>
               </div>
             </div>
@@ -256,28 +254,28 @@ export function ReviewPromptDialog({
         {step === 3 && subject && (
           <>
             <DialogHeader>
-              <DialogTitle>Review Submitted</DialogTitle>
+              <DialogTitle>{t("titleSubmitted")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 text-center">
               <div className="rounded-lg bg-green-50 p-6">
                 <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500 text-5xl">
                   ✓
                 </div>
-                <h3 className="text-lg font-bold text-ink">Thank you!</h3>
+                <h3 className="text-lg font-bold text-ink">{t("thankYou")}</h3>
                 <p className="mt-2 text-sm text-ink-muted">
-                  Your review has been submitted successfully.
+                  {t("submittedBody")}
                 </p>
               </div>
 
               <div className="space-y-2 rounded-lg border border-gray-200 p-4">
                 <p className="flex items-center gap-2 text-sm text-ink-muted">
                   <Check className="h-4 w-4 text-green-500" />
-                  {subject.title} will be notified and can respond to your review.
+                  {t("willBeNotified", { name: subject.title })}
                 </p>
               </div>
 
               <Button type="button" onClick={() => onOpenChange(false)} className="w-full bg-brand hover:bg-[#0e4209]">
-                Done
+                {t("done")}
               </Button>
             </div>
           </>

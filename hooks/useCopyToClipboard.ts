@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 /**
  * Copies plain text with a layered fallback chain: async clipboard, then
@@ -11,8 +12,9 @@ import toast from "react-hot-toast";
  * number or email copy button doesn't pop the OS share sheet.
  */
 export function useCopyToClipboard() {
+  const t = useTranslations("share");
   return useCallback(async (value: string, label?: string) => {
-    const successMessage = label ? `${label} copied` : "Copied to clipboard";
+    const successMessage = label ? t("labelCopied", { label }) : t("copied");
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(value);
@@ -39,6 +41,6 @@ export function useCopyToClipboard() {
     } catch {
       /* fall through to manual copy */
     }
-    toast(`Copy this: ${value}`, { duration: 6000 });
-  }, []);
+    toast(t("copyManually", { value }), { duration: 6000 });
+  }, [t]);
 }

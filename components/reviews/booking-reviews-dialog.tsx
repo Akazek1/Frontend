@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Loader2, RotateCcw } from "lucide-react";
 import {
   Dialog,
@@ -42,11 +43,12 @@ export function BookingReviewsDialog({
   onLeaveReview,
   onReply,
 }: BookingReviewsDialogProps) {
+  const t = useTranslations("bookingReviews");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[90vw] max-w-sm sm:w-full sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Job details</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -63,7 +65,7 @@ export function BookingReviewsDialog({
               </dl>
             ) : (
               <p className="mt-1 text-xs text-ink-muted">
-                Reviews and replies linked to this specific booking.
+                {t("linkedNote")}
               </p>
             )}
           </div>
@@ -80,7 +82,7 @@ export function BookingReviewsDialog({
             </div>
           ) : (
             <p className="rounded-xl bg-gray-50 px-3 py-6 text-center text-sm text-ink-muted">
-              No reviews have been left for this job yet.
+              {t("empty")}
             </p>
           )}
 
@@ -90,11 +92,11 @@ export function BookingReviewsDialog({
               onClick={onLeaveReview}
               className="w-full bg-brand hover:bg-[#0e4209]"
             >
-              Leave Review
+              {t("leaveReview")}
             </Button>
           ) : alreadyReviewed ? (
             <p className="rounded-lg bg-green-50 px-3 py-2 text-center text-xs font-medium text-green-700">
-              ✓ You&apos;ve reviewed this job.
+              {t("alreadyReviewed")}
             </p>
           ) : null}
 
@@ -107,7 +109,7 @@ export function BookingReviewsDialog({
             >
               <Link href={hireHref}>
                 <RotateCcw className="mr-1.5 h-4 w-4" />
-                Hire again
+                {t("hireAgain")}
               </Link>
             </Button>
           )}
