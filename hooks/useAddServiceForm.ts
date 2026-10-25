@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
+import { useQueryClient } from "@tanstack/react-query";
 import servicesService, {
   ChargedPer,
   CreateServicePayload,
@@ -137,6 +138,7 @@ function clearSession(key: string) {
 
 export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
   const { service, persistKey = service?.id ?? "new" } = options;
+  const queryClient = useQueryClient();
   const seededRef = useRef(false);
   // The category the rehydrated draft was originally written for. New-service
   // attempts all share the "new" sessionStorage key, so an abandoned draft for
@@ -303,6 +305,8 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
         ? await servicesService.update(service.id, payload)
         : await servicesService.create(payload);
       clearSession(persistKey);
+      // The "my services" list is cached; make every view of it pick this up.
+      void queryClient.invalidateQueries({ queryKey: ["my-services"] });
       return result;
     } finally {
       setIsSubmitting(false);
@@ -312,6 +316,7 @@ export function useAddServiceForm(options: UseAddServiceFormOptions = {}) {
     isStep2Valid,
     isStep3Valid,
     persistKey,
+    queryClient,
     service,
   ]);
 

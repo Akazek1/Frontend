@@ -1,8 +1,20 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { createElement, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAddServiceForm } from "@/hooks/useAddServiceForm";
 import servicesService from "@/services/services-service";
 import type { Service } from "@/types";
+
+// The hook refreshes the cached "my services" list after a save, so it needs
+// a React Query client like the real app provides.
+let queryClient: QueryClient;
+function renderWithQuery<T>(hook: () => T) {
+  queryClient = new QueryClient();
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return renderHook(hook, { wrapper });
+}
 
 // Compression is a browser-only lib; in tests just pass the file straight through.
 vi.mock("browser-image-compression", () => ({
@@ -59,7 +71,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("starts empty for a brand-new service and is not yet valid", () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     expect(result.current.form.priceMode).toBe("fixed");
     expect(result.current.form.chargedPer).toBe("daily"); // sensible default
@@ -70,7 +82,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("flips isStep1Valid when a grouping is picked, isStep2Valid when a job type is picked", () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     act(() => result.current.setField("groupingId", "grp-1"));
     expect(result.current.isStep1Valid).toBe(true);
@@ -81,7 +93,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("fixed mode validates on a single positive price; photos and description stay optional", () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     expect(result.current.isStep3Valid).toBe(false);
 
@@ -93,7 +105,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("range mode requires max >= min", () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     act(() => {
       result.current.setField("priceMode", "range");
@@ -107,7 +119,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("caps newImageFiles at maxImages and ignores extras", async () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     const files = Array.from({ length: 9 }, (_, i) =>
       new File(["x"], `${i}.jpg`, { type: "image/jpeg" }),
@@ -120,7 +132,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("removeImageAt deletes from the merged (existing + new) array by index", async () => {
-    const { result } = renderHook(() =>
+    const { result } = renderWithQuery(() =>
       useAddServiceForm({ service: buildExistingService() }),
     );
 
@@ -160,7 +172,7 @@ describe("useAddServiceForm — state machine", () => {
       }),
     );
 
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     await waitFor(() => expect(result.current.form.priceMin).toBe("5000"));
     expect(result.current.form.priceMode).toBe("range");
@@ -173,7 +185,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("persists every change back to sessionStorage", async () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     act(() => {
       result.current.setField("priceMin", "2000");
@@ -192,7 +204,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("pre-fills from an existing service in edit mode", () => {
-    const { result } = renderHook(() =>
+    const { result } = renderWithQuery(() =>
       useAddServiceForm({ service: buildExistingService() }),
     );
 
@@ -206,7 +218,7 @@ describe("useAddServiceForm — state machine", () => {
   });
 
   it("submit() throws when the form isn't valid", async () => {
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     await expect(result.current.submit()).rejects.toThrow(/not yet valid/i);
   });
@@ -214,7 +226,7 @@ describe("useAddServiceForm — state machine", () => {
   it("submit() calls servicesService.create and clears sessionStorage on success", async () => {
     (servicesService.create as any).mockResolvedValue({ id: "svc-new" });
 
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     act(() => {
       result.current.setField("categoryId", "cat-1");
@@ -227,11 +239,14 @@ describe("useAddServiceForm — state machine", () => {
 
     await waitFor(() => expect(result.current.isStep3Valid).toBe(true));
 
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     await act(async () => {
       await result.current.submit();
     });
 
     expect(servicesService.create).toHaveBeenCalledTimes(1);
+    // The cached "my services" list must pick up the new card.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["my-services"] });
     const arg = (servicesService.create as any).mock.calls[0][0];
     expect(arg.title).toBeUndefined(); // backend auto-derives from category
     expect(arg.priceMin).toBe(2000);
@@ -244,7 +259,7 @@ describe("useAddServiceForm — state machine", () => {
   it("fixed mode submits the single price as both min and max", async () => {
     (servicesService.create as any).mockResolvedValue({ id: "svc-new" });
 
-    const { result } = renderHook(() => useAddServiceForm());
+    const { result } = renderWithQuery(() => useAddServiceForm());
 
     act(() => {
       result.current.setField("categoryId", "cat-1");
@@ -265,7 +280,7 @@ describe("useAddServiceForm — state machine", () => {
   it("submit() routes to update() when the form was built from an existing service", async () => {
     (servicesService.update as any).mockResolvedValue({ id: "svc-edit" });
 
-    const { result } = renderHook(() =>
+    const { result } = renderWithQuery(() =>
       useAddServiceForm({ service: buildExistingService() }),
     );
 

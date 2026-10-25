@@ -1,13 +1,13 @@
-# Akazek Frontend App
+# Huza Frontend App
 
-Next.js 15 consumer application for the Akazek marketplace.
+Next.js 15 consumer application (installable PWA) for the Huza marketplace.
 
 ## Quick Start
 
 ```bash
 npm install
-cp .env.local.example .env.local
-# Edit .env.local with API URL
+cp .env.example .env.local
+# Edit .env.local with the API URL (other values are optional)
 npm run dev
 ```
 
