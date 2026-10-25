@@ -1,4 +1,4 @@
-# Akazek — Developer Guide
+# Huza — Developer Guide
 
 > Rwanda domestic work marketplace connecting employers with household workers and agencies.
 
@@ -26,16 +26,15 @@
 | Layer | Technology | Port |
 |-------|-----------|------|
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS | 3000 |
-| Backend | NestJS 11, Fastify, TypeScript | 3001 |
+| Backend | NestJS 11, Fastify, TypeScript | 3003 |
 | Database | PostgreSQL 16 | 5432 |
 | ORM | Prisma | — |
-| Auth | JWT + SMS OTP (IntouchSMS) | — |
+| Auth | JWT + SMS OTP (FDI/EFASHE gateway) + 5-digit PIN login | — |
 | Images | Cloudinary | — |
 | Real-time | Socket.io (WebSockets) | — |
 
 **Test login (development only):**
-- Phone: `111111111`
-- OTP: `111111`
+Outside production the backend returns the OTP as `devCode` and the app shows it in a toast, so any seeded phone number works. With no SMS provider configured the code is always `111111`. See the backend guide for the allowlisted test number (`TEST_PHONE_NUMBER` + `TEST_OTP_CODE`).
 
 ---
 
@@ -66,7 +65,7 @@ akazek/
 │   ├── lib/              # axios, utils, socket
 │   ├── __tests__/        # Vitest smoke tests
 │   ├── Dockerfile
-│   ├── .env.local.example
+│   ├── .env.example
 │   └── package.json      # Uses npm
 │
 ├── docker-compose.yml    # Local dev: postgres + backend + frontend
@@ -151,8 +150,8 @@ pnpm ts-node prisma/seed.ts
 cd ../HWA_Frontend
 
 # Copy environment file and fill in your values
-cp .env.local.example .env.local
-# Edit .env.local — usually just NEXT_PUBLIC_API_URL=http://localhost:3001
+cp .env.example .env.local
+# Edit .env.local — usually just NEXT_PUBLIC_API_URL=http://localhost:3003
 
 # Install dependencies
 npm install
@@ -183,7 +182,7 @@ pnpm start:dev
 
 You should see:
 ```
-[Nest] Application is running on: http://[::1]:3001
+[Nest] Application is running on: http://[::1]:3003
 ```
 
 ### Terminal 2 — Frontend
@@ -208,8 +207,8 @@ Press `Ctrl + C` in each terminal.
 ### If a Port is Already in Use
 
 ```bash
-# Kill whatever is using port 3001 (backend)
-npx kill-port 3001
+# Kill whatever is using port 3003 (backend)
+npx kill-port 3003
 
 # Kill whatever is using port 3000 (frontend)
 npx kill-port 3000
@@ -217,7 +216,7 @@ npx kill-port 3000
 
 On Mac/Linux you can also use:
 ```bash
-lsof -ti:3001 | xargs kill -9
+lsof -ti:3003 | xargs kill -9
 lsof -ti:3000 | xargs kill -9
 ```
 
@@ -246,7 +245,7 @@ This will:
 
 Wait for these log lines before opening the browser:
 ```
-backend   | [Nest] Application is running on: http://[::1]:3001
+backend   | [Nest] Application is running on: http://[::1]:3003
 frontend  | ✓ Ready in ...
 ```
 
@@ -306,31 +305,22 @@ docker compose exec backend pnpm prisma studio
 
 ### Backend — `HWA_Backend/.env`
 
-Copy from `.env.example`. Here is what each variable does:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string. Format: `postgresql://user:password@host:5432/dbname` |
-| `JWT_SECRET` | ✅ | Secret key for signing JWT tokens. Use a long random string in production. |
-| `CLOUDINARY_CLOUD_NAME` | ✅ | Your Cloudinary cloud name (from cloudinary.com dashboard) |
-| `CLOUDINARY_API_KEY` | ✅ | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | ✅ | Cloudinary API secret |
-| `INTOUCH_SMS_USERNAME` | ✅ | IntouchSMS account username (for OTP delivery in Rwanda) |
-| `INTOUCH_SMS_PASSWORD` | ✅ | IntouchSMS account password |
-| `INTOUCH_SMS_SENDER` | ✅ | Sender name shown on SMS (e.g. `AKAZEK`) |
-| `MAIL_FROM_NAME` | optional | Display name for emails |
-| `MAIL_FROM_ADDRESS` | optional | From email address |
-| `FRONTEND_URL` | optional | Used in email links. Set to `http://localhost:3000` in dev |
-
-**Development shortcut:** For local dev without SMS, the test phone `111111111` uses hardcoded OTP `111111` — no SMS credentials needed.
+Copy from `HWA_Backend/.env.example`. The full variable reference (database, JWT, Cloudinary, FDI SMS, test login) lives in [HWA_Backend/DEVELOPER_GUIDE.md](../HWA_Backend/DEVELOPER_GUIDE.md#8-environment-variables) so it is kept in one place.
 
 ### Frontend — `HWA_Frontend/.env.local`
 
-Copy from `.env.local.example`:
+Copy from `.env.example`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | ✅ | Backend URL. Use `http://localhost:3001` for local dev. |
+| `NEXT_PUBLIC_API_URL` | ✅ | Backend URL. Use `http://localhost:3003` for local dev. |
+| `NEXT_PUBLIC_SOCKET_URL` | ✅ | Socket.io URL, usually the same as the API |
+| `NEXT_PUBLIC_APP_URL` | optional | App host (defaults to `https://app.huza.app`) |
+| `NEXT_PUBLIC_MARKETING_URL` | optional | Marketing site (defaults to `https://huza.app`) |
+| `NEXT_PUBLIC_SITE_URL` | optional | Canonical origin for metadata / OG images |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | optional | Web push key; push is off without it |
+| `NEXT_PUBLIC_UMAMI_WEBSITE_ID` / `NEXT_PUBLIC_UMAMI_SRC` | optional | Umami analytics; off without a website id |
+| `NEXT_PUBLIC_GUEST_BROWSING` | optional | `true` lets guests browse before signing up |
 
 > **Note:** Variables prefixed with `NEXT_PUBLIC_` are bundled into the browser at build time. Never put secrets here.
 
@@ -517,15 +507,15 @@ Docker Desktop on Windows requires either WSL 2 or Hyper-V. WSL 2 is strongly re
 
 ## 12. Troubleshooting
 
-### "Port 3000 / 3001 already in use"
+### "Port 3000 / 3003 already in use"
 
 ```bash
 # Mac / Linux / WSL
-lsof -ti:3001 | xargs kill -9
+lsof -ti:3003 | xargs kill -9
 lsof -ti:3000 | xargs kill -9
 
 # Windows (PowerShell)
-netstat -ano | findstr :3001
+netstat -ano | findstr :3003
 taskkill /PID <PID> /F
 ```
 
@@ -610,8 +600,8 @@ Then run tests again.
 │                      │ pnpm prisma migrate dev               │
 │ After pulling code   │ pnpm prisma generate                  │
 ├──────────────────────┼──────────────────────────────────────┤
-│ Dev login            │ Phone: 111111111  OTP: 111111         │
-│ Backend URL          │ http://localhost:3001                 │
+│ Dev login            │ Any seeded phone; OTP = devCode toast │
+│ Backend URL          │ http://localhost:3003                 │
 │ Frontend URL         │ http://localhost:3000                 │
 └──────────────────────┴──────────────────────────────────────┘
 ```
