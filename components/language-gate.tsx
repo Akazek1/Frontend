@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { LOCALE_COOKIE } from "@/i18n/config";
 import { persistLanguage } from "@/lib/set-language";
+import { isMarketingPath } from "@/lib/marketing-host";
 
 // Only the two supported languages. Labels are shown in each language's own
 // name so the prompt is understandable before a choice is made.
@@ -34,12 +35,8 @@ export default function LanguageGate({ isMarketingHost = false }: { isMarketingH
   // The public marketing pages carry their own explicit EN/RW language switch
   // as real URLs, so this cookie-based prompt is redundant and intrusive there.
   // On the marketing host, "/" is the (rewritten) marketing homepage; the
-  // /welcome and /rw paths are marketing on any host.
-  const onMarketing =
-    (isMarketingHost && pathname === "/") ||
-    pathname.startsWith("/welcome") ||
-    pathname === "/rw" ||
-    pathname.startsWith("/rw/");
+  // /welcome, /rw and /blog paths are marketing on any host.
+  const onMarketing = isMarketingPath(pathname, isMarketingHost);
 
   useEffect(() => {
     // Runs client-side after hydration; if there's no saved locale, prompt once.
