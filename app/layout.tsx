@@ -136,7 +136,7 @@ export default async function RootLayout({
     <html lang={locale} className={`${geistSans.variable} ${geistMono.variable} ${urbanist.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider>
-        <Providers>
+        <Providers isMarketingHost={onMarketingHost}>
           <QueryProvider>
             <ViewModeProvider>
               <BookmarkProvider>
