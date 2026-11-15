@@ -93,7 +93,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       // Theme-adaptive tab icon: an SVG with a prefers-color-scheme media
-      // query inside (green mark on light themes, white on dark). This must
+      // query inside (dark-green mark on light themes, light green on dark,
+      // so the tab is never mistaken for the black-and-white admin panel's).
+      // This must
       // be the ONLY icon declared here: Chrome prefers raster entries (and
       // especially an ico with sizes="any") over the SVG, so listing the
       // 32/192/512 PNGs alongside it meant the SVG was never used. Legacy
