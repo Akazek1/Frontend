@@ -92,16 +92,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      // Theme-adaptive tab icon: an SVG with a prefers-color-scheme media
-      // query inside (dark-green mark on light themes, light green on dark,
-      // so the tab is never mistaken for the black-and-white admin panel's).
-      // This must
-      // be the ONLY icon declared here: Chrome prefers raster entries (and
-      // especially an ico with sizes="any") over the SVG, so listing the
-      // 32/192/512 PNGs alongside it meant the SVG was never used. Legacy
-      // fallback comes from the app/favicon.ico file convention (Next emits
-      // that link automatically); the 192/512 PNGs live in the manifest.
-      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/brand/favicon-green.png", type: "image/png", media: "(prefers-color-scheme: light)" },
+      { url: "/brand/favicon-white.png", type: "image/png", media: "(prefers-color-scheme: dark)" },
     ],
     apple: [
       // Exactly ONE apple-touch-icon: listing several makes iOS fetch each
