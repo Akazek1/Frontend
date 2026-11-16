@@ -9,6 +9,7 @@ interface ProfileMetaData {
   username?: string;
   bio?: string;
   profilePicture?: string;
+  isProvider?: boolean;
 }
 
 // Mirrors the backend's username rule (users.service.ts). This is a catch-all
@@ -61,12 +62,17 @@ export async function generateMetadata({
   }
   const { profile } = lookup;
 
-  const name = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || "User";
+  // Non-providers are private users — show first name only, no photo in previews.
+  // Providers are public by design and can show their full name and photo.
+  const isProvider = profile.isProvider ?? false;
+  const name = isProvider
+    ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || profile.username || "User"
+    : profile.firstName || profile.username || "User";
   const title = `${name} - ${APP_CONFIG.seoName}`;
   const description =
     profile.bio?.trim() ||
     `View ${name}'s profile on ${APP_CONFIG.seoName}. Find trusted help for your home and daily needs.`;
-  const image = profile.profilePicture;
+  const image = isProvider ? profile.profilePicture : undefined;
 
   return {
     title,
