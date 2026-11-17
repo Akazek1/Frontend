@@ -34,7 +34,23 @@ export async function registerFcmToken() {
   });
 
   if (token) {
-    await api.patch("/users/fcm-token", { token });
+    // Detect platform so the backend can segment by OS and PWA install state.
+    const ua = navigator.userAgent.toLowerCase();
+    const platform = /iphone|ipad|ipod/.test(ua)
+      ? "ios"
+      : /android/.test(ua)
+        ? "android"
+        : "web";
+    const pwaMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in window.navigator && (window.navigator as any).standalone === true);
+
+    await api.patch("/users/fcm-token", {
+      token,
+      platform,
+      pwaMode,
+      userAgent: navigator.userAgent,
+    });
   }
 
   return token;

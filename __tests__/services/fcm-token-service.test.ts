@@ -63,7 +63,7 @@ describe("registerFcmToken", () => {
       vapidKey: "test-vapid-key",
       serviceWorkerRegistration: fakeRegistration,
     });
-    expect(api.patch).toHaveBeenCalledWith("/users/fcm-token", { token: "fcm-token-123" });
+    expect(api.patch).toHaveBeenCalledWith("/users/fcm-token", expect.objectContaining({ token: "fcm-token-123" }));
     expect(result).toBe("fcm-token-123");
   });
 });
