@@ -146,6 +146,8 @@ export function HandleProfileClient() {
         if (!cancelled) {
           setProfile(userData);
           setServices(serviceList);
+          // Fire-and-forget profile view — no await, never blocks the UI.
+          api.post(`/users/username/${handle}/view`).catch(() => {});
           setReviews(allReviews);
           setError(null);
         }
