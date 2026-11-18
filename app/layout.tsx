@@ -26,13 +26,13 @@ import { isMarketingHost } from "@/lib/marketing-host";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  preload: process.env.CI !== "true",
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  preload: process.env.CI !== "true",
+  preload: false,
 });
 
 const urbanist = Urbanist({
@@ -40,7 +40,7 @@ const urbanist = Urbanist({
   weight: ["400", "700"],
   variable: "--font-urbanist",
   display: "swap",
-  preload: process.env.CI !== "true",
+  preload: false,
 });
 
 // Absolute-URL base for og:image and friends. APP_CONFIG.contact.website
