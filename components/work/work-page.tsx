@@ -716,7 +716,7 @@ function WorkFilterChips({
   const t = useTranslations("work");
   const filterLabels = FILTER_LABELS(t);
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
       {(Object.keys(filterLabels) as WorkFilter[]).map((key) => {
         const active = filter === key;
         const muted = counts[key] === 0;
@@ -726,7 +726,7 @@ function WorkFilterChips({
             type="button"
             onClick={() => onChange(key)}
             className={cn(
-              "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[12px] font-bold transition-colors",
+              "flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[12px] font-bold transition-colors",
               active
                 ? "border-[#C17A5D] bg-white text-[#C17A5D]"
                 : "border-gray-200 bg-white text-ink",
@@ -960,7 +960,7 @@ function DealCard({
 
             {/* Row 3 — category · date · price meta with icons */}
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-muted">
-              {item.meta.map((meta) => (
+              {item.meta.filter(Boolean).map((meta) => (
                 <span key={meta} className="inline-flex items-center gap-1">
                   {meta.includes("RWF") ? (
                     <Banknote className="h-3 w-3 text-ink-subtle" />

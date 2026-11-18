@@ -12,7 +12,6 @@ import type { Job, JobApplication } from "@/services/jobs-service";
 import { sectionOrder } from "./types";
 import type { BookingRecord, SectionKey, WorkItem, WorkRole } from "./types";
 import {
-  bookingCategory,
   bookingTitle,
   formatDate,
   getBookingId,
@@ -33,7 +32,6 @@ export type MapperStrings = {
   offerReceived: string;
   notSelected: string;
   youApplied: string;
-  toAgree: string;
   locale: string;
 };
 
@@ -48,7 +46,6 @@ const defaultStrings: MapperStrings = {
   offerReceived: "Offer Received",
   notSelected: "Not Selected",
   youApplied: "You Applied",
-  toAgree: "To agree",
   locale: "en",
 };
 
@@ -65,7 +62,7 @@ export const toBookingItem = (
       ? booking.employer || booking.partner
       : booking.worker || booking.partner;
   const title = getPersonName(person);
-  const workTitle = bookingTitle(booking);
+  const workTitle = bookingTitle(booking, strings.locale);
   const price = booking.price ?? booking.agreedPrice;
   const isPending = booking.status === "PENDING";
   const isDone = ["COMPLETED", "CANCELLED"].includes(booking.status);
@@ -89,7 +86,7 @@ export const toBookingItem = (
     role,
     title,
     subtitle: workTitle,
-    meta: [bookingCategory(booking), formatDate(booking.scheduledFor, strings.toAgree, strings.locale + "-RW"), getBudgetText(price)],
+    meta: [formatDate(booking.scheduledFor, "", strings.locale + "-RW"), getBudgetText(price)].filter(Boolean),
     secondaryMeta: booking.createdAt
       ? `${isPending ? strings.requested : strings.updated} ${getTimeAgo(booking.createdAt, strings.locale)}`
       : undefined,
@@ -145,7 +142,7 @@ export const toApplicationItem = (application: JobApplication, strings: MapperSt
     title: job.title,
     subtitle: strings.postedBy(job.employer?.firstName || ""),
     meta: [
-      job.category?.name || "",
+      (strings.locale === "rw" && job.category?.nameKn) ? job.category.nameKn : (job.category?.name || ""),
       job.startDate ? formatDate(job.startDate) : strings.flexible,
       formatPrice(job.budgetMin, job.budgetMax),
     ],
@@ -251,7 +248,7 @@ export const toJobApplicantsItem = (job: Job, strings: MapperStrings = defaultSt
     title: job.title,
     subtitle: `${count} applicant${count === 1 ? "" : "s"} interested`,
     meta: [
-      job.category?.name || "",
+      (strings.locale === "rw" && job.category?.nameKn) ? job.category.nameKn : (job.category?.name || ""),
       job.createdAt ? `${strings.requested} ${getTimeAgo(job.createdAt, strings.locale)}` : "",
       formatPrice(job.budgetMin, job.budgetMax),
     ],

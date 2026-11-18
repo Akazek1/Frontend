@@ -14,7 +14,7 @@ export interface Job {
   endDate?: string;
   status: "OPEN" | "CLOSED" | "AWARDED" | "CANCELLED";
   createdAt: string;
-  category: { id: string; name: string };
+  category: { id: string; name: string; nameKn?: string | null };
   address?: {
     id: string;
     street?: string | null;

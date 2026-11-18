@@ -34,12 +34,12 @@ export interface BookingRecord {
   service?: {
     id?: string;
     serviceImage?: string | null;
-    category?: { name?: string };
+    category?: { name?: string; nameKn?: string | null };
   } | null;
   job?: {
     id?: string;
     title?: string;
-    category?: { name?: string };
+    category?: { name?: string; nameKn?: string | null };
   } | null;
   employer?: Person | null;
   worker?: Person | null;

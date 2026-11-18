@@ -116,7 +116,6 @@ export function useWorkData(): UseWorkDataResult {
     offerReceived: t("metaOfferReceived"),
     notSelected: t("metaNotSelected"),
     youApplied: t("metaYouApplied"),
-    toAgree: t("metaToAgree"),
     locale,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [locale]);
