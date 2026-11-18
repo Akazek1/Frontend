@@ -818,6 +818,57 @@ function WorkSection({
   );
 }
 
+type ConfirmType = "reject" | "revoke" | "withdraw";
+
+const CONFIRM_CONFIG: Record<ConfirmType, { msgKey: "confirmRejectMsg" | "confirmRevokeMsg" | "confirmWithdrawMsg"; actionKey: "confirmReject" | "confirmRevoke" | "confirmWithdraw" }> = {
+  reject:   { msgKey: "confirmRejectMsg",   actionKey: "confirmReject" },
+  revoke:   { msgKey: "confirmRevokeMsg",   actionKey: "confirmRevoke" },
+  withdraw: { msgKey: "confirmWithdrawMsg", actionKey: "confirmWithdraw" },
+};
+
+function ConfirmSheet({
+  type,
+  isActing,
+  onConfirm,
+  onCancel,
+}: {
+  type: ConfirmType;
+  isActing: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("work");
+  const { msgKey, actionKey } = CONFIRM_CONFIG[type];
+  return (
+    <>
+      <SheetOverlay onClick={onCancel} />
+      <SheetPanel side="bottom" onClose={onCancel}>
+        <SheetBody className="py-6">
+          <p className="text-[15px] leading-relaxed text-ink">{t(msgKey)}</p>
+        </SheetBody>
+        <SheetFooter className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-[13px] font-black text-ink"
+          >
+            {t("keepIt")}
+          </button>
+          <button
+            type="button"
+            disabled={isActing}
+            onClick={onConfirm}
+            className="flex min-h-12 items-center justify-center rounded-xl bg-red-500 text-[13px] font-black text-white disabled:opacity-60"
+          >
+            {isActing && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+            {t(actionKey)}
+          </button>
+        </SheetFooter>
+      </SheetPanel>
+    </>
+  );
+}
+
 function DealCard({
   item,
   isDualRole,
@@ -845,6 +896,7 @@ function DealCard({
   onWithdraw: (item: WorkItem) => void;
 }) {
   const t = useTranslations("work");
+  const [confirmType, setConfirmType] = React.useState<ConfirmType | null>(null);
   // Per design: incoming hire requests in AWAITING YOUR REVIEW do NOT show
   // a status badge ("From Employer") — the section header already conveys the
   // direction. The clickable name handles profile access (no View Profile button).
@@ -951,11 +1003,23 @@ function DealCard({
           canEditReview={canEditReview}
           onPrimary={onPrimary}
           onReview={onReview}
-          onReject={onReject}
           onReminder={onReminder}
-          onWithdraw={onWithdraw}
+          onRequestConfirm={setConfirmType}
         />
       </div>
+      {confirmType && (
+        <ConfirmSheet
+          type={confirmType}
+          isActing={isActing}
+          onConfirm={() => {
+            if (confirmType === "reject") onReject(item);
+            else if (confirmType === "revoke") onReject(item);
+            else if (confirmType === "withdraw") onWithdraw(item);
+            setConfirmType(null);
+          }}
+          onCancel={() => setConfirmType(null)}
+        />
+      )}
     </article>
   );
 }
@@ -971,9 +1035,8 @@ function DealCardActions({
   canEditReview = false,
   onPrimary,
   onReview,
-  onReject,
   onReminder,
-  onWithdraw,
+  onRequestConfirm,
 }: {
   item: WorkItem;
   isActing: boolean;
@@ -981,9 +1044,8 @@ function DealCardActions({
   canEditReview?: boolean;
   onPrimary: (item: WorkItem) => void;
   onReview: (item: WorkItem) => void;
-  onReject: (item: WorkItem) => void;
   onReminder: (item: WorkItem) => void;
-  onWithdraw: (item: WorkItem) => void;
+  onRequestConfirm: (type: ConfirmType) => void;
 }) {
   const t = useTranslations("work");
   // Section: AWAITING YOUR REVIEW — grouped applicants on the user's own job post.
@@ -1004,6 +1066,17 @@ function DealCardActions({
   // Per design: no View Profile button — name in the card is clickable to the profile.
   // Buttons: Message (top, full width) then Accept | Reject (bottom row).
   if (item.section === "awaitingReview" && item.kind === "booking") {
+    const rejectBtn = (
+      <button
+        type="button"
+        disabled={isActing}
+        onClick={() => onRequestConfirm("reject")}
+        className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
+      >
+        {t("reject")}
+      </button>
+    );
+
     if (!item.chatOpened) {
       return (
         <div className="grid grid-cols-2 gap-2">
@@ -1016,14 +1089,7 @@ function DealCardActions({
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("acceptChat")}
           </button>
-          <button
-            type="button"
-            disabled={isActing}
-            onClick={() => onReject(item)}
-            className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
-          >
-            {t("reject")}
-          </button>
+          {rejectBtn}
         </div>
       );
     }
@@ -1041,14 +1107,7 @@ function DealCardActions({
             {isActing && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("acceptJob")}
           </button>
-          <button
-            type="button"
-            disabled={isActing}
-            onClick={() => onReject(item)}
-            className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
-          >
-            {t("reject")}
-          </button>
+          {rejectBtn}
         </div>
       </div>
     );
@@ -1056,15 +1115,18 @@ function DealCardActions({
 
   // Section: AWAITING THEIR REPLY — outgoing direct request, waiting on worker.
   // Per design: no View Profile (the clickable name handles that). User can
-  // Revoke (cancel the request) or Send Reminder.
+  // Revoke (cancel the request) or open the chat.
   if (item.section === "awaitingReply") {
     return (
       <div className="grid grid-cols-2 gap-2">
-        <RevokeButton
-          isActing={isActing}
-          onClick={() => onReject(item)}
-          label={t("revoke")}
-        />
+        <button
+          type="button"
+          disabled={isActing}
+          onClick={() => onRequestConfirm("revoke")}
+          className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
+        >
+          {t("revoke")}
+        </button>
         {item.chatOpened ? (
           <MessageButton bookingId={item.bookingId} />
         ) : (
@@ -1078,15 +1140,18 @@ function DealCardActions({
 
   // Section: YOU EXPRESSED INTEREST — application to a job post.
   // Per design: no View Job (the clickable title handles that). User can
-  // Revoke (withdraw application) or Send Reminder.
+  // Withdraw (revoke application) or Send Reminder.
   if (item.section === "expressedInterest") {
     return (
       <div className="grid grid-cols-2 gap-2">
-        <RevokeButton
-          isActing={isActing}
-          onClick={() => onWithdraw(item)}
-          label={t("revoke")}
-        />
+        <button
+          type="button"
+          disabled={isActing}
+          onClick={() => onRequestConfirm("withdraw")}
+          className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
+        >
+          {t("revoke")}
+        </button>
         <SendReminderButton item={item} onReminder={onReminder} />
       </div>
     );
@@ -1212,29 +1277,6 @@ function DealCardActions({
       className="flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-[12px] font-black text-ink"
     >
       {t("viewDetails")}
-    </button>
-  );
-}
-
-function RevokeButton({
-  isActing,
-  onClick,
-  label,
-}: {
-  isActing: boolean;
-  onClick: () => void;
-  label?: string;
-}) {
-  const t = useTranslations("work");
-  return (
-    <button
-      type="button"
-      disabled={isActing}
-      onClick={onClick}
-      className="flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white text-[12px] font-black text-red-500 disabled:opacity-60"
-    >
-      {isActing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-      {label ?? t("revoke")}
     </button>
   );
 }

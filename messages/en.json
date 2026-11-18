@@ -1109,6 +1109,13 @@
     "editReview": "Edit review",
     "openChat": "Open Chat",
     "revoke": "Revoke",
+    "confirmRevoke": "Revoke",
+    "confirmRevokeMsg": "Are you sure you want to revoke this request? Once revoked, the worker will no longer be able to see it.",
+    "confirmReject": "Reject",
+    "confirmRejectMsg": "Are you sure you want to reject this job request? Once rejected, you won't be able to see it again.",
+    "confirmWithdraw": "Withdraw",
+    "confirmWithdrawMsg": "Are you sure you want to withdraw your application? Once withdrawn, you won't be able to see it again.",
+    "keepIt": "Keep",
     "hireAgain": "Hire Again",
     "message": "Message",
     "sendReminder": "Send Reminder",
@@ -1139,7 +1146,18 @@
     "safeAndSecure": "Safe & Secure",
     "safeAndSecureDesc": "We review all applications and keep your information protected.",
     "previousReviewerFirstName": "Previous",
-    "previousReviewerLastName": "Partner"
+    "previousReviewerLastName": "Partner",
+    "metaRequested": "Requested",
+    "metaUpdated": "Updated",
+    "metaApplied": "Applied",
+    "metaFromEmployer": "From Employer",
+    "metaOfferSent": "Offer Sent",
+    "metaPostedBy": "Posted by {name}",
+    "metaFlexible": "Flexible",
+    "metaOfferReceived": "Offer Received",
+    "metaNotSelected": "Not Selected",
+    "metaYouApplied": "You Applied",
+    "metaToAgree": "To agree"
   },
   "searchResult": {
     "serviceTypeIndividual": "Individual",
@@ -2174,7 +2192,12 @@
     "bookingRequestSentTo": "Booking request sent to {name}!",
     "failedToSendRequest": "Failed to send request.",
     "companyFallback": "Company",
-    "providerFallback": "Provider"
+    "providerFallback": "Provider",
+    "serviceProviderBadge": "Service Provider",
+    "hireSheetWhoYoureHiring": "You're sending a request to hire:",
+    "messageRequired": "Your message",
+    "messageRequiredError": "Please write a message before sending.",
+    "messageExamples": "e.g. I need a cleaner on Saturday morning in Kicukiro. 2 bedrooms, 1 bathroom."
   },
   "serviceCard": {
     "availableToday": "Available Today",

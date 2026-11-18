@@ -49,6 +49,7 @@ import {
 import { colors } from "@/constant/colors";
 import { profileOptionLabel } from "@/constant/profile-options";
 import { SheetOverlay, SheetPanel, SheetHeader, SheetBody, SheetFooter } from "@/components/ui/app-primitives";
+import { HireSheet } from "@/components/ui/hire-sheet";
 import {
     DEFAULT_CATEGORY_ICON,
     providerStats,
@@ -131,7 +132,6 @@ export function ServiceDetailClient() {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const { lightbox, open: openLightbox, close: closeLightbox, prev: lightboxPrev, next: lightboxNext, select: selectLightboxIndex } = useLightbox();
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
-    const [hireNotes, setHireNotes] = useState("");
     // Agency-backed workers: employer contacts the agency (an inquiry), not a direct booking.
     const [isInquiryOpen, setIsInquiryOpen] = useState(false);
     const [inquiryNote, setInquiryNote] = useState("");
@@ -343,7 +343,6 @@ export function ServiceDetailClient() {
             toast.error(t("cantBookOwnService"));
             return;
         }
-        setHireNotes("");
         setIsHireModalOpen(true);
     };
 
@@ -371,18 +370,17 @@ export function ServiceDetailClient() {
         }
     };
 
-    const handleHireSubmit = async () => {
+    const handleHireSubmit = async (message: string) => {
         if (!service || submitting || hasRequested) return;
         setSubmitting(true);
         try {
             await api.post("/bookings", {
                 serviceId: service.id,
-                ...(hireNotes.trim() ? { notes: hireNotes.trim() } : {}),
+                notes: message,
             });
             toast.success(t("bookingRequestSentTo", { name: firstName }));
             setHasRequested(true);
             setIsHireModalOpen(false);
-            setHireNotes("");
         } catch (err) {
             toast.error(getApiErrorMessage(err, t("failedToSendRequest")));
         } finally {
@@ -1015,48 +1013,14 @@ export function ServiceDetailClient() {
             )}
 
             {isHireModalOpen && service && (
-                <>
-                    <SheetOverlay onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }} />
-                    <SheetPanel side="bottom" onClose={() => { setIsHireModalOpen(false); setHireNotes(""); }}>
-                        <SheetHeader
-                            title={providerName}
-                            subtitle={getServiceDisplayName(service, locale)}
-                            onClose={() => { setIsHireModalOpen(false); setHireNotes(""); }}
-                            leading={
-                                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{SERVICE_DETAIL_LABELS.requestToHire}</p>
-                            }
-                        />
-                        <SheetBody>
-                            <label className="text-[12px] font-semibold text-ink block mb-1.5">
-                                {t("messageOptional")} <span className="text-gray-400 font-normal">{t("optional")}</span>
-                            </label>
-                            <textarea
-                                value={hireNotes}
-                                onChange={(e) => setHireNotes(e.target.value)}
-                                placeholder={t("hireMessagePlaceholder")}
-                                rows={3}
-                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
-                            />
-                        </SheetBody>
-                        <SheetFooter>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => { setIsHireModalOpen(false); setHireNotes(""); }}
-                                    className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
-                                >
-                                    {t("cancel")}
-                                </button>
-                                <button
-                                    onClick={handleHireSubmit}
-                                    disabled={submitting}
-                                    className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2"
-                                >
-                                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("sendRequest")}
-                                </button>
-                            </div>
-                        </SheetFooter>
-                    </SheetPanel>
-                </>
+                <HireSheet
+                    providerName={providerName}
+                    serviceTitle={getServiceDisplayName(service, locale)}
+                    providerPhoto={providerPhoto}
+                    submitting={submitting}
+                    onClose={() => setIsHireModalOpen(false)}
+                    onSubmit={handleHireSubmit}
+                />
             )}
 
             {/* Sticky bottom action bar — constrained to phone container */}
