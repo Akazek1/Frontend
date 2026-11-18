@@ -37,15 +37,15 @@ import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/lib/error-handler";
 import {
   AppButton,
-  FormField,
   SheetBody,
   SheetFooter,
   SheetHeader,
   SheetOverlay,
   SheetPanel,
-  appTextareaClass,
 } from "@/components/ui/app-primitives";
+import { HireSheet } from "@/components/ui/hire-sheet";
 import { cn } from "@/lib/utils";
+
 
 type ServiceTypeFilter = "INDIVIDUAL" | "STAFFING_AGENCY" | "COMPANY";
 type AvailabilityFilter = "available" | "unavailable";
@@ -79,6 +79,7 @@ interface HireModal {
   serviceId: string;
   providerName: string;
   serviceTitle: string;
+  providerPhoto?: string;
 }
 
 interface ExistingBooking {
@@ -137,7 +138,6 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
   const [viewerLoc, setViewerLoc] = useState<ViewerLocation | null>(null);
   const [showLocPicker, setShowLocPicker] = useState(false);
   const [hireModal, setHireModal] = useState<HireModal | null>(null);
-  const [notes, setNotes] = useState("");
   const [submittingHire, setSubmittingHire] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
   // serviceId -> bookingId of a completed-but-unreviewed job (review-first re-hire).
@@ -527,23 +527,23 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
         serviceId: service.id,
         providerName,
         serviceTitle: getServiceDisplayName(service, locale),
+        providerPhoto: service.provider?.profilePicture || service.provider?.profileImg,
       });
     }, "hire");
   };
 
   const closeHireModal = () => {
     setHireModal(null);
-    setNotes("");
   };
 
-  const handleHireSubmit = async () => {
+  const handleHireSubmit = async (message: string) => {
     if (!hireModal) return;
 
     setSubmittingHire(true);
     try {
       await api.post("/bookings", {
         serviceId: hireModal.serviceId,
-        ...(notes.trim() ? { notes: notes.trim() } : {}),
+        notes: message,
       });
       toast.success(t("bookingRequestSentTo", { name: hireModal.providerName }));
       setRequestedServiceIds((prev) => {
@@ -848,52 +848,16 @@ const SearchResults = ({ query, onQueryChange, mode = "employer", filterTrigger 
       />
 
       {hireModal && (
-        <>
-          <SheetOverlay zIndexClassName="z-[90]" onClick={closeHireModal} aria-hidden="true" />
-          <SheetPanel side="floating" zIndexClassName="z-[91]" className="max-w-sm" onClose={closeHireModal}>
-            <SheetHeader
-              title={hireModal.providerName}
-              subtitle={hireModal.serviceTitle}
-              onClose={closeHireModal}
-              className="border-b-0 pb-2"
-              leading={
-                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-brand">
-                  {t("request")}
-                </span>
-              }
-            />
-
-            <SheetBody className="space-y-5 pt-2">
-              <FormField label={t("message")} hint={t("optional")}>
-                <textarea
-                  autoFocus
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={t("hireNotesPlaceholder")}
-                  rows={3}
-                  className={cn(appTextareaClass, "min-h-[96px]")}
-                />
-              </FormField>
-            </SheetBody>
-
-            <SheetFooter className="flex gap-3 border-t-0 pb-6 pt-0">
-              <AppButton
-                appVariant="secondary"
-                onClick={closeHireModal}
-                className="flex-1"
-              >
-                {t("cancel")}
-              </AppButton>
-              <AppButton
-                onClick={handleHireSubmit}
-                disabled={submittingHire}
-                className="flex-1"
-              >
-                {submittingHire ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sendRequest")}
-              </AppButton>
-            </SheetFooter>
-          </SheetPanel>
-        </>
+        <HireSheet
+          providerName={hireModal.providerName}
+          serviceTitle={hireModal.serviceTitle}
+          providerPhoto={hireModal.providerPhoto}
+          submitting={submittingHire}
+          onClose={closeHireModal}
+          onSubmit={handleHireSubmit}
+          side="floating"
+          zIndexClassName="z-[91]"
+        />
       )}
 
       {isFilterOpen && (

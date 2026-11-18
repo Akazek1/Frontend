@@ -26,29 +26,41 @@ export const getInitials = (name: string): string =>
 export const getProfileHref = (person?: Person | null): string | undefined =>
   person?.username ? `/${person.username}` : undefined;
 
-export const getTimeAgo = (iso?: string): string => {
+export const getTimeAgo = (iso?: string, locale = "en"): string => {
   if (!iso) return "";
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return `${Math.floor(days / 7)}w ago`;
+  try {
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+    if (minutes < 1) return rtf.format(0, "minute");
+    if (minutes < 60) return rtf.format(-minutes, "minute");
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return rtf.format(-hours, "hour");
+    const days = Math.floor(hours / 24);
+    if (days < 7) return rtf.format(-days, "day");
+    return rtf.format(-Math.floor(days / 7), "week");
+  } catch {
+    // Intl fallback for environments without full locale support
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return `${Math.floor(days / 7)}w ago`;
+  }
 };
 
-export const formatDate = (iso?: string | null): string => {
-  if (!iso) return "To agree";
+export const formatDate = (iso?: string | null, toAgreeLabel = "To agree", locale = "en-RW"): string => {
+  if (!iso) return toAgreeLabel;
   try {
-    return new Date(iso).toLocaleDateString("en-RW", {
+    return new Date(iso).toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",
     });
   } catch {
-    return "To agree";
+    return toAgreeLabel;
   }
 };
 

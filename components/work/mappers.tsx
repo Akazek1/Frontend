@@ -22,11 +22,42 @@ import {
   getTimeAgo,
 } from "./utils";
 
+export type MapperStrings = {
+  requested: string;
+  updated: string;
+  applied: string;
+  fromEmployer: string;
+  offerSent: string;
+  postedBy: (name: string) => string;
+  flexible: string;
+  offerReceived: string;
+  notSelected: string;
+  youApplied: string;
+  toAgree: string;
+  locale: string;
+};
+
+const defaultStrings: MapperStrings = {
+  requested: "Requested",
+  updated: "Updated",
+  applied: "Applied",
+  fromEmployer: "From Employer",
+  offerSent: "Offer Sent",
+  postedBy: (name) => `Posted by ${name}`,
+  flexible: "Flexible",
+  offerReceived: "Offer Received",
+  notSelected: "Not Selected",
+  youApplied: "You Applied",
+  toAgree: "To agree",
+  locale: "en",
+};
+
 export const toBookingItem = (
   booking: BookingRecord,
   role: WorkRole,
   section: SectionKey,
   accent: WorkItem["accent"],
+  strings: MapperStrings = defaultStrings,
 ): WorkItem => {
   const id = getBookingId(booking);
   const person =
@@ -58,16 +89,16 @@ export const toBookingItem = (
     role,
     title,
     subtitle: workTitle,
-    meta: [bookingCategory(booking), formatDate(booking.scheduledFor), getBudgetText(price)],
+    meta: [bookingCategory(booking), formatDate(booking.scheduledFor, strings.toAgree, strings.locale + "-RW"), getBudgetText(price)],
     secondaryMeta: booking.createdAt
-      ? `${isPending ? "Requested" : "Updated"} ${getTimeAgo(booking.createdAt)}`
+      ? `${isPending ? strings.requested : strings.updated} ${getTimeAgo(booking.createdAt, strings.locale)}`
       : undefined,
     status: booking.status,
     statusLabel:
       booking.status === "PENDING"
         ? role === "provider"
-          ? "From Employer"
-          : "Offer Sent"
+          ? strings.fromEmployer
+          : strings.offerSent
         : booking.status.replace("_", " "),
     accent,
     avatarUrl: person?.profilePicture,
@@ -99,7 +130,7 @@ export const toBookingItem = (
   };
 };
 
-export const toApplicationItem = (application: JobApplication): WorkItem | null => {
+export const toApplicationItem = (application: JobApplication, strings: MapperStrings = defaultStrings): WorkItem | null => {
   const job = application.job;
   if (!job) return null;
   const isPending = application.status === "PENDING";
@@ -112,15 +143,15 @@ export const toApplicationItem = (application: JobApplication): WorkItem | null 
     section: isPending || isAccepted ? "expressedInterest" : "done",
     role: "provider",
     title: job.title,
-    subtitle: `Posted by ${job.employer?.firstName || "Employer"}`,
+    subtitle: strings.postedBy(job.employer?.firstName || ""),
     meta: [
-      job.category?.name || "Work",
-      job.startDate ? formatDate(job.startDate) : "Flexible",
+      job.category?.name || "",
+      job.startDate ? formatDate(job.startDate) : strings.flexible,
       formatPrice(job.budgetMin, job.budgetMax),
     ],
-    secondaryMeta: `Applied ${getTimeAgo(application.createdAt)}`,
+    secondaryMeta: `${strings.applied} ${getTimeAgo(application.createdAt, strings.locale)}`,
     status: application.status,
-    statusLabel: isAccepted ? "Offer Received" : isClosed ? "Not Selected" : "You Applied",
+    statusLabel: isAccepted ? strings.offerReceived : isClosed ? strings.notSelected : strings.youApplied,
     accent: isClosed ? "gray" : "purple",
     icon: <ClipboardList className="h-6 w-6 text-[#6D28D9]" />,
     jobHref: `/jobs/${application.jobId}`,
@@ -147,12 +178,15 @@ export const composeWorkItems = ({
   employerBookings,
   applications,
   jobPosts,
+  strings,
 }: {
   workerBookings: BookingRecord[];
   employerBookings: BookingRecord[];
   applications: JobApplication[];
   jobPosts: Job[];
+  strings?: MapperStrings;
 }): WorkItem[] => {
+  const s = strings ?? defaultStrings;
   const bookingSeen = new Set<string>();
   const result: WorkItem[] = [];
 
@@ -161,13 +195,13 @@ export const composeWorkItems = ({
     if (!id) return;
     const status = booking.status;
     if (status === "PENDING") {
-      result.push(toBookingItem(booking, "provider", "awaitingReview", "orange"));
+      result.push(toBookingItem(booking, "provider", "awaitingReview", "orange", s));
     } else if (["CONFIRMED", "IN_PROGRESS"].includes(status)) {
       bookingSeen.add(id);
-      result.push(toBookingItem(booking, "provider", "activeDeals", "green"));
+      result.push(toBookingItem(booking, "provider", "activeDeals", "green", s));
     } else if (["COMPLETED", "CANCELLED"].includes(status)) {
       bookingSeen.add(id);
-      result.push(toBookingItem(booking, "provider", "done", "gray"));
+      result.push(toBookingItem(booking, "provider", "done", "gray", s));
     }
   });
 
@@ -176,25 +210,25 @@ export const composeWorkItems = ({
     if (!id) return;
     const status = booking.status;
     if (status === "PENDING") {
-      result.push(toBookingItem(booking, "employer", "awaitingReply", "slate"));
+      result.push(toBookingItem(booking, "employer", "awaitingReply", "slate", s));
     } else if (["CONFIRMED", "IN_PROGRESS"].includes(status)) {
       if (bookingSeen.has(id)) return;
       bookingSeen.add(id);
-      result.push(toBookingItem(booking, "employer", "activeDeals", "green"));
+      result.push(toBookingItem(booking, "employer", "activeDeals", "green", s));
     } else if (["COMPLETED", "CANCELLED"].includes(status)) {
       if (bookingSeen.has(id)) return;
       bookingSeen.add(id);
-      result.push(toBookingItem(booking, "employer", "done", "gray"));
+      result.push(toBookingItem(booking, "employer", "done", "gray", s));
     }
   });
 
   jobPosts.forEach((job) => {
-    const item = toJobApplicantsItem(job);
+    const item = toJobApplicantsItem(job, s);
     if (item) result.push(item);
   });
 
   applications.forEach((application) => {
-    const item = toApplicationItem(application);
+    const item = toApplicationItem(application, s);
     if (item) result.push(item);
   });
 
@@ -205,7 +239,7 @@ export const composeWorkItems = ({
   });
 };
 
-export const toJobApplicantsItem = (job: Job): WorkItem | null => {
+export const toJobApplicantsItem = (job: Job, strings: MapperStrings = defaultStrings): WorkItem | null => {
   const count = job._count?.applications || 0;
   if (count < 1) return null;
 
@@ -217,8 +251,8 @@ export const toJobApplicantsItem = (job: Job): WorkItem | null => {
     title: job.title,
     subtitle: `${count} applicant${count === 1 ? "" : "s"} interested`,
     meta: [
-      job.category?.name || "Work",
-      job.createdAt ? `Posted ${getTimeAgo(job.createdAt)}` : "Posted recently",
+      job.category?.name || "",
+      job.createdAt ? `${strings.requested} ${getTimeAgo(job.createdAt, strings.locale)}` : "",
       formatPrice(job.budgetMin, job.budgetMax),
     ],
     status: job.status,

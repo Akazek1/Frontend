@@ -14,10 +14,11 @@
 
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations, useLocale } from "next-intl";
 import api from "@/lib/axios";
 import { useAuth } from "@/hooks/useAuth";
 import jobsService, { Job, JobApplication } from "@/services/jobs-service";
-import { composeWorkItems } from "@/components/work/mappers";
+import { composeWorkItems, type MapperStrings } from "@/components/work/mappers";
 import type { BookingRecord, WorkItem } from "@/components/work/types";
 
 export interface UseWorkDataResult {
@@ -92,6 +93,8 @@ export function useWorkData(): UseWorkDataResult {
   // to every authenticated user (the EMPLOYER role has been retired).
   const isProvider = Boolean(user?.isProvider);
   const isEmployer = isAuthenticated;
+  const t = useTranslations("work");
+  const locale = useLocale();
 
   const query = useQuery({
     queryKey: ["work-data", user?.id],
@@ -102,6 +105,22 @@ export function useWorkData(): UseWorkDataResult {
 
   const data = query.data;
 
+  const mapperStrings: MapperStrings = useMemo(() => ({
+    requested: t("metaRequested"),
+    updated: t("metaUpdated"),
+    applied: t("metaApplied"),
+    fromEmployer: t("metaFromEmployer"),
+    offerSent: t("metaOfferSent"),
+    postedBy: (name: string) => t("metaPostedBy", { name }),
+    flexible: t("metaFlexible"),
+    offerReceived: t("metaOfferReceived"),
+    notSelected: t("metaNotSelected"),
+    youApplied: t("metaYouApplied"),
+    toAgree: t("metaToAgree"),
+    locale,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [locale]);
+
   const items = useMemo(
     () =>
       composeWorkItems({
@@ -109,8 +128,9 @@ export function useWorkData(): UseWorkDataResult {
         employerBookings: data?.employerBookings ?? [],
         applications: data?.applications ?? [],
         jobPosts: data?.jobPosts ?? [],
+        strings: mapperStrings,
       }),
-    [data],
+    [data, mapperStrings],
   );
 
   // Preserve the previous Promise<void> contract callers `await`.

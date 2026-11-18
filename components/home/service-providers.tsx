@@ -17,13 +17,14 @@ import {
   ReviewPromptDialog,
   type ReviewPromptPayload,
 } from "@/components/reviews/review-prompt-dialog";
-import { SheetOverlay, SheetPanel, SheetHeader, SheetBody, SheetFooter } from "@/components/ui/app-primitives";
+import { HireSheet } from "@/components/ui/hire-sheet";
 
 import { GuestContactLine } from "@/components/support/guest-contact-line";
 interface HireModal {
   serviceId: string;
   providerName: string;
   serviceTitle: string;
+  providerPhoto?: string;
 }
 
 interface ServiceProviderProps {
@@ -99,7 +100,6 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
     return () => main.removeEventListener("scroll", onScroll);
   }, [canAutoLoad, fetchNextPage]);
   const [hireModal, setHireModal] = useState<HireModal | null>(null);
-  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requestedServiceIds, setRequestedServiceIds] = useState<Set<string>>(new Set());
   // serviceId -> details of a completed job that still needs (or can finish) a
@@ -165,13 +165,13 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
     fetchBookings();
   }, [currentUserId]);
 
-  const handleHireSubmit = async () => {
+  const handleHireSubmit = async (message: string) => {
     if (!hireModal) return;
     setSubmitting(true);
     try {
       await api.post("/bookings", {
         serviceId: hireModal.serviceId,
-        ...(notes.trim() ? { notes: notes.trim() } : {}),
+        notes: message,
       });
       toast.success(t("hireRequestSent", { name: hireModal.providerName }));
       setRequestedServiceIds((prev) => {
@@ -180,7 +180,6 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         return next;
       });
       setHireModal(null);
-      setNotes("");
     } catch (err) {
       toast.error(getApiErrorMessage(err, t("requestFailed")));
     } finally {
@@ -256,6 +255,7 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
                         serviceId: provider.id,
                         providerName: provider.name,
                         serviceTitle: provider.title,
+                        providerPhoto: service.provider?.profilePicture || service.provider?.profileImg,
                       }), "hire");
                     }}
                     {...provider}
@@ -326,52 +326,15 @@ const ServiceProvider: React.FC<ServiceProviderProps> = () => {
         onSubmit={submitProviderReview}
       />
 
-      {/* Request to Hire sheet — shares the same animated bottom-sheet
-          primitives as the rest of the app (task drawer, agency inquiry). */}
       {hireModal && (
-        <>
-          <SheetOverlay onClick={() => { setHireModal(null); setNotes(""); }} />
-          <SheetPanel side="bottom" onClose={() => { setHireModal(null); setNotes(""); }}>
-            <SheetHeader
-              title={hireModal.providerName}
-              subtitle={hireModal.serviceTitle}
-              onClose={() => { setHireModal(null); setNotes(""); }}
-              leading={
-                <p className="text-[11px] font-semibold text-brand uppercase tracking-wider">{t("hireRequestLabel")}</p>
-              }
-            />
-            <SheetBody>
-              <label className="text-[12px] font-semibold text-ink block mb-1.5">
-                {t("hireMessage")} <span className="text-gray-400 font-normal">{t("hireOptional")}</span>
-              </label>
-              <textarea
-                autoFocus
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder={t("hireMessagePlaceholder")}
-                rows={3}
-                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-[13px] text-ink placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none"
-              />
-            </SheetBody>
-            <SheetFooter>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setHireModal(null); setNotes(""); }}
-                  className="flex-1 h-12 rounded-[18px] border-2 border-gray-100 text-gray-500 font-bold text-[13px] hover:bg-gray-50 transition-all"
-                >
-                  {t("hireCancel")}
-                </button>
-                <button
-                  onClick={handleHireSubmit}
-                  disabled={submitting}
-                  className="flex-1 h-12 rounded-[18px] bg-brand text-white font-bold text-[13px] hover:bg-brand-dark shadow-lg shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("hireSend")}
-                </button>
-              </div>
-            </SheetFooter>
-          </SheetPanel>
-        </>
+        <HireSheet
+          providerName={hireModal.providerName}
+          serviceTitle={hireModal.serviceTitle}
+          providerPhoto={hireModal.providerPhoto}
+          submitting={submitting}
+          onClose={() => setHireModal(null)}
+          onSubmit={handleHireSubmit}
+        />
       )}
     </div>
   );
