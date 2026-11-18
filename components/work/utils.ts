@@ -51,8 +51,8 @@ export const getTimeAgo = (iso?: string, locale = "en"): string => {
   }
 };
 
-export const formatDate = (iso?: string | null, toAgreeLabel = "To agree", locale = "en-RW"): string => {
-  if (!iso) return toAgreeLabel;
+export const formatDate = (iso?: string | null, _toAgreeLabel = "", locale = "en-RW"): string => {
+  if (!iso) return "";
   try {
     return new Date(iso).toLocaleDateString(locale, {
       weekday: "short",
@@ -60,15 +60,24 @@ export const formatDate = (iso?: string | null, toAgreeLabel = "To agree", local
       month: "short",
     });
   } catch {
-    return toAgreeLabel;
+    return "";
   }
 };
 
 export const getBudgetText = (value?: number | null): string =>
   value ? `${value.toLocaleString()} RWF/day` : "Budget to agree";
 
-export const bookingTitle = (booking: BookingRecord): string =>
-  booking.service?.category?.name || booking.job?.title || "Work request";
+const localizedCategoryName = (
+  cat: { name?: string; nameKn?: string | null } | undefined | null,
+  locale: string,
+): string => (locale === "rw" && cat?.nameKn) ? cat.nameKn : (cat?.name ?? "");
 
-export const bookingCategory = (booking: BookingRecord): string =>
-  booking.service?.category?.name || booking.job?.category?.name || "Work";
+export const bookingTitle = (booking: BookingRecord, locale = "en"): string =>
+  localizedCategoryName(booking.service?.category, locale) ||
+  booking.job?.title ||
+  "Work request";
+
+export const bookingCategory = (booking: BookingRecord, locale = "en"): string =>
+  localizedCategoryName(booking.service?.category, locale) ||
+  localizedCategoryName(booking.job?.category, locale) ||
+  "Work";
